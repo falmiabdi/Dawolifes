@@ -25,11 +25,11 @@ export function SiteHeader() {
           <span className="flex items-center gap-1">
             <Globe className="h-3.5 w-3.5" /> English
           </span>
-          <Link href="#" className="hover:text-primary">
+          <Link href="/login" className="hover:text-primary">
             Login
           </Link>
           <span className="text-secondary-foreground/30">|</span>
-          <Link href="#" className="hover:text-primary">
+          <Link href="/register" className="hover:text-primary">
             Register
           </Link>
         </div>

@@ -1,0 +1,301 @@
+"use client"
+
+import { useState, useEffect } from 'react'
+import {
+  Building2, Check, X, Search, Loader2, Eye, Trash2, MapPin, ExternalLink,
+  Info, ShieldCheck
+} from 'lucide-react'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { formatPrice } from '@/lib/data'
+
+interface Property {
+  _id: string
+  title: string
+  type: string
+  listingType: string
+  price: number
+  priceType: string
+  region: string
+  city: string
+  subCity: string
+  woreda: string
+  kebele: string
+  parcel: string
+  block: string
+  homeNo: string
+  area: number
+  bedrooms: number
+  bathrooms: number
+  condition: string
+  yearBuilt: number
+  description: string
+  features: string[]
+  images: string[]
+  agentId: {
+    _id: string
+    username: string
+    email: string
+    fullName?: string
+    ethPhone?: string
+    status: string
+  }
+  status: string
+  createdAt: string
+}
+
+export default function AdminPropertiesPage() {
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
+  const [submittingAction, setSubmittingAction] = useState(false)
+
+  async function fetchProperties() {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/properties?status=${statusFilter}&search=${search}`)
+      const data = await res.json()
+      setProperties(data.properties || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchProperties()
+  }, [search, statusFilter])
+
+  async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected') {
+    setSubmittingAction(true)
+    try {
+      const res = await fetch(`/api/properties/${propertyId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (res.ok) {
+        if (selectedProperty && selectedProperty._id === propertyId) {
+          setSelectedProperty(prev => prev ? { ...prev, status } : null)
+        }
+        fetchProperties()
+      } else {
+        alert('Failed to update property status.')
+      }
+    } catch (err) {
+      alert('An error occurred.')
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
+  async function handleDelete(propertyId: string) {
+    if (!confirm('Are you sure you want to permanently delete this listing?')) return
+    setSubmittingAction(true)
+    try {
+      const res = await fetch(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        setSelectedProperty(null)
+        fetchProperties()
+      } else {
+        alert('Failed to delete listing.')
+      }
+    } catch (err) {
+      alert('An error occurred.')
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Property Listings Review Queue</h1>
+        <p className="text-sm text-slate-500">Monitor properties listed by agents. Approve for public publish, reject incorrect posts, or delete violations.</p>
+      </div>
+
+      {/* Filter and Search */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white border border-slate-200 p-4 rounded-3xl shadow-sm">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search listings by title..."
+            className="pl-10 rounded-xl"
+          />
+        </div>
+
+        <div className="flex gap-2 w-full sm:w-auto">
+          {['all', 'Pending', 'Approved', 'Rejected'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === status ? 'border-orange-500 bg-orange-50 text-orange-950 font-bold' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-orange-300'}`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Properties Display Layout */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
+        {/* Listings Catalog */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-h-[400px]">
+          <h2 className="font-bold text-slate-900 mb-4">Listings Queue</h2>
+          {loading ? (
+            <div className="flex h-64 flex-col items-center justify-center text-slate-400">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500 mb-2" />
+              <span>Fetching properties...</span>
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="flex h-64 flex-col items-center justify-center text-slate-400">
+              <Building2 className="h-10 w-10 opacity-30 mb-2" />
+              <span>No property listings found.</span>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {properties.map((p) => (
+                <div
+                  key={p._id}
+                  onClick={() => setSelectedProperty(p)}
+                  className={`py-4 px-3 flex items-center justify-between gap-4 cursor-pointer transition rounded-2xl ${selectedProperty?._id === p._id ? 'bg-orange-50/50' : 'hover:bg-slate-50/70'}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={p.images?.[0] || '/placeholder-property.jpg'}
+                      alt={p.title}
+                      className="h-12 w-12 rounded-xl object-cover bg-slate-100 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 truncate">{p.title}</p>
+                      <p className="text-xs text-orange-600 font-bold mt-0.5">{formatPrice(p.price)} ETB</p>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">By: {p.agentId?.fullName || p.agentId?.username || 'Unknown'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <StatusBadge status={p.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Detailed Property Review Panel */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-h-[400px] lg:sticky lg:top-24">
+          <h2 className="font-bold text-slate-900 mb-4">Review Listing details</h2>
+          {selectedProperty ? (
+            <div className="space-y-5 text-xs text-slate-600">
+              {/* Image preview */}
+              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                <img
+                  src={selectedProperty.images?.[0] || '/placeholder-property.jpg'}
+                  alt={selectedProperty.title}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute left-3 top-3">
+                  <StatusBadge status={selectedProperty.status} />
+                </div>
+              </div>
+
+              {/* Title & Agent Info */}
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">{selectedProperty.title}</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Listed by: <span className="font-semibold text-slate-600">{selectedProperty.agentId?.fullName || selectedProperty.agentId?.username}</span> ({selectedProperty.agentId?.email})
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 border-t border-b border-slate-100 py-3">
+                {selectedProperty.status === 'Pending' && (
+                  <>
+                    <Button
+                      onClick={() => handleStatusChange(selectedProperty._id, 'Approved')}
+                      disabled={submittingAction}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5"
+                    >
+                      <Check className="h-3.5 w-3.5 mr-1" /> Approve Posting
+                    </Button>
+                    <Button
+                      onClick={() => handleStatusChange(selectedProperty._id, 'Rejected')}
+                      disabled={submittingAction}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5"
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" /> Reject
+                    </Button>
+                  </>
+                )}
+                <Button
+                  onClick={() => handleDelete(selectedProperty._id)}
+                  disabled={submittingAction}
+                  className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                  title="Delete Listing"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Specifications */}
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Specifications</h4>
+                  <div className="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3">
+                    <p><span className="text-slate-400">Type:</span> <span className="font-semibold text-slate-700">{selectedProperty.type}</span></p>
+                    <p><span className="text-slate-400">Listing:</span> <span className="font-semibold text-slate-700">{selectedProperty.listingType}</span></p>
+                    <p><span className="text-slate-400">Price:</span> <span className="font-bold text-orange-600">{selectedProperty.price.toLocaleString()} ETB ({selectedProperty.priceType})</span></p>
+                    <p><span className="text-slate-400">Area:</span> <span className="font-semibold text-slate-700">{selectedProperty.area} m²</span></p>
+                    <p><span className="text-slate-400">Beds/Baths:</span> <span className="font-semibold text-slate-700">{selectedProperty.bedrooms} / {selectedProperty.bathrooms}</span></p>
+                    <p><span className="text-slate-400">Condition:</span> <span className="font-semibold text-slate-700">{selectedProperty.condition}</span></p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Location Details</h4>
+                  <div className="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3">
+                    <p className="col-span-2"><span className="text-slate-400">City/Region:</span> <span className="font-semibold text-slate-700">{selectedProperty.city}, {selectedProperty.region}</span></p>
+                    <p><span className="text-slate-400">Subcity:</span> <span className="font-semibold text-slate-700">{selectedProperty.subCity || '-'}</span></p>
+                    <p><span className="text-slate-400">Woreda/Kebele:</span> <span className="font-semibold text-slate-700">{selectedProperty.woreda || '-'}/{selectedProperty.kebele || '-'}</span></p>
+                    <p><span className="text-slate-400">Parcel/Block:</span> <span className="font-semibold text-slate-700">{selectedProperty.parcel || '-'}/{selectedProperty.block || '-'}</span></p>
+                  </div>
+                </div>
+
+                {selectedProperty.description && (
+                  <div>
+                    <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-1">Description</h4>
+                    <p className="text-slate-600 leading-relaxed border-b border-slate-100 pb-3">{selectedProperty.description}</p>
+                  </div>
+                )}
+
+                {/* Amenities */}
+                {selectedProperty.features.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Amenities</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedProperty.features.map(f => (
+                        <span key={f} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 font-semibold">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-80 flex-col items-center justify-center text-slate-400 text-center px-4">
+              <Building2 className="h-10 w-10 opacity-30 mb-2" />
+              <p className="text-xs">Select a listing catalog card to view verification details and approve/reject it.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
