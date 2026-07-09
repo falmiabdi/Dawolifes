@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
+import mongoose from "mongoose"
 import {
   BedDouble,
   Bath,
@@ -11,6 +12,7 @@ import {
   Ruler,
   Share2,
   CalendarDays,
+  Video,
 } from "lucide-react"
 import { getProperty, formatPrice, properties } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
@@ -18,6 +20,9 @@ import { SiteFooter } from "@/components/site-footer"
 import { Gallery } from "@/components/listing/gallery"
 import { PropertyCard } from "@/components/property-card"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { connectToDatabase } from "@/lib/db"
+import { PropertyModel } from "@/lib/models/property"
+import "@/lib/models/user"
 
 export function generateStaticParams() {
   return properties.map((p) => ({ id: p.id }))
@@ -25,7 +30,55 @@ export function generateStaticParams() {
 
 export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const property = getProperty(id)
+  let property: any = null
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    try {
+      await connectToDatabase()
+      const dbProp = await PropertyModel.findById(id).populate('agentId').lean()
+      if (dbProp) {
+        property = {
+          id: dbProp._id.toString(),
+          title: dbProp.title,
+          type: dbProp.type,
+          listingType: dbProp.listingType,
+          price: dbProp.price,
+          priceType: dbProp.priceType,
+          region: dbProp.region,
+          city: dbProp.city,
+          subCity: dbProp.subCity || '',
+          woreda: dbProp.woreda || '',
+          kebele: dbProp.kebele || '',
+          parcel: dbProp.parcel || '',
+          block: dbProp.block || '',
+          homeNo: dbProp.homeNo || '',
+          area: dbProp.area || 0,
+          bedrooms: dbProp.bedrooms || 0,
+          bathrooms: dbProp.bathrooms || 0,
+          condition: dbProp.condition || 'Finished',
+          yearBuilt: dbProp.yearBuilt || 2024,
+          description: dbProp.description || '',
+          features: dbProp.features || [],
+          images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder-property.jpg"],
+          videoUrl: dbProp.videoUrl || '',
+          agent: {
+            id: dbProp.agentId?._id?.toString() || 'unknown',
+            name: dbProp.agentId?.fullName || dbProp.agentId?.username || 'Unknown Agent',
+            role: dbProp.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
+            phone: dbProp.agentId?.ethPhone || dbProp.agentId?.safaricomPhone || '+251 900 000 000',
+            avatar: dbProp.agentId?.profilePhoto || '/placeholder-user.jpg',
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[ListingDetails DB Load Error]', err)
+    }
+  }
+
+  if (!property) {
+    property = getProperty(id)
+  }
+
   if (!property) notFound()
 
   const isRent = property.listingType === "For Rent"
@@ -42,6 +95,30 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   ]
   const similar = properties.filter((p) => p.id !== property.id).slice(0, 3)
 
+  // Helper to parse YouTube embedded URL
+  function getYouTubeEmbedUrl(url: string) {
+    if (!url) return ''
+    try {
+      if (url.includes('youtube.com/watch')) {
+        const urlObj = new URL(url)
+        return `https://www.youtube.com/embed/${urlObj.searchParams.get('v')}`
+      }
+      if (url.includes('youtu.be/')) {
+        const id = url.split('/').pop()?.split('?')[0]
+        return `https://www.youtube.com/embed/${id}`
+      }
+      if (url.includes('vimeo.com/')) {
+        const id = url.split('/').pop()?.split('?')[0]
+        return `https://player.vimeo.com/video/${id}`
+      }
+      return url
+    } catch {
+      return url
+    }
+  }
+
+  const embedUrl = property.videoUrl ? getYouTubeEmbedUrl(property.videoUrl) : ''
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -56,7 +133,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               Listings
             </Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-foreground">{property.title}</span>
+            <span className="text-foreground line-clamp-1">{property.title}</span>
           </nav>
 
           <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
@@ -68,8 +145,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   <h1 className="text-2xl font-bold text-foreground">{property.title}</h1>
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 text-primary" />
-                    {property.subCity}, {property.woreda} · Parcel {property.parcel} · Block {property.block} · Home No{" "}
-                    {property.homeNo}
+                    {property.subCity}, {property.woreda} · Parcel {property.parcel || 'N/A'} · Block {property.block || 'N/A'} · Home No{" "}
+                    {property.homeNo || 'N/A'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -97,7 +174,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <section className="mt-8">
                 <h2 className="text-lg font-semibold text-foreground">Features</h2>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {property.features.map((f) => (
+                  {property.features.map((f: string) => (
                     <span
                       key={f}
                       className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground"
@@ -107,6 +184,23 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   ))}
                 </div>
               </section>
+
+              {embedUrl && (
+                <section className="mt-8">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground mb-3">
+                    <Video className="h-5 w-5 text-primary" /> Video Tour
+                  </h2>
+                  <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-border bg-slate-100 shadow-sm">
+                    <iframe
+                      src={embedUrl}
+                      title="Property Video Tour"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="absolute inset-0 w-full h-full border-0"
+                    />
+                  </div>
+                </section>
+              )}
 
               <section className="mt-8">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
@@ -125,15 +219,13 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <div className="rounded-2xl border border-border bg-card p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Advertised by</p>
                 <div className="mt-3 flex items-center gap-3">
-                  <Image
+                  <img
                     src={property.agent.avatar || "/placeholder-user.jpg"}
                     alt={property.agent.name}
-                    width={48}
-                    height={48}
-                    className="h-12 w-12 rounded-full object-cover"
+                    className="h-12 w-12 rounded-full object-cover border border-slate-100"
                   />
                   <div>
-                    <p className="font-semibold text-foreground">{property.agent.name}</p>
+                    <p className="font-semibold text-foreground line-clamp-1">{property.agent.name}</p>
                     <p className="text-xs text-muted-foreground">{property.agent.role}</p>
                   </div>
                 </div>
@@ -142,7 +234,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                 </p>
                 <a
                   href={`tel:${property.agent.phone}`}
-                  className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold" })}
+                  className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold min-h-[44px]" })}
                 >
                   <Phone className="h-4 w-4" /> Call Now
                 </a>
@@ -155,17 +247,17 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   {info.map(([label, value]) => (
                     <div key={label} className="flex items-center justify-between py-2">
                       <dt className="text-muted-foreground">{label}</dt>
-                      <dd className="font-medium text-foreground">{value}</dd>
+                      <dd className="font-medium text-foreground">{value || 'N/A'}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="rounded-xl">
+                <Button variant="outline" className="rounded-xl min-h-[44px]">
                   <Share2 className="h-4 w-4" /> Share
                 </Button>
-                <Button variant="outline" className="rounded-xl">
+                <Button variant="outline" className="rounded-xl min-h-[44px]">
                   <CalendarDays className="h-4 w-4" /> Visit
                 </Button>
               </div>

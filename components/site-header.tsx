@@ -53,12 +53,6 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/post"
-              className={buttonVariants({ className: "hidden rounded-full font-semibold sm:inline-flex" })}
-            >
-              <Plus className="h-4 w-4" /> POST
-            </Link>
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-foreground lg:hidden"
               onClick={() => setOpen((o) => !o)}
@@ -77,18 +71,28 @@ export function SiteHeader() {
                   key={link.label}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-muted"
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
                 >
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/post"
-                onClick={() => setOpen(false)}
-                className={buttonVariants({ className: "mt-2 rounded-full font-semibold" })}
-              >
-                <Plus className="h-4 w-4" /> POST
-              </Link>
+              {/* Login / Register — only visible on mobile (top bar is hidden) */}
+              <div className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-sm font-semibold text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center"
+                >
+                  Register
+                </Link>
+              </div>
             </div>
           </nav>
         )}

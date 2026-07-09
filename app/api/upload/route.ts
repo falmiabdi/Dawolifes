@@ -7,8 +7,11 @@ export async function POST(request: Request) {
     const apiKey = process.env.CLOUDINARY_API_KEY
     const apiSecret = process.env.CLOUDINARY_API_SECRET
 
+    console.log('[Upload API] Cloud name:', cloudName ? 'set' : 'MISSING')
+    console.log('[Upload API] API key:', apiKey ? 'set' : 'MISSING')
+    console.log('[Upload API] API secret:', apiSecret ? 'set' : 'MISSING')
+
     if (!cloudName || !apiKey || !apiSecret) {
-      console.error('[Agent Upload] Missing Cloudinary credentials')
       return NextResponse.json(
         { message: 'Cloudinary configuration is missing on the server.' },
         { status: 500 }
@@ -22,17 +25,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'No file uploaded' }, { status: 400 })
     }
 
-    console.log('[Agent Upload] File:', file.name, '|', file.type, '|', file.size, 'bytes')
+    console.log('[Upload API] File received:', file.name, file.type, file.size, 'bytes')
 
-    // Convert file to buffer for Cloudinary
+    // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Build Cloudinary signed upload
+    // Build timestamp and signature for Cloudinary signed upload
     const timestamp = Math.round(Date.now() / 1000).toString()
+
+    // Cloudinary signature: SHA1 of "timestamp=<ts><api_secret>"
     const stringToSign = `timestamp=${timestamp}${apiSecret}`
     const signature = crypto.createHash('sha1').update(stringToSign).digest('hex')
 
-    // Send as multipart form with blob
+    console.log('[Upload API] Timestamp:', timestamp)
+    console.log('[Upload API] Signature generated:', signature.substring(0, 10) + '...')
+
+    // Use multipart form with the actual file buffer (not base64)
     const cloudinaryForm = new FormData()
     const blob = new Blob([buffer], { type: file.type })
     cloudinaryForm.append('file', blob, file.name)
@@ -41,35 +49,34 @@ export async function POST(request: Request) {
     cloudinaryForm.append('signature', signature)
 
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
-    console.log('[Agent Upload] Uploading to Cloudinary...')
+    console.log('[Upload API] Sending to Cloudinary:', cloudinaryUrl)
 
-    const cloudinaryRes = await fetch(cloudinaryUrl, {
+    const cloudinaryResponse = await fetch(cloudinaryUrl, {
       method: 'POST',
       body: cloudinaryForm,
     })
 
-    const result = await cloudinaryRes.json()
+    const uploadResult = await cloudinaryResponse.json()
 
-    if (!cloudinaryRes.ok) {
-      console.error('[Agent Upload] Cloudinary error:', JSON.stringify(result))
+    console.log('[Upload API] Cloudinary response status:', cloudinaryResponse.status)
+
+    if (!cloudinaryResponse.ok) {
+      console.error('[Upload API] Cloudinary error:', JSON.stringify(uploadResult))
       return NextResponse.json(
-        { message: result.error?.message || 'Cloudinary upload failed' },
+        { message: uploadResult.error?.message || 'Failed to upload to Cloudinary' },
         { status: 400 }
       )
     }
 
-    console.log('[Agent Upload] Success:', result.secure_url)
+    console.log('[Upload API] Success! URL:', uploadResult.secure_url)
 
     return NextResponse.json({
-      url: result.secure_url,
-      publicId: result.public_id,
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
       ok: true,
     })
   } catch (error: any) {
-    console.error('[Agent Upload] Server error:', error)
-    return NextResponse.json(
-      { message: error.message || 'Server error during upload' },
-      { status: 500 }
-    )
+    console.error('[Upload API] Unexpected error:', error)
+    return NextResponse.json({ message: error.message || 'Server error' }, { status: 500 })
   }
 }

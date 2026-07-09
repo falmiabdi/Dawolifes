@@ -41,13 +41,13 @@ export default async function AdminDashboardPage() {
     .lean()
 
   return (
-    <div className="space-y-8">
-      {/* Top Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-8 text-white">
+    <div className="space-y-6 md:space-y-8">
+      {/* Top Banner — mobile: compact padding/font, desktop: full */}
+      <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-5 text-white md:p-8">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-orange-400">Enterprise Admin Portal</p>
-          <h1 className="mt-2 text-3xl font-bold">Platform Overview & Diagnostics</h1>
-          <p className="mt-2 max-w-xl text-slate-300 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-orange-400 md:text-sm">Enterprise Admin Portal</p>
+          <h1 className="mt-2 text-xl font-bold md:text-3xl">Platform Overview &amp; Diagnostics</h1>
+          <p className="mt-2 max-w-xl text-slate-300 text-xs md:text-sm">
             Monitor real-time stats, review agent verification requests, check property listing queues, and manage billing activity.
           </p>
         </div>
@@ -89,8 +89,8 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {/* Analytics Chart & Activity Panel */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
+      {/* Analytics Chart & Activity Panel — stacks on mobile, side-by-side on lg+ */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_350px]">
         {/* Chart */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
@@ -140,8 +140,8 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Recents Lists */}
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Recents Lists — stacks on mobile, 2 cols on md+ */}
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
         {/* Recent Agents */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">

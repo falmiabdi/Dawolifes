@@ -22,14 +22,14 @@ export default async function AgentDashboardPage() {
   const StatusIcon = cfg.icon
 
   return (
-    <div className="space-y-6">
-      {/* Welcome banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-slate-900 to-slate-800 p-8 text-white">
-        <div className="flex items-start justify-between">
+    <div className="space-y-5 md:space-y-6">
+      {/* Welcome banner — mobile: stacked, sm+: side-by-side */}
+      <div className="rounded-3xl bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-white md:p-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-orange-400">Agent Workspace</p>
-            <h1 className="mt-2 text-3xl font-bold">Welcome, {user.name}!</h1>
-            <p className="mt-2 max-w-lg text-slate-300 text-sm">Your central hub for managing properties, tracking performance, and growing your real estate business.</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-orange-400 md:text-sm">Agent Workspace</p>
+            <h1 className="mt-2 text-2xl font-bold md:text-3xl">Welcome, {user.name}!</h1>
+            <p className="mt-2 max-w-lg text-slate-300 text-xs md:text-sm">Your central hub for managing properties, tracking performance, and growing your real estate business.</p>
           </div>
           <StatusBadge status={status} />
         </div>

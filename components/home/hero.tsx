@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden min-h-[380px] sm:min-h-[480px]">
       <Image
         src="/properties/hero-bg.png"
         alt=""
@@ -15,7 +15,7 @@ export function Hero() {
       />
       <div className="absolute inset-0 bg-secondary/75" />
 
-      <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28">
+      <div className="relative mx-auto max-w-5xl px-4 py-14 text-center sm:px-6 sm:py-28">
         <h1 className="text-balance text-4xl font-extrabold leading-tight text-white sm:text-5xl">
           Find Homes for Sale &amp; Rent{" "}
           <span className="text-primary">in Ethiopia</span>

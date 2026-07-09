@@ -1,15 +1,15 @@
-import { redirect } from 'next/navigation'
-import { Users, User, Shield, Clock, Trash2, Calendar, ShieldCheck } from 'lucide-react'
-import { getServerSession } from '@/lib/auth-session'
-import { connectToDatabase } from '@/lib/db'
-import { UserModel } from '@/lib/models/user'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { UserDeleteButton } from './delete-button'
+import { redirect } from "next/navigation"
+import { Users, User, Shield } from "lucide-react"
+import { getServerSession } from "@/lib/auth-session"
+import { connectToDatabase } from "@/lib/db"
+import { UserModel } from "@/lib/models/user"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { UserDeleteButton } from "./delete-button"
 
 export default async function AdminUsersPage() {
   const session = await getServerSession()
   if (!session?.user) {
-    redirect('/login')
+    redirect("/login")
   }
 
   await connectToDatabase()
@@ -18,13 +18,77 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">User Catalog Management</h1>
-        <p className="text-sm text-slate-500">Monitor all administrators, agents, and client accounts registered on DelaHarme.</p>
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900 md:text-2xl">
+          User Catalog Management
+        </h1>
+        <p className="text-sm text-slate-500">
+          Monitor all administrators, agents, and client accounts registered on DelaHarme.
+        </p>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm overflow-hidden">
-        <h2 className="font-bold text-slate-900 mb-4">Database Users</h2>
-        <div className="overflow-x-auto">
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm overflow-hidden md:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-slate-900">Database Users</h2>
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+            {users.length} total
+          </span>
+        </div>
+
+        {/* ── Mobile card list (hidden on md+) ── */}
+        <div className="divide-y divide-slate-100 md:hidden">
+          {users.map((u: any) => (
+            <div key={u._id.toString()} className="py-4 space-y-2.5">
+              {/* Row 1: Avatar + name + role badge */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600 font-bold text-xs">
+                    {u.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 truncate text-sm">
+                      {u.username}
+                    </p>
+                    <p className="text-xs text-slate-400 truncate">{u.email}</p>
+                  </div>
+                </div>
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                    u.role === "admin"
+                      ? "bg-slate-900 text-white"
+                      : "bg-orange-50 text-orange-700"
+                  }`}
+                >
+                  {u.role === "admin" ? (
+                    <Shield className="h-3 w-3" />
+                  ) : (
+                    <User className="h-3 w-3" />
+                  )}
+                  {u.role}
+                </span>
+              </div>
+
+              {/* Row 2: Status + date + action */}
+              <div className="flex items-center justify-between pl-12">
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={u.status || "Pending"} />
+                  <span className="text-[10px] text-slate-400">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                {u.email !== "felmitesfaye@gmail.com" ? (
+                  <UserDeleteButton id={u._id.toString()} />
+                ) : (
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                    Root Owner
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Desktop table (hidden on mobile) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm divide-y divide-slate-100">
             <thead>
               <tr className="text-xs font-semibold text-slate-400 uppercase">
@@ -47,22 +111,34 @@ export default async function AdminUsersPage() {
                   </td>
                   <td className="py-3.5 text-xs text-slate-500">{u.email}</td>
                   <td className="py-3.5 text-xs">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${u.role === 'admin' ? 'bg-slate-900 text-white' : 'bg-orange-50 text-orange-700'}`}>
-                      {u.role === 'admin' ? <Shield className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        u.role === "admin"
+                          ? "bg-slate-900 text-white"
+                          : "bg-orange-50 text-orange-700"
+                      }`}
+                    >
+                      {u.role === "admin" ? (
+                        <Shield className="h-3 w-3" />
+                      ) : (
+                        <User className="h-3 w-3" />
+                      )}
                       {u.role}
                     </span>
                   </td>
                   <td className="py-3.5 text-xs">
-                    <StatusBadge status={u.status || 'Pending'} />
+                    <StatusBadge status={u.status || "Pending"} />
                   </td>
                   <td className="py-3.5 text-xs text-slate-500">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-3.5 text-right">
-                    {u.email !== 'felmitesfaye@gmail.com' ? (
+                    {u.email !== "felmitesfaye@gmail.com" ? (
                       <UserDeleteButton id={u._id.toString()} />
                     ) : (
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase">Root Owner</span>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                        Root Owner
+                      </span>
                     )}
                   </td>
                 </tr>

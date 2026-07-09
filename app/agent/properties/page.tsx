@@ -10,12 +10,12 @@ import { PropertyDeleteButton } from './delete-button'
 
 export default async function AgentPropertiesPage() {
   const session = await getServerSession()
-  if (!session?.userId) {
+  if (!session?.user?.id) {
     redirect('/login')
   }
 
   await connectToDatabase()
-  const properties = await PropertyModel.find({ agentId: session.userId })
+  const properties = await PropertyModel.find({ agentId: session.user.id })
     .sort({ createdAt: -1 })
     .lean()
 

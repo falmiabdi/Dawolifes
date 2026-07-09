@@ -5,6 +5,7 @@ import { readSessionCookie } from '@/lib/session-cookie'
 
 const publicRoutes = ['/', '/login', '/register']
 const onboardingRoute = '/agent/onboarding'
+const agentOnlyRoutes = ['/post']
 
 export async function middleware(req: NextRequest) {
   const cookieValue = req.cookies.get('delaharme-session')?.value
@@ -31,6 +32,14 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
+    return NextResponse.next()
+  }
+
+  // /post and similar pages are agent-only — redirect public visitors to login
+  if (agentOnlyRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
+    if (!sessionPayload?.userId) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
     return NextResponse.next()
   }
 

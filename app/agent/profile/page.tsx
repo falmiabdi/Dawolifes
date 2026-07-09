@@ -5,15 +5,16 @@ import { getServerSession } from '@/lib/auth-session'
 import { connectToDatabase } from '@/lib/db'
 import { UserModel } from '@/lib/models/user'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { ProfilePhotoUploader } from '@/components/dashboard/profile-photo-uploader'
 
 export default async function AgentProfilePage() {
   const session = await getServerSession()
-  if (!session?.userId) {
+  if (!session?.user?.id) {
     redirect('/login')
   }
 
   await connectToDatabase()
-  const user = await UserModel.findById(session.userId).lean()
+  const user = await UserModel.findById(session.user.id).lean()
 
   if (!user) {
     redirect('/login')
@@ -24,9 +25,10 @@ export default async function AgentProfilePage() {
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 text-2xl font-bold text-orange-600">
-            {user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
-          </div>
+          <ProfilePhotoUploader
+            currentPhoto={user.profilePhoto || ''}
+            initials={user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+          />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-slate-900">{user.fullName || user.username}</h1>

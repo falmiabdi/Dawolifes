@@ -13,6 +13,9 @@ import {
   Plus,
   Send,
   Upload,
+  Trash2,
+  Loader2,
+  AlertCircle
 } from "lucide-react"
 import { amenityOptions, formatPrice } from "@/lib/data"
 import { Button } from "@/components/ui/button"
@@ -54,7 +57,8 @@ type FormState = {
   woreda: string
   name: string
   phone: string
-  photos: number
+  images: string[]
+  videoUrl: string
 }
 
 const initialState: FormState = {
@@ -76,7 +80,8 @@ const initialState: FormState = {
   woreda: "",
   name: "",
   phone: "",
-  photos: 0,
+  images: [],
+  videoUrl: "",
 }
 
 export function PostWizard() {
@@ -84,6 +89,9 @@ export function PostWizard() {
   const [form, setForm] = useState<FormState>(initialState)
   const [customFeature, setCustomFeature] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -104,8 +112,103 @@ export function PostWizard() {
     setCustomFeature("")
   }
 
-  const next = () => setStep((s) => Math.min(s + 1, steps.length - 1))
-  const back = () => setStep((s) => Math.max(s - 1, 0))
+  const next = () => {
+    // Validation for photos
+    if (step === 2 && form.images.length < 3) {
+      setError("Please upload at least 3 photos of the property to continue.")
+      return
+    }
+    setError("")
+    setStep((s) => Math.min(s + 1, steps.length - 1))
+  }
+  
+  const back = () => {
+    setError("")
+    setStep((s) => Math.max(s - 1, 0))
+  }
+
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploadingImage(true)
+    setError("")
+    
+    try {
+      const uploadedUrls: string[] = []
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData()
+        formData.append('file', files[i])
+        
+        const res = await fetch('/api/agent/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        if (!res.ok) {
+          const errData = await res.json()
+          throw new Error(errData.message || `Failed to upload ${files[i].name}`)
+        }
+        
+        const data = await res.json()
+        uploadedUrls.push(data.url)
+      }
+      
+      set("images", [...form.images, ...uploadedUrls])
+    } catch (err: any) {
+      setError(err.message || 'Error uploading image')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (form.images.length < 3) {
+      setError("At least 3 photos are required to list a property.")
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      setError("")
+
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          type: form.propertyType,
+          listingType: form.listingType,
+          price: form.price,
+          priceType: form.priceType,
+          area: form.area,
+          bedrooms: form.bedrooms,
+          bathrooms: form.bathrooms,
+          condition: form.condition,
+          yearBuilt: form.yearBuilt,
+          description: form.description,
+          features: form.features,
+          region: form.region,
+          city: form.city,
+          subCity: form.subCity,
+          woreda: form.woreda,
+          images: form.images,
+          videoUrl: form.videoUrl
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to submit property')
+      }
+
+      setSubmitted(true)
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong while submitting the property.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   if (submitted) {
     return (
@@ -175,7 +278,14 @@ export function PostWizard() {
         })}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+      {error && (
+        <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         {/* Form panel */}
         <div className="rounded-2xl border border-border bg-card p-6">
           {step === 0 && (
@@ -337,22 +447,63 @@ export function PostWizard() {
             <div className="space-y-5">
               <SectionTitle icon={<Upload className="h-5 w-5" />} title="Photos & Media" />
               <div>
-                <Label className="mb-2 block">Property Photos</Label>
-                <button
-                  type="button"
-                  onClick={() => set("photos", form.photos + 1)}
-                  className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/40 py-12 text-center transition-colors hover:border-primary"
-                >
-                  <Upload className="h-8 w-8 text-primary" />
-                  <span className="text-sm font-medium text-foreground">Click to upload photos</span>
-                  <span className="text-xs text-muted-foreground">JPG, PNG, WEBP supported</span>
-                </button>
-                {form.photos > 0 && (
-                  <p className="mt-2 text-xs font-medium text-success">{form.photos} photo(s) added</p>
+                <Label className="mb-2 block font-semibold text-slate-800">
+                  Property Photos <span className="text-red-500">* (at least 3 photos required)</span>
+                </Label>
+                
+                <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 text-center transition hover:bg-slate-50 cursor-pointer">
+                  {uploadingImage ? (
+                    <>
+                      <Loader2 className="h-8 w-8 text-orange-500 animate-spin" />
+                      <span className="text-sm font-semibold text-slate-700">Uploading photos to Cloudinary...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-orange-500" />
+                      <span className="text-sm font-semibold text-slate-700">Click to upload photos</span>
+                      <span className="text-xs text-slate-400">Select one or more images (JPG, PNG, WEBP)</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleUploadImage}
+                    disabled={uploadingImage}
+                  />
+                </label>
+
+                {form.images.length > 0 && (
+                  <div className="mt-5 space-y-2">
+                    <p className="text-xs font-semibold text-orange-600">
+                      {form.images.length} photo(s) added {form.images.length < 3 && `(need ${3 - form.images.length} more)`}
+                    </p>
+                    
+                    <div className="grid grid-cols-3 gap-3">
+                      {form.images.map((url, idx) => (
+                        <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group/item shadow-sm">
+                          <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => set("images", form.images.filter((_, i) => i !== idx))}
+                            className="absolute right-1.5 top-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded-lg p-1.5 shadow transition-all duration-200 opacity-90 group-hover/item:opacity-100"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-              <Field label="Video URL (YouTube/Vimeo)">
-                <Input placeholder="https://youtube.com/watch?v=..." />
+              
+              <Field label="Video URL (YouTube/Vimeo) — Optional">
+                <Input
+                  value={form.videoUrl}
+                  onChange={(e) => set("videoUrl", e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
               </Field>
             </div>
           )}
@@ -375,16 +526,32 @@ export function PostWizard() {
 
           {/* Nav buttons */}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
-            <Button variant="outline" onClick={back} disabled={step === 0} className="rounded-xl">
+            <Button variant="outline" onClick={back} disabled={step === 0 || submitting} className="rounded-xl">
               <ArrowLeft className="h-4 w-4" /> Back
             </Button>
             {step < steps.length - 1 ? (
-              <Button onClick={next} className="rounded-xl font-semibold">
+              <Button
+                onClick={next}
+                disabled={step === 2 && form.images.length < 3}
+                className="rounded-xl font-semibold"
+              >
                 Next <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={() => setSubmitted(true)} className="rounded-xl font-semibold">
-                <Send className="h-4 w-4" /> Submit Property
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="rounded-xl font-semibold bg-orange-500 hover:bg-orange-600 text-white min-h-[44px]"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" /> Submit Property
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -404,7 +571,7 @@ export function PostWizard() {
               highlight={!!form.price}
             />
             <SummaryRow label="Location" value={form.subCity || form.city || "Not set"} />
-            <SummaryRow label="Photos" value={form.photos > 0 ? `${form.photos} uploaded` : "None"} />
+            <SummaryRow label="Photos" value={form.images.length > 0 ? `${form.images.length} uploaded` : "None"} />
             <SummaryRow label="Features" value={form.features.length ? `${form.features.length} selected` : "None"} />
           </dl>
         </aside>
@@ -475,3 +642,4 @@ function SummaryRow({ label, value, highlight }: { label: string; value: string;
     </div>
   )
 }
+

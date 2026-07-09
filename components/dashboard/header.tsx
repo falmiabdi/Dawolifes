@@ -1,30 +1,50 @@
-import { Bell, Search } from 'lucide-react'
-import { StatusBadge } from '@/components/ui/status-badge'
+import { Bell, Menu } from "lucide-react"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface DashboardHeaderProps {
   name: string
   email: string
   status?: string
   title: string
+  onToggleSidebar?: () => void
 }
 
-export function DashboardHeader({ name, email, status, title }: DashboardHeaderProps) {
+export function DashboardHeader({
+  name,
+  email,
+  status,
+  title,
+  onToggleSidebar,
+}: DashboardHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-6 py-4 backdrop-blur-sm">
-      <div>
-        <h1 className="text-lg font-bold text-slate-900">{title}</h1>
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-sm md:px-6 md:py-4">
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Hamburger — only visible on mobile (< lg) */}
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+        <h1 className="truncate text-base font-bold text-slate-900 md:text-lg">
+          {title}
+        </h1>
       </div>
-      <div className="flex items-center gap-4">
-        <button className="relative rounded-full p-2 text-slate-500 hover:bg-slate-100">
+
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        <button className="relative rounded-full p-2 text-slate-500 hover:bg-slate-100 transition">
           <Bell className="h-5 w-5" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-orange-500" />
         </button>
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
             {name.charAt(0).toUpperCase()}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-semibold text-slate-800">{name}</p>
+            <p className="text-sm font-semibold text-slate-800 leading-tight">{name}</p>
             {status && <StatusBadge status={status} />}
           </div>
         </div>

@@ -14,6 +14,7 @@ const userSchema = new Schema(
 
     // ── Step 1: Personal Information ──────────────────────────────────
     fullName: { type: String, default: '' },
+    profilePhoto: { type: String, default: '' },
     gender: { type: String, enum: ['Male', 'Female', 'Other', ''], default: '' },
     dateOfBirth: { type: String, default: '' },
     nationality: { type: String, default: 'Ethiopian' },

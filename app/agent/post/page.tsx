@@ -80,20 +80,27 @@ export default function AgentPostPage() {
         const file = files[i]
         const fd = new FormData()
         fd.append('file', file)
-        fd.append('field', 'property')
         const res = await fetch('/api/agent/upload', {
           method: 'POST',
           body: fd,
         })
         const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data.message || `Failed to upload ${file.name}`)
+        }
         if (data.url) {
           setUploadedImages((prev) => [...prev, data.url])
         }
       }
-    } catch (err) {
-      setError('Failed to upload image(s).')
+    } catch (err: any) {
+      console.error('[Image Upload Error]', err)
+      setError(err.message || 'Failed to upload image(s). Please try again.')
     } finally {
       setUploadingImage(false)
+      // Reset file input so the same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 

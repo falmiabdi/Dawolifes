@@ -23,6 +23,7 @@ const propertySchema = new Schema(
     description: { type: String, default: '' },
     features: { type: [String], default: [] },
     images: { type: [String], default: [] },
+    videoUrl: { type: String, default: '' },
     agentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
   },
