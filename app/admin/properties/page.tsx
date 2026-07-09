@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Building2, Check, X, Search, Loader2, Eye, Trash2, MapPin, ExternalLink,
-  Info, ShieldCheck
+  Building2, Check, X, Search, Loader2, Trash2
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useDebounce } from '@/lib/hooks/use-debounce'
 import { formatPrice } from '@/lib/data'
+import toast from 'react-hot-toast'
 
 interface Property {
   _id: string
@@ -53,10 +54,12 @@ export default function AdminPropertiesPage() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [submittingAction, setSubmittingAction] = useState(false)
 
+  const debouncedSearch = useDebounce(search, 300)
+
   async function fetchProperties() {
     setLoading(true)
     try {
-      const res = await fetch(`/api/properties?status=${statusFilter}&search=${search}`)
+      const res = await fetch(`/api/properties?status=${statusFilter}&search=${debouncedSearch}`)
       const data = await res.json()
       setProperties(data.properties || [])
     } catch (err) {
@@ -68,7 +71,7 @@ export default function AdminPropertiesPage() {
 
   useEffect(() => {
     fetchProperties()
-  }, [search, statusFilter])
+  }, [debouncedSearch, statusFilter])
 
   async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected') {
     setSubmittingAction(true)
@@ -79,15 +82,16 @@ export default function AdminPropertiesPage() {
         body: JSON.stringify({ status }),
       })
       if (res.ok) {
+        toast.success(`Property ${status === 'Approved' ? 'approved' : 'rejected'} successfully`)
         if (selectedProperty && selectedProperty._id === propertyId) {
           setSelectedProperty(prev => prev ? { ...prev, status } : null)
         }
         fetchProperties()
       } else {
-        alert('Failed to update property status.')
+        toast.error('Failed to update property status.')
       }
     } catch (err) {
-      alert('An error occurred.')
+      toast.error('An error occurred.')
     } finally {
       setSubmittingAction(false)
     }
@@ -101,13 +105,14 @@ export default function AdminPropertiesPage() {
         method: 'DELETE',
       })
       if (res.ok) {
+        toast.success('Property deleted successfully')
         setSelectedProperty(null)
         fetchProperties()
       } else {
-        alert('Failed to delete listing.')
+        toast.error('Failed to delete listing.')
       }
     } catch (err) {
-      alert('An error occurred.')
+      toast.error('An error occurred.')
     } finally {
       setSubmittingAction(false)
     }

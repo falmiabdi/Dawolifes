@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import {
-  User, Check, X, ShieldAlert, Phone, Mail, FileCheck, Search, Loader2,
-  Calendar, Eye, ChevronRight, XOctagon, Trash2, Ban, EyeOff
+  User, Check, X, Search, Loader2,
+  ChevronRight, Trash2, Ban
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDebounce } from '@/lib/hooks/use-debounce'
+import toast from 'react-hot-toast'
 
 interface Agent {
   id: string
@@ -18,7 +20,6 @@ interface Agent {
   status: string
   rejectionReason?: string
   createdAt: string
-  // onboarding fields
   fullName?: string
   gender?: string
   dateOfBirth?: string
@@ -51,10 +52,9 @@ export default function AdminAgentsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  // Selected agent for detail modal view
+  const debouncedSearch = useDebounce(search, 300)
+
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
-  
-  // Rejection reason form
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [submittingAction, setSubmittingAction] = useState(false)
@@ -62,7 +62,7 @@ export default function AdminAgentsPage() {
   async function fetchAgents() {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/agents?search=${search}&status=${statusFilter}`)
+      const res = await fetch(`/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`)
       const data = await res.json()
       setAgents(data.agents || [])
     } catch (err) {
@@ -74,7 +74,7 @@ export default function AdminAgentsPage() {
 
   useEffect(() => {
     fetchAgents()
-  }, [search, statusFilter])
+  }, [debouncedSearch, statusFilter])
 
   async function handleAction(action: 'approve' | 'reject' | 'suspend' | 'reactivate' | 'delete', agentId: string) {
     setSubmittingAction(true)
@@ -91,9 +91,9 @@ export default function AdminAgentsPage() {
       })
 
       if (res.ok) {
+        toast.success('Agent status updated successfully')
         setShowRejectForm(false)
         setRejectionReason('')
-        // Close agent detail or update it
         if (selectedAgent && selectedAgent.id === agentId) {
           const updatedStatus = action === 'approve' || action === 'reactivate' ? 'Approved' : action === 'reject' ? 'Rejected' : 'Suspended'
           setSelectedAgent(prev => prev ? { ...prev, status: updatedStatus, rejectionReason: body.rejectionReason || '' } : null)
@@ -101,10 +101,10 @@ export default function AdminAgentsPage() {
         fetchAgents()
       } else {
         const errData = await res.json()
-        alert(errData.message || 'Action failed.')
+        toast.error(errData.message || 'Action failed.')
       }
     } catch (err) {
-      alert('An error occurred.')
+      toast.error('An error occurred.')
     } finally {
       setSubmittingAction(false)
     }
@@ -317,10 +317,10 @@ export default function AdminAgentsPage() {
                   </div>
                 </div>
 
-                {/* Uploaded Documents Links */}
+                {/* Uploaded Documents with Image Previews */}
                 <div>
                   <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Uploaded Verification Files</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {[
                       { name: 'Fayda Front', file: selectedAgent.faydaFront },
                       { name: 'Fayda Back', file: selectedAgent.faydaBack },
@@ -329,19 +329,21 @@ export default function AdminAgentsPage() {
                       { name: 'Certificate', file: selectedAgent.educationCertificate },
                       { name: 'Business License', file: selectedAgent.businessLicenseFile },
                     ].map((doc, idx) => (
-                      <div key={idx} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 flex flex-col justify-between">
+                      <div key={idx} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
                         <span className="font-semibold text-slate-500 text-[10px]">{doc.name}</span>
                         {doc.file ? (
-                          <a
-                            href={doc.file}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-bold text-orange-600 hover:underline mt-1.5 inline-block text-[10px]"
-                          >
-                            View File →
+                          <a href={doc.file} target="_blank" rel="noreferrer" className="block mt-1.5 group">
+                            <img
+                              src={doc.file}
+                              alt={doc.name}
+                              className="w-full h-28 rounded-lg object-cover border border-slate-200 group-hover:border-orange-400 transition"
+                            />
+                            <span className="font-bold text-orange-600 hover:underline inline-block text-[10px] mt-1">Open full size</span>
                           </a>
                         ) : (
-                          <span className="text-slate-400 mt-1 inline-block text-[10px]">Not Provided</span>
+                          <div className="w-full h-28 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center mt-1.5">
+                            <span className="text-slate-400 text-[10px]">Not Provided</span>
+                          </div>
                         )}
                       </div>
                     ))}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export function UserDeleteButton({ id }: { id: string }) {
   const router = useRouter()
@@ -18,12 +19,13 @@ export function UserDeleteButton({ id }: { id: string }) {
         body: JSON.stringify({ action: 'delete', id }),
       })
       if (res.ok) {
+        toast.success('User account deleted successfully')
         router.refresh()
       } else {
-        alert('Failed to delete user account.')
+        toast.error('Failed to delete user account.')
       }
     } catch (err) {
-      alert('An error occurred.')
+      toast.error('An error occurred.')
     } finally {
       setLoading(false)
     }

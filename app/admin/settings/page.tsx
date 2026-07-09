@@ -1,19 +1,55 @@
 "use client"
 
 import { useState } from 'react'
-import { Lock, Bell, ShieldAlert, CheckCircle2 } from 'lucide-react'
+import { Lock, ShieldAlert, CheckCircle2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import toast from 'react-hot-toast'
+
+const passwordSchema = z
+  .object({
+    current: z.string().min(1, 'Current password is required'),
+    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    confirm: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirm, {
+    message: "Passwords don't match",
+    path: ['confirm'],
+  })
+
+type PasswordForm = z.infer<typeof passwordSchema>
 
 export default function AdminSettingsPage() {
   const [success, setSuccess] = useState(false)
-  const [password, setPassword] = useState({ current: '', new: '', confirm: '' })
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault()
-    setSuccess(true)
-    setTimeout(() => setSuccess(false), 3000)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<PasswordForm>({
+    resolver: zodResolver(passwordSchema),
+  })
+
+  async function onSubmit(data: PasswordForm) {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: data.current, newPassword: data.newPassword }),
+    })
+    if (res.ok) {
+      toast.success('Password updated successfully')
+      setSuccess(true)
+      reset()
+      setTimeout(() => setSuccess(false), 3000)
+    } else {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.message || 'Failed to update password')
+    }
   }
 
   return (
@@ -36,40 +72,40 @@ export default function AdminSettingsPage() {
           <Lock className="h-5 w-5" />
           <h2>Change Master Password</h2>
         </div>
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label>Current Master Password</Label>
             <Input
               type="password"
-              value={password.current}
-              onChange={(e) => setPassword(prev => ({ ...prev, current: e.target.value }))}
+              {...register('current')}
               placeholder="••••••••"
               className="rounded-xl"
             />
+            {errors.current && <p className="text-xs text-red-500">{errors.current.message}</p>}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>New Master Password</Label>
               <Input
                 type="password"
-                value={password.new}
-                onChange={(e) => setPassword(prev => ({ ...prev, new: e.target.value }))}
+                {...register('newPassword')}
                 placeholder="••••••••"
                 className="rounded-xl"
               />
+              {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Confirm Master Password</Label>
               <Input
                 type="password"
-                value={password.confirm}
-                onChange={(e) => setPassword(prev => ({ ...prev, confirm: e.target.value }))}
+                {...register('confirm')}
                 placeholder="••••••••"
                 className="rounded-xl"
               />
+              {errors.confirm && <p className="text-xs text-red-500">{errors.confirm.message}</p>}
             </div>
           </div>
-          <Button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
+          <Button type="submit" disabled={isSubmitting} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
             Update Security Credentials
           </Button>
         </form>

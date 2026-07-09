@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import {
-  CreditCard, Wallet, Landmark, CheckCircle2, DollarSign, TrendingUp,
-  Download, ArrowUpRight, ArrowDownLeft, ShieldCheck, QrCode
+  CreditCard, TrendingUp, Download, ShieldCheck
 } from 'lucide-react'
 import { StatsCard } from '@/components/admin/stats-card'
 

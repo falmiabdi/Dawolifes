@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import { ToastProvider } from '@/components/ui/toast-provider'
 import './globals.css'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plusJakarta.variable} bg-background`}>
       <body className="font-sans antialiased">
+        <ToastProvider />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

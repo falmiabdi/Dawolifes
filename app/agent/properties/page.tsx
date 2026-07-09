@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Building2, PlusCircle, Pencil, Trash2, ExternalLink, Calendar, Search, MapPin } from 'lucide-react'
+import { Building2, PlusCircle, ExternalLink, MapPin } from 'lucide-react'
 import { getServerSession } from '@/lib/auth-session'
 import { connectToDatabase } from '@/lib/db'
 import { PropertyModel } from '@/lib/models/property'

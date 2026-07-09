@@ -45,7 +45,10 @@ export default function AgentNotificationsPage() {
 
     function connect() {
       setWsStatus('connecting')
-      ws = new WebSocket('ws://localhost:8080')
+      const wsUrl = process.env.NODE_ENV === 'production'
+        ? `wss://${process.env.NEXT_PUBLIC_WS_DOMAIN}/notifications`
+        : 'ws://localhost:8080'
+      ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
         setWsStatus('connected')

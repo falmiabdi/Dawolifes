@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useCallback } from "react"
 import {
   LayoutDashboard,
   User,
@@ -47,6 +48,16 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname()
   const nav = role === "admin" ? adminNav : agentNav
 
+  const isActive = useCallback(
+    (path: string) => {
+      if (path === "/") return pathname === "/"
+      if (pathname === path) return true
+      if (pathname.startsWith(`${path}/`)) return true
+      return false
+    },
+    [pathname],
+  )
+
   const sidebarContent = (
     <aside className="flex h-full w-64 flex-col border-r border-slate-800 bg-slate-900 text-white">
       {/* Logo + close button (close only visible when drawer on mobile) */}
@@ -80,11 +91,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         {nav.map((item) => {
           const Icon = item.icon
-          const active =
-            pathname === item.href ||
-            (item.href !== "/agent" &&
-              item.href !== "/admin" &&
-              pathname.startsWith(item.href))
+          const active = isActive(item.href)
           return (
             <Link
               key={item.href}
@@ -106,13 +113,15 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
 
       {/* Footer */}
       <div className="border-t border-slate-800 p-4">
-        <Link
-          href="/api/auth/signout"
-          className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-red-900/30 hover:text-red-400"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </Link>
+        <form action="/api/auth/signout" method="POST">
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-red-900/30 hover:text-red-400"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   )

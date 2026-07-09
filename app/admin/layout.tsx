@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "@/lib/auth-session"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 
+const adminEmails = (process.env.ADMIN_EMAILS || "felmitesfaye@gmail.com").split(",").map((e) => e.trim().toLowerCase())
+
 export default async function AdminLayout({
   children,
 }: {
@@ -9,8 +11,13 @@ export default async function AdminLayout({
 }) {
   const session = await getServerSession()
 
-  // Hardcoded Admin role validation
-  if (!session?.user || session.user.email !== "felmitesfaye@gmail.com") {
+  const userEmail = session?.user?.email?.toLowerCase() || ""
+  const isAdmin =
+    session?.user?.role === "admin" ||
+    session?.user?.roles?.includes("admin") ||
+    adminEmails.includes(userEmail)
+
+  if (!session?.user || !isAdmin) {
     redirect("/login")
   }
 

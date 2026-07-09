@@ -1,14 +1,26 @@
 import { redirect } from "next/navigation"
-import { Users, User, Shield } from "lucide-react"
+import { User, Shield } from "lucide-react"
 import { getServerSession } from "@/lib/auth-session"
 import { connectToDatabase } from "@/lib/db"
 import { UserModel } from "@/lib/models/user"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { UserDeleteButton } from "./delete-button"
 
+const adminEmails = (process.env.ADMIN_EMAILS || "felmitesfaye@gmail.com").split(",").map((e) => e.trim().toLowerCase())
+
 export default async function AdminUsersPage() {
   const session = await getServerSession()
   if (!session?.user) {
+    redirect("/login")
+  }
+
+  const userEmail = session.user.email?.toLowerCase() || ""
+  const isAdmin =
+    session.user.role === "admin" ||
+    (session.user as any).roles?.includes("admin") ||
+    adminEmails.includes(userEmail)
+
+  if (!isAdmin) {
     redirect("/login")
   }
 
@@ -75,7 +87,7 @@ export default async function AdminUsersPage() {
                     {new Date(u.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                {u.email !== "felmitesfaye@gmail.com" ? (
+                {!adminEmails.includes(u.email?.toLowerCase() || "") ? (
                   <UserDeleteButton id={u._id.toString()} />
                 ) : (
                   <span className="text-[10px] font-semibold text-slate-400 uppercase">
@@ -133,7 +145,7 @@ export default async function AdminUsersPage() {
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-3.5 text-right">
-                    {u.email !== "felmitesfaye@gmail.com" ? (
+                    {!adminEmails.includes(u.email?.toLowerCase() || "") ? (
                       <UserDeleteButton id={u._id.toString()} />
                     ) : (
                       <span className="text-[10px] font-semibold text-slate-400 uppercase">

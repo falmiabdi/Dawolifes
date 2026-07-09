@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2,
-  Home as HomeIcon, MapPin, Phone, Plus, Send, Upload, X, Loader2, Info
+  Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info
 } from 'lucide-react'
 import { amenityOptions, formatPrice } from '@/lib/data'
 import { Button } from '@/components/ui/button'

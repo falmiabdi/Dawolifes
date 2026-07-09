@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Building2, PlusCircle, TrendingUp, Clock, CheckCircle2, AlertCircle, XCircle, PauseCircle, ArrowRight, BarChart3, MessageSquare, CreditCard } from 'lucide-react'
+import { Building2, PlusCircle, TrendingUp, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRight, BarChart3, CreditCard } from 'lucide-react'
 import { getServerSession } from '@/lib/auth-session'
+import { connectToDatabase } from '@/lib/db'
+import { PropertyModel } from '@/lib/models/property'
 import { StatusBadge } from '@/components/ui/status-badge'
 
 export default async function AgentDashboardPage() {
@@ -10,6 +12,12 @@ export default async function AgentDashboardPage() {
 
   const { user } = session
   const status = user.status || 'Pending'
+
+  await connectToDatabase()
+  const totalProperties = await PropertyModel.countDocuments({ agentId: user.id })
+  const pendingProperties = await PropertyModel.countDocuments({ agentId: user.id, status: 'Pending' })
+  const totalViews = 0
+  const commissionEarned = 0
 
   const statusConfig = {
     Pending: { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200', msg: 'Your application is under review. You will be notified once approved.' },
@@ -54,10 +62,10 @@ export default async function AgentDashboardPage() {
       {/* Stats grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Total Properties', value: '0', icon: Building2, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Pending Listings', value: '0', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: 'Total Views', value: '0', icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
-          { label: 'Commission Earned', value: 'ETB 0', icon: CreditCard, color: 'text-orange-500', bg: 'bg-orange-50' },
+          { label: 'Total Properties', value: String(totalProperties), icon: Building2, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Pending Listings', value: String(pendingProperties), icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
+          { label: 'Total Views', value: String(totalViews), icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
+          { label: 'Commission Earned', value: `ETB ${commissionEarned}`, icon: CreditCard, color: 'text-orange-500', bg: 'bg-orange-50' },
         ].map((stat) => {
           const Icon = stat.icon
           return (

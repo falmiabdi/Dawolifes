@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, ChevronRight, ChevronLeft, Upload, X, Loader2, User, Phone, Shield, GraduationCap, Briefcase, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import toast from 'react-hot-toast'
 
 const STEPS = [
   { id: 1, label: 'Personal', icon: User },
@@ -17,6 +18,94 @@ const STEPS = [
 ]
 
 interface FileState { url: string; preview: string }
+
+function FileUpload({ label, value, onChange, field, uploadFile }: {
+  label: string
+  value: FileState | null
+  onChange: (v: FileState | null) => void
+  field: string
+  uploadFile: (file: File, field: string) => Promise<string>
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const previewRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (previewRef.current) {
+        URL.revokeObjectURL(previewRef.current)
+      }
+    }
+  }, [])
+
+  async function handle(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 10MB')
+      return
+    }
+
+    const blobUrl = URL.createObjectURL(file)
+    previewRef.current = blobUrl
+    onChange({ url: '', preview: blobUrl })
+    setUploading(true)
+
+    try {
+      const url = await uploadFile(file, field)
+      URL.revokeObjectURL(blobUrl)
+      previewRef.current = null
+      onChange({ url, preview: url })
+    } catch (err: any) {
+      URL.revokeObjectURL(blobUrl)
+      previewRef.current = null
+      onChange(null)
+      toast.error(err.message || 'Failed to upload file')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function clear() {
+    if (previewRef.current) {
+      URL.revokeObjectURL(previewRef.current)
+      previewRef.current = null
+    }
+    onChange(null)
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div
+        onClick={() => ref.current?.click()}
+        className="relative flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-orange-400 hover:bg-orange-50"
+      >
+        {uploading && !value ? (
+          <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+        ) : value ? (
+          <>
+            <img src={value.preview} alt={label} className="max-h-[100px] rounded-xl object-cover" />
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); clear() }}
+              className="absolute top-2 right-2 rounded-full bg-red-500 p-1 text-white"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-slate-400">
+            <Upload className="h-6 w-6" />
+            <span className="text-xs">Click to upload</span>
+          </div>
+        )}
+        <input ref={ref} type="file" accept="image/*,.pdf" className="hidden" onChange={handle} />
+      </div>
+    </div>
+  )
+}
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -60,67 +149,31 @@ export default function OnboardingPage() {
 
   const [error, setError] = useState('')
 
-  async function uploadFile(file: File, field: string): Promise<string> {
+
+
+  const uploadFile = useCallback(async (file: File, field: string): Promise<string> => {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('field', field)
     const res = await fetch('/api/agent/upload', { method: 'POST', body: fd })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || 'Upload failed')
+    }
     const data = await res.json()
     return data.url || ''
-  }
-
-  function FileUpload({ label, value, onChange, field }: { label: string; value: FileState | null; onChange: (v: FileState | null) => void; field: string }) {
-    const ref = useRef<HTMLInputElement>(null)
-    const [uploading, setUploading] = useState(false)
-
-    async function handle(e: React.ChangeEvent<HTMLInputElement>) {
-      const file = e.target.files?.[0]
-      if (!file) return
-      setUploading(true)
-      const preview = URL.createObjectURL(file)
-      const url = await uploadFile(file, field)
-      onChange({ url, preview })
-      setUploading(false)
-    }
-
-    return (
-      <div className="space-y-2">
-        <Label>{label}</Label>
-        <div
-          onClick={() => ref.current?.click()}
-          className="relative flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-orange-400 hover:bg-orange-50"
-        >
-          {uploading ? (
-            <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
-          ) : value ? (
-            <>
-              <img src={value.preview} alt={label} className="max-h-[100px] rounded-xl object-cover" />
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onChange(null) }}
-                className="absolute top-2 right-2 rounded-full bg-red-500 p-1 text-white"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-400">
-              <Upload className="h-6 w-6" />
-              <span className="text-xs">Click to upload</span>
-            </div>
-          )}
-          <input ref={ref} type="file" accept="image/*,.pdf" className="hidden" onChange={handle} />
-        </div>
-      </div>
-    )
-  }
+  }, [])
 
   async function saveStep(data: Record<string, unknown>) {
-    await fetch('/api/agent/onboarding', {
+    const res = await fetch('/api/agent/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || 'Failed to save step')
+    }
   }
 
   async function next() {
@@ -148,10 +201,13 @@ export default function OnboardingPage() {
       } else if (step === 6) {
         if (!agreed.terms || !agreed.privacy) { setError('You must accept both the Terms & Conditions and Privacy Policy.'); setSaving(false); return }
         await saveStep({ onboardingComplete: true })
+        toast.success('Application submitted successfully!')
         router.push('/agent')
         return
       }
       setStep((s) => s + 1)
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred')
     } finally {
       setSaving(false)
     }
@@ -277,10 +333,10 @@ export default function OnboardingPage() {
               <h2 className="text-xl font-bold text-slate-800">Identity Verification</h2>
               <p className="text-sm text-slate-500">Upload clear photos of your identification documents. All fields are required.</p>
               <div className="grid gap-5 sm:grid-cols-2">
-                <FileUpload label="Fayda ID Front *" value={faydaFront} onChange={setFaydaFront} field="faydaFront" />
-                <FileUpload label="Fayda ID Back *" value={faydaBack} onChange={setFaydaBack} field="faydaBack" />
-                <FileUpload label="Selfie Holding Fayda ID *" value={selfie} onChange={setSelfie} field="selfie" />
-                <FileUpload label="Passport Size Photo *" value={passport} onChange={setPassport} field="passport" />
+                <FileUpload label="Fayda ID Front *" value={faydaFront} onChange={setFaydaFront} field="faydaFront" uploadFile={uploadFile} />
+                <FileUpload label="Fayda ID Back *" value={faydaBack} onChange={setFaydaBack} field="faydaBack" uploadFile={uploadFile} />
+                <FileUpload label="Selfie Holding Fayda ID *" value={selfie} onChange={setSelfie} field="selfie" uploadFile={uploadFile} />
+                <FileUpload label="Passport Size Photo *" value={passport} onChange={setPassport} field="passport" uploadFile={uploadFile} />
               </div>
             </div>
           )}
@@ -300,7 +356,7 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               </div>
-              <FileUpload label="Upload Certificate (Optional)" value={eduCert} onChange={setEduCert} field="eduCert" />
+              <FileUpload label="Upload Certificate (Optional)" value={eduCert} onChange={setEduCert} field="eduCert" uploadFile={uploadFile} />
             </div>
           )}
 
@@ -337,7 +393,7 @@ export default function OnboardingPage() {
                   <Label>Business License Number (Optional)</Label>
                   <Input value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} placeholder="License number" />
                 </div>
-                <FileUpload label="Business License Upload (Optional)" value={licenseFile} onChange={setLicenseFile} field="license" />
+                <FileUpload label="Business License Upload (Optional)" value={licenseFile} onChange={setLicenseFile} field="license" uploadFile={uploadFile} />
               </div>
             </div>
           )}

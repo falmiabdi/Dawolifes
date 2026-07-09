@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
+import { ErrorBoundary } from "@/components/ui/error-boundary"
 
 interface DashboardShellProps {
   role: "agent" | "admin"
@@ -41,7 +42,9 @@ export function DashboardShell({
           title={title}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
         />
-        <main className="flex-1 overflow-y-auto p-3 md:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-3 md:p-6">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
     </div>
   )

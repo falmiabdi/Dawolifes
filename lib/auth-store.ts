@@ -12,9 +12,39 @@ export interface AuthUser {
   email: string
   passwordHash: string
   role: UserRole
+  roles?: string[]
   status: AgentStatus
   rejectionReason?: string
+  isRootAdmin?: boolean
   createdAt?: string
+
+  // Onboarding fields
+  onboardingComplete?: boolean
+  fullName?: string
+  profilePhoto?: string
+  gender?: string
+  dateOfBirth?: string
+  nationality?: string
+  preferredLanguage?: string
+  ethPhone?: string
+  safaricomPhone?: string
+  region?: string
+  city?: string
+  woreda?: string
+  kebele?: string
+  fullAddress?: string
+  faydaFront?: string
+  faydaBack?: string
+  selfieFayda?: string
+  passportPhoto?: string
+  highestEducation?: string
+  educationCertificate?: string
+  agentExperience?: string
+  companyName?: string
+  officeAddress?: string
+  businessLicenseNumber?: string
+  businessLicenseFile?: string
+  tinNumber?: string
 }
 
 const memoryUsers: AuthUser[] = []
@@ -65,10 +95,40 @@ function toPlainUser(user: any): AuthUser {
     username: user.username,
     email: user.email,
     passwordHash: user.passwordHash,
-    role: user.role,
-    status: user.status,
+    role: user.role || 'agent',
+    roles: user.roles || [user.role || 'agent'],
+    status: user.status || 'Pending',
     rejectionReason: user.rejectionReason || '',
+    isRootAdmin: user.isRootAdmin || false,
     createdAt: user.createdAt?.toISOString?.() || new Date().toISOString(),
+
+    // Onboarding
+    onboardingComplete: user.onboardingComplete || false,
+    fullName: user.fullName || '',
+    profilePhoto: user.profilePhoto || '',
+    gender: user.gender || '',
+    dateOfBirth: user.dateOfBirth || '',
+    nationality: user.nationality || '',
+    preferredLanguage: user.preferredLanguage || '',
+    ethPhone: user.ethPhone || '',
+    safaricomPhone: user.safaricomPhone || '',
+    region: user.region || '',
+    city: user.city || '',
+    woreda: user.woreda || '',
+    kebele: user.kebele || '',
+    fullAddress: user.fullAddress || '',
+    faydaFront: user.faydaFront || '',
+    faydaBack: user.faydaBack || '',
+    selfieFayda: user.selfieFayda || '',
+    passportPhoto: user.passportPhoto || '',
+    highestEducation: user.highestEducation || '',
+    educationCertificate: user.educationCertificate || '',
+    agentExperience: user.agentExperience || '',
+    companyName: user.companyName || '',
+    officeAddress: user.officeAddress || '',
+    businessLicenseNumber: user.businessLicenseNumber || '',
+    businessLicenseFile: user.businessLicenseFile || '',
+    tinNumber: user.tinNumber || '',
   }
 }
 
@@ -88,7 +148,9 @@ async function ensureSeeded() {
         email: 'felmitesfaye@gmail.com',
         passwordHash: await hashPassword('SecurePass@12345'),
         role: 'admin',
+        roles: ['admin', 'superadmin'],
         status: 'Approved',
+        isRootAdmin: true,
       })
       console.log('Admin user successfully seeded into MongoDB!')
     }
@@ -104,7 +166,9 @@ async function ensureSeeded() {
     email: 'felmitesfaye@gmail.com',
     passwordHash: await hashPassword('SecurePass@12345'),
     role: 'admin',
+    roles: ['admin', 'superadmin'],
     status: 'Approved',
+    isRootAdmin: true,
   })
 }
 

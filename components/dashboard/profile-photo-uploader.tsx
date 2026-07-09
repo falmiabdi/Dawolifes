@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 interface ProfilePhotoUploaderProps {
   currentPhoto: string
@@ -18,8 +19,19 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
     const file = e.target.files?.[0]
     if (!file) return
 
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB')
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Only image files are allowed')
+      return
+    }
+
     try {
       setUploading(true)
+
       const formData = new FormData()
       formData.append('file', file)
 
@@ -49,9 +61,10 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       }
 
       setPhotoUrl(newUrl)
+      toast.success('Profile photo updated successfully')
       router.refresh()
     } catch (err: any) {
-      alert(err.message || 'Error uploading photo. Please try again.')
+      toast.error(err.message || 'Error uploading photo. Please try again.')
     } finally {
       setUploading(false)
     }

@@ -9,8 +9,10 @@ export interface SessionUser {
   name: string
   email: string
   role: string
+  roles?: string[]
   status: string
   rejectionReason?: string
+  isRootAdmin?: boolean
 }
 
 import { createSessionCookie } from '@/lib/session-cookie'
@@ -33,15 +35,16 @@ export async function getServerSession() {
       name: user.username,
       email: user.email,
       role: user.role,
+      roles: user.roles,
       status: user.status,
       rejectionReason: user.rejectionReason || '',
+      isRootAdmin: user.isRootAdmin,
     } as SessionUser,
   }
 }
 
-export async function getSessionFromRequest(req: NextRequest | Request) {
-  const cookieHeader = req.headers.get('cookie') || ''
-  const cookie = cookieHeader.split(';').map((entry) => entry.trim()).find((entry) => entry.startsWith('delaharme-session='))
-  const sessionValue = cookie?.split('=').slice(1).join('=')
+export async function getSessionFromRequest(_req?: NextRequest | Request) {
+  const cookieStore = await cookies()
+  const sessionValue = cookieStore.get('delaharme-session')?.value
   return await readSessionCookie(sessionValue)
 }
