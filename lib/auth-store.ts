@@ -1,4 +1,5 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto'
+import mongoose from 'mongoose'
 
 import { connectToDatabase } from '@/lib/db'
 import { UserModel } from '@/lib/models/user'
@@ -194,11 +195,14 @@ export async function getUserByEmail(email: string) {
 
 export async function getUserById(id: string) {
   await ensureSeeded()
-  const Model = await useDatabase()
-  if (Model) {
-    const user = await Model.findById(id).lean()
-    if (user) {
-      return toPlainUser(user)
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    const Model = await useDatabase()
+    if (Model) {
+      const user = await Model.findById(id).lean()
+      if (user) {
+        return toPlainUser(user)
+      }
     }
   }
 
@@ -287,10 +291,12 @@ export async function listAgents({ search = '', status = 'all' }: { search?: str
 }
 
 export async function updateAgentStatus(id: string, status: AgentStatus, rejectionReason?: string) {
-  const Model = await useDatabase()
-  if (Model) {
-    await Model.findByIdAndUpdate(id, { status, rejectionReason: rejectionReason || '' })
-    return true
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    const Model = await useDatabase()
+    if (Model) {
+      await Model.findByIdAndUpdate(id, { status, rejectionReason: rejectionReason || '' })
+      return true
+    }
   }
 
   const existing = memoryUsers.find((user) => user.id === id)
@@ -304,10 +310,12 @@ export async function updateAgentStatus(id: string, status: AgentStatus, rejecti
 }
 
 export async function deleteAgent(id: string) {
-  const Model = await useDatabase()
-  if (Model) {
-    await Model.findByIdAndDelete(id)
-    return true
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    const Model = await useDatabase()
+    if (Model) {
+      await Model.findByIdAndDelete(id)
+      return true
+    }
   }
 
   const index = memoryUsers.findIndex((user) => user.id === id)

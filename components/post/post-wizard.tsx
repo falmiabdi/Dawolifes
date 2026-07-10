@@ -15,7 +15,8 @@ import {
   Upload,
   Trash2,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from "lucide-react"
 import { amenityOptions, formatPrice } from "@/lib/data"
 import { Button } from "@/components/ui/button"
@@ -30,11 +31,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { MapPicker } from "@/components/maps/map-picker"
 
 const steps = [
   { label: "Basic Info", icon: HomeIcon },
   { label: "Location & Map", icon: MapPin },
   { label: "Photos & Media", icon: Upload },
+  { label: "Location Map", icon: MapPin },
   { label: "Contact", icon: Phone },
 ]
 
@@ -59,6 +62,9 @@ type FormState = {
   phone: string
   images: string[]
   videoUrl: string
+  latitude: number
+  longitude: number
+  locationDocument: string
 }
 
 const initialState: FormState = {
@@ -82,6 +88,9 @@ const initialState: FormState = {
   phone: "",
   images: [],
   videoUrl: "",
+  latitude: 0,
+  longitude: 0,
+  locationDocument: "",
 }
 
 export function PostWizard() {
@@ -116,6 +125,11 @@ export function PostWizard() {
     // Validation for photos
     if (step === 2 && form.images.length < 3) {
       setError("Please upload at least 3 photos of the property to continue.")
+      return
+    }
+    // Validation for location map
+    if (step === 3 && (form.latitude === 0 || form.longitude === 0)) {
+      setError("Please select the property location on the map to continue.")
       return
     }
     setError("")
@@ -162,9 +176,43 @@ export function PostWizard() {
     }
   }
 
+  const handleUploadDocument = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    setError("")
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const res = await fetch('/api/agent/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!res.ok) {
+        const errData = await res.json()
+        throw new Error(errData.message || 'Failed to upload document')
+      }
+      
+      const data = await res.json()
+      set("locationDocument", data.url)
+    } catch (err: any) {
+      setError(err.message || 'Error uploading document')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const handleSubmit = async () => {
     if (form.images.length < 3) {
       setError("At least 3 photos are required to list a property.")
+      return
+    }
+    if (form.latitude === 0 || form.longitude === 0) {
+      setError("Please select the property location on the map.")
       return
     }
 
@@ -193,7 +241,10 @@ export function PostWizard() {
           subCity: form.subCity,
           woreda: form.woreda,
           images: form.images,
-          videoUrl: form.videoUrl
+          videoUrl: form.videoUrl,
+          latitude: form.latitude,
+          longitude: form.longitude,
+          locationDocument: form.locationDocument,
         })
       })
 
@@ -510,6 +561,70 @@ export function PostWizard() {
 
           {step === 3 && (
             <div className="space-y-5">
+              <SectionTitle icon={<MapPin className="h-5 w-5" />} title="Property Location Map" />
+              <div className="flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                  Click on the map to select the exact location of the property. This helps buyers find your property easily.
+                </p>
+              </div>
+              
+              <MapPicker
+                latitude={form.latitude}
+                longitude={form.longitude}
+                onLocationChange={(lat, lng) => {
+                  set("latitude", lat)
+                  set("longitude", lng)
+                }}
+              />
+
+              <div className="space-y-2">
+                <Label className="font-semibold text-slate-800">
+                  Location Document (Optional)
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Upload a document showing property boundaries, land title, or location verification
+                </p>
+                <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 text-center transition hover:bg-slate-50 cursor-pointer">
+                  {uploadingImage ? (
+                    <>
+                      <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
+                      <span className="text-sm font-semibold text-slate-700">Uploading document...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-6 w-6 text-orange-500" />
+                      <span className="text-sm font-semibold text-slate-700">Click to upload document</span>
+                      <span className="text-xs text-slate-400">PDF, JPG, PNG (Max 10MB)</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={handleUploadDocument}
+                    disabled={uploadingImage}
+                  />
+                </label>
+                {form.locationDocument && (
+                  <div className="mt-2 flex items-center gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Document uploaded successfully</span>
+                    <button
+                      type="button"
+                      onClick={() => set("locationDocument", "")}
+                      className="ml-auto text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-5">
               <SectionTitle icon={<Phone className="h-5 w-5" />} title="Contact Information" />
               <Field label="Your Name" required>
                 <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Full Name" />
@@ -532,7 +647,7 @@ export function PostWizard() {
             {step < steps.length - 1 ? (
               <Button
                 onClick={next}
-                disabled={step === 2 && form.images.length < 3}
+                disabled={(step === 2 && form.images.length < 3) || (step === 3 && (form.latitude === 0 || form.longitude === 0))}
                 className="rounded-xl font-semibold"
               >
                 Next <ArrowRight className="h-4 w-4" />

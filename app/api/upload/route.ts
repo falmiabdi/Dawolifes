@@ -48,8 +48,10 @@ export async function POST(request: Request) {
     cloudinaryForm.append('timestamp', timestamp)
     cloudinaryForm.append('signature', signature)
 
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
-    console.log('[Upload API] Sending to Cloudinary:', cloudinaryUrl)
+    const isVideo = file.type.startsWith('video/')
+    const uploadType = isVideo ? 'video' : 'image'
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${uploadType}/upload`
+    console.log('[Upload API] Sending to Cloudinary:', cloudinaryUrl, '(type:', uploadType + ')')
 
     const cloudinaryResponse = await fetch(cloudinaryUrl, {
       method: 'POST',

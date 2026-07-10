@@ -81,6 +81,9 @@ export async function POST(request: Request) {
       features: body.features || [],
       images: body.images || [],
       videoUrl: body.videoUrl || '',
+      latitude: Number(body.latitude) || 0,
+      longitude: Number(body.longitude) || 0,
+      locationDocument: body.locationDocument || '',
       agentId: session.userId,
       status: 'Pending', // All new property listings default to Pending review
     })

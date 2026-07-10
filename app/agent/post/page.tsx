@@ -4,19 +4,21 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2,
-  Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info
+  Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info, FileText
 } from 'lucide-react'
 import { amenityOptions, formatPrice } from '@/lib/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { MapPicker } from '@/components/maps/map-picker'
 
 const steps = [
   { id: 1, label: 'Basic Info', icon: HomeIcon },
   { id: 2, label: 'Location Details', icon: MapPin },
   { id: 3, label: 'Media Upload', icon: Upload },
-  { id: 4, label: 'Review & Submit', icon: CheckCircle2 },
+  { id: 4, label: 'Location Map', icon: MapPin },
+  { id: 5, label: 'Review & Submit', icon: CheckCircle2 },
 ]
 
 export default function AgentPostPage() {
@@ -55,6 +57,11 @@ export default function AgentPostPage() {
   
   // Video
   const [videoUrl, setVideoUrl] = useState('')
+  
+  // Map
+  const [latitude, setLatitude] = useState(0)
+  const [longitude, setLongitude] = useState(0)
+  const [locationDocument, setLocationDocument] = useState('')
   
   const [customFeature, setCustomFeature] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -111,6 +118,34 @@ export default function AgentPostPage() {
     setUploadedImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  async function handleDocumentUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/agent/upload', {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to upload document')
+      }
+      if (data.url) {
+        setLocationDocument(data.url)
+      }
+    } catch (err: any) {
+      console.error('[Document Upload Error]', err)
+      setError(err.message || 'Failed to upload document. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   async function handleSubmit() {
     setError('')
     setSaving(true)
@@ -125,6 +160,7 @@ export default function AgentPostPage() {
           woreda, kebele, parcel, block, homeNo,
           images: uploadedImages, type: propertyType,
           videoUrl: videoUrl || '',
+          latitude, longitude, locationDocument,
         }),
       })
 
@@ -151,6 +187,8 @@ export default function AgentPostPage() {
       if (!city.trim()) { setError('City is required.'); return }
     } else if (step === 3) {
       if (uploadedImages.length === 0) { setError('Please upload at least one image.'); return }
+    } else if (step === 4) {
+      if (latitude === 0 || longitude === 0) { setError('Please select the property location on the map.'); return }
     }
     setStep((s) => s + 1)
   }
@@ -401,8 +439,75 @@ export default function AgentPostPage() {
             </div>
           )}
 
-          {/* STEP 4: Review */}
+          {/* STEP 4: Location Map */}
           {step === 4 && (
+            <div className="space-y-5">
+              <div className="flex items-center gap-2 text-orange-600 font-bold">
+                <MapPin className="h-5 w-5" />
+                <h2>Property Location Map</h2>
+              </div>
+              <div className="flex items-start gap-2 rounded-xl bg-orange-50 p-3 text-sm text-orange-700">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                  Click on the map to select the exact location of the property. This helps buyers find your property easily.
+                </p>
+              </div>
+              
+              <MapPicker
+                latitude={latitude}
+                longitude={longitude}
+                onLocationChange={(lat, lng) => {
+                  setLatitude(lat)
+                  setLongitude(lng)
+                }}
+              />
+
+              <div className="space-y-2">
+                <Label className="font-semibold text-slate-800">
+                  Location Document (Optional)
+                </Label>
+                <p className="text-xs text-slate-500">
+                  Upload a document showing property boundaries, land title, or location verification
+                </p>
+                <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 py-8 text-center transition hover:border-orange-500 hover:bg-orange-50/50 cursor-pointer">
+                  {uploadingImage ? (
+                    <div className="flex flex-col items-center gap-2 text-orange-500">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-xs">Uploading document...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <FileText className="h-6 w-6 text-slate-400" />
+                      <span className="text-sm font-semibold">Click to upload document</span>
+                      <span className="text-xs">PDF, JPG, PNG (Max 10MB)</span>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleDocumentUpload}
+                    className="hidden"
+                  />
+                </label>
+                {locationDocument && (
+                  <div className="mt-2 flex items-center gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+                    <Check className="h-4 w-4" />
+                    <span>Document uploaded successfully</span>
+                    <button
+                      type="button"
+                      onClick={() => setLocationDocument('')}
+                      className="ml-auto text-red-500 hover:text-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: Review */}
+          {step === 5 && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <CheckCircle2 className="h-5 w-5" />

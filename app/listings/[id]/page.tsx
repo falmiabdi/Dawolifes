@@ -17,6 +17,7 @@ import {
   Building2,
   MapPinned,
   Hash,
+  FileText,
 } from "lucide-react"
 import { getProperty, formatPrice, properties } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
@@ -65,6 +66,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
           features: dbProp.features || [],
           images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder-property.jpg"],
           videoUrl: dbProp.videoUrl || '',
+          locationDocument: dbProp.locationDocument || '',
           agent: {
             id: dbProp.agentId?._id?.toString() || 'unknown',
             name: dbProp.agentId?.fullName || dbProp.agentId?.username || 'Unknown Agent',
@@ -107,22 +109,35 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   ]
   const similar = properties.filter((p) => p.id !== property.id).slice(0, 3)
 
-  // Helper to parse YouTube embedded URL
   function getYouTubeEmbedUrl(url: string) {
     if (!url) return ''
     try {
-      if (url.includes('youtube.com/watch')) {
-        const urlObj = new URL(url)
-        return `https://www.youtube.com/embed/${urlObj.searchParams.get('v')}`
+      const urlObj = new URL(url)
+      const host = urlObj.hostname.replace('www.', '')
+
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        if (urlObj.pathname.startsWith('/embed/')) {
+          const id = urlObj.pathname.split('/embed/')[1]?.split('?')[0]
+          return id ? `https://www.youtube.com/embed/${id}` : ''
+        }
+        if (urlObj.pathname.startsWith('/shorts/')) {
+          const id = urlObj.pathname.split('/shorts/')[1]?.split('?')[0]
+          return id ? `https://www.youtube.com/embed/${id}` : ''
+        }
+        const v = urlObj.searchParams.get('v')
+        if (v) return `https://www.youtube.com/embed/${v}`
       }
-      if (url.includes('youtu.be/')) {
-        const id = url.split('/').pop()?.split('?')[0]
-        return `https://www.youtube.com/embed/${id}`
+
+      if (host === 'youtu.be') {
+        const id = urlObj.pathname.slice(1).split('?')[0]
+        return id ? `https://www.youtube.com/embed/${id}` : ''
       }
-      if (url.includes('vimeo.com/')) {
-        const id = url.split('/').pop()?.split('?')[0]
-        return `https://player.vimeo.com/video/${id}`
+
+      if (host === 'vimeo.com') {
+        const id = urlObj.pathname.slice(1).split('?')[0]
+        return id ? `https://player.vimeo.com/video/${id}` : ''
       }
+
       return url
     } catch {
       return url
@@ -211,6 +226,28 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                       className="absolute inset-0 w-full h-full border-0"
                     />
                   </div>
+                </section>
+              )}
+
+              {property.locationDocument && (
+                <section className="mt-8">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground mb-3">
+                    <FileText className="h-5 w-5 text-primary" /> Location Document
+                  </h2>
+                  <a
+                    href={property.locationDocument}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-accent/5"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <FileText className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">View Property Document</p>
+                      <p className="text-xs text-muted-foreground">Boundaries, title, or location verification (PDF/IMAGE)</p>
+                    </div>
+                  </a>
                 </section>
               )}
 

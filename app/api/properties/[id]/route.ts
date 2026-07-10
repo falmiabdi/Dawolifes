@@ -45,7 +45,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         'title', 'type', 'listingType', 'price', 'priceType', 'region', 'city',
         'subCity', 'woreda', 'kebele', 'parcel', 'block', 'homeNo', 'area',
         'bedrooms', 'bathrooms', 'condition', 'legalizedYear', 'description', 'videoUrl',
-        'features', 'images'
+        'features', 'images', 'latitude', 'longitude', 'locationDocument'
       ]
 
       for (const field of allowedFields) {
