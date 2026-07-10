@@ -60,6 +60,15 @@ export default function LoginPage() {
     <AuthShell
       title="Welcome back to DelaHarme"
       subtitle="Sign in to access your agent workspace or the administrator console."
+      backgroundUrl="https://res.cloudinary.com/y7q39zm5/image/upload/v1783685710/delaharme/backgrounds/wevko9a3x8ulqwtnfcnx.jpg"
+      footer={
+        <p className="text-center text-sm text-slate-500">
+          New to DelaHarme?{' '}
+          <Link href="/register" className="font-semibold text-orange-600 hover:text-orange-700">
+            Create an agent account
+          </Link>
+        </p>
+      }
     >
       <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-2">
@@ -105,13 +114,6 @@ export default function LoginPage() {
         <p className="font-semibold text-slate-800">Demo credentials</p>
         <p className="mt-1">Admin: felmitesfaye@gmail.com / SecurePass@12345</p>
       </div>
-
-      <p className="mt-6 text-center text-sm text-slate-500">
-        New to DelaHarme?{' '}
-        <Link href="/register" className="font-semibold text-orange-600 hover:text-orange-700">
-          Create an agent account
-        </Link>
-      </p>
     </AuthShell>
   )
 }

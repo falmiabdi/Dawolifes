@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import Link from 'next/link'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
@@ -68,6 +69,15 @@ export default function RegisterPage() {
     <AuthShell
       title="Create your agent account"
       subtitle="Sign up with your email and password. You'll complete your full profile in the next step."
+      backgroundUrl="https://res.cloudinary.com/y7q39zm5/image/upload/v1783685711/delaharme/backgrounds/sfyowxhy5uhx5q6m8rdg.jpg"
+      footer={
+        <p className="text-center text-sm text-slate-500">
+          Already have an account?{' '}
+          <Link href="/login" className="font-semibold text-orange-600 hover:text-orange-700">
+            Sign in
+          </Link>
+        </p>
+      }
     >
       <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-2">

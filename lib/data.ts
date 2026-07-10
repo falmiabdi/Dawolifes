@@ -19,10 +19,11 @@ export type Property = {
   bedrooms: number
   bathrooms: number
   condition: string
-  yearBuilt: number
+  legalizedYear: number
   description: string
   features: string[]
   images: string[]
+  videoUrl?: string
   featured?: boolean
   agent: Agent
 }
@@ -33,6 +34,11 @@ export type Agent = {
   role: string
   phone: string
   avatar: string
+  email?: string
+  secondaryPhone?: string
+  companyName?: string
+  officeAddress?: string
+  licenseNumber?: string
 }
 
 export const agent: Agent = {
@@ -105,7 +111,7 @@ export const properties: Property[] = [
     bedrooms: 3,
     bathrooms: 2,
     condition: "Finished",
-    yearBuilt: 2012,
+    legalizedYear: 2012,
     description: "manni kun hojjetamee xumurameera",
     features: ["Parking", "Compound", "Water Tank"],
     images: ["/properties/villa-1.png", "/properties/interior-4.png", "/properties/house-2.png"],
@@ -131,7 +137,7 @@ export const properties: Property[] = [
     bedrooms: 4,
     bathrooms: 3,
     condition: "Finished",
-    yearBuilt: 2019,
+    legalizedYear: 2019,
     description: "Spacious family home with a large compound in a quiet neighborhood.",
     features: ["Parking", "Garden", "Security", "Generator", "CCTV"],
     images: ["/properties/house-2.png", "/properties/interior-4.png", "/properties/villa-5.png"],
@@ -157,7 +163,7 @@ export const properties: Property[] = [
     bedrooms: 2,
     bathrooms: 2,
     condition: "Finished",
-    yearBuilt: 2021,
+    legalizedYear: 2021,
     description: "Bright, fully furnished apartment near Bole with elevator and covered parking.",
     features: ["Elevator", "Parking", "Balcony", "Furnished", "Security"],
     images: ["/properties/apartment-3.png", "/properties/interior-4.png"],
@@ -182,7 +188,7 @@ export const properties: Property[] = [
     bedrooms: 6,
     bathrooms: 5,
     condition: "Finished",
-    yearBuilt: 2022,
+    legalizedYear: 2022,
     description: "Premium villa with swimming pool, landscaped garden and smart-home features.",
     features: ["Swimming Pool", "Garden", "Parking", "Solar Power", "Security", "Generator"],
     images: ["/properties/villa-5.png", "/properties/villa-1.png", "/properties/interior-4.png"],
@@ -208,7 +214,7 @@ export const properties: Property[] = [
     bedrooms: 0,
     bathrooms: 2,
     condition: "Finished",
-    yearBuilt: 2018,
+    legalizedYear: 2018,
     description: "Street-facing commercial unit ideal for retail, offices or a showroom.",
     features: ["Parking", "Generator", "Air Conditioning"],
     images: ["/properties/commercial-6.png", "/properties/interior-4.png"],
@@ -233,7 +239,7 @@ export const properties: Property[] = [
     bedrooms: 4,
     bathrooms: 3,
     condition: "Finished",
-    yearBuilt: 2016,
+    legalizedYear: 2016,
     description: "Well-maintained home with a green compound close to schools and hospitals.",
     features: ["Parking", "Garden", "Borehole", "Compound"],
     images: ["/properties/house-2.png", "/properties/villa-1.png"],

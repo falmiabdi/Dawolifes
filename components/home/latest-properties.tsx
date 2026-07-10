@@ -37,7 +37,7 @@ export async function LatestProperties() {
       bedrooms: p.bedrooms || 0,
       bathrooms: p.bathrooms || 0,
       condition: p.condition || 'Finished',
-      yearBuilt: p.yearBuilt || 2024,
+      legalizedYear: p.legalizedYear || 2024,
       description: p.description || '',
       features: p.features || [],
       images: p.images && p.images.length > 0 ? p.images : ["/placeholder-property.jpg"],

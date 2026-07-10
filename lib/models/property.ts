@@ -19,7 +19,7 @@ const propertySchema = new Schema(
     bedrooms: { type: Number, default: 0 },
     bathrooms: { type: Number, default: 0 },
     condition: { type: String, default: 'Finished' },
-    yearBuilt: { type: Number, default: new Date().getFullYear() },
+    legalizedYear: { type: Number, default: new Date().getFullYear() },
     description: { type: String, default: '' },
     features: { type: [String], default: [] },
     images: { type: [String], default: [] },

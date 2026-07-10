@@ -48,7 +48,7 @@ type FormState = {
   bedrooms: string
   bathrooms: string
   condition: string
-  yearBuilt: string
+  legalizedYear: string
   description: string
   features: string[]
   region: string
@@ -71,7 +71,7 @@ const initialState: FormState = {
   bedrooms: "",
   bathrooms: "",
   condition: "Finished",
-  yearBuilt: "",
+  legalizedYear: "",
   description: "",
   features: [],
   region: "",
@@ -185,7 +185,7 @@ export function PostWizard() {
           bedrooms: form.bedrooms,
           bathrooms: form.bathrooms,
           condition: form.condition,
-          yearBuilt: form.yearBuilt,
+          legalizedYear: form.legalizedYear,
           description: form.description,
           features: form.features,
           region: form.region,
@@ -350,10 +350,10 @@ export function PostWizard() {
                     options={["Finished", "Semi-finished", "Under Construction"]}
                   />
                 </Field>
-                <Field label="Year Built">
+                <Field label="Legalized Year">
                   <Input
-                    value={form.yearBuilt}
-                    onChange={(e) => set("yearBuilt", e.target.value)}
+                    value={form.legalizedYear}
+                    onChange={(e) => set("legalizedYear", e.target.value)}
                     placeholder="2023"
                   />
                 </Field>

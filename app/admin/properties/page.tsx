@@ -30,7 +30,7 @@ interface Property {
   bedrooms: number
   bathrooms: number
   condition: string
-  yearBuilt: number
+  legalizedYear: number
   description: string
   features: string[]
   images: string[]

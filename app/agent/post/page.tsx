@@ -35,7 +35,7 @@ export default function AgentPostPage() {
   const [bedrooms, setBedrooms] = useState('')
   const [bathrooms, setBathrooms] = useState('')
   const [condition, setCondition] = useState('Finished')
-  const [yearBuilt, setYearBuilt] = useState(String(new Date().getFullYear()))
+  const [legalizedYear, setLegalizedYear] = useState(String(new Date().getFullYear()))
   const [description, setDescription] = useState('')
   const [features, setFeatures] = useState<string[]>([])
   
@@ -52,6 +52,9 @@ export default function AgentPostPage() {
   // Images
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
+  
+  // Video
+  const [videoUrl, setVideoUrl] = useState('')
   
   const [customFeature, setCustomFeature] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -117,10 +120,11 @@ export default function AgentPostPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title, propertyType, listingType, price, priceType,
-          area, bedrooms, bathrooms, condition, yearBuilt,
+          area, bedrooms, bathrooms, condition, legalizedYear,
           description, features, region, city, subCity,
           woreda, kebele, parcel, block, homeNo,
-          images: uploadedImages, type: propertyType
+          images: uploadedImages, type: propertyType,
+          videoUrl: videoUrl || '',
         }),
       })
 
@@ -252,8 +256,8 @@ export default function AgentPostPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Year Built</Label>
-                  <Input type="number" value={yearBuilt} onChange={(e) => setYearBuilt(e.target.value)} />
+                  <Label>Legalized Year</Label>
+                  <Input type="number" value={legalizedYear} onChange={(e) => setLegalizedYear(e.target.value)} />
                 </div>
               </div>
               <div className="space-y-2">
@@ -384,6 +388,16 @@ export default function AgentPostPage() {
                   ))}
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label>YouTube Video URL <span className="text-slate-400 font-normal">(optional)</span></Label>
+                <Input
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="e.g. https://www.youtube.com/watch?v=..."
+                />
+                <p className="text-xs text-slate-400">Paste a YouTube or Vimeo link to add a video tour of the property.</p>
+              </div>
             </div>
           )}
 

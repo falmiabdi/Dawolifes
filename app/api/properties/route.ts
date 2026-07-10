@@ -76,10 +76,11 @@ export async function POST(request: Request) {
       bedrooms: Number(body.bedrooms) || 0,
       bathrooms: Number(body.bathrooms) || 0,
       condition: body.condition || 'Finished',
-      yearBuilt: Number(body.yearBuilt) || new Date().getFullYear(),
+      legalizedYear: Number(body.legalizedYear) || new Date().getFullYear(),
       description: body.description || '',
       features: body.features || [],
       images: body.images || [],
+      videoUrl: body.videoUrl || '',
       agentId: session.userId,
       status: 'Pending', // All new property listings default to Pending review
     })

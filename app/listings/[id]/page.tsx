@@ -13,6 +13,10 @@ import {
   Share2,
   CalendarDays,
   Video,
+  Mail,
+  Building2,
+  MapPinned,
+  Hash,
 } from "lucide-react"
 import { getProperty, formatPrice, properties } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
@@ -56,7 +60,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
           bedrooms: dbProp.bedrooms || 0,
           bathrooms: dbProp.bathrooms || 0,
           condition: dbProp.condition || 'Finished',
-          yearBuilt: dbProp.yearBuilt || 2024,
+          legalizedYear: dbProp.legalizedYear || 2024,
           description: dbProp.description || '',
           features: dbProp.features || [],
           images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder-property.jpg"],
@@ -67,6 +71,11 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             role: dbProp.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
             phone: dbProp.agentId?.ethPhone || dbProp.agentId?.safaricomPhone || '+251 900 000 000',
             avatar: dbProp.agentId?.profilePhoto || '/placeholder-user.jpg',
+            email: dbProp.agentId?.email || '',
+            secondaryPhone: dbProp.agentId?.safaricomPhone || '',
+            companyName: dbProp.agentId?.companyName || '',
+            officeAddress: dbProp.agentId?.officeAddress || '',
+            licenseNumber: dbProp.agentId?.businessLicenseNumber || '',
           }
         }
       }
@@ -90,8 +99,11 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     ["Sub-city", property.subCity],
     ["Woreda", property.woreda],
     ["Kebele", property.kebele],
+    ["Parcel", property.parcel],
+    ["Block", property.block],
+    ["Home No", property.homeNo],
     ["Condition", property.condition],
-    ["Year Built", String(property.yearBuilt)],
+    ["Legalized Year", String(property.legalizedYear)],
   ]
   const similar = properties.filter((p) => p.id !== property.id).slice(0, 3)
 
@@ -229,9 +241,38 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                     <p className="text-xs text-muted-foreground">{property.agent.role}</p>
                   </div>
                 </div>
-                <p className="mt-4 flex items-center gap-2 text-sm text-foreground">
-                  <Phone className="h-4 w-4 text-primary" /> {property.agent.phone}
-                </p>
+
+                <div className="mt-4 space-y-3 text-sm">
+                  <p className="flex items-center gap-2 text-foreground">
+                    <Phone className="h-4 w-4 text-primary shrink-0" /> {property.agent.phone}
+                  </p>
+                  {property.agent.secondaryPhone && (
+                    <p className="flex items-center gap-2 text-foreground">
+                      <Phone className="h-4 w-4 text-primary shrink-0" /> {property.agent.secondaryPhone}
+                    </p>
+                  )}
+                  {property.agent.email && (
+                    <p className="flex items-center gap-2 text-foreground">
+                      <Mail className="h-4 w-4 text-primary shrink-0" /> {property.agent.email}
+                    </p>
+                  )}
+                  {property.agent.companyName && (
+                    <p className="flex items-center gap-2 text-foreground">
+                      <Building2 className="h-4 w-4 text-primary shrink-0" /> {property.agent.companyName}
+                    </p>
+                  )}
+                  {property.agent.officeAddress && (
+                    <p className="flex items-center gap-2 text-foreground">
+                      <MapPinned className="h-4 w-4 text-primary shrink-0" /> {property.agent.officeAddress}
+                    </p>
+                  )}
+                  {property.agent.licenseNumber && (
+                    <p className="flex items-center gap-2 text-foreground">
+                      <Hash className="h-4 w-4 text-primary shrink-0" /> License: {property.agent.licenseNumber}
+                    </p>
+                  )}
+                </div>
+
                 <a
                   href={`tel:${property.agent.phone}`}
                   className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold min-h-[44px]" })}
