@@ -11,6 +11,7 @@ interface DashboardShellProps {
   email: string
   status?: string
   title: string
+  profilePhoto?: string | null
   children: React.ReactNode
 }
 
@@ -20,6 +21,7 @@ export function DashboardShell({
   email,
   status,
   title,
+  profilePhoto,
   children,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -40,6 +42,7 @@ export function DashboardShell({
           email={email}
           status={status}
           title={title}
+          profilePhoto={profilePhoto}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
         />
         <main className="flex-1 overflow-y-auto p-3 md:p-6">

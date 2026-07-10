@@ -29,7 +29,10 @@ export async function GET(request: Request) {
       .populate('agentId', 'username email fullName ethPhone status')
       .lean()
 
-    return NextResponse.json({ properties })
+    // Exclude properties from suspended agents
+    const filtered = properties.filter((p: any) => p.agentId && p.agentId.status !== 'Suspended')
+
+    return NextResponse.json({ properties: filtered })
   } catch (error: any) {
     return NextResponse.json({ message: error.message || 'Server error' }, { status: 500 })
   }

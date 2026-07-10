@@ -25,6 +25,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { Gallery } from "@/components/listing/gallery"
 import { PropertyCard } from "@/components/property-card"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { MessageAgent } from "@/components/listing/message-agent"
 import { connectToDatabase } from "@/lib/db"
 import { PropertyModel } from "@/lib/models/property"
 import "@/lib/models/user"
@@ -42,42 +43,47 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
       await connectToDatabase()
       const dbProp = await PropertyModel.findById(id).populate('agentId').lean()
       if (dbProp) {
-        property = {
-          id: dbProp._id.toString(),
-          title: dbProp.title,
-          type: dbProp.type,
-          listingType: dbProp.listingType,
-          price: dbProp.price,
-          priceType: dbProp.priceType,
-          region: dbProp.region,
-          city: dbProp.city,
-          subCity: dbProp.subCity || '',
-          woreda: dbProp.woreda || '',
-          kebele: dbProp.kebele || '',
-          parcel: dbProp.parcel || '',
-          block: dbProp.block || '',
-          homeNo: dbProp.homeNo || '',
-          area: dbProp.area || 0,
-          bedrooms: dbProp.bedrooms || 0,
-          bathrooms: dbProp.bathrooms || 0,
-          condition: dbProp.condition || 'Finished',
-          legalizedYear: dbProp.legalizedYear || 2024,
-          description: dbProp.description || '',
-          features: dbProp.features || [],
-          images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder-property.jpg"],
-          videoUrl: dbProp.videoUrl || '',
-          locationDocument: dbProp.locationDocument || '',
-          agent: {
-            id: dbProp.agentId?._id?.toString() || 'unknown',
-            name: dbProp.agentId?.fullName || dbProp.agentId?.username || 'Unknown Agent',
-            role: dbProp.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
-            phone: dbProp.agentId?.ethPhone || dbProp.agentId?.safaricomPhone || '+251 900 000 000',
-            avatar: dbProp.agentId?.profilePhoto || '/placeholder-user.jpg',
-            email: dbProp.agentId?.email || '',
-            secondaryPhone: dbProp.agentId?.safaricomPhone || '',
-            companyName: dbProp.agentId?.companyName || '',
-            officeAddress: dbProp.agentId?.officeAddress || '',
-            licenseNumber: dbProp.agentId?.businessLicenseNumber || '',
+        // Hide properties from suspended agents
+        if (dbProp.agentId && (dbProp.agentId as any).status === 'Suspended') {
+          property = null
+        } else {
+          property = {
+            id: dbProp._id.toString(),
+            title: dbProp.title,
+            type: dbProp.type,
+            listingType: dbProp.listingType,
+            price: dbProp.price,
+            priceType: dbProp.priceType,
+            region: dbProp.region,
+            city: dbProp.city,
+            subCity: dbProp.subCity || '',
+            woreda: dbProp.woreda || '',
+            kebele: dbProp.kebele || '',
+            parcel: dbProp.parcel || '',
+            block: dbProp.block || '',
+            homeNo: dbProp.homeNo || '',
+            area: dbProp.area || 0,
+            bedrooms: dbProp.bedrooms || 0,
+            bathrooms: dbProp.bathrooms || 0,
+            condition: dbProp.condition || 'Finished',
+            legalizedYear: dbProp.legalizedYear || 2024,
+            description: dbProp.description || '',
+            features: dbProp.features || [],
+            images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder-property.jpg"],
+            videoUrl: dbProp.videoUrl || '',
+            locationDocument: dbProp.locationDocument || '',
+            agent: {
+              id: dbProp.agentId?._id?.toString() || 'unknown',
+              name: dbProp.agentId?.fullName || dbProp.agentId?.username || 'Unknown Agent',
+              role: dbProp.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
+              phone: dbProp.agentId?.ethPhone || dbProp.agentId?.safaricomPhone || '+251 900 000 000',
+              avatar: dbProp.agentId?.profilePhoto || '/placeholder-user.jpg',
+              email: dbProp.agentId?.email || '',
+              secondaryPhone: dbProp.agentId?.safaricomPhone || '',
+              companyName: dbProp.agentId?.companyName || '',
+              officeAddress: dbProp.agentId?.officeAddress || '',
+              licenseNumber: dbProp.agentId?.businessLicenseNumber || '',
+            }
           }
         }
       }
@@ -316,7 +322,13 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                 >
                   <Phone className="h-4 w-4" /> Call Now
                 </a>
-                <p className="mt-2 text-center text-xs text-muted-foreground">Communication by phone only</p>
+                <MessageAgent
+                  propertyId={property.id}
+                  agentId={property.agent.id}
+                  agentName={property.agent.name}
+                  propertyTitle={property.title}
+                />
+                <p className="mt-2 text-center text-xs text-muted-foreground">Call or message the agent directly</p>
               </div>
 
               <div className="rounded-2xl border border-border bg-card p-5">

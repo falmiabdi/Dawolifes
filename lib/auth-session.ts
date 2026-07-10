@@ -13,6 +13,7 @@ export interface SessionUser {
   status: string
   rejectionReason?: string
   isRootAdmin?: boolean
+  profilePhoto?: string | null
 }
 
 import { createSessionCookie } from '@/lib/session-cookie'
@@ -39,6 +40,7 @@ export async function getServerSession() {
       status: user.status,
       rejectionReason: user.rejectionReason || '',
       isRootAdmin: user.isRootAdmin,
+      profilePhoto: user.profilePhoto || null,
     } as SessionUser,
   }
 }

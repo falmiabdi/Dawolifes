@@ -27,6 +27,7 @@ export default async function AdminLayout({
       name={session.user.name || "Admin"}
       email={session.user.email}
       title="Enterprise Admin Portal"
+      profilePhoto={session.user.profilePhoto}
     >
       {children}
     </DashboardShell>

@@ -1,24 +1,23 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { properties as mockProperties } from "@/lib/data"
 import { PropertyCard } from "@/components/property-card"
 import { connectToDatabase } from "@/lib/db"
 import { PropertyModel } from "@/lib/models/property"
-import "@/lib/models/user" // Pre-register User model for populate query to work
+import "@/lib/models/user"
 
 export async function LatestProperties() {
   let dbPropertiesTransformed: any[] = []
   
   try {
     await connectToDatabase()
-    // Fetch approved properties from database
-    const dbProperties = await PropertyModel.find({ status: { $in: ['Approved', 'Pending'] } }) // Show pending/approved for preview purposes or approved
+    const dbProperties = await PropertyModel.find({ status: 'Approved' })
       .populate('agentId')
       .sort({ createdAt: -1 })
-      .limit(6)
       .lean()
 
-    dbPropertiesTransformed = dbProperties.map((p: any) => ({
+    dbPropertiesTransformed = dbProperties
+      .filter((p: any) => p.agentId && p.agentId.status !== 'Suspended')
+      .map((p: any) => ({
       id: p._id.toString(),
       title: p.title,
       type: p.type,
@@ -46,15 +45,12 @@ export async function LatestProperties() {
         name: p.agentId?.fullName || p.agentId?.username || 'Unknown Agent',
         role: p.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
         phone: p.agentId?.ethPhone || p.agentId?.safaricomPhone || '+251 900 000 000',
-        avatar: p.agentId?.profilePhoto || '/placeholder-user.jpg', // Dynamic Cloudinary Agent photo!
+        avatar: p.agentId?.profilePhoto || '/placeholder-user.jpg',
       }
     }))
   } catch (err) {
     console.error('[LatestProperties DB Load Error]', err)
   }
-
-  // Combine database properties with mock properties (DB ones first)
-  const combinedProperties = [...dbPropertiesTransformed, ...mockProperties].slice(0, 9)
 
   return (
     <section id="listings" className="bg-muted/40 py-14">
@@ -64,19 +60,20 @@ export async function LatestProperties() {
             <h2 className="text-xl font-bold text-foreground md:text-2xl">Latest Properties</h2>
             <p className="mt-1 text-sm text-muted-foreground">Newly listed homes and lands across Ethiopia</p>
           </div>
-          <Link
-            href="#listings"
-            className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-          >
-            View All <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {combinedProperties.map((property) => (
+          {dbPropertiesTransformed.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
         </div>
+
+        {dbPropertiesTransformed.length === 0 && (
+          <div className="mt-12 text-center text-muted-foreground">
+            <p className="text-lg font-semibold">No properties listed yet</p>
+            <p className="mt-1 text-sm">Check back soon for new listings.</p>
+          </div>
+        )}
       </div>
     </section>
   )

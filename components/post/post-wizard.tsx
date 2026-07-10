@@ -565,7 +565,7 @@ export function PostWizard() {
               <div className="flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Click on the map to select the exact location of the property. This helps buyers find your property easily.
+                  Click on the map to select the exact location, or enter the coordinates manually below.
                 </p>
               </div>
               
@@ -577,6 +577,27 @@ export function PostWizard() {
                   set("longitude", lng)
                 }}
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Latitude">
+                  <Input
+                    type="number"
+                    step="any"
+                    value={form.latitude || ''}
+                    onChange={(e) => set("latitude", parseFloat(e.target.value) || 0)}
+                    placeholder="e.g. 9.0375"
+                  />
+                </Field>
+                <Field label="Longitude">
+                  <Input
+                    type="number"
+                    step="any"
+                    value={form.longitude || ''}
+                    onChange={(e) => set("longitude", parseFloat(e.target.value) || 0)}
+                    placeholder="e.g. 38.7612"
+                  />
+                </Field>
+              </div>
 
               <div className="space-y-2">
                 <Label className="font-semibold text-slate-800">

@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Globe, Menu, Plus, X } from "lucide-react"
+import { Globe, Menu, Plus, X, User } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { buttonVariants } from "@/components/ui/button"
+import Image from "next/image"
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -16,6 +17,18 @@ const navLinks = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
+  const [session, setSession] = useState<any>(null)
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then(r => r.json())
+      .then(data => setSession(data?.session || null))
+      .catch(() => {})
+  }, [])
+
+  const user = session?.user
+  const isAuth = !!user
+  const photoUrl = user?.profilePhoto || null
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -25,13 +38,26 @@ export function SiteHeader() {
           <span className="flex items-center gap-1">
             <Globe className="h-3.5 w-3.5" /> English
           </span>
-          <Link href="/login" className="hover:text-primary">
-            Login
-          </Link>
-          <span className="text-secondary-foreground/30">|</span>
-          <Link href="/register" className="hover:text-primary">
-            Register
-          </Link>
+          {isAuth ? (
+            <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"} className="flex items-center gap-2 hover:opacity-80 transition">
+              {photoUrl ? (
+                <div className="h-6 w-6 rounded-full overflow-hidden bg-primary/10 ring-2 ring-primary/30">
+                  <Image src={photoUrl} alt={user.name || "Profile"} width={24} height={24} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] ring-2 ring-primary/30">
+                  {(user.name || user.email || "?").charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="font-semibold">{user.name || user.email}</span>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="hover:text-primary">Login</Link>
+              <span className="text-secondary-foreground/30">|</span>
+              <Link href="/register" className="hover:text-primary">Register</Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -53,6 +79,20 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {isAuth && (
+              <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"} className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition text-sm font-medium text-primary">
+                {photoUrl ? (
+                  <div className="h-7 w-7 rounded-full overflow-hidden bg-primary/10">
+                    <Image src={photoUrl} alt={user.name || "Profile"} width={28} height={28} className="h-full w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center font-bold text-xs">
+                    {(user.name || user.email || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="line-clamp-1">{user.name || user.email}</span>
+              </Link>
+            )}
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-foreground lg:hidden"
               onClick={() => setOpen((o) => !o)}
@@ -76,22 +116,42 @@ export function SiteHeader() {
                   {link.label}
                 </Link>
               ))}
-              {/* Login / Register — only visible on mobile (top bar is hidden) */}
               <div className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
-                <Link
-                  href="/login"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-sm font-semibold text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center"
-                >
-                  Register
-                </Link>
+                {isAuth ? (
+                  <Link
+                    href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"}
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center gap-2"
+                  >
+                    {photoUrl ? (
+                      <div className="h-6 w-6 rounded-full overflow-hidden bg-primary/10">
+                        <Image src={photoUrl} alt={user.name || "Profile"} width={24} height={24} className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px]">
+                        {(user.name || user.email || "?").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg px-3 py-3 text-sm font-semibold text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={() => setOpen(false)}
+                      className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center"
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </nav>

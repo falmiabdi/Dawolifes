@@ -19,6 +19,7 @@ export default async function AgentLayout({
       email={session.user.email}
       status={session.user.status}
       title="Agent Portal"
+      profilePhoto={session.user.profilePhoto}
     >
       {children}
     </DashboardShell>

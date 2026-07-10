@@ -462,6 +462,29 @@ export default function AgentPostPage() {
                 }}
               />
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Latitude</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={latitude || ''}
+                    onChange={(e) => setLatitude(parseFloat(e.target.value) || 0)}
+                    placeholder="e.g. 9.0375"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Longitude</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={longitude || ''}
+                    onChange={(e) => setLongitude(parseFloat(e.target.value) || 0)}
+                    placeholder="e.g. 38.7612"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label className="font-semibold text-slate-800">
                   Location Document (Optional)

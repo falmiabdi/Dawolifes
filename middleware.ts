@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { readSessionCookie } from '@/lib/session-cookie'
 
-const publicRoutes = ['/', '/login', '/register']
+const publicRoutes = ['/', '/login', '/register', '/listings']
 const onboardingRoute = '/agent/onboarding'
 const agentOnlyRoutes = ['/post']
 
@@ -43,7 +43,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (publicRoutes.some((route) => route === pathname)) {
+  if (publicRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
     return NextResponse.next()
   }
 

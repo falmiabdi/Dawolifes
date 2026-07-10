@@ -1,11 +1,13 @@
 import { Bell, Menu } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
+import Image from "next/image"
 
 interface DashboardHeaderProps {
   name: string
   email: string
   status?: string
   title: string
+  profilePhoto?: string | null
   onToggleSidebar?: () => void
 }
 
@@ -14,6 +16,7 @@ export function DashboardHeader({
   email,
   status,
   title,
+  profilePhoto,
   onToggleSidebar,
 }: DashboardHeaderProps) {
   return (
@@ -40,9 +43,21 @@ export function DashboardHeader({
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-orange-500" />
         </button>
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
-            {name.charAt(0).toUpperCase()}
-          </div>
+          {profilePhoto ? (
+            <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-orange-100 ring-2 ring-orange-200">
+              <Image
+                src={profilePhoto}
+                alt={name || "Profile"}
+                width={36}
+                height={36}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
+              {name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="hidden sm:block">
             <p className="text-sm font-semibold text-slate-800 leading-tight">{name}</p>
             {status && <StatusBadge status={status} />}
