@@ -26,6 +26,7 @@ import { Gallery } from "@/components/listing/gallery"
 import { PropertyCard } from "@/components/property-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
+import { PayServiceCharge } from "@/components/listing/pay-service-charge"
 import { connectToDatabase } from "@/lib/db"
 import { PropertyModel } from "@/lib/models/property"
 import "@/lib/models/user"
@@ -351,6 +352,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   <CalendarDays className="h-4 w-4" /> Visit
                 </Button>
               </div>
+
+              <PayServiceCharge propertyId={property.id} propertyTitle={property.title} />
             </aside>
           </div>
 

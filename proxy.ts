@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { readSessionCookie } from '@/lib/session-cookie'
 
-const publicRoutes = ['/', '/login', '/register', '/listings']
+const publicRoutes = ['/', '/login', '/register', '/listings', '/pay']
 const onboardingRoute = '/agent/onboarding'
 const agentOnlyRoutes = ['/post']
 

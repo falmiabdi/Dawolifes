@@ -57,27 +57,41 @@ export async function Hero() {
   const marqueeItems = [...recentProperties, ...recentProperties, ...recentProperties]
 
   return (
-    <section className="relative min-h-[600px] overflow-hidden bg-secondary sm:min-h-[700px]">
-      <div className="relative mx-auto grid max-w-7xl lg:grid-cols-2">
+    <section className="relative min-h-[360px] overflow-hidden bg-secondary sm:min-h-[480px] lg:min-h-[700px]">
+      {/* Video: full background on mobile, right-half on desktop */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        poster="/properties/hero-bg.png"
+        className="absolute inset-0 h-full w-full object-cover lg:left-1/2 lg:w-1/2"
+      >
+        <source src="https://res.cloudinary.com/y7q39zm5/video/upload/v1783767160/sytelecity_background_uu31gf.mp4" type="video/mp4" />
+      </video>
+      {/* Mobile: dark overlay over full video | Desktop: left side gets solid bg, right gets subtle gradient */}
+      <div className="absolute inset-0 bg-secondary/80 lg:w-1/2 lg:bg-secondary lg:shadow-[8px_0_30px_rgba(0,0,0,0.3)]" />
+
+      <div className="relative z-10 mx-auto grid max-w-7xl lg:grid-cols-2">
         {/* ===== LEFT: Content + Scrolling Houses ===== */}
-        <div className="relative z-10 flex flex-col justify-center px-4 pb-8 pt-12 sm:px-8 sm:pb-12 sm:pt-20">
-          <h1 className="text-balance text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
+        <div className="relative z-10 flex flex-col justify-center px-4 pb-6 pt-8 sm:px-8 sm:pb-8 sm:pt-14 lg:pb-12 lg:pt-20">
+          <h1 className="text-balance text-2xl font-extrabold leading-tight text-white sm:text-3xl md:text-4xl lg:text-6xl">
             Find Homes for Sale &amp; Rent{" "}
             <span className="text-primary">in Ethiopia</span>
           </h1>
-          <p className="mt-4 max-w-xl text-pretty text-sm leading-relaxed text-white/70 sm:text-base">
+          <p className="mt-2 max-w-xl text-pretty text-xs leading-relaxed text-white/70 sm:mt-3 sm:text-sm lg:mt-4 lg:text-base">
             Discover the best homes, luxury apartments, and commercial properties in Oromia,
             Addis Ababa, Shaggar and beyond.
           </p>
 
-          <form className="mt-6 max-w-lg rounded-2xl bg-card p-3 shadow-xl">
-            <div className="flex flex-col gap-2">
+          <form className="mt-4 max-w-lg rounded-2xl bg-card p-2 shadow-xl sm:mt-5 sm:p-3 lg:mt-6">
+            <div className="flex flex-col gap-1.5 sm:gap-2">
               <div className="flex items-center gap-2 rounded-xl bg-muted px-3">
                 <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="City, Woreda, Location"
-                  className="w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                  className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground sm:py-3"
                 />
               </div>
               <div className="flex items-center gap-2 rounded-xl bg-muted px-3">
@@ -85,7 +99,7 @@ export async function Hero() {
                 <input
                   type="text"
                   placeholder="Region"
-                  className="w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                  className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground sm:py-3"
                 />
               </div>
               <div className="flex items-center gap-2 rounded-xl bg-muted px-3">
@@ -93,26 +107,26 @@ export async function Hero() {
                 <input
                   type="text"
                   placeholder="Property Type"
-                  className="w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                  className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground sm:py-3"
                 />
               </div>
             </div>
-            <Button type="submit" className="mt-2 h-12 w-full rounded-xl text-base font-semibold">
+            <Button type="submit" className="mt-2 h-10 w-full rounded-xl text-sm font-semibold sm:h-12 sm:text-base">
               <Search className="h-5 w-5" /> Search Properties
             </Button>
           </form>
 
           {/* Scrolling houses from DB */}
-          <div className="mt-8">
-            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-white/50">
+          <div className="mt-5 sm:mt-6 lg:mt-8">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-widest text-white/50 sm:mb-3 sm:text-xs">
               Recently Posted
             </p>
             <div className="marquee-track overflow-hidden">
-              <div className="marquee-content flex gap-3">
+              <div className="marquee-content flex gap-2 sm:gap-3">
                 {marqueeItems.map((property, i) => (
                   <div
                     key={`${property.id}-${i}`}
-                    className="group relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-xl shadow-lg sm:w-44"
+                    className="group relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl shadow-lg sm:w-36 md:w-40 lg:w-44"
                   >
                     <Image
                       src={property.images[0]}
@@ -120,10 +134,10 @@ export async function Hero() {
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-secondary/95 to-transparent p-2 pt-7">
-                      <p className="truncate text-xs font-semibold text-white">{property.title}</p>
-                      <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-white/60">
-                        <Clock className="h-3 w-3" />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-secondary/95 to-transparent p-1.5 pt-6 sm:p-2 sm:pt-7">
+                      <p className="truncate text-[10px] font-semibold text-white sm:text-xs">{property.title}</p>
+                      <span className="mt-0.5 inline-flex items-center gap-1 text-[9px] text-white/60 sm:text-[10px]">
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {timeAgo(property.createdAt)}
                       </span>
                     </div>
@@ -134,20 +148,8 @@ export async function Hero() {
           </div>
         </div>
 
-        {/* ===== RIGHT: Video Panel ===== */}
-        <div className="relative flex min-h-[400px] items-center justify-center sm:min-h-[600px]">
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="/properties/hero-bg.png"
-            className="absolute inset-0 h-full w-full object-cover"
-          >
-            <source src="/properties/sytelecity background.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/60 to-transparent lg:bg-gradient-to-r lg:from-secondary lg:via-secondary/40 lg:to-transparent" />
-
+        {/* ===== RIGHT: 360° Badge (lg+ only, over video) ===== */}
+        <div className="relative hidden items-center justify-center lg:flex">
           <div className="relative z-10 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 text-center backdrop-blur-md">
             <p className="text-3xl font-bold text-white">360°</p>
             <p className="text-xs font-medium uppercase tracking-widest text-white/70">

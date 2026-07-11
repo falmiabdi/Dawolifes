@@ -2,12 +2,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   Users, Building2, CreditCard, ShieldAlert, Clock, CheckCircle2,
-  TrendingUp, ArrowRight, UserCheck, HelpCircle
+  TrendingUp, ArrowRight, UserCheck, HelpCircle, Banknote, AlertCircle
 } from 'lucide-react'
 import { getServerSession } from '@/lib/auth-session'
 import { connectToDatabase } from '@/lib/db'
 import { UserModel } from '@/lib/models/user'
 import { PropertyModel } from '@/lib/models/property'
+import { PaymentModel } from '@/lib/models/payment'
 import { StatsCard } from '@/components/admin/stats-card'
 import { OverviewChart } from '@/components/admin/overview-chart'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -20,29 +21,45 @@ export default async function AdminDashboardPage() {
 
   await connectToDatabase()
 
-  // Query actual counts from MongoDB
   const totalAgents = await UserModel.countDocuments({ role: 'agent' })
   const pendingAgents = await UserModel.countDocuments({ role: 'agent', status: 'Pending' })
   
   const totalProperties = await PropertyModel.countDocuments()
   const pendingProperties = await PropertyModel.countDocuments({ status: 'Pending' })
 
-  // Fetch recent registrations
+  const paymentStats = await PaymentModel.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, '$amount', 0] } },
+        completedCount: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
+        pendingCount: { $sum: { $cond: [{ $eq: ['$status', 'Pending'] }, 1, 0] } },
+        failedCount: { $sum: { $cond: [{ $eq: ['$status', 'Failed'] }, 1, 0] } },
+        totalCount: { $sum: 1 },
+      },
+    },
+  ])
+
+  const ps = paymentStats[0] || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 }
+
   const recentAgents = await UserModel.find({ role: 'agent' })
     .sort({ createdAt: -1 })
     .limit(5)
     .lean()
 
-  // Fetch recent listings
   const recentListings = await PropertyModel.find()
     .sort({ createdAt: -1 })
     .limit(5)
     .populate('agentId', 'username email fullName')
     .lean()
 
+  const recentPayments = await PaymentModel.find()
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .lean()
+
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Top Banner — mobile: compact padding/font, desktop: full */}
       <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-5 text-white md:p-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-orange-400 md:text-sm">Enterprise Admin Portal</p>
@@ -89,9 +106,44 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {/* Analytics Chart & Activity Panel — stacks on mobile, side-by-side on lg+ */}
+      {/* Payment Stats Grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          label="Total Revenue"
+          value={`ETB ${ps.totalRevenue.toLocaleString()}`}
+          description="From completed payments"
+          icon={TrendingUp}
+          colorClass="text-green-500"
+          bgClass="bg-green-50"
+        />
+        <StatsCard
+          label="Completed Payments"
+          value={ps.completedCount}
+          description="Successfully processed"
+          icon={CheckCircle2}
+          colorClass="text-green-500"
+          bgClass="bg-green-50"
+        />
+        <StatsCard
+          label="Pending Payments"
+          value={ps.pendingCount}
+          description="Awaiting confirmation"
+          icon={Clock}
+          colorClass="text-yellow-500"
+          bgClass="bg-yellow-50"
+        />
+        <StatsCard
+          label="Failed Payments"
+          value={ps.failedCount}
+          description="Requires attention"
+          icon={AlertCircle}
+          colorClass="text-red-500"
+          bgClass="bg-red-50"
+        />
+      </div>
+
+      {/* Analytics Chart & Activity Panel */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_350px]">
-        {/* Chart */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -106,7 +158,6 @@ export default async function AdminDashboardPage() {
           <OverviewChart />
         </div>
 
-        {/* Action Panel / Review queues */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
           <h2 className="font-bold text-slate-900">Task Center</h2>
           
@@ -136,13 +187,25 @@ export default async function AdminDashboardPage() {
               </div>
               <ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:text-orange-500" />
             </Link>
+
+            <Link href="/admin/payments" className="group flex items-center justify-between p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                  <Banknote className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-800">Payment Dashboard</p>
+                  <p className="text-[10px] text-slate-400">ETB {ps.totalRevenue.toLocaleString()} collected</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:text-orange-500" />
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Recents Lists — stacks on mobile, 2 cols on md+ */}
+      {/* Recent Lists */}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-        {/* Recent Agents */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-slate-900">Recent Registrations</h3>
@@ -170,27 +233,36 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Recent Listings */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-slate-900">Recent Listings Submitted</h3>
-            <Link href="/admin/properties" className="text-xs font-bold text-orange-500 hover:underline">View All</Link>
+            <h3 className="font-bold text-slate-900">Recent Payments</h3>
+            <Link href="/admin/payments" className="text-xs font-bold text-orange-500 hover:underline">View All</Link>
           </div>
-          {recentListings.length === 0 ? (
-            <p className="text-xs text-slate-400 py-6 text-center">No properties submitted yet.</p>
+          {recentPayments.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">No payments recorded yet.</p>
           ) : (
             <div className="divide-y divide-slate-100">
-              {recentListings.map((p: any) => (
+              {recentPayments.map((p: any) => (
                 <div key={p._id.toString()} className="py-3 flex items-center justify-between gap-3 text-xs">
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-slate-900 truncate">{p.title}</p>
-                    <p className="text-slate-400 truncate mt-0.5">By: {p.agentId?.fullName || p.agentId?.username || 'Unknown'}</p>
-                  </div>
-                  <div className="shrink-0 text-right font-medium">
-                    <span className="font-bold text-slate-900">{p.price.toLocaleString()} ETB</span>
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      <StatusBadge status={p.status} />
+                    <p className="text-slate-400 truncate mt-0.5">
+                      {p.method} · {p.paymentType.replace('_', ' ')}
                     </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                        p.status === 'Completed'
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : p.status === 'Pending'
+                          ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                          : 'bg-red-50 text-red-700 border-red-200'
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                    <p className="font-bold text-green-600 mt-1">+ETB {p.amount.toLocaleString()}</p>
                   </div>
                 </div>
               ))}
