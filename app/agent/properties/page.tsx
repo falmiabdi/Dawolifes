@@ -57,7 +57,7 @@ export default async function AgentPropertiesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((p: any) => {
-            const firstImage = p.images?.[0] || '/placeholder-property.jpg'
+            const firstImage = p.images?.[0] || '/placeholder.jpg'
             return (
               <div key={p._id.toString()} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">

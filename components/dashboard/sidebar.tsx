@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   LayoutDashboard,
   User,
@@ -47,6 +47,27 @@ interface SidebarProps {
 export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname()
   const nav = role === "admin" ? adminNav : agentNav
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    fetch("/api/notifications?count=true")
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.count === "number") setUnreadCount(data.count)
+      })
+      .catch(() => {})
+
+    const interval = setInterval(() => {
+      fetch("/api/notifications?count=true")
+        .then((r) => r.json())
+        .then((data) => {
+          if (typeof data.count === "number") setUnreadCount(data.count)
+        })
+        .catch(() => {})
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const isActive = useCallback(
     (path: string) => {
@@ -92,6 +113,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
         {nav.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
+          const showBadge = item.href === "/agent/notifications" && unreadCount > 0
           return (
             <Link
               key={item.href}
@@ -105,7 +127,12 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {showBadge && (
+                <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px]">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </Link>
           )
         })}

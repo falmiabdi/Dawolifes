@@ -69,7 +69,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             legalizedYear: dbProp.legalizedYear || 2024,
             description: dbProp.description || '',
             features: dbProp.features || [],
-            images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder-property.jpg"],
+            images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder.jpg"],
             videoUrl: dbProp.videoUrl || '',
             locationDocument: dbProp.locationDocument || '',
             agent: {

@@ -39,7 +39,7 @@ export async function LatestProperties() {
       legalizedYear: p.legalizedYear || 2024,
       description: p.description || '',
       features: p.features || [],
-      images: p.images && p.images.length > 0 ? p.images : ["/placeholder-property.jpg"],
+      images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
       agent: {
         id: p.agentId?._id?.toString() || 'unknown',
         name: p.agentId?.fullName || p.agentId?.username || 'Unknown Agent',
