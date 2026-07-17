@@ -55,7 +55,7 @@ export const categories = [
   { key: "land", label: "Land", icon: "Trees" },
   { key: "commercial", label: "Commercial", icon: "Store" },
   { key: "villas", label: "Villas", icon: "Hotel" },
-  { key: "condos", label: "Condos", icon: "Building" },
+
 ] as const
 
 export const services = [

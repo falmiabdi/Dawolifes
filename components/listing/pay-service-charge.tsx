@@ -28,7 +28,7 @@ export function PayServiceCharge({ propertyId, propertyTitle }: PayServiceCharge
         <span>Pay Service Charge (ETB 500)</span>
       </div>
       <p className="text-xs text-orange-700">
-        A one-time service fee to access premium listing features via Telebirr.
+        A one-time service fee to access premium listing features via TeleBirr or Chapa.
       </p>
       <Button
         onClick={handlePay}

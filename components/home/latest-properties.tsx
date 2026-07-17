@@ -10,7 +10,7 @@ export async function LatestProperties() {
   
   try {
     await connectToDatabase()
-    const dbProperties = await PropertyModel.find({ status: 'Approved' })
+    const dbProperties = await PropertyModel.find({ status: { $in: ['Approved', 'Pending'] } })
       .populate('agentId')
       .sort({ createdAt: -1 })
       .lean()

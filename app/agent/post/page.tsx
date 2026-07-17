@@ -250,7 +250,7 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>Property Type *</Label>
                   <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    {['House', 'Apartment', 'Land', 'Commercial', 'Villa', 'Condo'].map(o => <option key={o}>{o}</option>)}
+                    {['House', 'Apartment', 'Land', 'Commercial', 'Villa'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">

@@ -10,6 +10,8 @@ import { SiteFooter } from "@/components/site-footer"
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const merchOrderId = searchParams.get("merch_order_id") || ""
+  const txRef = searchParams.get("trx_ref") || searchParams.get("tx_ref") || ""
+  const orderId = merchOrderId || txRef
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -32,10 +34,10 @@ function PaymentSuccessContent() {
             </div>
             <h1 className="text-2xl font-bold text-green-900">Payment Received</h1>
             <p className="text-sm text-green-700">
-              TeleBirr has received your payment. We will verify and confirm your order shortly.
+              Your payment has been received. We will verify and confirm your order shortly.
             </p>
-            {merchOrderId && (
-              <p className="text-xs text-green-600 font-mono">Order ID: {merchOrderId}</p>
+            {orderId && (
+              <p className="text-xs text-green-600 font-mono">Order ID: {orderId}</p>
             )}
             <Link
               href="/"

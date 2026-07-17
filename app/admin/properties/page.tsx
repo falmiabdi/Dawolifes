@@ -43,6 +43,7 @@ interface Property {
     status: string
   }
   status: string
+  rejectionReason?: string
   createdAt: string
 }
 
@@ -53,6 +54,7 @@ export default function AdminPropertiesPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
   const [submittingAction, setSubmittingAction] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
 
   const debouncedSearch = useDebounce(search, 300)
 
@@ -73,22 +75,24 @@ export default function AdminPropertiesPage() {
     fetchProperties()
   }, [debouncedSearch, statusFilter])
 
-  async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected') {
+  async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected', reason?: string) {
     setSubmittingAction(true)
     try {
       const res = await fetch(`/api/properties/${propertyId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, rejectionReason: reason }),
       })
       if (res.ok) {
         toast.success(`Property ${status === 'Approved' ? 'approved' : 'rejected'} successfully`)
         if (selectedProperty && selectedProperty._id === propertyId) {
-          setSelectedProperty(prev => prev ? { ...prev, status } : null)
+          setSelectedProperty(prev => prev ? { ...prev, status, rejectionReason: status === 'Rejected' ? reason : '' } : null)
         }
+        setRejectionReason('')
         fetchProperties()
       } else {
-        toast.error('Failed to update property status.')
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.message || 'Failed to update property status.')
       }
     } catch (err) {
       toast.error('An error occurred.')
@@ -219,24 +223,49 @@ export default function AdminPropertiesPage() {
                 </p>
               </div>
 
+              {/* Rejection Reason Display */}
+              {selectedProperty.status === 'Rejected' && selectedProperty.rejectionReason && (
+                <div className="rounded-xl bg-red-50 border border-red-200 p-3">
+                  <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-1">Rejection Reason</p>
+                  <p className="text-xs text-red-600">{selectedProperty.rejectionReason}</p>
+                </div>
+              )}
+
               {/* Action Buttons */}
-              <div className="flex gap-2 border-t border-b border-slate-100 py-3">
-                {selectedProperty.status === 'Pending' && (
+              <div className="space-y-3 border-t border-b border-slate-100 py-3">
+                {(selectedProperty.status === 'Pending' || selectedProperty.status === 'Rejected' || selectedProperty.status === 'Approved') && (
                   <>
-                    <Button
-                      onClick={() => handleStatusChange(selectedProperty._id, 'Approved')}
-                      disabled={submittingAction}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5"
-                    >
-                      <Check className="h-3.5 w-3.5 mr-1" /> Approve Posting
-                    </Button>
-                    <Button
-                      onClick={() => handleStatusChange(selectedProperty._id, 'Rejected')}
-                      disabled={submittingAction}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5"
-                    >
-                      <X className="h-3.5 w-3.5 mr-1" /> Reject
-                    </Button>
+                    <div className="flex gap-2">
+                      {selectedProperty.status !== 'Approved' && (
+                        <Button
+                          onClick={() => handleStatusChange(selectedProperty._id, 'Approved')}
+                          disabled={submittingAction}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5"
+                        >
+                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => {
+                          if (rejectionReason.trim()) {
+                            handleStatusChange(selectedProperty._id, 'Rejected', rejectionReason.trim())
+                          } else {
+                            toast.error('Please provide a reason for rejection')
+                          }
+                        }}
+                        disabled={submittingAction}
+                        className={`${selectedProperty.status === 'Approved' ? 'flex-1' : 'flex-1'} bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5`}
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" /> Reject
+                      </Button>
+                    </div>
+                    <textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Reason for rejection (required if rejecting)..."
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                      rows={2}
+                    />
                   </>
                 )}
                 <Button

@@ -354,7 +354,7 @@ export function PostWizard() {
                   <SelectBox
                     value={form.propertyType}
                     onChange={(v) => set("propertyType", v)}
-                    options={["House", "Apartment", "Land", "Commercial", "Villa", "Condo"]}
+                    options={["House", "Apartment", "Land", "Commercial", "Villa"]}
                   />
                 </Field>
                 <Field label="Listing Type" required>

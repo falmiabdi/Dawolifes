@@ -3,7 +3,7 @@ import mongoose, { Schema, model, models } from 'mongoose'
 const propertySchema = new Schema(
   {
     title: { type: String, required: true },
-    type: { type: String, enum: ['House', 'Apartment', 'Land', 'Commercial', 'Villa', 'Condo'], required: true },
+    type: { type: String, enum: ['House', 'Apartment', 'Land', 'Commercial', 'Villa'], required: true },
     listingType: { type: String, enum: ['For Rent', 'For Sale'], required: true },
     price: { type: Number, required: true },
     priceType: { type: String, default: 'Fixed Price' },
@@ -29,6 +29,7 @@ const propertySchema = new Schema(
     locationDocument: { type: String, default: '' },
     agentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
+    rejectionReason: { type: String, default: '' },
   },
   {
     timestamps: true,

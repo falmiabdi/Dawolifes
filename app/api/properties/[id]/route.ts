@@ -30,6 +30,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (user.role === 'admin') {
       if (body.status && ['Pending', 'Approved', 'Rejected'].includes(body.status)) {
         property.status = body.status
+        if (body.status === 'Rejected') {
+          property.rejectionReason = body.rejectionReason || ''
+        } else {
+          property.rejectionReason = ''
+        }
       }
     } else {
       // If user is Agent, they can only edit if it is their property and they are approved
@@ -60,6 +65,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await property.save()
     return NextResponse.json({ property, ok: true })
   } catch (error: any) {
+    console.error('PATCH /api/properties error:', error)
     return NextResponse.json({ message: error.message || 'Server error' }, { status: 500 })
   }
 }

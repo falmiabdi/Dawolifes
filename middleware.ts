@@ -7,7 +7,7 @@ const publicRoutes = ['/', '/login', '/register', '/listings', '/pay']
 const onboardingRoute = '/agent/onboarding'
 const agentOnlyRoutes = ['/post']
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const cookieValue = req.cookies.get('delaharme-session')?.value
   const sessionPayload = await readSessionCookie(cookieValue)
   const pathname = req.nextUrl.pathname

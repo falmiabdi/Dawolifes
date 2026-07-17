@@ -26,6 +26,8 @@ const paymentSchema = new Schema(
     buyerName: { type: String, default: '' },
     rawRequest: { type: String, default: '' },
     telebirrTxId: { type: String, default: '' },
+    txRef: { type: String, default: '', index: true },
+    chapaTxId: { type: String, default: '' },
     notifyData: { type: Schema.Types.Mixed, default: null },
   },
   {

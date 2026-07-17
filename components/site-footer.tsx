@@ -3,7 +3,7 @@ import { Mail, MapPin, Phone, Globe } from "lucide-react"
 import { Logo } from "@/components/logo"
 
 const quickLinks = ["Home", "Listings", "Map View", "Agents", "Post Property"]
-const propertyTypes = ["Houses", "Apartments", "Land", "Commercial", "Villas", "Condos"]
+const propertyTypes = ["Houses", "Apartments", "Land", "Commercial", "Villas"]
 
 export function SiteFooter() {
   return (

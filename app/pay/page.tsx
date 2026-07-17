@@ -19,58 +19,47 @@ import {
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 
-const COMMISSION_TYPES = [
-  {
-    id: "service_charge",
-    label: "Listing Service Fee",
-    defaultAmount: "500",
-    description: "One-time fee to activate premium listing features",
-  },
-  {
-    id: "selling_commission",
-    label: "Selling Commission (2.5%)",
-    defaultAmount: "",
-    description: "2.5% commission on successful property sale",
-  },
-  {
-    id: "renting_commission",
-    label: "Renting Commission (5%)",
-    defaultAmount: "",
-    description: "5% commission on successful property rental",
-  },
+const PAYMENT_METHODS = [
+  { id: "telebirr", label: "TeleBirr", icon: Phone, color: "orange", description: "Pay with Ethio Telecom mobile money" },
+  { id: "chapa", label: "Chapa", icon: CreditCard, color: "blue", description: "Pay with bank card, mobile, or other methods" },
 ]
 
 function PayPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const presetType = searchParams.get("type") || "service_charge"
+  const presetType = searchParams.get("type") || ""
   const presetAmount = searchParams.get("amount") || ""
   const presetTitle = searchParams.get("title") || ""
   const propertyId = searchParams.get("propertyId") || ""
 
-  const [paymentType, setPaymentType] = useState(presetType)
+  const [paymentMethod, setPaymentMethod] = useState("telebirr")
   const [customAmount, setCustomAmount] = useState(presetAmount)
   const [title, setTitle] = useState(presetTitle)
+  const [email, setEmail] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "redirect" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
   const [payUrl, setPayUrl] = useState("")
   const [polling, setPolling] = useState(false)
+  const [activeTxRef, setActiveTxRef] = useState("")
 
-  useEffect(() => {
-    const type = COMMISSION_TYPES.find((t) => t.id === paymentType)
-    if (paymentType === "service_charge" && !customAmount) {
-      setCustomAmount(type?.defaultAmount || "500")
-    }
-  }, [paymentType, customAmount])
-
-  const pollStatus = useCallback(async (merchOrderId: string) => {
+  const pollStatus = useCallback(async (orderId: string, method: string) => {
     setPolling(true)
     let attempts = 0
     const maxAttempts = 60
 
     const check = async () => {
       try {
-        const res = await fetch(`/api/telebirr/status?merchOrderId=${merchOrderId}`)
+        let url: string
+        if (method === "chapa") {
+          url = `/api/chapa/verify?txRef=${orderId}`
+        } else {
+          url = `/api/telebirr/status?merchOrderId=${orderId}`
+        }
+
+        const res = await fetch(url)
         const data = await res.json()
 
         if (data.status === "Completed") {
@@ -113,40 +102,74 @@ function PayPageContent() {
       return
     }
 
-    const amount = paymentType === "service_charge" ? (customAmount || "500") : customAmount
+    const amount = customAmount
     if (!amount || Number(amount) <= 0) {
       setStatus("error")
       setMessage("Please enter a valid amount.")
       return
     }
 
+    if (paymentMethod === "chapa") {
+      if (!email.trim() || !firstName.trim() || !lastName.trim() || !phoneNumber.trim()) {
+        setStatus("error")
+        setMessage("Please fill in all your information (name, email, phone) for Chapa payment.")
+        return
+      }
+    }
+
     setStatus("loading")
     setMessage("")
 
     try {
-      const res = await fetch("/api/telebirr/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          amount,
-          propertyId,
-          propertyTitle: title.trim(),
-          paymentType,
-        }),
-      })
+      let data: any
 
-      const data = await res.json()
+      if (paymentMethod === "chapa") {
+        const res = await fetch("/api/chapa/initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim(),
+            amount,
+            propertyId,
+            propertyTitle: title.trim(),
+            paymentType: presetType || "service_charge",
+            email,
+            firstName,
+            lastName,
+            phoneNumber,
+          }),
+        })
+        data = await res.json()
+        if (!res.ok) throw new Error(data.message || "Payment initiation failed")
 
-      if (!res.ok) {
-        throw new Error(data.message || "Payment initiation failed")
-      }
+        if (data.checkoutUrl) {
+          setPayUrl(data.checkoutUrl)
+          setActiveTxRef(data.txRef)
+          setStatus("redirect")
+          setMessage("Opening Chapa checkout page...")
+          pollStatus(data.txRef, "chapa")
+        }
+      } else {
+        const res = await fetch("/api/telebirr/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim(),
+            amount,
+            propertyId,
+            propertyTitle: title.trim(),
+            paymentType: presetType || "service_charge",
+          }),
+        })
+        data = await res.json()
+        if (!res.ok) throw new Error(data.message || "Payment initiation failed")
 
-      if (data.toPayUrl) {
-        setPayUrl(data.toPayUrl)
-        setStatus("redirect")
-        setMessage("Opening TeleBirr payment page...")
-        pollStatus(data.merchOrderId)
+        if (data.toPayUrl) {
+          setPayUrl(data.toPayUrl)
+          setStatus("redirect")
+          setMessage("Opening TeleBirr payment page...")
+          pollStatus(data.merchOrderId, "telebirr")
+        }
       }
     } catch (err: any) {
       setStatus("error")
@@ -165,7 +188,10 @@ function PayPageContent() {
     setMessage("")
     setPolling(false)
     setPayUrl("")
+    setActiveTxRef("")
   }
+
+  const selectedMethod = PAYMENT_METHODS.find((m) => m.id === paymentMethod)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -187,7 +213,7 @@ function PayPageContent() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Commission Payment</h1>
-                <p className="text-sm text-muted-foreground">Pay listing fees or commissions via TeleBirr</p>
+                <p className="text-sm text-muted-foreground">Pay listing fees or commissions via TeleBirr or Chapa</p>
               </div>
             </div>
           </div>
@@ -240,8 +266,12 @@ function PayPageContent() {
                     <Phone className="h-5 w-5 text-blue-600 animate-pulse" />
                   </div>
                   <div>
-                    <p className="font-semibold text-blue-900">TeleBirr Payment Ready</p>
-                    <p className="text-sm text-blue-700">Click the button below to open the TeleBirr payment page</p>
+                    <p className="font-semibold text-blue-900">
+                      {paymentMethod === "chapa" ? "Chapa" : "TeleBirr"} Payment Ready
+                    </p>
+                    <p className="text-sm text-blue-700">
+                      Click the button below to open the {paymentMethod === "chapa" ? "Chapa" : "TeleBirr"} checkout page
+                    </p>
                     {polling && (
                       <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -257,11 +287,13 @@ function PayPageContent() {
                 className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
               >
                 <ExternalLink className="h-4 w-4" />
-                Open TeleBirr Payment Page
+                Open {paymentMethod === "chapa" ? "Chapa" : "TeleBirr"} Payment Page
               </button>
 
               <p className="text-xs text-center text-slate-500">
-                You will be redirected to TeleBirr to enter your phone number and complete payment
+                {paymentMethod === "chapa"
+                  ? "You will be redirected to Chapa to complete payment with card, mobile, or bank"
+                  : "You will be redirected to TeleBirr to enter your phone number and complete payment"}
               </p>
 
               <button
@@ -278,36 +310,28 @@ function PayPageContent() {
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
                   <Home className="h-4 w-4 text-orange-500" />
-                  Select Payment Type
+                  Select Payment Method
                 </h3>
-                <div className="space-y-3">
-                  {COMMISSION_TYPES.map((type) => (
+                <div className="grid grid-cols-2 gap-3">
+                  {PAYMENT_METHODS.map((method) => (
                     <button
-                      key={type.id}
+                      key={method.id}
                       type="button"
-                      onClick={() => {
-                        setPaymentType(type.id)
-                        if (type.defaultAmount) setCustomAmount(type.defaultAmount)
-                        else setCustomAmount("")
-                      }}
-                      className={`w-full text-left rounded-2xl border p-4 transition ${
-                        paymentType === type.id
+                      onClick={() => setPaymentMethod(method.id)}
+                      className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition ${
+                        paymentMethod === method.id
                           ? "border-orange-500 bg-orange-50 shadow-sm"
                           : "border-slate-200 bg-slate-50 hover:border-orange-300"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-slate-900 text-sm">{type.label}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{type.description}</p>
-                        </div>
-                        <div className="text-right">
-                          {type.defaultAmount ? (
-                            <p className="font-bold text-orange-600">ETB {type.defaultAmount}</p>
-                          ) : (
-                            <p className="text-xs text-slate-400">Variable</p>
-                          )}
-                        </div>
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                        paymentMethod === method.id ? "bg-orange-100 text-orange-600" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        <method.icon className="h-5 w-5" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-slate-900 text-sm">{method.label}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{method.description}</p>
                       </div>
                     </button>
                   ))}
@@ -329,69 +353,98 @@ function PayPageContent() {
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Listing Fee: Villa in Bole"
+                      placeholder="e.g., Service Charge: Villa in Bole"
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
                     />
                   </div>
 
-                  {paymentType !== "service_charge" && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block">
+                      Amount (ETB)
+                    </label>
+                    <input
+                      type="number"
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      min="1"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {paymentMethod === "chapa" && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                  <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-orange-500" />
+                    Your Information
+                  </h3>
+                  <p className="text-xs text-slate-500">Required by Chapa to process your payment</p>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 mb-1 block">
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="Bilen"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 mb-1 block">
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder="Gizachew"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
+                        />
+                      </div>
+                    </div>
                     <div>
                       <label className="text-sm font-medium text-slate-700 mb-1 block">
-                        Property Value (ETB)
+                        Email
                       </label>
                       <input
-                        type="number"
-                        value={customAmount}
-                        onChange={(e) => setCustomAmount(e.target.value)}
-                        placeholder="Enter property value"
-                        min="1"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
                       />
-                      {customAmount && Number(customAmount) > 0 && (
-                        <p className="mt-1 text-xs text-slate-500">
-                          Commission ({paymentType === "selling_commission" ? "2.5%" : "5%"}): ETB{" "}
-                          {(Number(customAmount) * (paymentType === "selling_commission" ? 0.025 : 0.05)).toFixed(2)}
-                        </p>
-                      )}
                     </div>
-                  )}
-
-                  {paymentType === "service_charge" && (
-                    <div className="rounded-xl bg-orange-50 border border-orange-100 p-3">
-                      <p className="text-sm font-semibold text-orange-900">
-                        Fixed Amount: ETB {customAmount || "500"}
-                      </p>
-                      <p className="text-xs text-orange-700 mt-0.5">
-                        One-time service charge for listing activation
-                      </p>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1 block">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="0912345678"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 transition"
+                      />
+                      <p className="text-xs text-slate-400 mt-1">10 digits: 09xxxxxxxx or 07xxxxxxxx</p>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-orange-500" />
-                  Payment Method
-                </h3>
-                <div className="flex items-center gap-3 rounded-xl bg-slate-50 border border-slate-200 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600 font-bold text-sm">
-                    TB
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-900 text-sm">TeleBirr Mobile Money</p>
-                    <p className="text-xs text-slate-500">Pay with your Ethio Telecom phone number</p>
                   </div>
                 </div>
-              </div>
+              )}
 
               <button
                 onClick={handlePay}
-                disabled={!title.trim() || !customAmount || Number(customAmount) <= 0}
+                disabled={!title.trim() || !customAmount || Number(customAmount) <= 0 || (paymentMethod === "chapa" && (!email.trim() || !firstName.trim() || !lastName.trim() || !phoneNumber.trim()))}
                 className="w-full rounded-2xl bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-4 text-sm transition shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2"
               >
                 <Wallet className="h-4 w-4" />
-                Pay with TeleBirr
+                Pay with {selectedMethod?.label || "TeleBirr"}
               </button>
 
               <div className="flex items-center justify-center gap-6 text-xs text-slate-400 pb-8">

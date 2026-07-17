@@ -7,15 +7,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const merchOrderId = searchParams.get('merchOrderId')
     const paymentId = searchParams.get('paymentId')
+    const txRef = searchParams.get('txRef')
 
-    if (!merchOrderId && !paymentId) {
-      return NextResponse.json({ message: 'merchOrderId or paymentId is required' }, { status: 400 })
+    if (!merchOrderId && !paymentId && !txRef) {
+      return NextResponse.json({ message: 'merchOrderId, paymentId, or txRef is required' }, { status: 400 })
     }
 
     await connectToDatabase()
 
     const query: Record<string, any> = {}
     if (merchOrderId) query.merchOrderId = merchOrderId
+    if (txRef) query.txRef = txRef
     if (paymentId) query._id = paymentId
 
     const payment = await PaymentModel.findOne(query).lean()
@@ -31,6 +33,7 @@ export async function GET(request: Request) {
       title: payment.title,
       buyerPhone: payment.buyerPhone,
       telebirrTxId: payment.telebirrTxId,
+      txRef: payment.txRef,
       createdAt: payment.createdAt,
     })
   } catch (error: any) {
