@@ -56,7 +56,7 @@ export function SiteFooter() {
           <h3 className="text-sm font-semibold uppercase tracking-wide">Contact</h3>
           <ul className="mt-4 space-y-3 text-sm text-secondary-foreground/70">
             <li className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-primary" /> delaharme@gmail.com
+              <Mail className="h-4 w-4 text-primary" /> dawolife@gmail.com
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-primary" /> +251 911 000 000
@@ -69,7 +69,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/10 py-5 text-center text-xs text-secondary-foreground/50">
-        © {new Date().getFullYear()} DelaHarme. All rights reserved. | Ethiopia Real Estate Marketplace
+        © {new Date().getFullYear()} DawoLife. All rights reserved. | Ethiopia Real Estate Marketplace
       </div>
     </footer>
   )

@@ -20,7 +20,7 @@ import { createSessionCookie } from '@/lib/session-cookie'
 
 export async function getServerSession() {
   const cookieStore = await cookies()
-  const session = await readSessionCookie(cookieStore.get('delaharme-session')?.value)
+  const session = await readSessionCookie(cookieStore.get('dawolife-session')?.value)
   if (!session) {
     return null
   }
@@ -47,6 +47,6 @@ export async function getServerSession() {
 
 export async function getSessionFromRequest(_req?: NextRequest | Request) {
   const cookieStore = await cookies()
-  const sessionValue = cookieStore.get('delaharme-session')?.value
+  const sessionValue = cookieStore.get('dawolife-session')?.value
   return await readSessionCookie(sessionValue)
 }

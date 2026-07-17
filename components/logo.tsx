@@ -9,7 +9,7 @@ export function Logo({ className, dark }: { className?: string; dark?: boolean }
         <Home className="h-4 w-4" />
       </span>
       <span className={cn("text-lg font-extrabold tracking-tight", dark ? "text-white" : "text-secondary")}>
-        Dela<span className="text-primary">Harme</span>
+        Dawo<span className="text-primary">life</span>
       </span>
     </Link>
   )

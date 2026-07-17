@@ -11,9 +11,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'DelaHarme — Ethiopia\'s Digital Real Estate Marketplace',
+  title: 'DawoLife — Ethiopia\'s Digital Real Estate Marketplace',
   description:
-    'Find homes for sale and rent across Ethiopia. Browse verified listings in Oromia, Addis Ababa, Shaggar and beyond on DelaHarme.',
+    'Find homes for sale and rent across Ethiopia. Browse verified listings in Oromia, Addis Ababa, Shaggar and beyond on DawoLife.',
   generator: 'v0.app',
 }
 

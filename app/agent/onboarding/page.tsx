@@ -413,7 +413,7 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.terms} onChange={(e) => setAgreed((a) => ({ ...a, terms: e.target.checked }))} />
-                  <span className="text-sm text-slate-600">I agree to the <span className="font-semibold text-orange-600 underline cursor-pointer">Terms & Conditions</span> of the DelaHarme platform.</span>
+                  <span className="text-sm text-slate-600">I agree to the <span className="font-semibold text-orange-600 underline cursor-pointer">Terms & Conditions</span> of the DawoLife platform.</span>
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.privacy} onChange={(e) => setAgreed((a) => ({ ...a, privacy: e.target.checked }))} />

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Building2, PlusCircle, ExternalLink, MapPin } from 'lucide-react'
+import { Building2, PlusCircle, ExternalLink, MapPin, AlertCircle, Pencil } from 'lucide-react'
 import { getServerSession } from '@/lib/auth-session'
 import { connectToDatabase } from '@/lib/db'
 import { PropertyModel } from '@/lib/models/property'
@@ -47,7 +47,7 @@ export default async function AgentPropertiesPage() {
             <Building2 className="h-8 w-8" />
           </div>
           <h2 className="text-lg font-bold text-slate-700">No properties listed yet</h2>
-          <p className="text-sm max-w-xs text-center">Get started by listing your first property on DelaHarme portal.</p>
+          <p className="text-sm max-w-xs text-center">Get started by listing your first property on DawoLife portal.</p>
           {session.user.status === 'Approved' && (
             <Link href="/agent/post" className="mt-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition">
               Create Listing
@@ -84,6 +84,18 @@ export default async function AgentPropertiesPage() {
                     {formatPrice(p.price)} ETB <span className="text-xs font-medium text-slate-400">{p.priceType}</span>
                   </p>
 
+                  {p.status === 'Rejected' && p.rejectionReason && (
+                    <div className="mt-3 rounded-xl bg-red-50 border border-red-200 p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Rejection Reason</p>
+                          <p className="text-xs text-red-600 mt-0.5">{p.rejectionReason}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
                     <div className="flex gap-1">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{p.bedrooms} Beds</span>
@@ -99,6 +111,14 @@ export default async function AgentPropertiesPage() {
                     >
                       <ExternalLink className="h-3.5 w-3.5" /> View
                     </Link>
+                    {p.status === 'Rejected' && (
+                      <Link
+                        href={`/agent/properties/${p._id.toString()}/edit`}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </Link>
+                    )}
                     <PropertyDeleteButton id={p._id.toString()} />
                   </div>
                 </div>

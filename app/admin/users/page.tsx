@@ -34,7 +34,7 @@ export default async function AdminUsersPage() {
           User Catalog Management
         </h1>
         <p className="text-sm text-slate-500">
-          Monitor all administrators, agents, and client accounts registered on DelaHarme.
+          Monitor all administrators, agents, and client accounts registered on DawoLife.
         </p>
       </div>
 

@@ -145,7 +145,7 @@ async function ensureSeeded() {
     const existing = await Model.findOne({ email: 'felmitesfaye@gmail.com' }).lean()
     if (!existing) {
       await Model.create({
-        username: 'DelaHarme Admin',
+        username: 'DawoLife Admin',
         email: 'felmitesfaye@gmail.com',
         passwordHash: await hashPassword('SecurePass@12345'),
         role: 'admin',
@@ -163,7 +163,7 @@ async function ensureSeeded() {
 
   memoryUsers.push({
     id: 'admin-1',
-    username: 'DelaHarme Admin',
+    username: 'DawoLife Admin',
     email: 'felmitesfaye@gmail.com',
     passwordHash: await hashPassword('SecurePass@12345'),
     role: 'admin',

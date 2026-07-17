@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true, user: { id: user.id, email: user.email, role: user.role, status: user.status } })
-  response.cookies.set('delaharme-session', await createSessionCookie({ userId: user.id, email: user.email, role: user.role, status: user.status }), {
+  response.cookies.set('dawolife-session', await createSessionCookie({ userId: user.id, email: user.email, role: user.role, status: user.status }), {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',

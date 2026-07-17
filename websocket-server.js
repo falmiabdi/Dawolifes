@@ -198,7 +198,7 @@ wss.on('connection', async (ws, req) => {
     notification: {
       id: 'ws-welcome',
       title: 'Real-Time Updates Connected',
-      description: 'You are now connected to DelaHarme real-time notification stream.',
+      description: 'You are now connected to DawoLife real-time notification stream.',
       type: 'success',
       isRead: false,
       time: 'Just now',

@@ -43,7 +43,7 @@ async function run() {
 
   const hash = await hashPassword('SecurePass@12345');
   await db.collection('users').insertOne({
-    username: 'DelaHarme Admin',
+    username: 'DawoLife Admin',
     email: 'felmitesfaye@gmail.com',
     passwordHash: hash,
     role: 'admin',

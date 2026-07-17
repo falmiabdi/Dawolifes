@@ -57,16 +57,16 @@ export function AuthShell({
 
           <div className={`relative flex-1 rounded-[28px] border border-white/70 p-8 shadow-2xl shadow-orange-100 backdrop-blur-xl ${backgroundUrl ? 'bg-white/90' : 'bg-white/80'}`}>
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-sm font-semibold text-orange-700">
-              <ShieldCheck className="h-4 w-4" /> DelaHarme Secure Access
+              <ShieldCheck className="h-4 w-4" /> DawoLife Secure Access
             </div>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
             <p className="mt-3 max-w-xl text-base text-slate-600">{subtitle}</p>
             <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 p-6">
-              <h2 className="text-lg font-semibold">Why agents trust DelaHarme</h2>
+              <h2 className="text-lg font-semibold">Why agents trust DawoLife</h2>
               <ul className="mt-4 space-y-3 text-sm text-slate-600">
                 <li>• Secure onboarding with review-based approval.</li>
                 <li>• Role-based access for admins, agents, and pending accounts.</li>
-                <li>• Modern workflows that align with the DelaHarme brand.</li>
+                <li>• Modern workflows that align with the DawoLife brand.</li>
               </ul>
             </div>
           </div>

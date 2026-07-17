@@ -4,6 +4,32 @@ import { connectToDatabase } from '@/lib/db'
 import { PropertyModel } from '@/lib/models/property'
 import { UserModel } from '@/lib/models/user'
 
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSessionFromRequest(request)
+    if (!session?.userId) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    await connectToDatabase()
+
+    const property = await PropertyModel.findById(id).lean()
+    if (!property) {
+      return NextResponse.json({ message: 'Property not found.' }, { status: 404 })
+    }
+
+    if (property.agentId.toString() !== session.userId) {
+      return NextResponse.json({ message: 'Access denied.' }, { status: 403 })
+    }
+
+    return NextResponse.json({ property })
+  } catch (error: any) {
+    console.error('GET /api/properties error:', error)
+    return NextResponse.json({ message: error.message || 'Server error' }, { status: 500 })
+  }
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getSessionFromRequest(request)

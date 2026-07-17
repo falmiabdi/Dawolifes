@@ -84,7 +84,7 @@ export function MapPicker({ latitude, longitude, onLocationChange }: MapPickerPr
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery + ", Ethiopia")}&format=json&limit=1`,
-        { headers: { "User-Agent": "DelaHarme/1.0" } }
+        { headers: { "User-Agent": "DawoLife/1.0" } }
       )
       const data = await res.json()
       if (data[0]) {

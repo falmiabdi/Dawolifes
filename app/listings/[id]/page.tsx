@@ -17,7 +17,8 @@ import {
   Building2,
   MapPinned,
   Hash,
-  FileText,
+  AlertCircle,
+  FileText
 } from "lucide-react"
 import { getProperty, formatPrice, properties } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
@@ -73,6 +74,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder.jpg"],
             videoUrl: dbProp.videoUrl || '',
             locationDocument: dbProp.locationDocument || '',
+            status: dbProp.status || '',
+            rejectionReason: dbProp.rejectionReason || '',
             agent: {
               id: dbProp.agentId?._id?.toString() || 'unknown',
               name: dbProp.agentId?.fullName || dbProp.agentId?.username || 'Unknown Agent',
@@ -199,6 +202,16 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   value={property.condition}
                 />
               </div>
+
+              {property.status === 'Rejected' && property.rejectionReason && (
+                <div className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-wider">Rejection Reason</p>
+                    <p className="mt-1 text-sm text-red-600">{property.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
 
               <section className="mt-8">
                 <h2 className="text-lg font-semibold text-foreground">Description</h2>

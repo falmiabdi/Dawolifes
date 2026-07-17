@@ -33,7 +33,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full">
       <div className="hidden items-center justify-between bg-secondary px-6 py-1.5 text-xs text-secondary-foreground/80 md:flex">
-        <span>delaharme@gmail.com</span>
+        <span>dawolife@gmail.com</span>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1">
             <Globe className="h-3.5 w-3.5" /> English
