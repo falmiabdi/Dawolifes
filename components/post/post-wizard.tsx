@@ -31,7 +31,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { MapPicker } from "@/components/maps/map-picker"
+import dynamic from "next/dynamic"
+
+const MapPicker = dynamic(() => import("@/components/maps/map-picker").then((m) => m.MapPicker), {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full animate-pulse rounded-2xl bg-muted" />,
+})
 
 const steps = [
   { label: "Basic Info", icon: HomeIcon },
