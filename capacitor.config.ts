@@ -1,0 +1,43 @@
+﻿import { CapacitorConfig } from '@capacitor/cli'
+
+const config: CapacitorConfig = {
+  appId: 'com.dawolife.app',
+  appName: 'DawoLife',
+  webDir: 'client/out',
+  server: {
+    url: 'http://localhost:4000',
+    cleartext: true,
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      backgroundColor: '#F97316',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'LIGHT',
+      backgroundColor: '#F97316',
+    },
+    Keyboard: {
+      resize: 'body',
+    },
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
+  ios: {
+    contentInset: 'automatic',
+    allowsLinkPreview: false,
+    scheme: 'dawolife',
+    hostname: 'dawolife.app',
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true,
+  },
+}
+
+export default config

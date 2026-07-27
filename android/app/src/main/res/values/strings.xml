@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DelaHarme</string>
+    <string name="title_activity_main">DelaHarme</string>
+    <string name="package_name">com.delaharme.app</string>
+    <string name="custom_url_scheme">com.delaharme.app</string>
+</resources>
