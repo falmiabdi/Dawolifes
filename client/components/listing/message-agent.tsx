@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { MessageCircle, Send, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -72,7 +74,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
   const fetchMessages = useCallback(async () => {
     if (mode !== "chat" || !email) return
     try {
-      const res = await fetch(`/api/messages?propertyId=${propertyId}&buyerEmail=${encodeURIComponent(email)}`)
+      const res = await fetch(`${API_URL}/api/messages?propertyId=${propertyId}&buyerEmail=${encodeURIComponent(email)}`)
       const data = await res.json()
       setMessages(data.messages || [])
     } catch {}
@@ -107,7 +109,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
     setSending(true)
     setError("")
     try {
-      const res = await fetch("/api/messages", {
+      const res = await fetch(`${API_URL}/api/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,8 +138,8 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
     const now = new Date()
     const diff = now.getTime() - d.getTime()
     if (diff < 60000) return "Just now"
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago'
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago'
     return d.toLocaleDateString()
   }
 
@@ -200,7 +202,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
                     value={text}
                     onChange={e => setText(e.target.value)}
                     rows={3}
-                    placeholder={`Hi, I'm interested in "${propertyTitle}". Is it still available?`}
+                    placeholder={'Hi, I\'m interested in "' + propertyTitle + '". Is it still available?'}
                     className="mt-1"
                   />
                 </div>
@@ -219,10 +221,10 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
                   {messages.map(m => {
                     const isBuyer = m.sender === "buyer"
                     return (
-                      <div key={m._id} className={`flex ${isBuyer ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${isBuyer ? "bg-primary text-primary-foreground rounded-br-none" : "bg-card border border-border text-foreground rounded-bl-none"}`}>
+                      <div key={m._id} className={'flex ' + (isBuyer ? 'justify-end' : 'justify-start')}>
+                        <div className={'max-w-[80%] rounded-2xl px-3 py-2 text-sm ' + (isBuyer ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card border border-border text-foreground rounded-bl-none')}>
                           <p>{m.text}</p>
-                          <span className={`block mt-1 text-[10px] text-right ${isBuyer ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <span className={'block mt-1 text-[10px] text-right ' + (isBuyer ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
                             {formatTime(m.createdAt)}
                           </span>
                         </div>

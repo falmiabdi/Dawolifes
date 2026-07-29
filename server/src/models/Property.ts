@@ -1,75 +1,80 @@
-﻿import mongoose, { Schema, Document, Model } from 'mongoose'
+﻿import { DataTypes, Model } from "sequelize";
+import { sequelize } from "../config/database.js";
 
-export interface IProperty extends Document {
-  title: string
-  type: string
-  listingType: 'For Sale' | 'For Rent'
-  price: number
-  priceType: string
-  region: string
-  city: string
-  subCity?: string
-  woreda?: string
-  kebele?: string
-  parcel?: string
-  block?: string
-  homeNo?: string
-  area?: number
-  bedrooms?: number
-  bathrooms?: number
-  condition?: string
-  legalizedYear?: number
-  description?: string
-  features: string[]
-  images: string[]
-  videoUrl?: string
-  featured?: boolean
-  agentId: string
-  agentName: string
-  status: 'Draft' | 'Pending' | 'Approved' | 'Rejected' | 'Sold' | 'Rented'
-  latitude?: number
-  longitude?: number
-  createdAt: Date
-  updatedAt: Date
+export interface IProperty {
+  id: string;
+  title: string;
+  type: string;
+  listingType: "For Sale" | "For Rent";
+  price: number;
+  priceType: string;
+  region: string;
+  city: string;
+  subCity?: string;
+  woreda?: string;
+  kebele?: string;
+  parcel?: string;
+  block?: string;
+  homeNo?: string;
+  area?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  condition?: string;
+  legalizedYear?: number;
+  description?: string;
+  features: string[];
+  images: string[];
+  videoUrl?: string;
+  featured?: boolean;
+  locationDocument?: string;
+  agentId: string;
+  agentName: string;
+  status: "Draft" | "Pending" | "Approved" | "Rejected" | "Sold" | "Rented";
+  latitude?: number;
+  longitude?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const PropertySchema = new Schema<IProperty>(
-  {
-    title: { type: String, required: true, trim: true },
-    type: { type: String, required: true },
-    listingType: { type: String, enum: ['For Sale', 'For Rent'], required: true },
-    price: { type: Number, required: true },
-    priceType: { type: String, required: true },
-    region: { type: String, required: true },
-    city: { type: String, required: true },
-    subCity: { type: String },
-    woreda: { type: String },
-    kebele: { type: String },
-    parcel: { type: String },
-    block: { type: String },
-    homeNo: { type: String },
-    area: { type: Number },
-    bedrooms: { type: Number, min: 0 },
-    bathrooms: { type: Number, min: 0 },
-    condition: { type: String },
-    legalizedYear: { type: Number, min: 1900, max: 2030 },
-    description: { type: String },
-    features: { type: [String], default: [] },
-    images: { type: [String], default: [] },
-    videoUrl: { type: String },
-    featured: { type: Boolean, default: false },
-    agentId: { type: String, required: true },
-    agentName: { type: String, required: true },
-    status: {
-      type: String,
-      enum: ['Draft', 'Pending', 'Approved', 'Rejected', 'Sold', 'Rented'],
-      default: 'Draft',
-    },
-    latitude: { type: Number },
-    longitude: { type: Number },
-  },
-  { timestamps: true }
-)
+export class PropertyModel extends Model<IProperty> {}
 
-export const PropertyModel: Model<IProperty> =
-  (mongoose.models.Property as Model<IProperty>) || mongoose.model<IProperty>('Property', PropertySchema)
+PropertyModel.init(
+  {
+    id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+    title: { type: DataTypes.STRING(200), allowNull: false },
+    type: { type: DataTypes.STRING, allowNull: false },
+    listingType: { type: DataTypes.ENUM("For Sale", "For Rent"), allowNull: false },
+    price: { type: DataTypes.DOUBLE, allowNull: false },
+    priceType: { type: DataTypes.STRING, allowNull: false },
+    region: { type: DataTypes.STRING, allowNull: false },
+    city: { type: DataTypes.STRING, allowNull: false },
+    subCity: { type: DataTypes.STRING },
+    woreda: { type: DataTypes.STRING },
+    kebele: { type: DataTypes.STRING },
+    parcel: { type: DataTypes.STRING },
+    block: { type: DataTypes.STRING },
+    homeNo: { type: DataTypes.STRING },
+    area: { type: DataTypes.DOUBLE },
+    bedrooms: { type: DataTypes.INTEGER },
+    bathrooms: { type: DataTypes.INTEGER },
+    condition: { type: DataTypes.STRING },
+    legalizedYear: { type: DataTypes.INTEGER },
+    description: { type: DataTypes.TEXT },
+    features: { type: DataTypes.JSONB, defaultValue: [] },
+    images: { type: DataTypes.JSONB, defaultValue: [] },
+    videoUrl: { type: DataTypes.STRING },
+    featured: { type: DataTypes.BOOLEAN, defaultValue: false },
+    locationDocument: { type: DataTypes.STRING },
+    agentId: { type: DataTypes.UUID, allowNull: false },
+    agentName: { type: DataTypes.STRING, allowNull: false },
+    status: {
+      type: DataTypes.ENUM("Draft", "Pending", "Approved", "Rejected", "Sold", "Rented"),
+      defaultValue: "Draft",
+    },
+    latitude: { type: DataTypes.DOUBLE },
+    longitude: { type: DataTypes.DOUBLE },
+    createdAt: { type: DataTypes.DATE, allowNull: false },
+    updatedAt: { type: DataTypes.DATE, allowNull: false },
+  },
+  { sequelize, tableName: "properties", timestamps: true }
+);

@@ -1,15 +1,17 @@
 ﻿import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
-import { NotificationModel } from '../models/Notification.js'
+import { NotificationModel } from '../models/index.js'
 
 const router = Router()
 
 // Get notifications for current user
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const notifications = await NotificationModel.find({ userId: req.user!.userId })
-      .sort({ createdAt: -1 })
-      .limit(50)
+    const notifications = await NotificationModel.findAll({
+      where: { userId: req.user!.userId },
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+    })
     res.json({ notifications })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch notifications' })
@@ -24,14 +26,13 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' })
     }
 
-    const notification = new NotificationModel({
+    const notification = await NotificationModel.create({
       userId: req.user!.userId,
       title,
       body,
       type,
       data,
-    })
-    await notification.save()
+    } as any)
 
     res.status(201).json({ message: 'Notification created', notification })
   } catch (err: any) {
@@ -42,9 +43,9 @@ router.post('/', authMiddleware, async (req, res) => {
 // Mark all notifications as read
 router.patch('/read-all', authMiddleware, async (req, res) => {
   try {
-    await NotificationModel.updateMany(
-      { userId: req.user!.userId, read: false },
-      { $set: { read: true } }
+    await NotificationModel.update(
+      { read: true },
+      { where: { userId: req.user!.userId, read: false } }
     )
     res.json({ message: 'All notifications marked as read' })
   } catch (err: any) {
@@ -55,12 +56,11 @@ router.patch('/read-all', authMiddleware, async (req, res) => {
 // Mark single notification as read
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
-    const notification = await NotificationModel.findById(req.params.id)
+    const notification = await NotificationModel.findByPk(req.params.id)
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' })
     }
-    notification.read = true
-    await notification.save()
+    await notification.update({ read: true })
     res.json({ message: 'Notification marked as read' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update notification' })

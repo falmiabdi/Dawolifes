@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,7 +35,7 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
-    const response = await fetch('/api/auth/signin', {
+    const response = await fetch(`${API_URL}/api/auth/signin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -50,6 +52,9 @@ export default function LoginPage() {
     }
 
     const payload = await response.json()
+    if (payload.accessToken) {
+      document.cookie = `token=${payload.accessToken}; path=/; max-age=604800; SameSite=Lax`
+    }
     router.refresh()
     if (payload.user?.email === 'felmitesfaye@gmail.com') {
       router.push('/admin')

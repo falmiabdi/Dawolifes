@@ -5,22 +5,30 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_URL}${path}`
+  console.log(`[API] ${options.method || 'GET'} ${url}`)
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    credentials: 'include',
-  })
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      credentials: 'include',
+    })
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.message || `HTTP ${response.status}`)
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }))
+      console.error(`[API] ❌ ${response.status} ${url} - ${error.message}`)
+      throw new Error(error.message || `HTTP ${response.status}`)
+    }
+
+    console.log(`[API] ✅ ${response.status} ${url}`)
+    return response.json()
+  } catch (err) {
+    console.error(`[API] ❌ Connection failed: ${url}`, err)
+    throw err
   }
-
-  return response.json()
 }
 
 export const api = {

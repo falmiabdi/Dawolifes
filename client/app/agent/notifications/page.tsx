@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState, useCallback } from 'react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { Bell, Wifi, WifiOff, Info, CheckCircle2, AlertTriangle, AlertCircle, CheckCheck } from 'lucide-react'
 
 interface Notification {
@@ -27,7 +29,7 @@ export default function AgentNotificationsPage() {
 
   // Fetch current user session
   useEffect(() => {
-    fetch('/api/auth/session')
+    fetch(`${API_URL}/api/auth/session`)
       .then((r) => r.json())
       .then((data) => {
         if (data?.user?.id) {
@@ -40,7 +42,7 @@ export default function AgentNotificationsPage() {
   // Fetch notifications from DB on load
   useEffect(() => {
     if (!userId) return
-    fetch('/api/notifications')
+    fetch(`${API_URL}/api/notifications`)
       .then((r) => r.json())
       .then((data) => {
         if (data.notifications) {
@@ -121,7 +123,7 @@ export default function AgentNotificationsPage() {
   const markAllRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
     setUnreadCount(0)
-    await fetch('/api/notifications', {
+    await fetch(`${API_URL}/api/notifications`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ markAllRead: true }),
@@ -133,7 +135,7 @@ export default function AgentNotificationsPage() {
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     )
     setUnreadCount((prev) => Math.max(0, prev - 1))
-    await fetch('/api/notifications', {
+    await fetch(`${API_URL}/api/notifications`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notificationId: id }),

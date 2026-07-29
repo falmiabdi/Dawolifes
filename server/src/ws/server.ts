@@ -1,6 +1,6 @@
-﻿import { Server as HTTPServer } from 'http'
+import { Server as HTTPServer } from 'http'
 import { Server as WSServer } from 'ws'
-import { NotificationModel } from './models/Notification.js'
+import { NotificationModel } from '../models/index.js'
 
 interface WSClient {
   userId: string
@@ -37,30 +37,32 @@ export function setupWebSocket(server: HTTPServer) {
 
         switch (message.type) {
           case 'mark_read':
-            await NotificationModel.updateMany(
-              { userId, read: false },
-              { $set: { read: true } }
+            await NotificationModel.update(
+              { read: true },
+              { where: { userId, read: false } }
             )
             broadcastToUser(userId, { type: 'mark_read_ack', timestamp: Date.now() })
             break
 
           case 'mark_single_read':
             if (message.notificationId) {
-              await NotificationModel.findByIdAndUpdate(message.notificationId, { read: true })
+              await NotificationModel.update(
+                { read: true },
+                { where: { id: message.notificationId } }
+              )
               broadcastToUser(userId, { type: 'mark_single_read_ack', notificationId: message.notificationId })
             }
             break
 
           case 'send_notification':
             if (message.targetUserId && message.title && message.body) {
-              const notification = new NotificationModel({
+              const notification = await NotificationModel.create({
                 userId: message.targetUserId,
                 title: message.title,
                 body: message.body,
                 type: message.type || 'general',
                 data: message.data,
-              })
-              await notification.save()
+              } as any)
               broadcastToUser(message.targetUserId, {
                 type: 'notification',
                 notification,
@@ -69,7 +71,7 @@ export function setupWebSocket(server: HTTPServer) {
             break
 
           case 'unread_count':
-            const unreadCount = await NotificationModel.countDocuments({ userId, read: false })
+            const unreadCount = await NotificationModel.count({ where: { userId, read: false } })
             broadcastToUser(userId, { type: 'unread_count', count: unreadCount })
             break
         }
@@ -97,14 +99,13 @@ export function setupWebSocket(server: HTTPServer) {
     })
   })
 
-  // Heartbeat to detect dead connections
   const heartbeat = setInterval(() => {
     wss.clients.forEach((ws) => {
       if (!(ws as any).isAlive) {
         ws.terminate()
         return
       }
-      ws.isAlive = false
+      ;(ws as any).isAlive = false
       ws.ping()
     })
   }, 30000)

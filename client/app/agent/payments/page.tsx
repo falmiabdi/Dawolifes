@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   CreditCard,
   Wallet,
@@ -50,7 +52,7 @@ export default function AgentPaymentsPage() {
   async function fetchPayments() {
     setLoading(true)
     try {
-      const res = await fetch("/api/auth/session")
+      const res = await fetch(`${API_URL}/api/auth/session`)
       const session = await res.json()
       const userId = session?.user?.id
 
@@ -60,7 +62,7 @@ export default function AgentPaymentsPage() {
       }
 
       const params = new URLSearchParams({ role: "agent", userId, limit: "10" })
-      const dataRes = await fetch(`/api/payments?${params}`)
+      const dataRes = await fetch(`${API_URL}/api/payments?${params}`)
       const data = await dataRes.json()
       setPayments(data.payments || [])
       setStats(data.stats || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 })

@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   LayoutDashboard,
   User,
@@ -53,7 +55,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    fetch("/api/notifications?count=true")
+    fetch(`${API_URL}/api/notifications?count=true`)
       .then((r) => r.json())
       .then((data) => {
         if (typeof data.count === "number") setUnreadCount(data.count)
@@ -61,7 +63,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
       .catch(() => {})
 
     const interval = setInterval(() => {
-      fetch("/api/notifications?count=true")
+      fetch(`${API_URL}/api/notifications?count=true`)
         .then((r) => r.json())
         .then((data) => {
           if (typeof data.count === "number") setUnreadCount(data.count)

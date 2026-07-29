@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   CreditCard, TrendingUp, Download, ShieldCheck, RefreshCw,
   Clock, CheckCircle2, XCircle, Filter,
@@ -44,7 +46,7 @@ export default function AdminPaymentsPage() {
       const params = new URLSearchParams({ role: "admin", page: String(page), limit: "15" })
       if (filter) params.set("status", filter)
 
-      const res = await fetch(`/api/payments?${params}`)
+      const res = await fetch(`${API_URL}/api/payments?${params}`)
       const data = await res.json()
       setPayments(data.payments || [])
       setStats(data.stats || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 })

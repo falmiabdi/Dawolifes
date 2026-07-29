@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   ArrowLeft,
   ArrowRight,
@@ -267,7 +269,7 @@ export function PostVehicleWizard() {
         const formData = new FormData()
         formData.append("file", files[i])
 
-        const res = await fetch("/api/agent/upload", {
+        const res = await fetch(`${API_URL}/api/agent/upload`, {
           method: "POST",
           body: formData,
         })
@@ -303,7 +305,7 @@ export function PostVehicleWizard() {
       setSubmitting(true)
       setError("")
 
-      const res = await fetch("/api/vehicles", {
+      const res = await fetch(`${API_URL}/api/vehicles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1136,7 +1138,7 @@ export function PostVehicleWizard() {
                   <div className="mt-5 space-y-2">
                     <p className="text-xs font-semibold text-orange-600">
                       {form.images.length} photo(s) added{" "}
-                      {form.images.length < 3 && `(need ${3 - form.images.length} more)`}
+                      {form.images.length < 3 && "(need " + (3 - form.images.length) + " more)"}
                     </p>
 
                     <div className="grid grid-cols-3 gap-3">
@@ -1145,7 +1147,7 @@ export function PostVehicleWizard() {
                           key={idx}
                           className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group/item shadow-sm"
                         >
-                          <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={'Upload ' + (idx + 1)} className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => set("images", form.images.filter((_, i) => i !== idx))}
@@ -1230,14 +1232,14 @@ export function PostVehicleWizard() {
                 <div className="border-t border-border pt-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pricing</p>
                   <p className="mt-1 text-sm font-semibold text-primary">
-                    {form.price ? `${formatPrice(Number(form.price))} ETB` : "Price not set"}
+                    {form.price ? formatPrice(Number(form.price)) + ' ETB' : "Price not set"}
                   </p>
                   <p className="text-sm text-muted-foreground">{form.listingType} · {form.priceType}</p>
                 </div>
                 <div className="border-t border-border pt-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Technical</p>
                   <p className="text-sm text-muted-foreground">
-                    {[form.fuelType, form.transmission, form.drivetrain, form.mileage ? `${Number(form.mileage).toLocaleString()} km` : ""]
+                    {[form.fuelType, form.transmission, form.drivetrain, form.mileage ? Number(form.mileage).toLocaleString() + ' km' : ""]
                       .filter(Boolean)
                       .join(" · ") || "Not specified"}
                   </p>
@@ -1298,25 +1300,25 @@ export function PostVehicleWizard() {
           </p>
           <dl className="mt-4 space-y-3 text-sm">
             <SummaryRow label="Category" value={form.vehicleCategory || "Not set"} />
-            <SummaryRow label="Make/Model" value={form.make && form.model ? `${form.make} ${form.model}` : "Not set"} />
+            <SummaryRow label="Make/Model" value={form.make && form.model ? form.make + ' ' + form.model : "Not set"} />
             <SummaryRow label="Year" value={form.manufacturingYear || "Not set"} />
             <SummaryRow label="Listing" value={form.listingType} />
             <SummaryRow
               label="Price"
-              value={form.price ? `${formatPrice(Number(form.price))} ETB` : "Not set"}
+              value={form.price ? formatPrice(Number(form.price)) + ' ETB' : "Not set"}
               highlight={!!form.price}
             />
             <SummaryRow label="Condition" value={form.condition || "Not set"} />
             <SummaryRow label="Fuel" value={form.fuelType || "Not set"} />
             <SummaryRow label="Transmission" value={form.transmission || "Not set"} />
-            <SummaryRow label="Mileage" value={form.mileage ? `${Number(form.mileage).toLocaleString()} km` : "Not set"} />
+            <SummaryRow label="Mileage" value={form.mileage ? Number(form.mileage).toLocaleString() + ' km' : "Not set"} />
             <SummaryRow label="Location" value={form.subCity || form.city || "Not set"} />
-            <SummaryRow label="Photos" value={form.images.length > 0 ? `${form.images.length} uploaded` : "None"} />
+            <SummaryRow label="Photos" value={form.images.length > 0 ? form.images.length + ' uploaded' : "None"} />
             <SummaryRow
               label="Features"
               value={
                 form.safetyFeatures.length + form.interiorFeatures.length + form.exteriorFeatures.length > 0
-                  ? `${form.safetyFeatures.length + form.interiorFeatures.length + form.exteriorFeatures.length} selected`
+                  ? (form.safetyFeatures.length + form.interiorFeatures.length + form.exteriorFeatures.length) + ' selected'
                   : "None"
               }
             />

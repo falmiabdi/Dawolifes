@@ -49,7 +49,7 @@ export function LatestProperties() {
           }))
         setProperties(transformed)
       })
-      .catch(() => {})
+      .catch((err) => console.error('[API] ❌ Properties fetch failed:', err))
       .finally(() => setLoading(false))
   }, [])
 

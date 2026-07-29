@@ -1,11 +1,11 @@
-﻿import { Router } from 'express'
-import authRoutes from './routes/auth.js'
-import propertyRoutes from './routes/properties.js'
-import paymentRoutes from './routes/payments.js'
-import uploadRoutes from './routes/upload.js'
-import messageRoutes from './routes/messages.js'
-import notificationRoutes from './routes/notifications.js'
-import adminRoutes from './routes/admin.js'
+import { Router } from 'express'
+import authRoutes from './auth.js'
+import propertyRoutes from './properties.js'
+import paymentRoutes from './payments.js'
+import uploadRoutes from './upload.js'
+import messageRoutes from './messages.js'
+import notificationRoutes from './notifications.js'
+import adminRoutes from './admin.js'
 
 const router = Router()
 

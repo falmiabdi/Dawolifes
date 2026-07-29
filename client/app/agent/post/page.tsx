@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2,
   Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info, FileText
@@ -90,7 +92,7 @@ export default function AgentPostPage() {
         const file = files[i]
         const fd = new FormData()
         fd.append('file', file)
-        const res = await fetch('/api/agent/upload', {
+        const res = await fetch(`${API_URL}/api/agent/upload`, {
           method: 'POST',
           body: fd,
         })
@@ -127,7 +129,7 @@ export default function AgentPostPage() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/agent/upload', {
+      const res = await fetch(`${API_URL}/api/agent/upload`, {
         method: 'POST',
         body: fd,
       })
@@ -150,7 +152,7 @@ export default function AgentPostPage() {
     setError('')
     setSaving(true)
     try {
-      const res = await fetch('/api/properties', {
+      const res = await fetch(`${API_URL}/api/properties`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

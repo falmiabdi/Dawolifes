@@ -1,7 +1,7 @@
 ﻿import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { connectDB } from './utils/db.js'
+import { connectDB, sequelize } from './utils/db.js'
 import authRoutes from './routes/auth.js'
 import propertyRoutes from './routes/properties.js'
 import paymentRoutes from './routes/payments.js'
@@ -16,6 +16,18 @@ dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 4000
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now()
+  const timestamp = new Date().toLocaleTimeString()
+  res.on("finish", () => {
+    const ms = Date.now() - start
+    const icon = res.statusCode < 400 ? "✅" : "❌"
+    console.log(`[${timestamp}] ${icon} ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms`)
+  })
+  next()
+})
 
 // Middleware
 app.use(cors({
@@ -41,14 +53,23 @@ app.use('/api/vehicles', vehicleRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  const dbState = sequelize ? 'connected' : 'disconnected'
+  res.json({
+    status: 'ok',
+    db: dbState,
+    timestamp: new Date().toISOString(),
+  })
 })
 
 // Start server
 async function start() {
-  await connectDB()
+  const db = await connectDB()
   const server = app.listen(PORT, () => {
-    console.log(`DawoLife API server running on port ${PORT}`)
+    if (db) {
+      console.log(`DawoLife API server running on port ${PORT} ✅ DB connected`)
+    } else {
+      console.log(`DawoLife API server running on port ${PORT} ⚠️ DB not connected`)
+    }
   })
   setupWebSocket(server)
 }

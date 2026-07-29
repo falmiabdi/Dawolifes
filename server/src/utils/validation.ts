@@ -37,6 +37,9 @@ export const propertySchema = z.object({
   featured: z.boolean().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
+  name: z.string().optional(),
+  phone: z.string().optional(),
+  locationDocument: z.string().optional(),
 })
 
 export const vehicleSchema = z.object({

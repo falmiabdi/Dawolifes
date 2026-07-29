@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { CheckCircle2, ChevronRight, ChevronLeft, Upload, X, Loader2, User, Phone, Shield, GraduationCap, Briefcase, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -155,7 +157,7 @@ export default function OnboardingPage() {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('field', field)
-    const res = await fetch('/api/agent/upload', { method: 'POST', body: fd })
+    const res = await fetch(`${API_URL}/api/agent/upload`, { method: 'POST', body: fd })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.message || 'Upload failed')
@@ -165,7 +167,7 @@ export default function OnboardingPage() {
   }, [])
 
   async function saveStep(data: Record<string, unknown>) {
-    const res = await fetch('/api/agent/onboarding', {
+    const res = await fetch(`${API_URL}/api/agent/onboarding`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

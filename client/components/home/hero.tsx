@@ -53,7 +53,7 @@ export function Hero() {
           }))
         )
       })
-      .catch(() => {})
+      .catch((err) => console.error('[API] ❌ Hero properties fetch failed:', err))
   }, [])
 
   const marqueeItems = [...recentProperties, ...recentProperties, ...recentProperties]
@@ -136,7 +136,7 @@ export function Hero() {
                       <p className="truncate text-[10px] font-semibold text-white sm:text-xs">{property.title}</p>
                       <span className="mt-0.5 inline-flex items-center gap-1 text-[9px] text-white/60 sm:text-[10px]">
                         <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        {timeAgo(property.createdAt)}
+                        <span suppressHydrationWarning>{timeAgo(property.createdAt)}</span>
                       </span>
                     </div>
                   </div>

@@ -1,27 +1,31 @@
-﻿import mongoose, { Schema, Document, Model } from 'mongoose'
+﻿import { DataTypes, Model } from "sequelize";
+import { sequelize } from "../config/database.js";
 
-export interface INotification extends Document {
-  userId: string
-  title: string
-  body: string
-  type: string
-  read: boolean
-  data?: any
-  createdAt: Date
-  updatedAt: Date
+export interface INotification {
+  id: string;
+  userId: string;
+  title: string;
+  body: string;
+  type: string;
+  read: boolean;
+  data?: any;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const NotificationSchema = new Schema<INotification>(
-  {
-    userId: { type: String, required: true },
-    title: { type: String, required: true },
-    body: { type: String, required: true },
-    type: { type: String, required: true },
-    read: { type: Boolean, default: false },
-    data: { type: mongoose.Schema.Types.Mixed },
-  },
-  { timestamps: true }
-)
+export class NotificationModel extends Model<INotification> {}
 
-export const NotificationModel: Model<INotification> =
-  (mongoose.models.Notification as Model<INotification>) || mongoose.model<INotification>('Notification', NotificationSchema)
+NotificationModel.init(
+  {
+    id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+    userId: { type: DataTypes.UUID, allowNull: false },
+    title: { type: DataTypes.STRING, allowNull: false },
+    body: { type: DataTypes.TEXT, allowNull: false },
+    type: { type: DataTypes.STRING, allowNull: false },
+    read: { type: DataTypes.BOOLEAN, defaultValue: false },
+    data: { type: DataTypes.JSONB },
+    createdAt: { type: DataTypes.DATE, allowNull: false },
+    updatedAt: { type: DataTypes.DATE, allowNull: false },
+  },
+  { sequelize, tableName: "notifications", timestamps: true }
+);

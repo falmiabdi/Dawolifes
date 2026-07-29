@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { MessageSquare, Send, Phone, Mail, ChevronLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,7 +43,7 @@ export default function AgentMessagesPage() {
 
   // Get agent ID from session
   useEffect(() => {
-    fetch('/api/auth/session')
+    fetch(`${API_URL}/api/auth/session`)
       .then(r => r.json())
       .then(data => {
         const userId = data?.session?.user?.id || data?.user?.id
@@ -53,7 +55,7 @@ export default function AgentMessagesPage() {
   const fetchConversations = useCallback(async () => {
     if (!agentId) return
     try {
-      const res = await fetch(`/api/messages?agentId=${agentId}`)
+      const res = await fetch(`${API_URL}/api/messages?agentId=${agentId}`)
       const data = await res.json()
       setConversations(data.conversations || [])
     } catch (err) {
@@ -74,7 +76,7 @@ export default function AgentMessagesPage() {
   const fetchMessages = useCallback(async () => {
     if (!activeConv) return
     try {
-      const res = await fetch(`/api/messages?propertyId=${activeConv.propertyId}&buyerEmail=${activeConv.buyerEmail}`)
+      const res = await fetch(`${API_URL}/api/messages?propertyId=${activeConv.propertyId}&buyerEmail=${activeConv.buyerEmail}`)
       const data = await res.json()
       setMessages(data.messages || [])
     } catch (err) {
@@ -88,7 +90,7 @@ export default function AgentMessagesPage() {
     fetchMessages()
 
     // Mark as read
-    fetch('/api/messages', {
+    fetch(`${API_URL}/api/messages`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -118,7 +120,7 @@ export default function AgentMessagesPage() {
     if (!typedMessage.trim() || !activeConv || !agentId) return
     setSending(true)
     try {
-      const res = await fetch('/api/messages', {
+      const res = await fetch(`${API_URL}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

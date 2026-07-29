@@ -1,9 +1,7 @@
-﻿import { Capacitor } from '@capacitor/core'
-import {
-  SplashScreen,
-  StatusBar,
-  Keyboard,
-} from '@capacitor/plugin'
+import { Capacitor } from '@capacitor/core'
+import { SplashScreen } from '@capacitor/splash-screen'
+import { StatusBar } from '@capacitor/status-bar'
+import { Keyboard } from '@capacitor/keyboard'
 import { Camera } from '@capacitor/camera'
 import { Geolocation } from '@capacitor/geolocation'
 import { Network } from '@capacitor/network'

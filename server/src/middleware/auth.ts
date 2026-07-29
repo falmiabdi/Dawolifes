@@ -1,5 +1,17 @@
-﻿import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../utils/jwt.js'
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: string
+        email: string
+        role: string
+      }
+    }
+  }
+}
 
 export interface AuthenticatedRequest extends Request {
   user?: {

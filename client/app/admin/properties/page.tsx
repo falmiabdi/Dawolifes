@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   Building2, Check, X, Search, Loader2, Trash2
 } from 'lucide-react'
@@ -61,7 +63,7 @@ export default function AdminPropertiesPage() {
   async function fetchProperties() {
     setLoading(true)
     try {
-      const res = await fetch(`/api/properties?status=${statusFilter}&search=${debouncedSearch}`)
+      const res = await fetch(`${API_URL}/api/properties?status=${statusFilter}&search=${debouncedSearch}`)
       const data = await res.json()
       setProperties(data.properties || [])
     } catch (err) {
@@ -78,7 +80,7 @@ export default function AdminPropertiesPage() {
   async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected', reason?: string) {
     setSubmittingAction(true)
     try {
-      const res = await fetch(`/api/properties/${propertyId}`, {
+      const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, rejectionReason: reason }),
@@ -105,7 +107,7 @@ export default function AdminPropertiesPage() {
     if (!confirm('Are you sure you want to permanently delete this listing?')) return
     setSubmittingAction(true)
     try {
-      const res = await fetch(`/api/properties/${propertyId}`, {
+      const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
         method: 'DELETE',
       })
       if (res.ok) {

@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   ArrowLeft,
   ArrowRight,
@@ -159,7 +161,7 @@ export function PostWizard() {
         const formData = new FormData()
         formData.append('file', files[i])
         
-        const res = await fetch('/api/agent/upload', {
+        const res = await fetch(`${API_URL}/api/upload`, {
           method: 'POST',
           body: formData,
         })
@@ -192,7 +194,7 @@ export function PostWizard() {
       const formData = new FormData()
       formData.append('file', file)
       
-      const res = await fetch('/api/agent/upload', {
+      const res = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -225,7 +227,7 @@ export function PostWizard() {
       setSubmitting(true)
       setError("")
 
-      const res = await fetch('/api/properties', {
+      const res = await fetch(`${API_URL}/api/properties`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

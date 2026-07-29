@@ -1,8 +1,8 @@
-﻿import { Router } from 'express'
+import { Router } from 'express'
 import { registerSchema, loginSchema } from '../utils/validation.js'
 import { hashPassword, comparePassword } from '../utils/password.js'
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js'
-import { UserModel } from '../models/User.js'
+import { signAccessToken, signRefreshToken, verifyAccessToken } from '../utils/jwt.js'
+import { UserModel } from '../models/index.js'
 
 const router = Router()
 
@@ -16,21 +16,20 @@ router.post('/register', async (req, res) => {
 
     const { username, email, password } = parsed.data
 
-    const existingUser = await UserModel.findOne({ email })
+    const existingUser = await UserModel.findOne({ where: { email } })
     if (existingUser) {
       return res.status(409).json({ message: 'Email already registered' })
     }
 
     const hashedPassword = await hashPassword(password)
-    const user = new UserModel({
+    const user = await UserModel.create({
       username,
       email,
       password: hashedPassword,
       role: 'agent',
       roles: ['agent'],
       status: 'Pending',
-    })
-    await user.save()
+    } as any)
 
     res.status(201).json({ message: 'Registration successful. Please sign in.' })
   } catch (err: any) {
@@ -47,43 +46,48 @@ router.post('/signin', async (req, res) => {
     }
 
     const { email, password } = parsed.data
-    const user = await UserModel.findOne({ email })
+    const user = await UserModel.findOne({ where: { email } })
 
-    if (!user || !(await comparePassword(password, user.password))) {
+    if (!user || !(await comparePassword(password, user.getDataValue('password')))) {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
-    if (user.status === 'Rejected') {
-      return res.status(403).json({ message: 'Your account has been rejected', rejectionReason: user.rejectionReason })
+    const status = user.getDataValue('status')
+    if (status === 'Rejected') {
+      return res.status(403).json({ message: 'Your account has been rejected', rejectionReason: user.getDataValue('rejectionReason') })
     }
 
-    if (user.status === 'Suspended') {
+    if (status === 'Suspended') {
       return res.status(403).json({ message: 'Your account has been suspended' })
     }
 
+    const userId = user.getDataValue('id')
+    const emailVal = user.getDataValue('email')
+    const role = user.getDataValue('role')
+
     const accessToken = signAccessToken({
-      userId: user._id.toString(),
-      email: user.email,
-      role: user.role,
+      userId,
+      email: emailVal,
+      role,
     })
     const refreshToken = signRefreshToken({
-      userId: user._id.toString(),
-      email: user.email,
-      role: user.role,
+      userId,
+      email: emailVal,
+      role,
     })
 
     res.json({
       message: 'Login successful',
       user: {
-        id: user._id.toString(),
-        name: user.username,
-        email: user.email,
-        role: user.role,
-        roles: user.roles,
-        status: user.status,
-        rejectionReason: user.rejectionReason,
-        isRootAdmin: user.isRootAdmin,
-        profilePhoto: user.profilePhoto,
+        id: userId,
+        name: user.getDataValue('username'),
+        email: emailVal,
+        role,
+        roles: user.getDataValue('roles'),
+        status,
+        rejectionReason: user.getDataValue('rejectionReason'),
+        isRootAdmin: user.getDataValue('isRootAdmin'),
+        profilePhoto: user.getDataValue('profilePhoto'),
       },
       accessToken,
       refreshToken,
@@ -103,7 +107,7 @@ router.get('/session', async (req, res) => {
 
     const token = authHeader.split(' ')[1]
     const decoded = verifyAccessToken(token)
-    const user = await UserModel.findById(decoded.userId)
+    const user = await UserModel.findByPk(decoded.userId)
 
     if (!user) {
       return res.status(401).json({ message: 'User not found' })
@@ -112,15 +116,15 @@ router.get('/session', async (req, res) => {
     res.json({
       session: {
         user: {
-          id: user._id.toString(),
-          name: user.username,
-          email: user.email,
-          role: user.role,
-          roles: user.roles,
-          status: user.status,
-          rejectionReason: user.rejectionReason,
-          isRootAdmin: user.isRootAdmin,
-          profilePhoto: user.profilePhoto,
+          id: user.getDataValue('id'),
+          name: user.getDataValue('username'),
+          email: user.getDataValue('email'),
+          role: user.getDataValue('role'),
+          roles: user.getDataValue('roles'),
+          status: user.getDataValue('status'),
+          rejectionReason: user.getDataValue('rejectionReason'),
+          isRootAdmin: user.getDataValue('isRootAdmin'),
+          profilePhoto: user.getDataValue('profilePhoto'),
         },
       },
     })

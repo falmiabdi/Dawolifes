@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   User, Check, X, Search, Loader2,
   ChevronRight, Trash2, Ban
@@ -62,7 +64,7 @@ export default function AdminAgentsPage() {
   async function fetchAgents() {
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`)
+      const res = await fetch(`${API_URL}/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`)
       const data = await res.json()
       setAgents(data.agents || [])
     } catch (err) {
@@ -84,7 +86,7 @@ export default function AdminAgentsPage() {
         body.rejectionReason = rejectionReason
       }
       
-      const res = await fetch('/api/admin/agents', {
+      const res = await fetch(`${API_URL}/api/admin/agents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import Link from "next/link"
 import { Globe, Menu, Plus, X, User } from "lucide-react"
 import { Logo } from "@/components/logo"
@@ -20,7 +22,7 @@ export function SiteHeader() {
   const [session, setSession] = useState<any>(null)
 
   useEffect(() => {
-    fetch("/api/auth/session")
+    fetch(`${API_URL}/api/auth/session`)
       .then(r => r.json())
       .then(data => setSession(data?.session || null))
       .catch(() => {})

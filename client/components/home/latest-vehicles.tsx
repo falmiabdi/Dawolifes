@@ -62,7 +62,7 @@ export function LatestVehicles() {
           }))
         setVehicles(transformed)
       })
-      .catch(() => {})
+      .catch((err) => console.error('[API] ❌ Vehicles fetch failed:', err))
       .finally(() => setLoading(false))
   }, [])
 

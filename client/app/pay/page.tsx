@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import Link from "next/link"
 import {
   Wallet,
@@ -124,7 +126,7 @@ function PayPageContent() {
       let data: any
 
       if (paymentMethod === "chapa") {
-        const res = await fetch("/api/chapa/initialize", {
+        const res = await fetch(`${API_URL}/api/chapa/initialize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -150,7 +152,7 @@ function PayPageContent() {
           pollStatus(data.txRef, "chapa")
         }
       } else {
-        const res = await fetch("/api/telebirr/create-order", {
+        const res = await fetch(`${API_URL}/api/telebirr/create-order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

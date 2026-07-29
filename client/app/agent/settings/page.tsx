@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Bell, Lock, CheckCircle2 } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -36,7 +38,7 @@ export default function AgentSettingsPage() {
   })
 
   async function onSubmit(data: PasswordForm) {
-    const res = await fetch('/api/auth/change-password', {
+    const res = await fetch(`${API_URL}/api/auth/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentPassword: data.current, newPassword: data.newPassword }),

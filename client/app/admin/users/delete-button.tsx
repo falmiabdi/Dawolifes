@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import toast from 'react-hot-toast'
 
 export function UserDeleteButton({ id }: { id: string }) {
@@ -13,7 +15,7 @@ export function UserDeleteButton({ id }: { id: string }) {
     if (!confirm('Are you sure you want to permanently delete this user account? This cannot be undone.')) return
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/agents', {
+      const res = await fetch(`${API_URL}/api/admin/agents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', id }),

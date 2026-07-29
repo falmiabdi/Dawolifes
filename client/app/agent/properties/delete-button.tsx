@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+
 export function PropertyDeleteButton({ id }: { id: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -12,7 +14,7 @@ export function PropertyDeleteButton({ id }: { id: string }) {
     if (!confirm('Are you sure you want to delete this listing?')) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/properties/${id}`, {
+      const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'DELETE',
       })
       if (res.ok) {

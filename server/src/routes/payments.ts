@@ -1,25 +1,21 @@
 ﻿import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
-import { PaymentModel } from '../models/Payment.js'
+import { PaymentModel } from '../models/index.js'
+import { sequelize } from '../config/database.js'
 
 const router = Router()
 
 // Get payments with stats
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const payments = await PaymentModel.find({})
-      .sort({ createdAt: -1 })
-      .limit(50)
+    const payments = await PaymentModel.findAll({
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+    })
 
-    const stats = await PaymentModel.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$amount' },
-        },
-      },
-    ])
+    const [stats] = await sequelize.query(
+      `SELECT status, COUNT(*)::int AS count, SUM(amount) AS "totalAmount" FROM payments GROUP BY status`
+    )
 
     res.json({ payments, stats })
   } catch (err: any) {
@@ -30,7 +26,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Get payment by ID
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const payment = await PaymentModel.findById(req.params.id)
+    const payment = await PaymentModel.findByPk(req.params.id)
     if (!payment) {
       return res.status(404).json({ message: 'Payment not found' })
     }
