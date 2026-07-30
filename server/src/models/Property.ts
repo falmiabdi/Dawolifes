@@ -29,6 +29,7 @@ export interface IProperty {
   locationDocument?: string;
   agentId: string;
   agentName: string;
+  displayPhone?: string;
   status: "Draft" | "Pending" | "Approved" | "Rejected" | "Sold" | "Rented";
   latitude?: number;
   longitude?: number;
@@ -67,6 +68,7 @@ PropertyModel.init(
     locationDocument: { type: DataTypes.STRING },
     agentId: { type: DataTypes.UUID, allowNull: false },
     agentName: { type: DataTypes.STRING, allowNull: false },
+    displayPhone: { type: DataTypes.STRING },
     status: {
       type: DataTypes.ENUM("Draft", "Pending", "Approved", "Rejected", "Sold", "Rented"),
       defaultValue: "Draft",

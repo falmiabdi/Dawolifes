@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-guard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
@@ -25,6 +26,7 @@ const steps = [
 
 export default function AgentPostPage() {
   const router = useRouter()
+  const { getToken } = useAuth()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -68,6 +70,11 @@ export default function AgentPostPage() {
   const [customFeature, setCustomFeature] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
   const toggleFeature = (feature: string) => {
     setFeatures((prev) =>
       prev.includes(feature) ? prev.filter((f) => f !== feature) : [...prev, feature]
@@ -88,11 +95,15 @@ export default function AgentPostPage() {
     setUploadingImage(true)
     setError('')
     try {
+      const token = await getToken()
+      const uploadUrl = token
+        ? `${API_URL}/api/agent/upload?token=${encodeURIComponent(token)}`
+        : `${API_URL}/api/agent/upload`
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const fd = new FormData()
         fd.append('file', file)
-        const res = await fetch(`${API_URL}/api/agent/upload`, {
+        const res = await fetch(uploadUrl, {
           method: 'POST',
           body: fd,
         })
@@ -127,10 +138,12 @@ export default function AgentPostPage() {
     setUploadingImage(true)
     setError('')
     try {
+      const headers = await getAuthHeaders()
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch(`${API_URL}/api/agent/upload`, {
         method: 'POST',
+        headers,
         body: fd,
       })
       const data = await res.json()
@@ -152,25 +165,37 @@ export default function AgentPostPage() {
     setError('')
     setSaving(true)
     try {
+      const authHeaders = await getAuthHeaders()
       const res = await fetch(`${API_URL}/api/properties`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
-          title, propertyType, listingType, price, priceType,
-          area, bedrooms, bathrooms, condition, legalizedYear,
+          title, type: propertyType, listingType, price: Number(price), priceType,
+          area: area ? Number(area) : undefined,
+          bedrooms: bedrooms ? Number(bedrooms) : undefined,
+          bathrooms: bathrooms ? Number(bathrooms) : undefined,
+          condition, legalizedYear: legalizedYear ? Number(legalizedYear) : undefined,
           description, features, region, city, subCity,
           woreda, kebele, parcel, block, homeNo,
-          images: uploadedImages, type: propertyType,
-          videoUrl: videoUrl || '',
-          latitude, longitude, locationDocument,
+          images: uploadedImages,
+          ...(videoUrl ? { videoUrl } : {}),
+          ...(latitude ? { latitude } : {}),
+          ...(longitude ? { longitude } : {}),
+          ...(locationDocument ? { locationDocument } : {}),
         }),
       })
 
       const data = await res.json()
-      if (res.ok && data.ok) {
+      if (res.ok) {
         router.push('/agent/properties')
       } else {
-        setError(data.message || 'Failed to submit property listing.')
+        if (data.errors?.fieldErrors) {
+          const msgs = Object.entries(data.errors.fieldErrors)
+            .map(([field, errs]) => `${field}: ${(errs as string[]).join(', ')}`)
+          setError(msgs.join(' | '))
+        } else {
+          setError(data.message || 'Failed to submit property listing.')
+        }
       }
     } catch (err) {
       setError('An error occurred. Please try again.')

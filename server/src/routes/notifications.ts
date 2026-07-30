@@ -18,6 +18,18 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
+// Get unread notification count
+router.get('/count', authMiddleware, async (req, res) => {
+  try {
+    const count = await NotificationModel.count({
+      where: { userId: req.user!.userId, read: false },
+    })
+    res.json({ count })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to get count' })
+  }
+})
+
 // Create notification
 router.post('/', authMiddleware, async (req, res) => {
   try {

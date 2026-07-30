@@ -3,19 +3,23 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
+import { useAuth } from '@/components/auth/auth-guard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export function PropertyDeleteButton({ id }: { id: string }) {
   const router = useRouter()
+  const { getToken } = useAuth()
   const [loading, setLoading] = useState(false)
 
   async function handleDelete() {
     if (!confirm('Are you sure you want to delete this listing?')) return
     setLoading(true)
     try {
+      const token = await getToken()
       const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (res.ok) {
         router.refresh()

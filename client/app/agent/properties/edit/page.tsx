@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useAuth } from "@/components/auth/auth-guard"
 import {
   ArrowLeft,
   Building2,
@@ -88,6 +89,7 @@ function EditPropertyPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const router = useRouter()
+  const { getToken } = useAuth()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState | null>(null)
   const [customFeature, setCustomFeature] = useState("")
@@ -96,6 +98,11 @@ function EditPropertyPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [rejectionReason, setRejectionReason] = useState("")
+
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => (f ? { ...f, [key]: value } : f))
@@ -197,6 +204,7 @@ function EditPropertyPage() {
     setError("")
 
     try {
+      const headers = await getAuthHeaders()
       const uploadedUrls: string[] = []
       for (let i = 0; i < files.length; i++) {
         const formData = new FormData()
@@ -204,8 +212,8 @@ function EditPropertyPage() {
 
         const res = await fetch(`${API_URL}/api/agent/upload`, {
           method: "POST",
+          headers,
           body: formData,
-          credentials: "include",
         })
 
         if (!res.ok) {
@@ -233,13 +241,14 @@ function EditPropertyPage() {
     setError("")
 
     try {
+      const headers = await getAuthHeaders()
       const formData = new FormData()
       formData.append("file", file)
 
       const res = await fetch(`${API_URL}/api/agent/upload`, {
         method: "POST",
+        headers,
         body: formData,
-        credentials: "include",
       })
 
       if (!res.ok) {
@@ -271,21 +280,21 @@ function EditPropertyPage() {
       setSubmitting(true)
       setError("")
 
+      const authHeaders = await getAuthHeaders()
       const res = await fetch(`${API_URL}/api/properties/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           title: form.title,
           type: form.propertyType,
           listingType: form.listingType,
-          price: form.price,
+          price: Number(form.price),
           priceType: form.priceType,
-          area: form.area,
-          bedrooms: form.bedrooms,
-          bathrooms: form.bathrooms,
+          area: form.area ? Number(form.area) : undefined,
+          bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
+          bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
           condition: form.condition,
-          legalizedYear: form.legalizedYear,
+          legalizedYear: form.legalizedYear ? Number(form.legalizedYear) : undefined,
           description: form.description,
           features: form.features,
           region: form.region,

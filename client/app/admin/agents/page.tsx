@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { useAuth } from '@/components/auth/auth-guard'
 import {
   User, Check, X, Search, Loader2,
   ChevronRight, Trash2, Ban
@@ -49,6 +50,7 @@ interface Agent {
 }
 
 export default function AdminAgentsPage() {
+  const { getToken } = useAuth()
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -61,10 +63,18 @@ export default function AdminAgentsPage() {
   const [rejectionReason, setRejectionReason] = useState('')
   const [submittingAction, setSubmittingAction] = useState(false)
 
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
   async function fetchAgents() {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`)
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`, {
+        headers: { ...authHeaders },
+      })
       const data = await res.json()
       setAgents(data.agents || [])
     } catch (err) {
@@ -76,11 +86,12 @@ export default function AdminAgentsPage() {
 
   useEffect(() => {
     fetchAgents()
-  }, [debouncedSearch, statusFilter])
+  }, [debouncedSearch, statusFilter, getAuthHeaders])
 
   async function handleAction(action: 'approve' | 'reject' | 'suspend' | 'reactivate' | 'delete', agentId: string) {
     setSubmittingAction(true)
     try {
+      const authHeaders = await getAuthHeaders()
       const body: Record<string, any> = { action, id: agentId }
       if (action === 'reject') {
         body.rejectionReason = rejectionReason
@@ -88,7 +99,7 @@ export default function AdminAgentsPage() {
       
       const res = await fetch(`${API_URL}/api/admin/agents`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify(body),
       })
 

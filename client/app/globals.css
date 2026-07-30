@@ -198,3 +198,26 @@
 .marquee-content:hover {
   animation-play-state: paused;
 }
+
+html.native-platform {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+html.native-platform ::-webkit-scrollbar {
+  display: none;
+}
+
+html.native-platform {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html.native-platform .safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+html.native-platform .safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

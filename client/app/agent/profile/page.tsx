@@ -10,18 +10,31 @@ import { ProfilePhotoUploader } from '@/components/dashboard/profile-photo-uploa
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AgentProfilePage() {
-  const { user: authUser } = useAuth()
+  const { user: authUser, getToken } = useAuth()
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     if (!authUser) return
-    fetch(`${API_URL}/api/agent/profile`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then((data) => setUser(data.user))
-      .catch(() => {})
-  }, [authUser])
+    const fetchProfile = async () => {
+      try {
+        const token = await getToken()
+        const res = await fetch(`${API_URL}/api/agent/profile`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        setUser(data.user)
+      } catch {
+        // Fall back to auth user data if profile endpoint fails
+        setUser(authUser)
+      }
+    }
+    fetchProfile()
+  }, [authUser, getToken])
 
-  if (!authUser || !user) {
+  const displayUser = user || authUser
+
+  if (!displayUser) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -34,34 +47,40 @@ export default function AgentProfilePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
           <ProfilePhotoUploader
-            currentPhoto={user.profilePhoto || ''}
-            initials={user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+            currentPhoto={displayUser.profilePhoto || ''}
+            initials={displayUser.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser.username.charAt(0).toUpperCase()}
           />
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900">{user.fullName || user.username}</h1>
-              <StatusBadge status={user.status || 'Pending'} />
+              <h1 className="text-2xl font-bold text-slate-900">{displayUser.fullName || displayUser.username}</h1>
+              <StatusBadge status={displayUser.status || 'Pending'} />
             </div>
-            <p className="text-sm text-slate-500">{user.email}</p>
+            <p className="text-sm text-slate-500">{displayUser.email}</p>
           </div>
         </div>
         <div>
-          {user.status === 'Pending' && (
+          {displayUser.status === 'Pending' && (
             <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 border border-amber-100">
               <Clock className="h-4 w-4" /> Under Review
             </div>
           )}
-          {user.status === 'Approved' && (
+          {displayUser.status === 'Approved' && (
             <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-2 text-xs font-medium text-green-800 border border-green-100">
               <CheckCircle2 className="h-4 w-4" /> Verified Agent
             </div>
           )}
-          {user.status === 'Rejected' && (
+          {displayUser.status === 'Rejected' && (
             <div className="rounded-xl bg-red-50 px-4 py-2 text-xs font-medium text-red-800 border border-red-100 space-y-1">
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4" /> Application Rejected
               </div>
-              {user.rejectionReason && <p className="text-slate-600">Reason: {user.rejectionReason}</p>}
+              {displayUser.rejectionReason && <p className="text-slate-600">Reason: {displayUser.rejectionReason}</p>}
+              <Link
+                href="/agent/onboarding"
+                className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 hover:underline mt-2"
+              >
+                Edit Profile & Resubmit →
+              </Link>
             </div>
           )}
         </div>
@@ -76,19 +95,19 @@ export default function AgentProfilePage() {
           <div className="divide-y divide-slate-100 text-sm">
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Gender</span>
-              <span className="font-semibold text-slate-800">{user.gender || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.gender || 'Not Specified'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Date of Birth</span>
-              <span className="font-semibold text-slate-800">{user.dateOfBirth || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.dateOfBirth || 'Not Specified'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Nationality</span>
-              <span className="font-semibold text-slate-800">{user.nationality || 'Ethiopian'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.nationality || 'Ethiopian'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Preferred Language</span>
-              <span className="font-semibold text-slate-800">{user.preferredLanguage || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.preferredLanguage || 'Not Specified'}</span>
             </div>
           </div>
         </div>
@@ -101,22 +120,22 @@ export default function AgentProfilePage() {
           <div className="divide-y divide-slate-100 text-sm">
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Ethio Telecom Phone</span>
-              <span className="font-semibold text-slate-800">{user.ethPhone || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.ethPhone || 'Not Specified'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Safaricom Phone</span>
-              <span className="font-semibold text-slate-800">{user.safaricomPhone || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.safaricomPhone || 'Not Specified'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Region & City</span>
               <span className="font-semibold text-slate-800">
-                {user.region ? `${user.region}, ${user.city || ''}` : 'Not Specified'}
+                {displayUser.region ? `${displayUser.region}, ${displayUser.city || ''}` : 'Not Specified'}
               </span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Woreda / Kebele</span>
               <span className="font-semibold text-slate-800">
-                {user.woreda ? `Woreda ${user.woreda}, Kebele ${user.kebele || ''}` : 'Not Specified'}
+                {displayUser.woreda ? `Woreda ${displayUser.woreda}, Kebele ${displayUser.kebele || ''}` : 'Not Specified'}
               </span>
             </div>
           </div>
@@ -130,19 +149,19 @@ export default function AgentProfilePage() {
           <div className="divide-y divide-slate-100 text-sm">
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Highest Education</span>
-              <span className="font-semibold text-slate-800">{user.highestEducation || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.highestEducation || 'Not Specified'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Agent Experience</span>
-              <span className="font-semibold text-slate-800">{user.agentExperience || 'Not Specified'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.agentExperience || 'Not Specified'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">Company Name</span>
-              <span className="font-semibold text-slate-800">{user.companyName || 'None'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.companyName || 'None'}</span>
             </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">TIN Number</span>
-              <span className="font-semibold text-slate-800">{user.tinNumber || 'None'}</span>
+              <span className="font-semibold text-slate-800">{displayUser.tinNumber || 'None'}</span>
             </div>
           </div>
         </div>
@@ -154,12 +173,12 @@ export default function AgentProfilePage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Fayda ID Front', url: user.faydaFront },
-              { label: 'Fayda ID Back', url: user.faydaBack },
-              { label: 'Selfie with Fayda', url: user.selfieFayda },
-              { label: 'Passport Photo', url: user.passportPhoto },
-              { label: 'Education Certificate', url: user.educationCertificate },
-              { label: 'Business License', url: user.businessLicenseFile },
+              { label: 'Fayda ID Front', url: displayUser.faydaFront },
+              { label: 'Fayda ID Back', url: displayUser.faydaBack },
+              { label: 'Selfie with Fayda', url: displayUser.selfieFayda },
+              { label: 'Passport Photo', url: displayUser.passportPhoto },
+              { label: 'Education Certificate', url: displayUser.educationCertificate },
+              { label: 'Business License', url: displayUser.businessLicenseFile },
             ].map((doc) => (
               <div key={doc.label} className="rounded-xl border border-slate-100 bg-slate-50 p-3 flex flex-col justify-between">
                 <span className="text-xs font-semibold text-slate-500 mb-2">{doc.label}</span>

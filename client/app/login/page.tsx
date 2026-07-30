@@ -1,14 +1,13 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { useAuth } from '@/components/auth/auth-guard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,6 +19,7 @@ interface LoginFormValues {
 
 export default function LoginPage() {
   const router = useRouter()
+  const { user, login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const {
@@ -33,34 +33,19 @@ export default function LoginPage() {
     },
   })
 
+  useEffect(() => {
+    if (!user) return
+    if (user.role === 'admin') router.replace('/admin')
+    else router.replace('/agent')
+  }, [user, router])
+
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
-    const response = await fetch(`${API_URL}/api/auth/signin`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: values.email,
-        password: values.password,
-      }),
-      // Forward to server API
-      redirect: 'follow',
-    })
-
-    if (!response.ok) {
+    try {
+      await login(values.email, values.password)
+    } catch {
       setMessage('Invalid email or password. Please try again.')
-      return
     }
-
-    const payload = await response.json()
-    if (payload.accessToken) {
-      document.cookie = `token=${payload.accessToken}; path=/; max-age=604800; SameSite=Lax`
-    }
-    router.refresh()
-    if (payload.user?.email === 'felmitesfaye@gmail.com') {
-      router.push('/admin')
-      return
-    }
-    router.push('/agent')
   }
 
   return (
@@ -117,10 +102,6 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-        <p className="font-semibold text-slate-800">Demo credentials</p>
-        <p className="mt-1">Admin: felmitesfaye@gmail.com / SecurePass@12345</p>
-      </div>
     </AuthShell>
   )
 }

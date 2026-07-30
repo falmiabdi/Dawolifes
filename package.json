@@ -17,7 +17,10 @@
     "server:dev": "cd server && pnpm dev",
     "server:build": "cd server && pnpm build",
     "server:start": "cd server && pnpm start",
-    "dev:all": "concurrently \"pnpm dev\" \"pnpm server:dev\""
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm server:dev\"",
+    "cap:sync:all": "pnpm build && npx cap sync",
+    "android:dev": "pnpm build && npx cap sync android && npx cap run android",
+    "ios:dev": "pnpm build && npx cap sync ios && npx cap run ios"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -42,6 +45,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
+    "lenis": "^1.3.25",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "react": "^19",

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-guard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { CheckCircle2, ChevronRight, ChevronLeft, Upload, X, Loader2, User, Phone, Shield, GraduationCap, Briefcase, FileCheck } from 'lucide-react'
@@ -111,6 +112,7 @@ function FileUpload({ label, value, onChange, field, uploadFile }: {
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { getToken } = useAuth()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [agreed, setAgreed] = useState({ terms: false, privacy: false })
@@ -153,23 +155,30 @@ export default function OnboardingPage() {
 
 
 
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
   const uploadFile = useCallback(async (file: File, field: string): Promise<string> => {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('field', field)
-    const res = await fetch(`${API_URL}/api/agent/upload`, { method: 'POST', body: fd })
+    const headers = await getAuthHeaders()
+    const res = await fetch(`${API_URL}/api/agent/upload`, { method: 'POST', headers, body: fd })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.message || 'Upload failed')
     }
     const data = await res.json()
     return data.url || ''
-  }, [])
+  }, [getAuthHeaders])
 
   async function saveStep(data: Record<string, unknown>) {
+    const headers = { 'Content-Type': 'application/json', ...await getAuthHeaders() }
     const res = await fetch(`${API_URL}/api/agent/onboarding`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(data),
     })
     if (!res.ok) {

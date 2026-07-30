@@ -221,7 +221,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
                   {messages.map(m => {
                     const isBuyer = m.sender === "buyer"
                     return (
-                      <div key={m._id} className={'flex ' + (isBuyer ? 'justify-end' : 'justify-start')}>
+                      <div key={m.id} className={'flex ' + (isBuyer ? 'justify-end' : 'justify-start')}>
                         <div className={'max-w-[80%] rounded-2xl px-3 py-2 text-sm ' + (isBuyer ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-card border border-border text-foreground rounded-bl-none')}>
                           <p>{m.text}</p>
                           <span className={'block mt-1 text-[10px] text-right ' + (isBuyer ? 'text-primary-foreground/70' : 'text-muted-foreground')}>

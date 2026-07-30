@@ -2,6 +2,9 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/toast-provider'
+import { AuthProvider } from '@/components/auth/auth-guard'
+import { SmoothScroll } from '@/components/smooth-scroll'
+import { CapacitorInit } from '@/components/capacitor-init'
 import './globals.css'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -15,11 +18,18 @@ export const metadata: Metadata = {
   description:
     'Find homes for sale and rent across Ethiopia. Browse verified listings in Oromia, Addis Ababa, Shaggar and beyond on DawoLife.',
   generator: 'v0.app',
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light',
   themeColor: '#F97316',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -29,9 +39,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${plusJakarta.variable} bg-background`}>
-      <body className="font-sans antialiased">
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
+      <body className="font-sans antialiased overflow-x-hidden">
         <ToastProvider />
-        {children}
+        <AuthProvider>
+          <CapacitorInit />
+          <SmoothScroll>{children}</SmoothScroll>
+        </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

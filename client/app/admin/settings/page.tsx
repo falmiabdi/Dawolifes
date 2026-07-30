@@ -1,56 +1,156 @@
 "use client"
 
-import { useState } from 'react'
-import { Lock, ShieldAlert, CheckCircle2 } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { Camera, Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2 } from 'lucide-react'
+import { useAuth } from '@/components/auth/auth-guard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
 
-const passwordSchema = z
-  .object({
-    current: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-    confirm: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.newPassword === data.confirm, {
-    message: "Passwords don't match",
-    path: ['confirm'],
-  })
-
-type PasswordForm = z.infer<typeof passwordSchema>
-
 export default function AdminSettingsPage() {
-  const [success, setSuccess] = useState(false)
+  const { user, getToken } = useAuth()
+  const [saving, setSaving] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<PasswordForm>({
-    resolver: zodResolver(passwordSchema),
-  })
+  // Profile
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [profilePhoto, setProfilePhoto] = useState('')
+  const [uploading, setUploading] = useState(false)
 
-  async function onSubmit(data: PasswordForm) {
-    const res = await fetch(`${API_URL}/api/auth/change-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentPassword: data.current, newPassword: data.newPassword }),
-    })
-    if (res.ok) {
-      toast.success('Password updated successfully')
-      setSuccess(true)
-      reset()
-      setTimeout(() => setSuccess(false), 3000)
-    } else {
-      const err = await res.json().catch(() => ({}))
-      toast.error(err.message || 'Failed to update password')
+  // Password
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+
+  // Create admin
+  const [newAdmin, setNewAdmin] = useState({ username: '', email: '', password: '' })
+  const [creatingAdmin, setCreatingAdmin] = useState(false)
+  const [isRootAdmin, setIsRootAdmin] = useState(false)
+
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
+  useEffect(() => {
+    if (user) {
+      setPhone((user as any).phone || '')
+      setEmail((user as any).email || '')
+      setProfilePhoto((user as any).profilePhoto || '')
+      setIsRootAdmin((user as any).isRootAdmin || false)
+    }
+  }, [user])
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json()
+      if (data.url) {
+        setProfilePhoto(data.url)
+        toast.success('Photo uploaded')
+      }
+    } catch {
+      toast.error('Failed to upload photo')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const saveProfile = async () => {
+    setSaving(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/admin/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ phone, email, profilePhoto }),
+      })
+      if (res.ok) {
+        toast.success('Profile updated')
+      } else {
+        const data = await res.json()
+        toast.error(data.message || 'Failed to update profile')
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords don't match")
+      return
+    }
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters')
+      return
+    }
+    setChangingPassword(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      if (res.ok) {
+        toast.success('Password changed')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        const data = await res.json()
+        toast.error(data.message || 'Failed to change password')
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
+  const handleCreateAdmin = async () => {
+    if (!newAdmin.username || !newAdmin.email || !newAdmin.password) {
+      toast.error('All fields are required')
+      return
+    }
+    if (newAdmin.password.length < 8) {
+      toast.error('Password must be at least 8 characters')
+      return
+    }
+    setCreatingAdmin(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/admin/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify(newAdmin),
+      })
+      if (res.ok) {
+        toast.success('Admin created successfully')
+        setNewAdmin({ username: '', email: '', password: '' })
+      } else {
+        const data = await res.json()
+        toast.error(data.message || 'Failed to create admin')
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setCreatingAdmin(false)
     }
   }
 
@@ -58,82 +158,106 @@ export default function AdminSettingsPage() {
     <div className="space-y-6 max-w-3xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Admin Settings</h1>
-        <p className="text-sm text-slate-500">Manage administrator security credentials and system notifications.</p>
+        <p className="text-sm text-slate-500">Manage your profile, credentials, and team.</p>
       </div>
 
-      {success && (
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>Admin configuration updated successfully!</span>
+      {/* Profile */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+        <div className="flex items-center gap-2 text-orange-600 font-bold">
+          <Camera className="h-5 w-5" />
+          <h2>Profile</h2>
         </div>
-      )}
 
-      {/* Security Credentials */}
+        <div className="flex items-center gap-5">
+          <div className="relative">
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="Profile" className="h-20 w-20 rounded-full object-cover border-2 border-slate-200" />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 border-2 border-slate-200">
+                <Camera className="h-6 w-6 text-slate-400" />
+              </div>
+            )}
+            <label className="absolute bottom-0 right-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-orange-500 text-white hover:bg-orange-600">
+              <Camera className="h-3.5 w-3.5" />
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            </label>
+            {uploading && <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-orange-500" />}
+          </div>
+          <div className="text-sm">
+            <p className="font-bold text-slate-900">{(user as any)?.name || 'Admin'}</p>
+            <p className="text-slate-400">{email}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Phone Number</Label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+251 900 000 000" className="rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="rounded-xl" />
+          </div>
+        </div>
+        <Button onClick={saveProfile} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
+          {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Saving...</> : 'Save Profile'}
+        </Button>
+      </div>
+
+      {/* Change Password */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Lock className="h-5 w-5" />
-          <h2>Change Master Password</h2>
+          <h2>Change Password</h2>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Current Master Password</Label>
-            <Input
-              type="password"
-              {...register('current')}
-              placeholder="••••••••"
-              className="rounded-xl"
-            />
-            {errors.current && <p className="text-xs text-red-500">{errors.current.message}</p>}
+            <Label>Current Password</Label>
+            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>New Master Password</Label>
-              <Input
-                type="password"
-                {...register('newPassword')}
-                placeholder="••••••••"
-                className="rounded-xl"
-              />
-              {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
+              <Label>New Password</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>Confirm Master Password</Label>
-              <Input
-                type="password"
-                {...register('confirm')}
-                placeholder="••••••••"
-                className="rounded-xl"
-              />
-              {errors.confirm && <p className="text-xs text-red-500">{errors.confirm.message}</p>}
+              <Label>Confirm Password</Label>
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
             </div>
           </div>
-          <Button type="submit" disabled={isSubmitting} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
-            Update Security Credentials
+          <Button onClick={handleChangePassword} disabled={changingPassword} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
+            {changingPassword ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Changing...</> : 'Update Password'}
           </Button>
-        </form>
+        </div>
       </div>
 
-      {/* System configuration */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-orange-600 font-bold">
-          <ShieldAlert className="h-5 w-5" />
-          <h2>Platform Rules & Audits</h2>
+      {/* Create Admin */}
+      {isRootAdmin && (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-orange-600 font-bold">
+            <UserPlus className="h-5 w-5" />
+            <h2>Create New Admin</h2>
+          </div>
+          <p className="text-xs text-slate-400">Only root administrators can create new admin accounts.</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <Input value={newAdmin.username} onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })} className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={newAdmin.email} onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })} type="email" className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <Input value={newAdmin.password} onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} type="password" className="rounded-xl" />
+            </div>
+          </div>
+          <Button onClick={handleCreateAdmin} disabled={creatingAdmin} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
+            {creatingAdmin ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Creating...</> : 'Create Admin'}
+          </Button>
         </div>
-        <div className="space-y-3 text-sm text-slate-700">
-          {[
-            { id: 'rule1', title: 'Auto-Reject Blank Applications', desc: 'System automatically flags and requests updates for onboarding forms with missing document attachments.' },
-            { id: 'rule2', title: 'Listing Verifications Audit Trail', desc: 'Track administrator usernames and action logs for every approved/rejected listing.' },
-          ].map((item) => (
-            <label key={item.id} className="flex items-start gap-4 p-3 rounded-2xl border border-slate-50 hover:bg-slate-50/50 cursor-pointer">
-              <input type="checkbox" defaultChecked className="mt-1 accent-orange-500" />
-              <div>
-                <p className="font-semibold text-slate-900">{item.title}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
-              </div>
-            </label>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   )
 }

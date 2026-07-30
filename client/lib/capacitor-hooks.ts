@@ -3,13 +3,18 @@
 import { useEffect, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { initializeCapacitorPlugins } from '@/lib/capacitor-plugins'
+import { patchFetchForCapacitor } from '@/lib/get-api-url'
 
 export function useCapacitor() {
   const [isNative, setIsNative] = useState(false)
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    setIsNative(Capacitor.isNativePlatform())
+    const isNativePlatform = Capacitor.isNativePlatform()
+    setIsNative(isNativePlatform)
+    if (isNativePlatform) {
+      patchFetchForCapacitor()
+    }
     initializeCapacitorPlugins()
     setIsReady(true)
   }, [])

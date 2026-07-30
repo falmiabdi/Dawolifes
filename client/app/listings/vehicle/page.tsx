@@ -108,131 +108,124 @@ function VehicleListingPage() {
     }
 
     const fetchVehicle = async () => {
-      if (/^[0-9a-fA-F]{24}$/.test(id)) {
-        try {
-          const res = await fetch(`${API_URL}/api/vehicles/${id}`)
-          if (res.ok) {
-            const data = await res.json()
-            const db = data.vehicle
-            if (db) {
-              const mapped: Vehicle = {
-                id: db._id?.toString() || id,
-                title: db.title || "",
-                listingType: db.listingType || "For Sale",
-                vehicleCategory: db.vehicleCategory || "",
-                make: db.make || "",
-                model: db.vehicleModel || db.model || "",
-                trimVersion: db.trimVersion || "",
-                manufacturingYear: db.manufacturingYear || 0,
-                color: db.color || "",
-                countryOfOrigin: db.countryOfOrigin || "",
-                fuelType: db.fuelType || "",
-                engineSize: db.engineSize || 0,
-                horsepower: db.horsepower || 0,
-                transmission: db.transmission || "",
-                drivetrain: db.drivetrain || "",
-                seatingCapacity: db.seatingCapacity || 0,
-                doors: db.doors || 0,
-                mileage: db.mileage || 0,
-                condition: db.condition || "Used",
-                accidentFree: db.accidentFree ?? false,
-                imported: db.imported ?? false,
-                safetyFeatures: db.safetyFeatures || [],
-                interiorFeatures: db.interiorFeatures || [],
-                exteriorFeatures: db.exteriorFeatures || [],
-                price: db.price || 0,
-                priceType: db.priceType || "",
-                region: db.region || "",
-                city: db.city || "",
-                subCity: db.subCity || "",
-                woreda: db.woreda || "",
-                description: db.description || "",
-                features: db.features || [],
-                images: db.images && db.images.length > 0 ? db.images : ["/placeholder.jpg"],
-                videoUrl: db.videoUrl || "",
-                featured: db.featured || false,
-                dailyRate: db.dailyRate || 0,
-                weeklyRate: db.weeklyRate || 0,
-                monthlyRate: db.monthlyRate || 0,
-                selfDrive: db.selfDrive ?? false,
-                driverIncluded: db.driverIncluded ?? false,
-                negotiable: db.negotiable ?? false,
-                financingAvailable: db.financingAvailable ?? false,
-                plateNumber: db.plateNumber || "",
-                insuranceValid: db.insuranceValid ?? false,
-                ownershipCertificate: db.ownershipCertificate ?? false,
-                roadFundPaid: db.roadFundPaid ?? false,
-                inspectionCertificate: db.inspectionCertificate ?? false,
-                agent: {
-                  id: db.agentId?._id?.toString() || "unknown",
-                  name: db.agentId?.fullName || db.agentId?.username || "Unknown Agent",
-                  role: db.agentId?.role === "admin" ? "Administrator" : "Vehicle Agent",
-                  phone: db.agentId?.ethPhone || db.agentId?.safaricomPhone || "+251 900 000 000",
-                  avatar: db.agentId?.profilePhoto || "/placeholder-user.jpg",
-                  email: db.agentId?.email || "",
-                  secondaryPhone: db.agentId?.safaricomPhone || "",
-                  companyName: db.agentId?.companyName || "",
-                  officeAddress: db.agentId?.officeAddress || "",
-                  licenseNumber: db.agentId?.businessLicenseNumber || "",
-                },
-              }
-              setVehicle(mapped)
-              setLoading(false)
-
-              try {
-                const simRes = await fetch(`${API_URL}/api/vehicles?category=${mapped.vehicleCategory}&limit=3`)
-                if (simRes.ok) {
-                  const simData = await simRes.json()
-                  const simArr: Vehicle[] = (simData.vehicles || [])
-                    .filter((v: any) => (v._id?.toString() || v.id) !== mapped.id)
-                    .slice(0, 3)
-                    .map((v: any) => ({
-                      id: v._id?.toString() || v.id,
-                      title: v.title || "",
-                      listingType: v.listingType || "For Sale",
-                      vehicleCategory: v.vehicleCategory || "",
-                      make: v.make || "",
-                      model: v.vehicleModel || v.model || "",
-                      trimVersion: v.trimVersion || "",
-                      manufacturingYear: v.manufacturingYear || 0,
-                      color: v.color || "",
-                      countryOfOrigin: v.countryOfOrigin || "",
-                      fuelType: v.fuelType || "",
-                      transmission: v.transmission || "",
-                      mileage: v.mileage || 0,
-                      condition: v.condition || "Used",
-                      safetyFeatures: v.safetyFeatures || [],
-                      interiorFeatures: v.interiorFeatures || [],
-                      exteriorFeatures: v.exteriorFeatures || [],
-                      price: v.price || 0,
-                      priceType: v.priceType || "",
-                      region: v.region || "",
-                      city: v.city || "",
-                      subCity: v.subCity || "",
-                      woreda: v.woreda || "",
-                      description: v.description || "",
-                      features: v.features || [],
-                      images: v.images && v.images.length > 0 ? v.images : ["/placeholder.jpg"],
-                      featured: v.featured || false,
-                      agent: {
-                        id: v.agentId?._id?.toString() || "unknown",
-                        name: v.agentId?.fullName || "Agent",
-                        role: v.agentId?.role === "admin" ? "Administrator" : "Vehicle Agent",
-                        phone: v.agentId?.ethPhone || v.agentId?.safaricomPhone || "+251 900 000 000",
-                        avatar: v.agentId?.profilePhoto || "/placeholder-user.jpg",
-                      },
-                    }))
-                  setSimilarVehicles(simArr)
-                }
-              } catch {
-                /* no similar vehicles */
-              }
-              return
+      try {
+        const res = await fetch(`${API_URL}/api/vehicles/${id}`)
+        if (res.ok) {
+          const data = await res.json()
+          const db = data.vehicle
+          if (db) {
+            const mapped: Vehicle = {
+              id: db.id,
+              title: db.title || "",
+              listingType: db.listingType || "For Sale",
+              vehicleCategory: db.vehicleCategory || "",
+              make: db.make || "",
+              model: db.vehicleModel || db.model || "",
+              trimVersion: db.trimVersion || "",
+              manufacturingYear: db.manufacturingYear || 0,
+              color: db.color || "",
+              countryOfOrigin: db.countryOfOrigin || "",
+              fuelType: db.fuelType || "",
+              engineSize: db.engineSize || 0,
+              horsepower: db.horsepower || 0,
+              transmission: db.transmission || "",
+              drivetrain: db.drivetrain || "",
+              seatingCapacity: db.seatingCapacity || 0,
+              doors: db.doors || 0,
+              mileage: db.mileage || 0,
+              condition: db.condition || "Used",
+              accidentFree: db.accidentFree ?? false,
+              imported: db.imported ?? false,
+              safetyFeatures: db.safetyFeatures || [],
+              interiorFeatures: db.interiorFeatures || [],
+              exteriorFeatures: db.exteriorFeatures || [],
+              price: db.price || 0,
+              priceType: db.priceType || "",
+              region: db.region || "",
+              city: db.city || "",
+              subCity: db.subCity || "",
+              woreda: db.woreda || "",
+              description: db.description || "",
+              features: db.features || [],
+              images: db.images && db.images.length > 0 ? db.images : ["/placeholder.jpg"],
+              videoUrl: db.videoUrl || "",
+              featured: db.featured || false,
+              dailyRate: db.dailyRate || 0,
+              weeklyRate: db.weeklyRate || 0,
+              monthlyRate: db.monthlyRate || 0,
+              selfDrive: db.selfDrive ?? false,
+              driverIncluded: db.driverIncluded ?? false,
+              negotiable: db.negotiable ?? false,
+              financingAvailable: db.financingAvailable ?? false,
+              plateNumber: db.plateNumber || "",
+              insuranceValid: db.insuranceValid ?? false,
+              ownershipCertificate: db.ownershipCertificate ?? false,
+              roadFundPaid: db.roadFundPaid ?? false,
+              inspectionCertificate: db.inspectionCertificate ?? false,
+              agent: {
+                id: db.agentId || "unknown",
+                name: db.agentName || "Unknown Agent",
+                role: "Vehicle Agent",
+                phone: "+251 900 000 000",
+                avatar: "/placeholder-user.jpg",
+              },
             }
+            setVehicle(mapped)
+            setLoading(false)
+
+            try {
+              const simRes = await fetch(`${API_URL}/api/vehicles?category=${mapped.vehicleCategory}&limit=3`)
+              if (simRes.ok) {
+                const simData = await simRes.json()
+                const simArr: Vehicle[] = (simData.vehicles || [])
+                  .filter((v: any) => v.id !== mapped.id)
+                  .slice(0, 3)
+                  .map((v: any) => ({
+                    id: v.id,
+                    title: v.title || "",
+                    listingType: v.listingType || "For Sale",
+                    vehicleCategory: v.vehicleCategory || "",
+                    make: v.make || "",
+                    model: v.vehicleModel || v.model || "",
+                    trimVersion: v.trimVersion || "",
+                    manufacturingYear: v.manufacturingYear || 0,
+                    color: v.color || "",
+                    countryOfOrigin: v.countryOfOrigin || "",
+                    fuelType: v.fuelType || "",
+                    transmission: v.transmission || "",
+                    mileage: v.mileage || 0,
+                    condition: v.condition || "Used",
+                    safetyFeatures: v.safetyFeatures || [],
+                    interiorFeatures: v.interiorFeatures || [],
+                    exteriorFeatures: v.exteriorFeatures || [],
+                    price: v.price || 0,
+                    priceType: v.priceType || "",
+                    region: v.region || "",
+                    city: v.city || "",
+                    subCity: v.subCity || "",
+                    woreda: v.woreda || "",
+                    description: v.description || "",
+                    features: v.features || [],
+                    images: v.images && v.images.length > 0 ? v.images : ["/placeholder.jpg"],
+                    featured: v.featured || false,
+                    agent: {
+                      id: v.agentId || "unknown",
+                      name: v.agentName || "Agent",
+                      role: "Vehicle Agent",
+                      phone: "+251 900 000 000",
+                      avatar: "/placeholder-user.jpg",
+                    },
+                  }))
+                setSimilarVehicles(simArr)
+              }
+            } catch {
+              /* no similar vehicles */
+            }
+            return
           }
-        } catch (err) {
-          console.error("[VehicleListing API Load Error]", err)
         }
+      } catch (err) {
+        console.error("[VehicleListing API Load Error]", err)
       }
 
       setLoading(false)

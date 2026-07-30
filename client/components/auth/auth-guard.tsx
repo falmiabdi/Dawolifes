@@ -3,6 +3,9 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Capacitor } from '@capacitor/core'
+import { patchFetchForCapacitor } from '@/lib/get-api-url'
+
+patchFetchForCapacitor()
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
@@ -24,9 +27,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>
   register: (data: { username: string; email: string; password: string }) => Promise<any>
   logout: () => void
+  getToken: () => Promise<string | null>
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true, login: async () => {}, register: async () => {}, logout: () => {} })
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true, login: async () => {}, register: async () => {}, logout: () => {}, getToken: async () => null })
 
 export function useAuth() {
   return useContext(AuthContext)
@@ -37,8 +41,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const cached = sessionStorage.getItem('auth_user')
+    if (cached) {
+      try { setUser(JSON.parse(cached)) } catch {}
+      setLoading(false)
+    }
     fetchAuthSession()
   }, [])
+
+  function setUserAndCache(u: SessionUser | null) {
+    setUser(u)
+    if (u) sessionStorage.setItem('auth_user', JSON.stringify(u))
+    else sessionStorage.removeItem('auth_user')
+  }
 
   async function fetchAuthSession() {
     try {
@@ -57,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json()
         if (data?.session?.user) {
-          setUser(data.session.user)
+          setUserAndCache(data.session.user)
         }
       }
     } catch {
@@ -99,10 +114,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { Preferences } = await import('@capacitor/preferences')
       await Preferences.set({ key: 'auth_token', value: data.accessToken })
     } else {
-      document.cookie = `token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; samesite=strict`
+      document.cookie = `token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
     }
 
-    setUser(data.user)
+    setUserAndCache(data.user)
     return data
   }
 
@@ -128,11 +143,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.cookie = 'token=; path=/; max-age=0'
     }
-    setUser(null)
+    setUserAndCache(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, getToken }}>
       {children}
     </AuthContext.Provider>
   )
@@ -170,10 +185,9 @@ export function AuthGuard({
 
   if (loading || redirecting) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="mt-3 text-sm text-muted-foreground">Loading...</p>
+      <div className="min-h-screen">
+        <div className="h-1 w-full bg-primary/10">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
         </div>
       </div>
     )

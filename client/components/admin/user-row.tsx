@@ -58,7 +58,7 @@ export function UserRow({ user, isProtected = false, variant = 'card' }: UserRow
           {isProtected ? (
             <span className="text-[10px] font-semibold text-slate-400 uppercase">Root Owner</span>
           ) : (
-            <UserDeleteButton id={user._id.toString()} />
+            <UserDeleteButton id={user.id.toString()} />
           )}
         </td>
       </tr>
@@ -87,7 +87,7 @@ export function UserRow({ user, isProtected = false, variant = 'card' }: UserRow
         {isProtected ? (
           <span className="text-[10px] font-semibold text-slate-400 uppercase">Root Owner</span>
         ) : (
-          <UserDeleteButton id={user._id.toString()} />
+          <UserDeleteButton id={user.id.toString()} />
         )}
       </div>
     </div>

@@ -2,13 +2,40 @@ import { Router } from 'express'
 import { authMiddleware, agentMiddleware } from '../middleware/auth.js'
 import { vehicleSchema } from '../utils/validation.js'
 import { VehicleModel } from '../models/index.js'
+import { notifyAdmins } from '../utils/notifications.js'
 
 const router = Router()
 
+const ALLOWED_UPDATE_FIELDS = [
+  'title', 'listingType', 'vehicleCategory', 'make', 'vehicleModel',
+  'trimVersion', 'manufacturingYear', 'registrationYear', 'color',
+  'countryOfOrigin', 'condition', 'fuelType', 'engineSize', 'horsepower',
+  'transmission', 'drivetrain', 'cylinders', 'seatingCapacity', 'doors',
+  'mileage', 'fuelConsumption', 'fuelTankCapacity', 'groundClearance',
+  'weight', 'tireSize', 'accidentFree', 'accidentHistory',
+  'serviceHistoryAvailable', 'ownershipCount', 'imported', 'locallyAssembled',
+  'safetyFeatures', 'interiorFeatures', 'exteriorFeatures',
+  'price', 'priceType', 'sellingPrice', 'negotiable', 'financingAvailable',
+  'exchangeAccepted', 'bankLoanAccepted', 'dailyRate', 'weeklyRate',
+  'monthlyRate', 'securityDeposit', 'minRentalDays', 'maxRentalDays',
+  'driverIncluded', 'selfDrive', 'fuelPolicy', 'mileageLimit', 'extraKmCharge',
+  'deliveryAvailable', 'airportPickup', 'region', 'city', 'subCity', 'woreda',
+  'pickupAddress', 'regionRegistration', 'ownershipCertificate', 'roadFundPaid',
+  'insuranceValid', 'inspectionCertificate', 'customsClearance', 'dutyPaid',
+  'plateType', 'plateNumber', 'description', 'images', 'videoUrl',
+  'latitude', 'longitude', 'features',
+]
+
 // Get all vehicles (public)
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const vehicles = await VehicleModel.findAll({ where: { status: 'Approved' }, order: [['createdAt', 'DESC']] })
+    const where: any = { status: 'Approved' }
+    if (req.query.city) where.city = req.query.city
+    if (req.query.category) where.vehicleCategory = req.query.category
+    if (req.query.make) where.make = req.query.make
+    if (req.query.agentId) where.agentId = req.query.agentId
+    const limit = parseInt(req.query.limit as string) || 100
+    const vehicles = await VehicleModel.findAll({ where, order: [['createdAt', 'DESC']], limit })
     res.json({ vehicles })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch vehicles' })
@@ -33,6 +60,7 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
   try {
     const parsed = vehicleSchema.safeParse(req.body)
     if (!parsed.success) {
+      console.error('[Vehicle Validation Error]', JSON.stringify(parsed.error.flatten().fieldErrors))
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
@@ -42,6 +70,13 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
       agentName: req.user!.email,
       status: 'Pending',
     } as any)
+
+    notifyAdmins(
+      'New Vehicle Listing',
+      `A new vehicle "${parsed.data.title}" has been posted and needs review.`,
+      'info',
+      { type: 'vehicle', id: vehicle.getDataValue('id') }
+    ).catch(() => {})
 
     res.status(201).json({ message: 'Vehicle created', vehicle })
   } catch (err: any) {
@@ -61,7 +96,20 @@ router.patch('/:id', authMiddleware, agentMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' })
     }
 
-    await vehicle.update(req.body)
+    // Whitelist allowed fields
+    const updates: Record<string, any> = {}
+    for (const field of ALLOWED_UPDATE_FIELDS) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field]
+      }
+    }
+
+    // Reset status to Pending when agent updates (admin updates preserve status)
+    if (req.user!.role !== 'admin') {
+      updates.status = 'Pending'
+    }
+
+    await vehicle.update(updates)
     res.json({ message: 'Vehicle updated', vehicle })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update vehicle' })

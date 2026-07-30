@@ -21,7 +21,7 @@ import {
   AlertCircle,
   FileText
 } from "lucide-react"
-import { getProperty, formatPrice, properties } from "@/lib/data"
+import { formatPrice } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { Gallery } from "@/components/listing/gallery"
@@ -83,6 +83,7 @@ function ListingPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const [property, setProperty] = useState<any>(null)
+  const [similar, setSimilar] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -92,64 +93,82 @@ function ListingPage() {
     }
 
     const fetchProperty = async () => {
-      if (/^[0-9a-fA-F]{24}$/.test(id)) {
-        try {
-          const res = await fetch(`${API_URL}/api/properties/${id}`)
-          if (res.ok) {
-            const data = await res.json()
-            const dbProp = data.property
-            if (dbProp) {
-              setProperty({
-                id: dbProp._id.toString(),
-                title: dbProp.title,
-                type: dbProp.type,
-                listingType: dbProp.listingType,
-                price: dbProp.price,
-                priceType: dbProp.priceType,
-                region: dbProp.region,
-                city: dbProp.city,
-                subCity: dbProp.subCity || '',
-                woreda: dbProp.woreda || '',
-                kebele: dbProp.kebele || '',
-                parcel: dbProp.parcel || '',
-                block: dbProp.block || '',
-                homeNo: dbProp.homeNo || '',
-                area: dbProp.area || 0,
-                bedrooms: dbProp.bedrooms || 0,
-                bathrooms: dbProp.bathrooms || 0,
-                condition: dbProp.condition || 'Finished',
-                legalizedYear: dbProp.legalizedYear || 2024,
-                description: dbProp.description || '',
-                features: dbProp.features || [],
-                images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder.jpg"],
-                videoUrl: dbProp.videoUrl || '',
-                locationDocument: dbProp.locationDocument || '',
-                status: dbProp.status || '',
-                rejectionReason: dbProp.rejectionReason || '',
-                agent: {
-                  id: dbProp.agentId?._id?.toString() || 'unknown',
-                  name: dbProp.agentId?.fullName || dbProp.agentId?.username || 'Unknown Agent',
-                  role: dbProp.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
-                  phone: dbProp.agentId?.ethPhone || dbProp.agentId?.safaricomPhone || '+251 900 000 000',
-                  avatar: dbProp.agentId?.profilePhoto || '/placeholder-user.jpg',
-                  email: dbProp.agentId?.email || '',
-                  secondaryPhone: dbProp.agentId?.safaricomPhone || '',
-                  companyName: dbProp.agentId?.companyName || '',
-                  officeAddress: dbProp.agentId?.officeAddress || '',
-                  licenseNumber: dbProp.agentId?.businessLicenseNumber || '',
-                }
-              })
-              setLoading(false)
-              return
+      try {
+        const res = await fetch(`${API_URL}/api/properties/${id}`)
+        if (res.ok) {
+          const data = await res.json()
+          const dbProp = data.property
+          if (dbProp) {
+            const mapped = {
+              id: dbProp.id,
+              title: dbProp.title,
+              type: dbProp.type,
+              listingType: dbProp.listingType,
+              price: dbProp.price,
+              priceType: dbProp.priceType,
+              region: dbProp.region,
+              city: dbProp.city,
+              subCity: dbProp.subCity || '',
+              woreda: dbProp.woreda || '',
+              kebele: dbProp.kebele || '',
+              parcel: dbProp.parcel || '',
+              block: dbProp.block || '',
+              homeNo: dbProp.homeNo || '',
+              area: dbProp.area || 0,
+              bedrooms: dbProp.bedrooms || 0,
+              bathrooms: dbProp.bathrooms || 0,
+              condition: dbProp.condition || 'Finished',
+              legalizedYear: dbProp.legalizedYear || 2024,
+              description: dbProp.description || '',
+              features: dbProp.features || [],
+              images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder.jpg"],
+              videoUrl: dbProp.videoUrl || '',
+              locationDocument: dbProp.locationDocument || '',
+              status: dbProp.status || '',
+              rejectionReason: dbProp.rejectionReason || '',
+              agent: {
+                id: dbProp.agent?.id || dbProp.agentId || 'unknown',
+                name: dbProp.agent?.username || dbProp.agentName || 'Unknown Agent',
+                role: 'Real Estate Agent',
+                phone: dbProp.displayPhone || dbProp.agent?.phone || '+251 900 000 000',
+                avatar: dbProp.agent?.profilePhoto || '/placeholder-user.jpg',
+              }
             }
+            setProperty(mapped)
+            setLoading(false)
+
+            fetch(`${API_URL}/api/properties?city=${encodeURIComponent(dbProp.city)}&limit=4`)
+              .then(r => r.json())
+              .then(d => {
+                const list = (d.properties || []).filter((p: any) => p.id !== dbProp.id).slice(0, 3).map((p: any) => ({
+                  id: p.id,
+                  title: p.title,
+                  type: p.type,
+                  listingType: p.listingType,
+                  price: p.price,
+                  priceType: p.priceType,
+                  region: p.region,
+                  city: p.city,
+                  subCity: p.subCity || '',
+                  area: p.area || 0,
+                  bedrooms: p.bedrooms || 0,
+                  bathrooms: p.bathrooms || 0,
+                  condition: p.condition || 'Finished',
+                  description: p.description || '',
+                  features: p.features || [],
+                  images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
+                  agent: { id: p.agent?.id || p.agentId || '', name: p.agent?.username || p.agentName || 'Agent', role: 'Real Estate Agent', phone: p.displayPhone || p.agent?.phone || '+251 900 000 000', avatar: p.agent?.profilePhoto || '/placeholder-user.jpg' },
+                }))
+                setSimilar(list)
+              })
+              .catch(() => {})
+            return
           }
-        } catch (err) {
-          console.error('[ListingDetails API Load Error]', err)
         }
+      } catch (err) {
+        console.error('[ListingDetails API Load Error]', err)
       }
 
-      const fallback = getProperty(id)
-      if (fallback) setProperty(fallback)
       setLoading(false)
     }
 
@@ -199,7 +218,6 @@ function ListingPage() {
     ["Condition", property.condition],
     ["Legalized Year", String(property.legalizedYear)],
   ]
-  const similar = properties.filter((p) => p.id !== property.id).slice(0, 3)
   const embedUrl = property.videoUrl ? getYouTubeEmbedUrl(property.videoUrl) : ''
 
   return (

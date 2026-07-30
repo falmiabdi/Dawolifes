@@ -17,7 +17,7 @@ export function LatestVehicles() {
         const transformed = dbVehicles
           .filter((v: any) => v.agentId && v.agentId.status !== 'Suspended')
           .map((v: any) => ({
-            id: v._id?.toString() || v._id,
+            id: v.id,
             title: v.title || `${v.make} ${v.vehicleModel || v.model || ''} ${v.trimVersion || ''}`.trim(),
             listingType: v.listingType || 'For Sale',
             vehicleCategory: v.vehicleCategory || '',
@@ -53,7 +53,7 @@ export function LatestVehicles() {
             videoUrl: v.videoUrl || undefined,
             featured: v.featured || false,
             agent: {
-              id: v.agentId?._id?.toString() || 'unknown',
+              id: v.agentId || 'unknown',
               name: v.agentId?.fullName || v.agentId?.username || 'Unknown Agent',
               role: v.agentId?.role === 'admin' ? 'Administrator' : 'Vehicle Agent',
               phone: v.agentId?.ethPhone || v.agentId?.safaricomPhone || '+251 900 000 000',

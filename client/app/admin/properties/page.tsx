@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/components/auth/auth-guard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
-  Building2, Check, X, Search, Loader2, Trash2
+  Building2, Check, X, Search, Loader2, Trash2, Phone, PhoneCall
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ import { formatPrice } from '@/lib/data'
 import toast from 'react-hot-toast'
 
 interface Property {
-  _id: string
+  id: string
   title: string
   type: string
   listingType: string
@@ -36,13 +37,15 @@ interface Property {
   description: string
   features: string[]
   images: string[]
-  agentId: {
-    _id: string
+  agentId: string
+  agentName?: string
+  displayPhone?: string
+  agent?: {
+    id: string
     username: string
     email: string
-    fullName?: string
-    ethPhone?: string
-    status: string
+    phone?: string
+    profilePhoto?: string
   }
   status: string
   rejectionReason?: string
@@ -50,6 +53,7 @@ interface Property {
 }
 
 export default function AdminPropertiesPage() {
+  const { getToken } = useAuth()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -60,10 +64,16 @@ export default function AdminPropertiesPage() {
 
   const debouncedSearch = useDebounce(search, 300)
 
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
   async function fetchProperties() {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/properties?status=${statusFilter}&search=${debouncedSearch}`)
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/admin/properties?status=${statusFilter}&search=${debouncedSearch}`, { headers: authHeaders })
       const data = await res.json()
       setProperties(data.properties || [])
     } catch (err) {
@@ -80,14 +90,16 @@ export default function AdminPropertiesPage() {
   async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected', reason?: string) {
     setSubmittingAction(true)
     try {
-      const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
+      const authHeaders = await getAuthHeaders()
+      const endpoint = status === 'Approved' ? 'approve' : 'reject'
+      const res = await fetch(`${API_URL}/api/admin/properties/${propertyId}/${endpoint}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, rejectionReason: reason }),
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ reason }),
       })
       if (res.ok) {
         toast.success(`Property ${status === 'Approved' ? 'approved' : 'rejected'} successfully`)
-        if (selectedProperty && selectedProperty._id === propertyId) {
+        if (selectedProperty && selectedProperty.id === propertyId) {
           setSelectedProperty(prev => prev ? { ...prev, status, rejectionReason: status === 'Rejected' ? reason : '' } : null)
         }
         setRejectionReason('')
@@ -107,8 +119,10 @@ export default function AdminPropertiesPage() {
     if (!confirm('Are you sure you want to permanently delete this listing?')) return
     setSubmittingAction(true)
     try {
+      const authHeaders = await getAuthHeaders()
       const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
       })
       if (res.ok) {
         toast.success('Property deleted successfully')
@@ -175,9 +189,9 @@ export default function AdminPropertiesPage() {
             <div className="divide-y divide-slate-100">
               {properties.map((p) => (
                 <div
-                  key={p._id}
+                  key={p.id}
                   onClick={() => setSelectedProperty(p)}
-                  className={`py-4 px-3 flex items-center justify-between gap-4 cursor-pointer transition rounded-2xl ${selectedProperty?._id === p._id ? 'bg-orange-50/50' : 'hover:bg-slate-50/70'}`}
+                  className={`py-4 px-3 flex items-center justify-between gap-4 cursor-pointer transition rounded-2xl ${selectedProperty?.id === p.id ? 'bg-orange-50/50' : 'hover:bg-slate-50/70'}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
@@ -188,7 +202,7 @@ export default function AdminPropertiesPage() {
                     <div className="min-w-0">
                       <p className="font-bold text-slate-900 truncate">{p.title}</p>
                       <p className="text-xs text-orange-600 font-bold mt-0.5">{formatPrice(p.price)} ETB</p>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">By: {p.agentId?.fullName || p.agentId?.username || 'Unknown'}</p>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">By: {p.agent?.username || 'Unknown'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -221,7 +235,10 @@ export default function AdminPropertiesPage() {
               <div>
                 <h3 className="text-sm font-bold text-slate-900">{selectedProperty.title}</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Listed by: <span className="font-semibold text-slate-600">{selectedProperty.agentId?.fullName || selectedProperty.agentId?.username}</span> ({selectedProperty.agentId?.email})
+                  Listed by: <span className="font-semibold text-slate-600">{selectedProperty.agent?.username || selectedProperty.agentName || 'Unknown'}</span>
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Contact: <span className="font-semibold text-slate-600">{selectedProperty.displayPhone || selectedProperty.agent?.phone || 'No phone set'}</span>
                 </p>
               </div>
 
@@ -240,7 +257,7 @@ export default function AdminPropertiesPage() {
                     <div className="flex gap-2">
                       {selectedProperty.status !== 'Approved' && (
                         <Button
-                          onClick={() => handleStatusChange(selectedProperty._id, 'Approved')}
+                          onClick={() => handleStatusChange(selectedProperty.id, 'Approved')}
                           disabled={submittingAction}
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5"
                         >
@@ -250,7 +267,7 @@ export default function AdminPropertiesPage() {
                       <Button
                         onClick={() => {
                           if (rejectionReason.trim()) {
-                            handleStatusChange(selectedProperty._id, 'Rejected', rejectionReason.trim())
+                            handleStatusChange(selectedProperty.id, 'Rejected', rejectionReason.trim())
                           } else {
                             toast.error('Please provide a reason for rejection')
                           }
@@ -270,14 +287,40 @@ export default function AdminPropertiesPage() {
                     />
                   </>
                 )}
-                <Button
-                  onClick={() => handleDelete(selectedProperty._id)}
-                  disabled={submittingAction}
-                  className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
-                  title="Delete Listing"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={async () => {
+                      setSubmittingAction(true)
+                      const authHeaders = await getAuthHeaders()
+                      const res = await fetch(`${API_URL}/api/admin/properties/${selectedProperty.id}/contact`, {
+                        method: 'PATCH',
+                        headers: { ...authHeaders },
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        toast.success(`Contact switched to ${data.displayPhone}`)
+                        setSelectedProperty(prev => prev ? { ...prev, displayPhone: data.displayPhone } : null)
+                        fetchProperties()
+                      } else {
+                        toast.error('Failed to toggle contact')
+                      }
+                      setSubmittingAction(false)
+                    }}
+                    disabled={submittingAction}
+                    className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
+                    title="Toggle contact phone"
+                  >
+                    <Phone className="h-3.5 w-3.5 mr-1" /> Switch Contact
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(selectedProperty.id)}
+                    disabled={submittingAction}
+                    className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                    title="Delete Listing"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Specifications */}

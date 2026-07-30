@@ -14,8 +14,12 @@ export interface IUser {
   profilePhoto?: string;
   phone?: string;
   documents?: { type: string; url: string }[];
-  education?: { institution: string; degree: string; year: number }[];
-  professionalInfo?: { licenseNumber: string; companyName: string; officeAddress: string };
+  education?: any;
+  professionalInfo?: any;
+  profile?: any;
+  emailVerified?: boolean;
+  verificationToken?: string | null;
+  onboardingComplete?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +45,10 @@ UserModel.init(
     documents: { type: DataTypes.JSONB, defaultValue: [] },
     education: { type: DataTypes.JSONB, defaultValue: [] },
     professionalInfo: { type: DataTypes.JSONB },
+    profile: { type: DataTypes.JSONB, defaultValue: {} },
+    emailVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
+    verificationToken: { type: DataTypes.STRING },
+    onboardingComplete: { type: DataTypes.BOOLEAN, defaultValue: false },
     createdAt: { type: DataTypes.DATE, allowNull: false },
     updatedAt: { type: DataTypes.DATE, allowNull: false },
   },

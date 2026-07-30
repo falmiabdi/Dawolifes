@@ -1,16 +1,15 @@
 ﻿import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.dawolife.app',
+  appId: 'com.delaharme.app',
   appName: 'DawoLife',
   webDir: 'client/out',
   server: {
-    url: 'http://localhost:4000',
     cleartext: true,
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 3000,
       launchAutoHide: true,
       backgroundColor: '#F97316',
       androidScaleType: 'CENTER_CROP',

@@ -1,6 +1,7 @@
-import { Bell, Menu } from "lucide-react"
+import { Menu } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import Image from "next/image"
+import { NotificationBell } from "@/components/dashboard/notification-bell"
 
 interface DashboardHeaderProps {
   name: string
@@ -38,10 +39,7 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
-        <button className="relative rounded-full p-2 text-slate-500 hover:bg-slate-100 transition">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-orange-500" />
-        </button>
+        <NotificationBell />
         <div className="flex items-center gap-2 md:gap-3">
           {profilePhoto ? (
             <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-orange-100 ring-2 ring-orange-200">

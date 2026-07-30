@@ -117,7 +117,7 @@ export function setupWebSocket(server: HTTPServer) {
   console.log('WebSocket server started on /ws')
 }
 
-function broadcastToUser(userId: string, data: any) {
+export function broadcastToUser(userId: string, data: any) {
   const userClients = clients.get(userId)
   if (userClients) {
     const message = JSON.stringify(data)

@@ -14,8 +14,10 @@ export function initializeCapacitorPlugins() {
     return
   }
 
-  // Hide splash screen after app loads
-  SplashScreen.hide()
+  // Hide splash screen after app is fully ready
+  setTimeout(() => {
+    SplashScreen.hide().catch(() => {})
+  }, 800)
 
   // Set status bar style
   StatusBar.setStyle({ style: 'LIGHT' })

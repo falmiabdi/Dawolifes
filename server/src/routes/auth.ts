@@ -1,8 +1,12 @@
 import { Router } from 'express'
+import crypto from 'crypto'
 import { registerSchema, loginSchema } from '../utils/validation.js'
 import { hashPassword, comparePassword } from '../utils/password.js'
 import { signAccessToken, signRefreshToken, verifyAccessToken } from '../utils/jwt.js'
 import { UserModel } from '../models/index.js'
+import { sendVerificationEmail } from '../services/email.js'
+import { notifyAdmins } from '../utils/notifications.js'
+import { authMiddleware } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -22,6 +26,7 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await hashPassword(password)
+    const verificationToken = crypto.randomBytes(32).toString('hex')
     const user = await UserModel.create({
       username,
       email,
@@ -29,11 +34,44 @@ router.post('/register', async (req, res) => {
       role: 'agent',
       roles: ['agent'],
       status: 'Pending',
+      verificationToken,
     } as any)
 
-    res.status(201).json({ message: 'Registration successful. Please sign in.' })
+    // Send verification email in background (don't block response)
+    sendVerificationEmail(email, username, verificationToken).catch((err) => {
+      console.error('Failed to send verification email:', err.message)
+    })
+
+    notifyAdmins(
+      'New Agent Registration',
+      `${username} (${email}) has registered and is awaiting verification.`,
+      'info',
+      { type: 'agent', id: user.getDataValue('id') }
+    ).catch(() => {})
+
+    res.status(201).json({ message: 'Registration successful. Please check your email to verify your account.' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
+  }
+})
+
+// Verify email
+router.get('/verify-email', async (req, res) => {
+  try {
+    const token = req.query.token as string
+    if (!token) {
+      return res.status(400).json({ message: 'Verification token is required' })
+    }
+
+    const user = await UserModel.findOne({ where: { verificationToken: token } as any })
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' })
+    }
+
+    await user.update({ verificationToken: null, emailVerified: true })
+    res.json({ message: 'Email verified successfully. You can now sign in.' })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Verification failed' })
   }
 })
 
@@ -130,6 +168,33 @@ router.get('/session', async (req, res) => {
     })
   } catch (err: any) {
     res.status(401).json({ message: 'Invalid token' })
+  }
+})
+
+// Change password
+router.post('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current password and new password are required' })
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' })
+    }
+    const user = await UserModel.findByPk(req.user!.userId)
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    const { comparePassword, hashPassword } = await import('../utils/password.js')
+    const valid = await comparePassword(currentPassword, user.getDataValue('password'))
+    if (!valid) {
+      return res.status(401).json({ message: 'Current password is incorrect' })
+    }
+    const hashedPassword = await hashPassword(newPassword)
+    await user.update({ password: hashedPassword })
+    res.json({ message: 'Password changed successfully' })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to change password' })
   }
 })
 

@@ -15,10 +15,17 @@ export default function AgentVehiclesPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    fetch(`${API_URL}/api/vehicles?agentId=${user.id}`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then((data) => setVehicles(data.vehicles || []))
-      .catch(() => {})
+    const fetchVehicles = async () => {
+      try {
+        const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
+        const res = await fetch(`${API_URL}/api/agent/vehicles`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const data = await res.json()
+        setVehicles(data.vehicles || [])
+      } catch {}
+    }
+    fetchVehicles()
   }, [user?.id])
 
   if (!user) return null
@@ -63,7 +70,7 @@ export default function AgentVehiclesPage() {
           {vehicles.map((v: any) => {
             const firstImage = v.images?.[0] || '/placeholder.jpg'
             return (
-              <div key={v._id.toString()} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+              <div key={v.id.toString()} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
                   <img
                     src={firstImage}
@@ -112,21 +119,29 @@ export default function AgentVehiclesPage() {
 
                   <div className="mt-4 flex gap-2">
                     <Link
-                      href={`/listings/vehicle?id=${v._id.toString()}`}
+                      href={`/listings/vehicle?id=${v.id.toString()}`}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
                     >
                       <ExternalLink className="h-3.5 w-3.5" /> View
                     </Link>
+                    {v.status === 'Rejected' && (
+                      <Link
+                        href={`/agent/vehicles/edit?id=${v.id.toString()}`}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </Link>
+                    )}
                     <button
                       onClick={async () => {
                         if (!confirm('Delete this vehicle listing?')) return
                         try {
                           const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
-                          await fetch(`${API_URL}/api/vehicles/${v._id.toString()}`, {
+                          await fetch(`${API_URL}/api/vehicles/${v.id.toString()}`, {
                             method: 'DELETE',
                             headers: { Authorization: `Bearer ${token}` },
                           })
-                          setVehicles((prev) => prev.filter((veh) => veh._id.toString() !== v._id.toString()))
+                          setVehicles((prev) => prev.filter((veh) => veh.id.toString() !== v.id.toString()))
                         } catch (err) {
                           console.error('Delete failed', err)
                         }

@@ -22,12 +22,15 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  let token: string | undefined
   const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1]
+  } else if (req.query.token) {
+    token = req.query.token as string
+  } else {
     return res.status(401).json({ message: 'No token provided' })
   }
-
-  const token = authHeader.split(' ')[1]
   try {
     const decoded = verifyAccessToken(token)
     req.user = {

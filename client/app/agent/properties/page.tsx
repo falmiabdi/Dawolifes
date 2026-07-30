@@ -16,10 +16,17 @@ export default function AgentPropertiesPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    fetch(`${API_URL}/api/properties?agentId=${user.id}`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then((data) => setProperties(data.properties || []))
-      .catch(() => {})
+    const fetchProperties = async () => {
+      try {
+        const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
+        const res = await fetch(`${API_URL}/api/agent/properties`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const data = await res.json()
+        setProperties(data.properties || [])
+      } catch {}
+    }
+    fetchProperties()
   }, [user?.id])
 
   if (!user) return null
@@ -64,7 +71,7 @@ export default function AgentPropertiesPage() {
           {properties.map((p: any) => {
             const firstImage = p.images?.[0] || '/placeholder.jpg'
             return (
-              <div key={p._id.toString()} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+              <div key={p.id.toString()} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
                   <img
                     src={firstImage}
@@ -111,20 +118,20 @@ export default function AgentPropertiesPage() {
 
                   <div className="mt-4 flex gap-2">
                     <Link
-                      href={`/listings/view?id=${p._id.toString()}`}
+                      href={`/listings/view?id=${p.id.toString()}`}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
                     >
                       <ExternalLink className="h-3.5 w-3.5" /> View
                     </Link>
                     {p.status === 'Rejected' && (
                       <Link
-                        href={`/agent/properties/edit?id=${p._id.toString()}`}
+                        href={`/agent/properties/edit?id=${p.id.toString()}`}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
                       >
                         <Pencil className="h-3.5 w-3.5" /> Edit
                       </Link>
                     )}
-                    <PropertyDeleteButton id={p._id.toString()} />
+                    <PropertyDeleteButton id={p.id.toString()} />
                   </div>
                 </div>
               </div>

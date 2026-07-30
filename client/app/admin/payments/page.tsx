@@ -191,7 +191,7 @@ export default function AdminPaymentsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                   {payments.map((tx) => (
-                    <tr key={tx._id}>
+                    <tr key={tx.id}>
                       <td className="py-3.5 font-bold text-slate-900">
                         {tx.user?.fullName || tx.user?.username || "Direct Payment"}
                       </td>

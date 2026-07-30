@@ -1,24 +1,50 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { User, Shield } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { User, Shield, Ban, RotateCcw } from "lucide-react"
 import { useAuth } from "@/components/auth/auth-guard"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { UserDeleteButton } from "./delete-button"
+import toast from "react-hot-toast"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AdminUsersPage() {
-  const { user: authUser } = useAuth()
+  const { user: authUser, getToken } = useAuth()
   const [users, setUsers] = useState<any[]>([])
 
-  useEffect(() => {
-    if (!authUser) return
-    fetch(`${API_URL}/api/admin/users`, { credentials: 'include' })
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
+  async function fetchUsers() {
+    const authHeaders = await getAuthHeaders()
+    fetch(`${API_URL}/api/admin/users`, { headers: { ...authHeaders } })
       .then((res) => res.json())
       .then((data) => setUsers(data.users || []))
       .catch(() => {})
-  }, [authUser])
+  }
+
+  useEffect(() => {
+    if (!authUser) return
+    fetchUsers()
+  }, [authUser, getAuthHeaders])
+
+  async function handleAction(action: string, id: string) {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_URL}/api/admin/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ action, id }),
+    })
+    if (res.ok) {
+      toast.success(action === 'suspend' ? 'User suspended' : 'User activated')
+      fetchUsers()
+    } else {
+      toast.error('Action failed')
+    }
+  }
 
   if (!authUser) return null
 
@@ -45,7 +71,7 @@ export default function AdminUsersPage() {
 
         <div className="divide-y divide-slate-100 md:hidden">
           {users.map((u: any) => (
-            <div key={u._id.toString()} className="py-4 space-y-2.5">
+            <div key={u.id.toString()} className="py-4 space-y-2.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600 font-bold text-xs">
@@ -82,7 +108,26 @@ export default function AdminUsersPage() {
                   </span>
                 </div>
                 {!adminEmails.includes(u.email?.toLowerCase() || "") ? (
-                  <UserDeleteButton id={u._id.toString()} />
+                  <div className="flex items-center gap-1">
+                    {u.status !== 'Suspended' ? (
+                      <button
+                        onClick={() => handleAction('suspend', u.id.toString())}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition"
+                        title="Suspend User"
+                      >
+                        <Ban className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAction('activate', u.id.toString())}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition"
+                        title="Activate User"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    <UserDeleteButton id={u.id.toString()} />
+                  </div>
                 ) : (
                   <span className="text-[10px] font-semibold text-slate-400 uppercase">
                     Root Owner
@@ -107,7 +152,7 @@ export default function AdminUsersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {users.map((u: any) => (
-                <tr key={u._id.toString()}>
+                <tr key={u.id.toString()}>
                   <td className="py-3.5 flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-50 text-orange-600 font-bold text-xs">
                       {u.username.charAt(0).toUpperCase()}
@@ -139,7 +184,26 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="py-3.5 text-right">
                     {!adminEmails.includes(u.email?.toLowerCase() || "") ? (
-                      <UserDeleteButton id={u._id.toString()} />
+                      <div className="flex items-center justify-end gap-1">
+                        {u.status !== 'Suspended' ? (
+                          <button
+                            onClick={() => handleAction('suspend', u.id.toString())}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition"
+                            title="Suspend User"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleAction('activate', u.id.toString())}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition"
+                            title="Activate User"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <UserDeleteButton id={u.id.toString()} />
+                      </div>
                     ) : (
                       <span className="text-[10px] font-semibold text-slate-400 uppercase">
                         Root Owner

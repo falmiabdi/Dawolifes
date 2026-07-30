@@ -26,7 +26,7 @@ export async function connectDB() {
   try {
     await sequelize.authenticate();
     console.log("✅ PostgreSQL connected");
-    await sequelize.sync({ alter: false });
+    await sequelize.sync({ alter: true });
     console.log("✅ Tables synced");
     return sequelize;
   } catch (error: any) {

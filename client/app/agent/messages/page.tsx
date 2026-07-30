@@ -239,7 +239,7 @@ export default function AgentMessagesPage() {
               messages.map((m) => {
                 const isAgent = m.sender === 'agent'
                 return (
-                  <div key={m._id} className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
+                  <div key={m.id} className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] md:max-w-md rounded-2xl px-4 py-2.5 text-sm ${isAgent ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
                       <p>{m.text}</p>
                       <span className={`block mt-1 text-[10px] text-right ${isAgent ? 'text-orange-100' : 'text-slate-400'}`}>

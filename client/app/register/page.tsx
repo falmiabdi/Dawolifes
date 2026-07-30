@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
+import { useAuth } from '@/components/auth/auth-guard'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ interface RegisterFormValues {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { user, login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const {
@@ -31,6 +33,10 @@ export default function RegisterPage() {
   } = useForm<RegisterFormValues>({
     defaultValues: { username: '', email: '', password: '', confirmPassword: '' },
   })
+
+  useEffect(() => {
+    if (user) router.replace('/agent/onboarding')
+  }, [user, router])
 
   const onSubmit = async (values: RegisterFormValues) => {
     setMessage('')
@@ -51,25 +57,12 @@ export default function RegisterPage() {
       return
     }
 
-    const signInResponse = await fetch(`${API_URL}/api/auth/signin`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: values.email, password: values.password }),
-    })
-
-    const signInPayload = await signInResponse.json()
-    if (!signInResponse.ok) {
+    try {
+      await login(values.email, values.password)
+    } catch {
       setMessage('Account created! Please sign in to continue.')
       router.push('/login')
-      return
     }
-
-    if (signInPayload.accessToken) {
-      document.cookie = `token=${signInPayload.accessToken}; path=/; max-age=604800; SameSite=Lax`
-    }
-
-    router.refresh()
-    router.push('/agent/onboarding')
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Users, Building2, CreditCard, ShieldAlert, Clock, CheckCircle2,
@@ -14,25 +14,37 @@ import { StatusBadge } from '@/components/ui/status-badge'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth()
+  const { user, getToken } = useAuth()
   const [agents, setAgents] = useState<any[]>([])
   const [properties, setProperties] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [stats, setStats] = useState<any>({})
 
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
+
   useEffect(() => {
     if (!user) return
-    Promise.all([
-      fetch(`${API_URL}/api/admin/agents?status=all`, { credentials: 'include' }).then(r => r.json()),
-      fetch(`${API_URL}/api/properties?status=all`, { credentials: 'include' }).then(r => r.json()),
-      fetch(`${API_URL}/api/payments?role=admin&limit=5`, { credentials: 'include' }).then(r => r.json()),
-    ]).then(([agentsData, propertiesData, paymentsData]) => {
-      setAgents(agentsData.agents || [])
-      setProperties(propertiesData.properties || [])
-      setPayments(paymentsData.payments || [])
-      setStats(paymentsData.stats || {})
-    }).catch(() => {})
-  }, [user])
+    ;(async () => {
+      const authHeaders = await getAuthHeaders()
+      const headers = { ...authHeaders }
+      Promise.all([
+        fetch(`${API_URL}/api/admin/agents?status=all`, { headers }).then(r => r.json()),
+        fetch(`${API_URL}/api/admin/properties`, { headers }).then(r => r.json()),
+        fetch(`${API_URL}/api/admin/vehicles`, { headers }).then(r => r.json()),
+        fetch(`${API_URL}/api/payments?role=admin&limit=5`, { headers }).then(r => r.json()),
+      ]).then(([agentsData, propertiesData, vehiclesData, paymentsData]) => {
+        setAgents(agentsData.agents || [])
+        setProperties(propertiesData.properties || [])
+        setVehicles(vehiclesData.vehicles || [])
+        setPayments(paymentsData.payments || [])
+        setStats(paymentsData.stats || {})
+      }).catch(() => {})
+    })()
+  }, [user, getAuthHeaders])
 
   if (!user) return null
 
@@ -40,6 +52,8 @@ export default function AdminDashboardPage() {
   const pendingAgents = agents.filter((a: any) => a.status === 'Pending').length
   const totalProperties = properties.length
   const pendingProperties = properties.filter((p: any) => p.status === 'Pending').length
+  const totalVehicles = vehicles.length
+  const pendingVehicles = vehicles.filter((v: any) => v.status === 'Pending').length
 
   const ps = stats
   const recentAgents = agents.slice(0, 5)
@@ -60,8 +74,8 @@ export default function AdminDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard label="Total Agents" value={totalAgents} description={`${pendingAgents} pending verification`} icon={Users} colorClass="text-blue-500" bgClass="bg-blue-50" />
         <StatsCard label="Verification Queue" value={pendingAgents} description="Requires identity approval" icon={UserCheck} colorClass="text-amber-500" bgClass="bg-amber-50" />
-        <StatsCard label="Total Listings" value={totalProperties} description={`${pendingProperties} awaiting review`} icon={Building2} colorClass="text-green-500" bgClass="bg-green-50" />
-        <StatsCard label="Pending Listings Queue" value={pendingProperties} description="Needs verification" icon={Clock} colorClass="text-orange-500" bgClass="bg-orange-50" />
+        <StatsCard label="Total Properties" value={totalProperties} description={`${pendingProperties} awaiting review`} icon={Building2} colorClass="text-green-500" bgClass="bg-green-50" />
+        <StatsCard label="Total Vehicles" value={totalVehicles} description={`${pendingVehicles} awaiting review`} icon={TrendingUp} colorClass="text-blue-500" bgClass="bg-blue-50" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -105,6 +119,18 @@ export default function AdminDashboardPage() {
                 <div>
                   <p className="text-xs font-bold text-slate-800">Verify Property Postings</p>
                   <p className="text-[10px] text-slate-400">{pendingProperties} post(s) pending</p>
+                </div>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:text-orange-500" />
+            </Link>
+            <Link href="/admin/vehicles" className="group flex items-center justify-between p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-800">Verify Vehicle Postings</p>
+                  <p className="text-[10px] text-slate-400">{pendingVehicles} post(s) pending</p>
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:text-orange-500" />
@@ -163,7 +189,7 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="divide-y divide-slate-100">
               {recentPayments.map((p: any) => (
-                <div key={p._id} className="py-3 flex items-center justify-between gap-3 text-xs">
+                <div key={p.id} className="py-3 flex items-center justify-between gap-3 text-xs">
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-slate-900 truncate">{p.title}</p>
                     <p className="text-slate-400 truncate mt-0.5">

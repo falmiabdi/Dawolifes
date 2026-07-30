@@ -275,7 +275,7 @@ export default function AgentPaymentsPage() {
             <div className="space-y-3 md:hidden">
               {payments.map((tx) => (
                 <div
-                  key={tx._id}
+                  key={tx.id}
                   className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -328,7 +328,7 @@ export default function AgentPaymentsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {payments.map((tx) => (
-                    <tr key={tx._id} className="text-slate-700">
+                    <tr key={tx.id} className="text-slate-700">
                       <td className="py-3 text-slate-900">{tx.title}</td>
                       <td className="py-3 text-slate-500 text-xs">
                         {new Date(tx.createdAt).toLocaleDateString()}

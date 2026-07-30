@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
+import { useAuth } from "@/components/auth/auth-guard"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
@@ -222,12 +223,18 @@ const initialState: VehicleFormState = {
 }
 
 export function PostVehicleWizard() {
+  const { getToken } = useAuth()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<VehicleFormState>(initialState)
   const [submitted, setSubmitted] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getToken])
 
   const set = <K extends keyof VehicleFormState>(key: K, value: VehicleFormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -264,6 +271,7 @@ export function PostVehicleWizard() {
     setError("")
 
     try {
+      const headers = await getAuthHeaders()
       const uploadedUrls: string[] = []
       for (let i = 0; i < files.length; i++) {
         const formData = new FormData()
@@ -271,6 +279,7 @@ export function PostVehicleWizard() {
 
         const res = await fetch(`${API_URL}/api/agent/upload`, {
           method: "POST",
+          headers,
           body: formData,
         })
 
@@ -305,89 +314,100 @@ export function PostVehicleWizard() {
       setSubmitting(true)
       setError("")
 
+      const authHeaders = await getAuthHeaders()
+      const body: Record<string, any> = {
+        title: form.title,
+        vehicleId: `${form.make}-${form.model}-${Date.now()}`,
+        listingType: form.listingType,
+        vehicleCategory: form.vehicleCategory,
+        make: form.make,
+        vehicleModel: form.model,
+        trimVersion: form.trimVersion,
+        manufacturingYear: Number(form.manufacturingYear) || new Date().getFullYear(),
+        registrationYear: form.registrationYear ? Number(form.registrationYear) : undefined,
+        color: form.color,
+        countryOfOrigin: form.countryOfOrigin,
+        condition: form.condition,
+        fuelType: form.fuelType,
+        engineSize: form.engineSize ? Number(form.engineSize) : undefined,
+        horsepower: form.horsepower ? Number(form.horsepower) : undefined,
+        transmission: form.transmission,
+        drivetrain: form.drivetrain,
+        cylinders: form.cylinders ? Number(form.cylinders) : undefined,
+        seatingCapacity: form.seatingCapacity ? Number(form.seatingCapacity) : undefined,
+        doors: form.doors ? Number(form.doors) : undefined,
+        mileage: form.mileage ? Number(form.mileage) : undefined,
+        fuelConsumption: form.fuelConsumption,
+        fuelTankCapacity: form.fuelTankCapacity ? Number(form.fuelTankCapacity) : undefined,
+        groundClearance: form.groundClearance ? Number(form.groundClearance) : undefined,
+        weight: form.weight ? Number(form.weight) : undefined,
+        tireSize: form.tireSize,
+        accidentFree: form.accidentFree,
+        accidentHistory: form.accidentHistory,
+        serviceHistoryAvailable: form.serviceHistoryAvailable,
+        ownershipCount: form.ownershipCount ? Number(form.ownershipCount) : undefined,
+        imported: form.imported,
+        locallyAssembled: form.locallyAssembled,
+        safetyFeatures: form.safetyFeatures,
+        interiorFeatures: form.interiorFeatures,
+        exteriorFeatures: form.exteriorFeatures,
+        price: Number(form.price) || 0,
+        priceType: form.priceType,
+        sellingPrice: form.sellingPrice ? Number(form.sellingPrice) : undefined,
+        negotiable: form.negotiable,
+        financingAvailable: form.financingAvailable,
+        exchangeAccepted: form.exchangeAccepted,
+        bankLoanAccepted: form.bankLoanAccepted,
+        dailyRate: form.dailyRate ? Number(form.dailyRate) : undefined,
+        weeklyRate: form.weeklyRate ? Number(form.weeklyRate) : undefined,
+        monthlyRate: form.monthlyRate ? Number(form.monthlyRate) : undefined,
+        securityDeposit: form.securityDeposit ? Number(form.securityDeposit) : undefined,
+        minRentalDays: form.minRentalDays ? Number(form.minRentalDays) : undefined,
+        maxRentalDays: form.maxRentalDays ? Number(form.maxRentalDays) : undefined,
+        driverIncluded: form.driverIncluded,
+        selfDrive: form.selfDrive,
+        fuelPolicy: form.fuelPolicy,
+        mileageLimit: form.mileageLimit ? Number(form.mileageLimit) : undefined,
+        extraKmCharge: form.extraKmCharge ? Number(form.extraKmCharge) : undefined,
+        deliveryAvailable: form.deliveryAvailable,
+        airportPickup: form.airportPickup,
+        region: form.region,
+        city: form.city,
+        subCity: form.subCity,
+        woreda: form.woreda,
+        pickupAddress: form.pickupAddress,
+        regionRegistration: form.regionRegistration,
+        ownershipCertificate: form.ownershipCertificate,
+        roadFundPaid: form.roadFundPaid,
+        insuranceValid: form.insuranceValid,
+        inspectionCertificate: form.inspectionCertificate,
+        customsClearance: form.customsClearance,
+        dutyPaid: form.dutyPaid,
+        plateType: form.plateType,
+        plateNumber: form.plateNumber,
+        description: form.description,
+        images: form.images,
+      }
+      if (form.videoUrl) body.videoUrl = form.videoUrl
+      if (form.latitude) body.latitude = form.latitude
+      if (form.longitude) body.longitude = form.longitude
+      // Convert string "" to undefined for boolean fields
+      for (const key of ['ownershipCertificate']) {
+        if (!(body as any)[key]) delete (body as any)[key]
+      }
       const res = await fetch(`${API_URL}/api/vehicles`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          listingType: form.listingType,
-          vehicleCategory: form.vehicleCategory,
-          make: form.make,
-          model: form.model,
-          vehicleModel: form.model,
-          trimVersion: form.trimVersion,
-          manufacturingYear: form.manufacturingYear,
-          registrationYear: form.registrationYear,
-          color: form.color,
-          countryOfOrigin: form.countryOfOrigin,
-          condition: form.condition,
-          fuelType: form.fuelType,
-          engineSize: form.engineSize,
-          horsepower: form.horsepower,
-          transmission: form.transmission,
-          drivetrain: form.drivetrain,
-          cylinders: form.cylinders,
-          seatingCapacity: form.seatingCapacity,
-          doors: form.doors,
-          mileage: form.mileage,
-          fuelConsumption: form.fuelConsumption,
-          fuelTankCapacity: form.fuelTankCapacity,
-          groundClearance: form.groundClearance,
-          weight: form.weight,
-          tireSize: form.tireSize,
-          accidentFree: form.accidentFree,
-          accidentHistory: form.accidentHistory,
-          serviceHistoryAvailable: form.serviceHistoryAvailable,
-          ownershipCount: form.ownershipCount,
-          imported: form.imported,
-          locallyAssembled: form.locallyAssembled,
-          safetyFeatures: form.safetyFeatures,
-          interiorFeatures: form.interiorFeatures,
-          exteriorFeatures: form.exteriorFeatures,
-          price: form.price,
-          priceType: form.priceType,
-          sellingPrice: form.sellingPrice,
-          negotiable: form.negotiable,
-          financingAvailable: form.financingAvailable,
-          exchangeAccepted: form.exchangeAccepted,
-          bankLoanAccepted: form.bankLoanAccepted,
-          dailyRate: form.dailyRate,
-          weeklyRate: form.weeklyRate,
-          monthlyRate: form.monthlyRate,
-          securityDeposit: form.securityDeposit,
-          minRentalDays: form.minRentalDays,
-          maxRentalDays: form.maxRentalDays,
-          driverIncluded: form.driverIncluded,
-          selfDrive: form.selfDrive,
-          fuelPolicy: form.fuelPolicy,
-          mileageLimit: form.mileageLimit,
-          extraKmCharge: form.extraKmCharge,
-          deliveryAvailable: form.deliveryAvailable,
-          airportPickup: form.airportPickup,
-          region: form.region,
-          city: form.city,
-          subCity: form.subCity,
-          woreda: form.woreda,
-          pickupAddress: form.pickupAddress,
-          regionRegistration: form.regionRegistration,
-          ownershipCertificate: form.ownershipCertificate,
-          roadFundPaid: form.roadFundPaid,
-          insuranceValid: form.insuranceValid,
-          inspectionCertificate: form.inspectionCertificate,
-          customsClearance: form.customsClearance,
-          dutyPaid: form.dutyPaid,
-          plateType: form.plateType,
-          plateNumber: form.plateNumber,
-          description: form.description,
-          images: form.images,
-          videoUrl: form.videoUrl,
-          latitude: form.latitude,
-          longitude: form.longitude,
-        }),
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify(body),
       })
 
       const data = await res.json()
       if (!res.ok) {
+        if (data.errors?.fieldErrors) {
+          const msgs = Object.entries(data.errors.fieldErrors)
+            .map(([field, errs]) => `${field}: ${(errs as string[]).join(', ')}`)
+          throw new Error(msgs.join(' | '))
+        }
         throw new Error(data.message || "Failed to submit vehicle")
       }
 
@@ -473,6 +493,64 @@ export function PostVehicleWizard() {
           <span>{error}</span>
         </div>
       )}
+
+      <div className="mt-4 flex justify-center">
+        <button
+          type="button"
+          onClick={() => {
+            const demoImgs = [
+              'https://images.unsplash.com/photo-1541899481282-d53b9a353a1f?w=800',
+              'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
+              'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800',
+            ]
+            setForm({
+              ...initialState,
+              title: "Toyota Corolla 2020",
+              listingType: "For Sale",
+              vehicleCategory: "Sedan",
+              make: "Toyota",
+              model: "Corolla",
+              trimVersion: "LE",
+              manufacturingYear: "2020",
+              registrationYear: "2020",
+              color: "White",
+              countryOfOrigin: "Japan",
+              condition: "Used",
+              fuelType: "Petrol",
+              engineSize: "1800",
+              horsepower: "140",
+              transmission: "Automatic",
+              drivetrain: "FWD",
+              cylinders: "4",
+              seatingCapacity: "5",
+              doors: "4",
+              mileage: "45000",
+              fuelConsumption: "7.5L/100km",
+              tireSize: "205/55R16",
+              accidentFree: true,
+              serviceHistoryAvailable: true,
+              ownershipCount: "1",
+              imported: true,
+              safetyFeatures: ["ABS", "Airbags", "Rear Camera"],
+              interiorFeatures: ["AC", "Leather Seats", "Touch Screen"],
+              exteriorFeatures: ["Alloy Wheels", "Fog Lights"],
+              price: "1850000",
+              priceType: "Fixed Price",
+              region: "Addis Ababa",
+              city: "Bole",
+              subCity: "Bole",
+              woreda: "03",
+              description: "Well-maintained Toyota Corolla 2020, single owner, full service history. Perfect condition, driven only in city.",
+              images: demoImgs,
+              latitude: 9.0192,
+              longitude: 38.7525,
+            })
+          }}
+          className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer"
+        >
+          Fill Demo Data
+        </button>
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         {/* Form panel */}

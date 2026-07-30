@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
+import { useAuth } from "@/components/auth/auth-guard"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
@@ -38,7 +39,9 @@ const adminNav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/agents", label: "Agent Management", icon: User },
   { href: "/admin/properties", label: "Properties", icon: Building2 },
+  { href: "/admin/vehicles", label: "Vehicles", icon: Car },
   { href: "/admin/users", label: "Users", icon: User },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
@@ -51,28 +54,29 @@ interface SidebarProps {
 
 export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout, getToken } = useAuth()
   const nav = role === "admin" ? adminNav : agentNav
   const [unreadCount, setUnreadCount] = useState(0)
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/notifications?count=true`)
+  const fetchUnreadCount = useCallback(async () => {
+    const token = await getToken()
+    if (!token) return
+    fetch(`${API_URL}/api/notifications/count`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((r) => r.json())
       .then((data) => {
         if (typeof data.count === "number") setUnreadCount(data.count)
       })
       .catch(() => {})
+  }, [getToken])
 
-    const interval = setInterval(() => {
-      fetch(`${API_URL}/api/notifications?count=true`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (typeof data.count === "number") setUnreadCount(data.count)
-        })
-        .catch(() => {})
-    }, 30000)
-
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [fetchUnreadCount])
 
   const isActive = useCallback(
     (path: string) => {
@@ -118,7 +122,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
         {nav.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
-          const showBadge = item.href === "/agent/notifications" && unreadCount > 0
+          const showBadge = (item.href === "/agent/notifications" || item.href === "/admin/notifications") && unreadCount > 0
           return (
             <Link
               key={item.href}
@@ -145,15 +149,16 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
 
       {/* Footer */}
       <div className="border-t border-slate-800 p-4">
-        <form action="/api/auth/signout" method="POST">
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-red-900/30 hover:text-red-400"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
-        </form>
+        <button
+          onClick={() => {
+            logout()
+            router.push("/login")
+          }}
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-red-900/30 hover:text-red-400"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </button>
       </div>
     </aside>
   )

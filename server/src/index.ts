@@ -10,6 +10,7 @@ import messageRoutes from './routes/messages.js'
 import notificationRoutes from './routes/notifications.js'
 import adminRoutes from './routes/admin.js'
 import vehicleRoutes from './routes/vehicles.js'
+import agentRoutes from './routes/agent.js'
 import { setupWebSocket } from './ws/server.js'
 
 dotenv.config()
@@ -34,8 +35,11 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:4000',
+    'capacitor://localhost',
+    'http://localhost',
+    'http://10.0.2.2',
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ],
+  ].filter(Boolean),
   credentials: true,
 }))
 app.use(express.json())
@@ -50,6 +54,7 @@ app.use('/api/messages', messageRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/vehicles', vehicleRoutes)
+app.use('/api/agent', agentRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

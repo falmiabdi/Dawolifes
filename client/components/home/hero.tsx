@@ -46,7 +46,7 @@ export function Hero() {
         const docs = (data.properties || []).slice(0, 5)
         setRecentProperties(
           docs.map((p: any) => ({
-            id: p._id?.toString() || p._id,
+            id: p.id,
             title: p.title,
             images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
             createdAt: p.createdAt,

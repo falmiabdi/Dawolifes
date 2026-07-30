@@ -14,39 +14,37 @@ export function LatestProperties() {
       .then((res) => res.json())
       .then((data) => {
         const dbProperties = data.properties || []
-        const transformed = dbProperties
-          .filter((p: any) => p.agentId && p.agentId.status !== 'Suspended')
-          .map((p: any) => ({
-            id: p._id?.toString() || p._id,
-            title: p.title,
-            type: p.type,
-            listingType: p.listingType,
-            price: p.price,
-            priceType: p.priceType,
-            region: p.region,
-            city: p.city,
-            subCity: p.subCity || '',
-            woreda: p.woreda || '',
-            kebele: p.kebele || '',
-            parcel: p.parcel || '',
-            block: p.block || '',
-            homeNo: p.homeNo || '',
-            area: p.area || 0,
-            bedrooms: p.bedrooms || 0,
-            bathrooms: p.bathrooms || 0,
-            condition: p.condition || 'Finished',
-            legalizedYear: p.legalizedYear || 2024,
-            description: p.description || '',
-            features: p.features || [],
-            images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
-            agent: {
-              id: p.agentId?._id?.toString() || 'unknown',
-              name: p.agentId?.fullName || p.agentId?.username || 'Unknown Agent',
-              role: p.agentId?.role === 'admin' ? 'Administrator' : 'Real Estate Agent',
-              phone: p.agentId?.ethPhone || p.agentId?.safaricomPhone || '+251 900 000 000',
-              avatar: p.agentId?.profilePhoto || '/placeholder-user.jpg',
-            }
-          }))
+        const transformed = dbProperties.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          type: p.type,
+          listingType: p.listingType,
+          price: p.price,
+          priceType: p.priceType,
+          region: p.region,
+          city: p.city,
+          subCity: p.subCity || '',
+          woreda: p.woreda || '',
+          kebele: p.kebele || '',
+          parcel: p.parcel || '',
+          block: p.block || '',
+          homeNo: p.homeNo || '',
+          area: p.area || 0,
+          bedrooms: p.bedrooms || 0,
+          bathrooms: p.bathrooms || 0,
+          condition: p.condition || 'Finished',
+          legalizedYear: p.legalizedYear || 2024,
+          description: p.description || '',
+          features: p.features || [],
+          images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
+          agent: {
+            id: p.agent?.id || p.agentId || 'unknown',
+            name: p.agent?.username || p.agentName || 'Unknown Agent',
+            role: 'Real Estate Agent',
+            phone: p.displayPhone || p.agent?.phone || '+251 900 000 000',
+            avatar: p.agent?.profilePhoto || '/placeholder-user.jpg',
+          }
+        }))
         setProperties(transformed)
       })
       .catch((err) => console.error('[API] ❌ Properties fetch failed:', err))
