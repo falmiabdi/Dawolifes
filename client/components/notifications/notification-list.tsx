@@ -1,9 +1,10 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl, getWsUrl } from '@/lib/get-api-url'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { Bell, Wifi, WifiOff, Info, CheckCircle2, AlertTriangle, AlertCircle, CheckCheck } from 'lucide-react'
 
 export interface NotificationItem {
@@ -38,7 +39,7 @@ export function NotificationList() {
   useEffect(() => {
     ;(async () => {
       const authHeaders = await getAuthHeaders()
-      fetch(`${API_URL}/api/auth/session`, { headers: { ...authHeaders } })
+      fetch(`${getApiUrl()}/api/auth/session`, { headers: { ...authHeaders } })
         .then((r) => r.json())
         .then((data) => {
           if (data?.session?.user?.id) {
@@ -53,7 +54,7 @@ export function NotificationList() {
     if (!userId) return
     ;(async () => {
       const authHeaders = await getAuthHeaders()
-      fetch(`${API_URL}/api/notifications`, { headers: { ...authHeaders } })
+      fetch(`${getApiUrl()}/api/notifications`, { headers: { ...authHeaders } })
         .then((r) => r.json())
         .then((data) => {
           if (data.notifications) {
@@ -75,9 +76,7 @@ export function NotificationList() {
 
     function connect() {
       setWsStatus('connecting')
-      const wsUrl = process.env.NODE_ENV === 'production'
-        ? `wss://${process.env.NEXT_PUBLIC_WS_DOMAIN}/ws?userId=${userId}`
-        : `ws://localhost:4000/ws?userId=${userId}`
+      const wsUrl = getWsUrl(`/ws?userId=${userId}`)
 
       ws = new WebSocket(wsUrl)
 
@@ -127,7 +126,7 @@ export function NotificationList() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     setUnreadCount(0)
     const authHeaders = await getAuthHeaders()
-    await fetch(`${API_URL}/api/notifications/read-all`, {
+    await fetch(`${getApiUrl()}/api/notifications/read-all`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
     })
@@ -137,7 +136,7 @@ export function NotificationList() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
     setUnreadCount((prev) => Math.max(0, prev - 1))
     const authHeaders = await getAuthHeaders()
-    await fetch(`${API_URL}/api/notifications/${id}/read`, {
+    await fetch(`${getApiUrl()}/api/notifications/${id}/read`, {
       method: 'PATCH',
       headers: authHeaders,
     })
@@ -250,3 +249,4 @@ export function NotificationList() {
     </div>
   )
 }
+

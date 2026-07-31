@@ -1,10 +1,11 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import toast from 'react-hot-toast'
 
 interface ProfilePhotoUploaderProps {
@@ -38,7 +39,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       formData.append('file', file)
 
       // 1. Upload to Cloudinary via server-side /api/agent/upload
-      const uploadRes = await fetch(`${API_URL}/api/agent/upload`, {
+      const uploadRes = await fetch(`${getApiUrl()}/api/agent/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -50,7 +51,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       const newUrl = uploadData.url
 
       // 2. Save profilePhoto url to MongoDB via /api/agent/profile
-      const saveRes = await fetch(`${API_URL}/api/agent/profile`, {
+      const saveRes = await fetch(`${getApiUrl()}/api/agent/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -103,3 +104,4 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
     </div>
   )
 }
+

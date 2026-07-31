@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { VehicleCard } from "@/components/vehicle-card"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 export function LatestVehicles() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${API_URL}/api/vehicles`)
+    fetch(`${getApiUrl()}/api/vehicles`)
       .then((res) => res.json())
       .then((data) => {
         const dbVehicles = data.vehicles || data || []
@@ -49,7 +48,7 @@ export function LatestVehicles() {
             woreda: v.woreda || '',
             description: v.description || '',
             features: v.features || [],
-            images: v.images && v.images.length > 0 ? v.images : ["/placeholder.jpg"],
+            images: v.images && v.images.length > 0 ? v.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
             videoUrl: v.videoUrl || undefined,
             featured: v.featured || false,
             agent: {
@@ -57,7 +56,7 @@ export function LatestVehicles() {
               name: v.agentId?.fullName || v.agentId?.username || 'Unknown Agent',
               role: v.agentId?.role === 'admin' ? 'Administrator' : 'Vehicle Agent',
               phone: v.agentId?.ethPhone || v.agentId?.safaricomPhone || '+251 900 000 000',
-              avatar: v.agentId?.profilePhoto || '/placeholder-user.jpg',
+              avatar: v.agentId?.profilePhoto || '/placeholder.svg',
             }
           }))
         setVehicles(transformed)
@@ -67,7 +66,7 @@ export function LatestVehicles() {
   }, [])
 
   return (
-    <section id="vehicles" className="bg-muted/40 py-14">
+    <section id="vehicles" className="bg-muted/40 py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -76,7 +75,7 @@ export function LatestVehicles() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((vehicle) => (
             <VehicleCard key={vehicle.id} vehicle={vehicle} />
           ))}

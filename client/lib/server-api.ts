@@ -1,7 +1,7 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+﻿import { getApiUrl } from '@/lib/get-api-url'
 
 export async function serverFetch(path: string, options: RequestInit = {}) {
-  const url = `${API_BASE}${path}`
+  const url = `${getApiUrl()}${path}`
 
   const response = await fetch(url, {
     ...options,

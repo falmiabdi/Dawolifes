@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -6,7 +8,6 @@ import { Building2, PlusCircle, TrendingUp, Clock, CheckCircle2, XCircle, PauseC
 import { useAuth } from '@/components/auth/auth-guard'
 import { StatusBadge } from '@/components/ui/status-badge'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AgentDashboardPage() {
   const { user } = useAuth()
@@ -15,11 +16,11 @@ export default function AgentDashboardPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    fetch(`${API_URL}/api/properties?agentId=${user.id}`, { credentials: 'include' })
+    fetch(`${getApiUrl()}/api/properties?agentId=${user.id}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => setProperties(data.properties || []))
       .catch(() => {})
-    fetch(`${API_URL}/api/vehicles?agentId=${user.id}`, { credentials: 'include' })
+    fetch(`${getApiUrl()}/api/vehicles?agentId=${user.id}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => setVehicles(data.vehicles || []))
       .catch(() => {})
@@ -134,3 +135,4 @@ export default function AgentDashboardPage() {
     </div>
   )
 }
+

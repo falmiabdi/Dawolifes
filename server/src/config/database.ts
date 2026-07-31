@@ -22,17 +22,24 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   },
 });
 
-export async function connectDB() {
-  try {
-    await sequelize.authenticate();
-    console.log("✅ PostgreSQL connected");
-    await sequelize.sync({ alter: true });
-    console.log("✅ Tables synced");
-    return sequelize;
-  } catch (error: any) {
-    console.error("❌ Database connection failed");
-    console.error("Name:", error.name);
-    console.error("Message:", error.message);
-    return null;
+export async function connectDB(retries = 5, interval = 5000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await sequelize.authenticate()
+      console.log("✅ PostgreSQL connected")
+      await sequelize.sync({ alter: true })
+      console.log("✅ Tables synced")
+      return sequelize
+    } catch (error: any) {
+      console.error(`❌ Database connection attempt ${i + 1}/${retries} failed`)
+      console.error("Name:", error.name)
+      console.error("Message:", error.message)
+      if (i < retries - 1) {
+        console.log(`⏳ Retrying in ${interval / 1000}s...`)
+        await new Promise((r) => setTimeout(r, interval))
+      }
+    }
   }
+  console.error("❌ All database connection retries exhausted")
+  return null
 }

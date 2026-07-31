@@ -1,9 +1,10 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useCallback } from "react"
 import { useAuth } from "@/components/auth/auth-guard"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   ArrowLeft,
   ArrowRight,
@@ -277,7 +278,7 @@ export function PostVehicleWizard() {
         const formData = new FormData()
         formData.append("file", files[i])
 
-        const res = await fetch(`${API_URL}/api/agent/upload`, {
+        const res = await fetch(`${getApiUrl()}/api/agent/upload`, {
           method: "POST",
           headers,
           body: formData,
@@ -395,7 +396,7 @@ export function PostVehicleWizard() {
       for (const key of ['ownershipCertificate']) {
         if (!(body as any)[key]) delete (body as any)[key]
       }
-      const res = await fetch(`${API_URL}/api/vehicles`, {
+      const res = await fetch(`${getApiUrl()}/api/vehicles`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify(body),
@@ -1240,7 +1241,7 @@ export function PostVehicleWizard() {
                 )}
               </div>
 
-              <Field label="Video URL (YouTube/Vimeo) — Optional">
+              <Field label="Video URL (YouTube/Vimeo) â€” Optional">
                 <Input
                   value={form.videoUrl}
                   onChange={(e) => set("videoUrl", e.target.value)}
@@ -1304,7 +1305,7 @@ export function PostVehicleWizard() {
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Basic Info</p>
                   <p className="mt-1 text-sm text-foreground">{form.title || "No title set"}</p>
                   <p className="text-sm text-muted-foreground">
-                    {form.vehicleCategory} · {form.make} {form.model} · {form.manufacturingYear}
+                    {form.vehicleCategory} Â· {form.make} {form.model} Â· {form.manufacturingYear}
                   </p>
                 </div>
                 <div className="border-t border-border pt-3">
@@ -1312,14 +1313,14 @@ export function PostVehicleWizard() {
                   <p className="mt-1 text-sm font-semibold text-primary">
                     {form.price ? formatPrice(Number(form.price)) + ' ETB' : "Price not set"}
                   </p>
-                  <p className="text-sm text-muted-foreground">{form.listingType} · {form.priceType}</p>
+                  <p className="text-sm text-muted-foreground">{form.listingType} Â· {form.priceType}</p>
                 </div>
                 <div className="border-t border-border pt-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Technical</p>
                   <p className="text-sm text-muted-foreground">
                     {[form.fuelType, form.transmission, form.drivetrain, form.mileage ? Number(form.mileage).toLocaleString() + ' km' : ""]
                       .filter(Boolean)
-                      .join(" · ") || "Not specified"}
+                      .join(" Â· ") || "Not specified"}
                   </p>
                 </div>
                 <div className="border-t border-border pt-3">
@@ -1331,7 +1332,7 @@ export function PostVehicleWizard() {
                 <div className="border-t border-border pt-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Media</p>
                   <p className="text-sm text-muted-foreground">
-                    {form.images.length} photo(s) · {form.videoUrl ? "Video attached" : "No video"}
+                    {form.images.length} photo(s) Â· {form.videoUrl ? "Video attached" : "No video"}
                   </p>
                 </div>
               </div>
@@ -1469,3 +1470,4 @@ function SummaryRow({ label, value, highlight }: { label: string; value: string;
     </div>
   )
 }
+

@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import Link from "next/link"
 import { Globe, Menu, Plus, X, User } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { buttonVariants } from "@/components/ui/button"
 import Image from "next/image"
+import { getApiUrl } from "@/lib/get-api-url"
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -22,7 +21,7 @@ export function SiteHeader() {
   const [session, setSession] = useState<any>(null)
 
   useEffect(() => {
-    fetch(`${API_URL}/api/auth/session`)
+    fetch(`${getApiUrl()}/api/auth/session`)
       .then(r => r.json())
       .then(data => setSession(data?.session || null))
       .catch(() => {})

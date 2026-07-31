@@ -1,10 +1,11 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2,
   Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info, FileText
@@ -97,8 +98,8 @@ export default function AgentPostPage() {
     try {
       const token = await getToken()
       const uploadUrl = token
-        ? `${API_URL}/api/agent/upload?token=${encodeURIComponent(token)}`
-        : `${API_URL}/api/agent/upload`
+        ? `${getApiUrl()}/api/agent/upload?token=${encodeURIComponent(token)}`
+        : `${getApiUrl()}/api/agent/upload`
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const fd = new FormData()
@@ -141,7 +142,7 @@ export default function AgentPostPage() {
       const headers = await getAuthHeaders()
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch(`${API_URL}/api/agent/upload`, {
+      const res = await fetch(`${getApiUrl()}/api/agent/upload`, {
         method: 'POST',
         headers,
         body: fd,
@@ -166,7 +167,7 @@ export default function AgentPostPage() {
     setSaving(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/properties`, {
+      const res = await fetch(`${getApiUrl()}/api/properties`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
@@ -301,7 +302,7 @@ export default function AgentPostPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Area (m²)</Label>
+                  <Label>Area (mÂ²)</Label>
                   <Input type="number" value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. 150" />
                 </div>
                 <div className="space-y-2">
@@ -570,7 +571,7 @@ export default function AgentPostPage() {
                   <p><span className="font-semibold">Price:</span> {formatPrice(Number(price))} ETB ({priceType})</p>
                   <p><span className="font-semibold">Location:</span> {city}, {region}</p>
                   <p><span className="font-semibold">Beds/Baths:</span> {bedrooms} / {bathrooms}</p>
-                  <p><span className="font-semibold">Area:</span> {area} m²</p>
+                  <p><span className="font-semibold">Area:</span> {area} mÂ²</p>
                   <p><span className="font-semibold">Condition:</span> {condition}</p>
                 </div>
                 {description && (
@@ -649,3 +650,4 @@ export default function AgentPostPage() {
     </div>
   )
 }
+

@@ -1,8 +1,8 @@
-"use client"
+﻿"use client"
 
+import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from 'react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { useAuth } from '@/components/auth/auth-guard'
 import {
   User, Check, X, Search, Loader2,
@@ -72,7 +72,7 @@ export default function AdminAgentsPage() {
     setLoading(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/agents?search=${debouncedSearch}&status=${statusFilter}`, {
         headers: { ...authHeaders },
       })
       const data = await res.json()
@@ -97,7 +97,7 @@ export default function AdminAgentsPage() {
         body.rejectionReason = rejectionReason
       }
       
-      const res = await fetch(`${API_URL}/api/admin/agents`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/agents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify(body),
@@ -375,3 +375,4 @@ export default function AdminAgentsPage() {
     </div>
   )
 }
+

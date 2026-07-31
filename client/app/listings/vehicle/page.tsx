@@ -42,8 +42,7 @@ import { VehicleCard } from "@/components/vehicle-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 function getYouTubeEmbedUrl(url: string) {
   if (!url) return ""
@@ -109,7 +108,7 @@ function VehicleListingPage() {
 
     const fetchVehicle = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/vehicles/${id}`)
+        const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`)
         if (res.ok) {
           const data = await res.json()
           const db = data.vehicle
@@ -147,7 +146,7 @@ function VehicleListingPage() {
               woreda: db.woreda || "",
               description: db.description || "",
               features: db.features || [],
-              images: db.images && db.images.length > 0 ? db.images : ["/placeholder.jpg"],
+              images: db.images && db.images.length > 0 ? db.images.map((img: string) => getImageUrl(img)) : ["/placeholder.jpg"],
               videoUrl: db.videoUrl || "",
               featured: db.featured || false,
               dailyRate: db.dailyRate || 0,
@@ -174,7 +173,7 @@ function VehicleListingPage() {
             setLoading(false)
 
             try {
-              const simRes = await fetch(`${API_URL}/api/vehicles?category=${mapped.vehicleCategory}&limit=3`)
+              const simRes = await fetch(`${getApiUrl()}/api/vehicles?category=${mapped.vehicleCategory}&limit=3`)
               if (simRes.ok) {
                 const simData = await simRes.json()
                 const simArr: Vehicle[] = (simData.vehicles || [])

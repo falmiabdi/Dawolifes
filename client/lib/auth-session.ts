@@ -1,6 +1,7 @@
 ﻿import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { verifyAccessToken } from './jwt-utils'
+import { getApiUrl } from './get-api-url'
 
 export interface SessionUser {
   id: string
@@ -25,8 +26,7 @@ export async function getServerSession() {
   try {
     const decoded = verifyAccessToken(token)
     // Fetch full user data from the API
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    const response = await fetch(`${API_URL}/api/auth/session`, {
+    const response = await fetch(`${getApiUrl()}/api/auth/session`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -66,3 +66,4 @@ export async function getSessionFromRequest(req?: NextRequest | Request) {
     return null
   }
 }
+

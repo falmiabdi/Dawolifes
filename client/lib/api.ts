@@ -1,19 +1,48 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { getApiUrl } from '@/lib/get-api-url'
+import { Capacitor } from '@capacitor/core'
 
-async function request<T>(
+let cachedToken: string | null = null
+
+export async function getCachedToken(): Promise<string | null> {
+  if (cachedToken) return cachedToken
+  if (Capacitor.isNativePlatform()) {
+    const { Preferences } = await import('@capacitor/preferences')
+    const { value } = await Preferences.get({ key: 'auth_token' })
+    cachedToken = value || null
+    return cachedToken
+  } else {
+    const cookie = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('token='))
+    cachedToken = cookie ? cookie.split('=')[1] : null
+    return cachedToken
+  }
+}
+
+export function clearCachedToken() {
+  cachedToken = null
+}
+
+export async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_URL}${path}`
-  console.log(`[API] ${options.method || 'GET'} ${url}`)
+  const url = `${getApiUrl()}${path}`
+  const token = await getCachedToken()
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+
+  if (token) {
+    (headers as Record<string, string>).Authorization = `Bearer ${token}`
+  }
 
   try {
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       credentials: 'include',
     })
 
@@ -23,7 +52,6 @@ async function request<T>(
       throw new Error(error.message || `HTTP ${response.status}`)
     }
 
-    console.log(`[API] ✅ ${response.status} ${url}`)
     return response.json()
   } catch (err) {
     console.error(`[API] ❌ Connection failed: ${url}`, err)
@@ -48,5 +76,3 @@ export const api = {
       method: 'DELETE',
     }),
 }
-
-export default API_URL

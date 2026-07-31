@@ -3,11 +3,9 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Capacitor } from '@capacitor/core'
-import { patchFetchForCapacitor } from '@/lib/get-api-url'
+import { getApiUrl, patchFetchForCapacitor } from '@/lib/get-api-url'
 
 patchFetchForCapacitor()
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export interface SessionUser {
   id: string
@@ -63,10 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      const response = await fetch(`${API_URL}/api/auth/session`, {
+      const response = await fetch(`${getApiUrl()}/api/auth/session`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
       })
 
       if (response.ok) {
@@ -96,9 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function login(email: string, password: string) {
-    const response = await fetch(`${API_URL}/api/auth/signin`, {
+    const response = await fetch(`${getApiUrl()}/api/auth/signin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     })
 
@@ -122,9 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function register(data: { username: string; email: string; password: string }) {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(`${getApiUrl()}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(data),
     })
 

@@ -1,9 +1,10 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   Car, Check, X, Search, Loader2, Trash2, Phone
 } from 'lucide-react'
@@ -72,7 +73,7 @@ export default function AdminVehiclesPage() {
       const params = new URLSearchParams()
       if (statusFilter !== 'all') params.set('status', statusFilter)
       if (debouncedSearch) params.set('search', debouncedSearch)
-      const res = await fetch(`${API_URL}/api/admin/vehicles?${params}`, { headers: authHeaders })
+      const res = await fetch(`${getApiUrl()}/api/admin/vehicles?${params}`, { headers: authHeaders })
       const data = await res.json()
       setVehicles(data.vehicles || [])
     } catch {
@@ -88,7 +89,7 @@ export default function AdminVehiclesPage() {
     setSubmittingAction(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/admin/vehicles/${id}/${status === 'Approved' ? 'approve' : 'reject'}`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/vehicles/${id}/${status === 'Approved' ? 'approve' : 'reject'}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: status === 'Rejected' ? JSON.stringify({ rejectionReason: reason || '' }) : undefined,
@@ -114,7 +115,7 @@ export default function AdminVehiclesPage() {
     setSubmittingAction(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/vehicles/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`, {
         method: 'DELETE',
         headers: authHeaders,
       })
@@ -197,7 +198,7 @@ export default function AdminVehiclesPage() {
                       <div>
                         <p className="text-sm font-bold text-slate-900 truncate">{v.title}</p>
                         <p className="text-[11px] text-slate-500 mt-0.5">
-                          {v.make} {v.vehicleModel} · {v.manufacturingYear} · {v.color}
+                          {v.make} {v.vehicleModel} Â· {v.manufacturingYear} Â· {v.color}
                         </p>
                       </div>
                       <StatusBadge status={v.status} />
@@ -320,3 +321,4 @@ export default function AdminVehiclesPage() {
     </div>
   )
 }
+

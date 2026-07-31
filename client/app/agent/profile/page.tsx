@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -7,7 +9,6 @@ import { useAuth } from '@/components/auth/auth-guard'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { ProfilePhotoUploader } from '@/components/dashboard/profile-photo-uploader'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AgentProfilePage() {
   const { user: authUser, getToken } = useAuth()
@@ -18,7 +19,7 @@ export default function AgentProfilePage() {
     const fetchProfile = async () => {
       try {
         const token = await getToken()
-        const res = await fetch(`${API_URL}/api/agent/profile`, {
+        const res = await fetch(`${getApiUrl()}/api/agent/profile`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
         if (!res.ok) throw new Error('Failed to fetch')
@@ -79,7 +80,7 @@ export default function AgentProfilePage() {
                 href="/agent/onboarding"
                 className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 hover:underline mt-2"
               >
-                Edit Profile & Resubmit →
+                Edit Profile & Resubmit â†’
               </Link>
             </div>
           )}
@@ -189,7 +190,7 @@ export default function AgentProfilePage() {
                     rel="noreferrer"
                     className="text-xs font-semibold text-orange-600 hover:underline"
                   >
-                    View Document →
+                    View Document â†’
                   </a>
                 ) : (
                   <span className="text-xs text-slate-400">Not Uploaded</span>
@@ -202,3 +203,4 @@ export default function AgentProfilePage() {
     </div>
   )
 }
+

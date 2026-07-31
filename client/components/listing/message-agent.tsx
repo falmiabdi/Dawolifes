@@ -1,8 +1,9 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect, useRef, useCallback } from "react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { MessageCircle, Send, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -74,7 +75,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
   const fetchMessages = useCallback(async () => {
     if (mode !== "chat" || !email) return
     try {
-      const res = await fetch(`${API_URL}/api/messages?propertyId=${propertyId}&buyerEmail=${encodeURIComponent(email)}`)
+      const res = await fetch(`${getApiUrl()}/api/messages?propertyId=${propertyId}&buyerEmail=${encodeURIComponent(email)}`)
       const data = await res.json()
       setMessages(data.messages || [])
     } catch {}
@@ -109,7 +110,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
     setSending(true)
     setError("")
     try {
-      const res = await fetch(`${API_URL}/api/messages`, {
+      const res = await fetch(`${getApiUrl()}/api/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
             </div>
 
             {mode === "form" ? (
-              /* ── Initial form ── */
+              /* â”€â”€ Initial form â”€â”€ */
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {error && (
                   <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
@@ -215,7 +216,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
                 </Button>
               </div>
             ) : (
-              /* ── Chat thread ── */
+              /* â”€â”€ Chat thread â”€â”€ */
               <>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/30 min-h-0">
                   {messages.map(m => {
@@ -261,3 +262,4 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
     </>
   )
 }
+

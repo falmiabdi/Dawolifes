@@ -1,11 +1,12 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export function PropertyDeleteButton({ id }: { id: string }) {
   const router = useRouter()
@@ -17,7 +18,7 @@ export function PropertyDeleteButton({ id }: { id: string }) {
     setLoading(true)
     try {
       const token = await getToken()
-      const res = await fetch(`${API_URL}/api/properties/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/properties/${id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
@@ -44,3 +45,4 @@ export function PropertyDeleteButton({ id }: { id: string }) {
     </button>
   )
 }
+

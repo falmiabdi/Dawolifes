@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -9,7 +11,6 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,7 +46,7 @@ export default function RegisterPage() {
       return
     }
 
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(`${getApiUrl()}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: values.username, email: values.email, password: values.password }),
@@ -129,3 +130,4 @@ export default function RegisterPage() {
     </AuthShell>
   )
 }
+

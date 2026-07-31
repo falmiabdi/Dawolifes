@@ -1,10 +1,11 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { CheckCircle2, ChevronRight, ChevronLeft, Upload, X, Loader2, User, Phone, Shield, GraduationCap, Briefcase, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -165,7 +166,7 @@ export default function OnboardingPage() {
     fd.append('file', file)
     fd.append('field', field)
     const headers = await getAuthHeaders()
-    const res = await fetch(`${API_URL}/api/agent/upload`, { method: 'POST', headers, body: fd })
+    const res = await fetch(`${getApiUrl()}/api/agent/upload`, { method: 'POST', headers, body: fd })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.message || 'Upload failed')
@@ -176,7 +177,7 @@ export default function OnboardingPage() {
 
   async function saveStep(data: Record<string, unknown>) {
     const headers = { 'Content-Type': 'application/json', ...await getAuthHeaders() }
-    const res = await fetch(`${API_URL}/api/agent/onboarding`, {
+    const res = await fetch(`${getApiUrl()}/api/agent/onboarding`, {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
@@ -231,7 +232,7 @@ export default function OnboardingPage() {
         <div className="mb-8 text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-orange-500">Agent Registration</p>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">Complete Your Profile</h1>
-          <p className="mt-2 text-slate-500">Step {step} of {STEPS.length} — {STEPS[step - 1].label}</p>
+          <p className="mt-2 text-slate-500">Step {step} of {STEPS.length} â€” {STEPS[step - 1].label}</p>
         </div>
 
         {/* Step progress */}
@@ -259,7 +260,7 @@ export default function OnboardingPage() {
             <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
           )}
 
-          {/* ── STEP 1 ── */}
+          {/* â”€â”€ STEP 1 â”€â”€ */}
           {step === 1 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">Personal Information</h2>
@@ -298,7 +299,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 2 ── */}
+          {/* â”€â”€ STEP 2 â”€â”€ */}
           {step === 2 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">Contact Information</h2>
@@ -338,7 +339,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 3 ── */}
+          {/* â”€â”€ STEP 3 â”€â”€ */}
           {step === 3 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">Identity Verification</h2>
@@ -352,7 +353,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 4 ── */}
+          {/* â”€â”€ STEP 4 â”€â”€ */}
           {step === 4 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">Education</h2>
@@ -371,7 +372,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 5 ── */}
+          {/* â”€â”€ STEP 5 â”€â”€ */}
           {step === 5 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">Professional Information</h2>
@@ -382,9 +383,9 @@ export default function OnboardingPage() {
                   <select value={experience} onChange={(e) => setExperience(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     <option value="">Select experience</option>
                     <option>Less than 1 year</option>
-                    <option>1–3 years</option>
-                    <option>3–5 years</option>
-                    <option>5–10 years</option>
+                    <option>1â€“3 years</option>
+                    <option>3â€“5 years</option>
+                    <option>5â€“10 years</option>
                     <option>More than 10 years</option>
                   </select>
                 </div>
@@ -409,7 +410,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── STEP 6 ── */}
+          {/* â”€â”€ STEP 6 â”€â”€ */}
           {step === 6 && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-slate-800">Review & Submit</h2>
@@ -460,3 +461,4 @@ export default function OnboardingPage() {
     </div>
   )
 }
+

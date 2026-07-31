@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -7,7 +9,6 @@ import { useAuth } from '@/components/auth/auth-guard'
 import { formatPrice } from '@/lib/data'
 import { StatusBadge } from '@/components/ui/status-badge'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AgentVehiclesPage() {
   const { user } = useAuth()
@@ -18,7 +19,7 @@ export default function AgentVehiclesPage() {
     const fetchVehicles = async () => {
       try {
         const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
-        const res = await fetch(`${API_URL}/api/agent/vehicles`, {
+        const res = await fetch(`${getApiUrl()}/api/agent/vehicles`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
         const data = await res.json()
@@ -137,7 +138,7 @@ export default function AgentVehiclesPage() {
                         if (!confirm('Delete this vehicle listing?')) return
                         try {
                           const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
-                          await fetch(`${API_URL}/api/vehicles/${v.id.toString()}`, {
+                          await fetch(`${getApiUrl()}/api/vehicles/${v.id.toString()}`, {
                             method: 'DELETE',
                             headers: { Authorization: `Bearer ${token}` },
                           })
@@ -160,3 +161,4 @@ export default function AgentVehiclesPage() {
     </div>
   )
 }
+

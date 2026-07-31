@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect, Suspense, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -68,7 +70,6 @@ const steps = [
   { label: "Location Map", icon: MapPin },
 ]
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function EditPropertyPageWrapper() {
   return (
@@ -136,7 +137,7 @@ function EditPropertyPage() {
 
     async function fetchProperty() {
       try {
-        const res = await fetch(`${API_URL}/api/properties/${id}`)
+        const res = await fetch(`${getApiUrl()}/api/properties/${id}`)
         if (!res.ok) {
           toast.error("Failed to load property.")
           router.push("/agent/properties")
@@ -210,7 +211,7 @@ function EditPropertyPage() {
         const formData = new FormData()
         formData.append("file", files[i])
 
-        const res = await fetch(`${API_URL}/api/agent/upload`, {
+        const res = await fetch(`${getApiUrl()}/api/agent/upload`, {
           method: "POST",
           headers,
           body: formData,
@@ -245,7 +246,7 @@ function EditPropertyPage() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const res = await fetch(`${API_URL}/api/agent/upload`, {
+      const res = await fetch(`${getApiUrl()}/api/agent/upload`, {
         method: "POST",
         headers,
         body: formData,
@@ -281,7 +282,7 @@ function EditPropertyPage() {
       setError("")
 
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/properties/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/properties/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
@@ -468,7 +469,7 @@ function EditPropertyPage() {
                       </Field>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <Field label="Area (m²)">
+                      <Field label="Area (mÂ²)">
                         <Input value={form.area} onChange={(e) => set("area", e.target.value)} placeholder="214" />
                       </Field>
                       <Field label="Bedrooms">
@@ -629,7 +630,7 @@ function EditPropertyPage() {
                       )}
                     </div>
 
-                    <Field label="Video URL (YouTube/Vimeo) — Optional">
+                    <Field label="Video URL (YouTube/Vimeo) â€” Optional">
                       <Input
                         value={form.videoUrl}
                         onChange={(e) => set("videoUrl", e.target.value)}
@@ -842,3 +843,4 @@ function SummaryRow({ label, value, highlight }: { label: string; value: string;
     </div>
   )
 }
+

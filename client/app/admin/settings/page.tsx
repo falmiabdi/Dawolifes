@@ -1,10 +1,10 @@
-"use client"
+﻿"use client"
 
+import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useCallback, useEffect } from 'react'
 import { Camera, Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,7 +52,7 @@ export default function AdminSettingsPage() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch(`${API_URL}/api/upload`, {
+      const res = await fetch(`${getApiUrl()}/api/upload`, {
         method: 'POST',
         body: fd,
       })
@@ -72,7 +72,7 @@ export default function AdminSettingsPage() {
     setSaving(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/admin/profile`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ phone, email, profilePhoto }),
@@ -102,7 +102,7 @@ export default function AdminSettingsPage() {
     setChangingPassword(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/auth/change-password`, {
+      const res = await fetch(`${getApiUrl()}/api/auth/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ currentPassword, newPassword }),
@@ -135,7 +135,7 @@ export default function AdminSettingsPage() {
     setCreatingAdmin(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/admin/create`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify(newAdmin),
@@ -213,16 +213,16 @@ export default function AdminSettingsPage() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Current Password</Label>
-            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
+            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>New Password</Label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>Confirm Password</Label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
             </div>
           </div>
           <Button onClick={handleChangePassword} disabled={changingPassword} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
@@ -261,3 +261,4 @@ export default function AdminSettingsPage() {
     </div>
   )
 }
+

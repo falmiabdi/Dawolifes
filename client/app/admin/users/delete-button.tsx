@@ -1,11 +1,11 @@
-"use client"
+﻿"use client"
 
+import { getApiUrl } from '@/lib/get-api-url'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import toast from 'react-hot-toast'
 
 export function UserDeleteButton({ id }: { id: string }) {
@@ -21,7 +21,7 @@ export function UserDeleteButton({ id }: { id: string }) {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (token) headers['Authorization'] = `Bearer ${token}`
 
-      const res = await fetch(`${API_URL}/api/admin/users`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/users`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ action: 'delete', id }),
@@ -50,3 +50,4 @@ export function UserDeleteButton({ id }: { id: string }) {
     </button>
   )
 }
+

@@ -22,8 +22,9 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: 'body',
     },
+    // CapacitorHttp disabled — rely on window.fetch patch for URL rewriting
     CapacitorHttp: {
-      enabled: true,
+      enabled: false,
     },
   },
   ios: {

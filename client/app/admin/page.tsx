@@ -1,5 +1,6 @@
-"use client"
+﻿"use client"
 
+import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
@@ -11,7 +12,6 @@ import { StatsCard } from '@/components/admin/stats-card'
 import { OverviewChart } from '@/components/admin/overview-chart'
 import { StatusBadge } from '@/components/ui/status-badge'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AdminDashboardPage() {
   const { user, getToken } = useAuth()
@@ -32,10 +32,10 @@ export default function AdminDashboardPage() {
       const authHeaders = await getAuthHeaders()
       const headers = { ...authHeaders }
       Promise.all([
-        fetch(`${API_URL}/api/admin/agents?status=all`, { headers }).then(r => r.json()),
-        fetch(`${API_URL}/api/admin/properties`, { headers }).then(r => r.json()),
-        fetch(`${API_URL}/api/admin/vehicles`, { headers }).then(r => r.json()),
-        fetch(`${API_URL}/api/payments?role=admin&limit=5`, { headers }).then(r => r.json()),
+        fetch(`${getApiUrl()}/api/admin/agents?status=all`, { headers }).then(r => r.json()),
+        fetch(`${getApiUrl()}/api/admin/properties`, { headers }).then(r => r.json()),
+        fetch(`${getApiUrl()}/api/admin/vehicles`, { headers }).then(r => r.json()),
+        fetch(`${getApiUrl()}/api/payments?role=admin&limit=5`, { headers }).then(r => r.json()),
       ]).then(([agentsData, propertiesData, vehiclesData, paymentsData]) => {
         setAgents(agentsData.agents || [])
         setProperties(propertiesData.properties || [])
@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-slate-900 truncate">{p.title}</p>
                     <p className="text-slate-400 truncate mt-0.5">
-                      {p.method} · {p.paymentType.replace('_', ' ')}
+                      {p.method} Â· {p.paymentType.replace('_', ' ')}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -219,3 +219,4 @@ export default function AdminDashboardPage() {
     </div>
   )
 }
+

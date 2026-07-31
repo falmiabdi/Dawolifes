@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { authMiddleware, agentMiddleware } from '../middleware/auth.js'
 import { vehicleSchema } from '../utils/validation.js'
-import { VehicleModel } from '../models/index.js'
+import { VehicleModel, UserModel } from '../models/index.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
 const router = Router()
@@ -35,7 +35,14 @@ router.get('/', async (req, res) => {
     if (req.query.make) where.make = req.query.make
     if (req.query.agentId) where.agentId = req.query.agentId
     const limit = parseInt(req.query.limit as string) || 100
-    const vehicles = await VehicleModel.findAll({ where, order: [['createdAt', 'DESC']], limit })
+    const vehicles = await VehicleModel.findAll({
+      where,
+      include: [
+        { model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] },
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+    })
     res.json({ vehicles })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch vehicles' })
@@ -45,7 +52,11 @@ router.get('/', async (req, res) => {
 // Get vehicle by ID
 router.get('/:id', async (req, res) => {
   try {
-    const vehicle = await VehicleModel.findByPk(req.params.id)
+    const vehicle = await VehicleModel.findByPk(req.params.id, {
+      include: [
+        { model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] },
+      ],
+    } as any)
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }

@@ -1,8 +1,9 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from "react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   CreditCard,
   Wallet,
@@ -52,7 +53,7 @@ export default function AgentPaymentsPage() {
   async function fetchPayments() {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/auth/session`)
+      const res = await fetch(`${getApiUrl()}/api/auth/session`)
       const session = await res.json()
       const userId = session?.user?.id
 
@@ -62,7 +63,7 @@ export default function AgentPaymentsPage() {
       }
 
       const params = new URLSearchParams({ role: "agent", userId, limit: "10" })
-      const dataRes = await fetch(`${API_URL}/api/payments?${params}`)
+      const dataRes = await fetch(`${getApiUrl()}/api/payments?${params}`)
       const data = await dataRes.json()
       setPayments(data.payments || [])
       setStats(data.stats || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 })
@@ -116,7 +117,7 @@ export default function AgentPaymentsPage() {
         </div>
       )}
 
-      {/* ── Wallet Cards ── */}
+      {/* â”€â”€ Wallet Cards â”€â”€ */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Wallet Balance */}
         <div className="rounded-3xl bg-slate-900 p-5 text-white shadow-xl flex flex-col justify-between relative overflow-hidden md:p-6">
@@ -166,7 +167,7 @@ export default function AgentPaymentsPage() {
         </div>
       </div>
 
-      {/* ── Withdraw + Upgrade ── */}
+      {/* â”€â”€ Withdraw + Upgrade â”€â”€ */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Withdraw Form */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 md:p-6">
@@ -254,7 +255,7 @@ export default function AgentPaymentsPage() {
         </div>
       </div>
 
-      {/* ── Transaction History ── */}
+      {/* â”€â”€ Transaction History â”€â”€ */}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <h3 className="font-bold text-slate-900 mb-4">Transaction History</h3>
 
@@ -295,9 +296,9 @@ export default function AgentPaymentsPage() {
                   </div>
                   <div className="flex items-center gap-3 text-xs text-slate-400">
                     <span>{new Date(tx.createdAt).toLocaleDateString()}</span>
-                    <span>·</span>
+                    <span>Â·</span>
                     <span>{tx.method}</span>
-                    <span>·</span>
+                    <span>Â·</span>
                     <span
                       className={`rounded-full px-2 py-0.5 border ${
                         tx.status === "Completed"
@@ -365,3 +366,4 @@ export default function AgentPaymentsPage() {
     </div>
   )
 }
+

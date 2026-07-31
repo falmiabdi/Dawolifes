@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect, Suspense, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -11,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import toast from "react-hot-toast"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function EditVehiclePageWrapper() {
   return (
@@ -58,7 +59,7 @@ function EditVehiclePage() {
 
     async function fetchVehicle() {
       try {
-        const res = await fetch(`${API_URL}/api/vehicles/${id}`)
+        const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`)
         if (!res.ok) throw new Error("Not found")
         const data = await res.json()
         const v = data.vehicle
@@ -87,7 +88,7 @@ function EditVehiclePage() {
     setSubmitting(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/vehicles/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
@@ -202,3 +203,4 @@ function EditVehiclePage() {
     </div>
   )
 }
+

@@ -29,8 +29,7 @@ import { PropertyCard } from "@/components/property-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 function getYouTubeEmbedUrl(url: string) {
   if (!url) return ''
@@ -94,7 +93,7 @@ function ListingPage() {
 
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties/${id}`)
+        const res = await fetch(`${getApiUrl()}/api/properties/${id}`)
         if (res.ok) {
           const data = await res.json()
           const dbProp = data.property
@@ -121,7 +120,7 @@ function ListingPage() {
               legalizedYear: dbProp.legalizedYear || 2024,
               description: dbProp.description || '',
               features: dbProp.features || [],
-              images: dbProp.images && dbProp.images.length > 0 ? dbProp.images : ["/placeholder.jpg"],
+               images: dbProp.images && dbProp.images.length > 0 ? dbProp.images.map((img: string) => getImageUrl(img)) : ["/placeholder.jpg"],
               videoUrl: dbProp.videoUrl || '',
               locationDocument: dbProp.locationDocument || '',
               status: dbProp.status || '',
@@ -137,7 +136,7 @@ function ListingPage() {
             setProperty(mapped)
             setLoading(false)
 
-            fetch(`${API_URL}/api/properties?city=${encodeURIComponent(dbProp.city)}&limit=4`)
+            fetch(`${getApiUrl()}/api/properties?city=${encodeURIComponent(dbProp.city)}&limit=4`)
               .then(r => r.json())
               .then(d => {
                 const list = (d.properties || []).filter((p: any) => p.id !== dbProp.id).slice(0, 3).map((p: any) => ({
@@ -458,3 +457,4 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
     </div>
   )
 }
+

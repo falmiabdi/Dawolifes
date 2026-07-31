@@ -1,11 +1,12 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useAuth } from "@/components/auth/auth-guard"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   LayoutDashboard,
   User,
@@ -62,7 +63,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const fetchUnreadCount = useCallback(async () => {
     const token = await getToken()
     if (!token) return
-    fetch(`${API_URL}/api/notifications/count`, {
+    fetch(`${getApiUrl()}/api/notifications/count`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
@@ -100,7 +101,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
             Dela<span className="text-orange-400">Harme</span>
           </span>
         </div>
-        {/* Close button — only useful in mobile drawer mode */}
+        {/* Close button â€” only useful in mobile drawer mode */}
         <button
           onClick={onClose}
           className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition"
@@ -165,12 +166,12 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* ── Desktop (lg+): static sidebar column ── */}
+      {/* â”€â”€ Desktop (lg+): static sidebar column â”€â”€ */}
       <div className="hidden lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0">
         {sidebarContent}
       </div>
 
-      {/* ── Mobile: slide-in drawer with backdrop ── */}
+      {/* â”€â”€ Mobile: slide-in drawer with backdrop â”€â”€ */}
       {/* Backdrop overlay */}
       <div
         className={cn(
@@ -192,3 +193,4 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
     </>
   )
 }
+

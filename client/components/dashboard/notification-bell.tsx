@@ -1,11 +1,12 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl, getWsUrl } from '@/lib/get-api-url'
 
 import { useEffect, useState, useCallback } from 'react'
 import { Bell } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import Link from 'next/link'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export function NotificationBell() {
   const { getToken } = useAuth()
@@ -22,7 +23,7 @@ export function NotificationBell() {
   useEffect(() => {
     ;(async () => {
       const authHeaders = await getAuthHeaders()
-      fetch(`${API_URL}/api/auth/session`, { headers: { ...authHeaders } })
+      fetch(`${getApiUrl()}/api/auth/session`, { headers: { ...authHeaders } })
         .then((r) => r.json())
         .then((data) => {
           if (data?.session?.user?.id) {
@@ -39,7 +40,7 @@ export function NotificationBell() {
     if (!userId) return
     ;(async () => {
       const authHeaders = await getAuthHeaders()
-      fetch(`${API_URL}/api/notifications/count`, { headers: { ...authHeaders } })
+      fetch(`${getApiUrl()}/api/notifications/count`, { headers: { ...authHeaders } })
         .then((r) => r.json())
         .then((data) => {
           if (typeof data.count === 'number') setUnreadCount(data.count)
@@ -49,7 +50,7 @@ export function NotificationBell() {
 
     const interval = setInterval(async () => {
       const authHeaders = await getAuthHeaders()
-      fetch(`${API_URL}/api/notifications/count`, { headers: { ...authHeaders } })
+      fetch(`${getApiUrl()}/api/notifications/count`, { headers: { ...authHeaders } })
         .then((r) => r.json())
         .then((data) => {
           if (typeof data.count === 'number') setUnreadCount(data.count)
@@ -69,7 +70,7 @@ export function NotificationBell() {
     let reconnectAttempts = 0
 
     function connect() {
-      ws = new WebSocket(`ws://localhost:4000/ws?userId=${userId}`)
+      ws = new WebSocket(getWsUrl(`/ws?userId=${userId}`))
 
       ws.onopen = () => {
         reconnectAttempts = 0
@@ -121,3 +122,4 @@ export function NotificationBell() {
     </Link>
   )
 }
+

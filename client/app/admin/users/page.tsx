@@ -1,5 +1,6 @@
-"use client"
+﻿"use client"
 
+import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from "react"
 import { User, Shield, Ban, RotateCcw } from "lucide-react"
 import { useAuth } from "@/components/auth/auth-guard"
@@ -7,7 +8,6 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { UserDeleteButton } from "./delete-button"
 import toast from "react-hot-toast"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AdminUsersPage() {
   const { user: authUser, getToken } = useAuth()
@@ -20,7 +20,7 @@ export default function AdminUsersPage() {
 
   async function fetchUsers() {
     const authHeaders = await getAuthHeaders()
-    fetch(`${API_URL}/api/admin/users`, { headers: { ...authHeaders } })
+    fetch(`${getApiUrl()}/api/admin/users`, { headers: { ...authHeaders } })
       .then((res) => res.json())
       .then((data) => setUsers(data.users || []))
       .catch(() => {})
@@ -33,7 +33,7 @@ export default function AdminUsersPage() {
 
   async function handleAction(action: string, id: string) {
     const authHeaders = await getAuthHeaders()
-    const res = await fetch(`${API_URL}/api/admin/users`, {
+    const res = await fetch(`${getApiUrl()}/api/admin/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ action, id }),
@@ -219,3 +219,4 @@ export default function AdminUsersPage() {
     </div>
   )
 }
+

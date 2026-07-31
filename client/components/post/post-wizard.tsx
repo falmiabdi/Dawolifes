@@ -1,8 +1,9 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState } from "react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   ArrowLeft,
   ArrowRight,
@@ -161,7 +162,7 @@ export function PostWizard() {
         const formData = new FormData()
         formData.append('file', files[i])
         
-        const res = await fetch(`${API_URL}/api/upload`, {
+        const res = await fetch(`${getApiUrl()}/api/upload`, {
           method: 'POST',
           body: formData,
         })
@@ -194,7 +195,7 @@ export function PostWizard() {
       const formData = new FormData()
       formData.append('file', file)
       
-      const res = await fetch(`${API_URL}/api/upload`, {
+      const res = await fetch(`${getApiUrl()}/api/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -227,7 +228,7 @@ export function PostWizard() {
       setSubmitting(true)
       setError("")
 
-      const res = await fetch(`${API_URL}/api/properties`, {
+      const res = await fetch(`${getApiUrl()}/api/properties`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -390,7 +391,7 @@ export function PostWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Area (m²)">
+                <Field label="Area (mÂ²)">
                   <Input value={form.area} onChange={(e) => set("area", e.target.value)} placeholder="214" />
                 </Field>
                 <Field label="Bedrooms">
@@ -556,7 +557,7 @@ export function PostWizard() {
                 )}
               </div>
               
-              <Field label="Video URL (YouTube/Vimeo) — Optional">
+              <Field label="Video URL (YouTube/Vimeo) â€” Optional">
                 <Input
                   value={form.videoUrl}
                   onChange={(e) => set("videoUrl", e.target.value)}
@@ -785,4 +786,5 @@ function SummaryRow({ label, value, highlight }: { label: string; value: string;
     </div>
   )
 }
+
 

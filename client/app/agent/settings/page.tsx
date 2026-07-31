@@ -1,9 +1,10 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState } from 'react'
 import { Bell, Lock, CheckCircle2 } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,7 +39,7 @@ export default function AgentSettingsPage() {
   })
 
   async function onSubmit(data: PasswordForm) {
-    const res = await fetch(`${API_URL}/api/auth/change-password`, {
+    const res = await fetch(`${getApiUrl()}/api/auth/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentPassword: data.current, newPassword: data.newPassword }),
@@ -80,7 +81,7 @@ export default function AgentSettingsPage() {
             <Input
               type="password"
               {...register('current')}
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               className="rounded-xl"
             />
             {errors.current && <p className="text-xs text-red-500">{errors.current.message}</p>}
@@ -91,7 +92,7 @@ export default function AgentSettingsPage() {
               <Input
                 type="password"
                 {...register('newPassword')}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 className="rounded-xl"
               />
               {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
@@ -101,7 +102,7 @@ export default function AgentSettingsPage() {
               <Input
                 type="password"
                 {...register('confirm')}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 className="rounded-xl"
               />
               {errors.confirm && <p className="text-xs text-red-500">{errors.confirm.message}</p>}
@@ -138,3 +139,4 @@ export default function AgentSettingsPage() {
     </div>
   )
 }
+

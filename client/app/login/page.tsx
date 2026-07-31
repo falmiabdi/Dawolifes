@@ -43,8 +43,15 @@ export default function LoginPage() {
     setMessage('')
     try {
       await login(values.email, values.password)
-    } catch {
-      setMessage('Invalid email or password. Please try again.')
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
+        setMessage('Cannot connect to the server. Check your network connection.')
+      } else if (msg.includes('403') || msg.includes('rejected') || msg.includes('suspended')) {
+        setMessage('Your account has been rejected or suspended.')
+      } else {
+        setMessage('Invalid email or password. Please try again.')
+      }
     }
   }
 

@@ -1,9 +1,9 @@
-"use client"
+﻿"use client"
 
+import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/components/auth/auth-guard'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 import {
   Building2, Check, X, Search, Loader2, Trash2, Phone, PhoneCall
 } from 'lucide-react'
@@ -73,7 +73,7 @@ export default function AdminPropertiesPage() {
     setLoading(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/admin/properties?status=${statusFilter}&search=${debouncedSearch}`, { headers: authHeaders })
+      const res = await fetch(`${getApiUrl()}/api/admin/properties?status=${statusFilter}&search=${debouncedSearch}`, { headers: authHeaders })
       const data = await res.json()
       setProperties(data.properties || [])
     } catch (err) {
@@ -92,7 +92,7 @@ export default function AdminPropertiesPage() {
     try {
       const authHeaders = await getAuthHeaders()
       const endpoint = status === 'Approved' ? 'approve' : 'reject'
-      const res = await fetch(`${API_URL}/api/admin/properties/${propertyId}/${endpoint}`, {
+      const res = await fetch(`${getApiUrl()}/api/admin/properties/${propertyId}/${endpoint}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ reason }),
@@ -120,7 +120,7 @@ export default function AdminPropertiesPage() {
     setSubmittingAction(true)
     try {
       const authHeaders = await getAuthHeaders()
-      const res = await fetch(`${API_URL}/api/properties/${propertyId}`, {
+      const res = await fetch(`${getApiUrl()}/api/properties/${propertyId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
       })
@@ -292,7 +292,7 @@ export default function AdminPropertiesPage() {
                     onClick={async () => {
                       setSubmittingAction(true)
                       const authHeaders = await getAuthHeaders()
-                      const res = await fetch(`${API_URL}/api/admin/properties/${selectedProperty.id}/contact`, {
+                      const res = await fetch(`${getApiUrl()}/api/admin/properties/${selectedProperty.id}/contact`, {
                         method: 'PATCH',
                         headers: { ...authHeaders },
                       })
@@ -331,7 +331,7 @@ export default function AdminPropertiesPage() {
                     <p><span className="text-slate-400">Type:</span> <span className="font-semibold text-slate-700">{selectedProperty.type}</span></p>
                     <p><span className="text-slate-400">Listing:</span> <span className="font-semibold text-slate-700">{selectedProperty.listingType}</span></p>
                     <p><span className="text-slate-400">Price:</span> <span className="font-bold text-orange-600">{selectedProperty.price.toLocaleString()} ETB ({selectedProperty.priceType})</span></p>
-                    <p><span className="text-slate-400">Area:</span> <span className="font-semibold text-slate-700">{selectedProperty.area} m²</span></p>
+                    <p><span className="text-slate-400">Area:</span> <span className="font-semibold text-slate-700">{selectedProperty.area} mÂ²</span></p>
                     <p><span className="text-slate-400">Beds/Baths:</span> <span className="font-semibold text-slate-700">{selectedProperty.bedrooms} / {selectedProperty.bathrooms}</span></p>
                     <p><span className="text-slate-400">Condition:</span> <span className="font-semibold text-slate-700">{selectedProperty.condition}</span></p>
                   </div>
@@ -378,3 +378,4 @@ export default function AdminPropertiesPage() {
     </div>
   )
 }
+

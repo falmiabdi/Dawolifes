@@ -31,15 +31,24 @@ app.use((req, res, next) => {
 })
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'capacitor://localhost',
+  'http://localhost',
+  'http://10.0.2.2',
+  process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  process.env.FRONTEND_URL || '',
+].filter(Boolean)
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'capacitor://localhost',
-    'http://localhost',
-    'http://10.0.2.2',
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(null, true)
+    }
+  },
   credentials: true,
 }))
 app.use(express.json())
@@ -69,12 +78,12 @@ app.get('/api/health', (_req, res) => {
 // Start server
 async function start() {
   const db = await connectDB()
+  if (!db) {
+    console.error("FATAL: Database connection failed after retries. Exiting.")
+    process.exit(1)
+  }
   const server = app.listen(PORT, () => {
-    if (db) {
-      console.log(`DawoLife API server running on port ${PORT} ✅ DB connected`)
-    } else {
-      console.log(`DawoLife API server running on port ${PORT} ⚠️ DB not connected`)
-    }
+    console.log(`DawoLife API server running on port ${PORT} ✅ DB connected`)
   })
   setupWebSocket(server)
 }

@@ -1,4 +1,6 @@
-"use client"
+﻿"use client"
+
+import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -8,7 +10,6 @@ import { formatPrice } from '@/lib/data'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PropertyDeleteButton } from './delete-button'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
 export default function AgentPropertiesPage() {
   const { user } = useAuth()
@@ -19,7 +20,7 @@ export default function AgentPropertiesPage() {
     const fetchProperties = async () => {
       try {
         const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
-        const res = await fetch(`${API_URL}/api/agent/properties`, {
+        const res = await fetch(`${getApiUrl()}/api/agent/properties`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
         const data = await res.json()
@@ -112,7 +113,7 @@ export default function AgentPropertiesPage() {
                     <div className="flex gap-1">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{p.bedrooms} Beds</span>
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{p.bathrooms} Baths</span>
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{p.area} m²</span>
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{p.area} mÂ²</span>
                     </div>
                   </div>
 
@@ -142,3 +143,4 @@ export default function AgentPropertiesPage() {
     </div>
   )
 }
+

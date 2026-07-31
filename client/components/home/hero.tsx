@@ -4,8 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Building2, MapPin, Search, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 type RecentProperty = {
   id: string
@@ -40,7 +39,7 @@ export function Hero() {
   const [recentProperties, setRecentProperties] = useState<RecentProperty[]>(fallbackProperties)
 
   useEffect(() => {
-    fetch(`${API_URL}/api/properties?status=Approved`)
+    fetch(`${getApiUrl()}/api/properties?status=Approved`)
       .then((res) => res.json())
       .then((data) => {
         const docs = (data.properties || []).slice(0, 5)
@@ -48,7 +47,7 @@ export function Hero() {
           docs.map((p: any) => ({
             id: p.id,
             title: p.title,
-            images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
+            images: p.images && p.images.length > 0 ? p.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
             createdAt: p.createdAt,
           }))
         )

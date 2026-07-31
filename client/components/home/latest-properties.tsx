@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { PropertyCard } from "@/components/property-card"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 export function LatestProperties() {
   const [properties, setProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${API_URL}/api/properties`)
+    fetch(`${getApiUrl()}/api/properties`)
       .then((res) => res.json())
       .then((data) => {
         const dbProperties = data.properties || []
@@ -36,13 +35,13 @@ export function LatestProperties() {
           legalizedYear: p.legalizedYear || 2024,
           description: p.description || '',
           features: p.features || [],
-          images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
+          images: p.images && p.images.length > 0 ? p.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
           agent: {
             id: p.agent?.id || p.agentId || 'unknown',
             name: p.agent?.username || p.agentName || 'Unknown Agent',
             role: 'Real Estate Agent',
             phone: p.displayPhone || p.agent?.phone || '+251 900 000 000',
-            avatar: p.agent?.profilePhoto || '/placeholder-user.jpg',
+            avatar: p.agent?.profilePhoto || '/placeholder.svg',
           }
         }))
         setProperties(transformed)
@@ -52,7 +51,7 @@ export function LatestProperties() {
   }, [])
 
   return (
-    <section id="listings" className="bg-muted/40 py-14">
+    <section id="listings" className="bg-muted/40 py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -61,7 +60,7 @@ export function LatestProperties() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}

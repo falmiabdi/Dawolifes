@@ -221,3 +221,44 @@ html.native-platform .safe-top {
 html.native-platform .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+html.native-platform .safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+html.native-platform .safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+@media (max-width: 640px) {
+  .container-mobile {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .mobile-px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .mobile-py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .mobile-text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  .mobile-stack {
+    display: flex;
+    flex-direction: column;
+  }
+  .mobile-full-width {
+    width: 100%;
+  }
+  .mobile-tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .mobile-gap-3 {
+    gap: 0.75rem;
+  }
+}
