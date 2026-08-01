@@ -19,18 +19,18 @@ export function Categories() {
         <p className="mt-1 text-sm text-muted-foreground">Browse by property type across Ethiopia</p>
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="mt-8 -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0">
         {categories.map((cat) => {
           const Icon = iconMap[cat.icon as keyof typeof iconMap]
           return (
             <button
               key={cat.key}
-              className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md"
+              className="group flex shrink-0 items-center gap-2.5 rounded-full border border-border bg-card px-5 py-3 transition-all hover:border-primary hover:shadow-md sm:shrink"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                <Icon className="h-6 w-6" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <Icon className="h-4.5 w-4.5" />
               </span>
-              <span className="text-sm font-semibold text-foreground">{cat.label}</span>
+              <span className="whitespace-nowrap text-sm font-semibold text-foreground">{cat.label}</span>
             </button>
           )
         })}

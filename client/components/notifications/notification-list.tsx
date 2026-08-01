@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { getApiUrl, getWsUrl } from '@/lib/get-api-url'
+import { getApiUrl, getWsUrlAsync } from '@/lib/get-api-url'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/components/auth/auth-guard'
@@ -76,43 +76,44 @@ export function NotificationList() {
 
     function connect() {
       setWsStatus('connecting')
-      const wsUrl = getWsUrl(`/ws?userId=${userId}`)
+      getWsUrlAsync(`/ws?userId=${userId}`).then((wsUrl) => {
+        if (ws) return
+        ws = new WebSocket(wsUrl)
 
-      ws = new WebSocket(wsUrl)
-
-      ws.onopen = () => {
-        setWsStatus('connected')
-        reconnectAttempts = 0
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.type === 'notification') {
-            const notif = data.notification as NotificationItem
-            setNotifications((prev) => {
-              if (prev.some((n) => n.id === notif.id)) return prev
-              return [notif, ...prev]
-            })
-            setUnreadCount((prev) => prev + 1)
-          }
-          if (data.type === 'unread_count') {
-            setUnreadCount(data.count)
-          }
-        } catch {}
-      }
-
-      ws.onerror = () => setWsStatus('disconnected')
-      ws.onclose = () => {
-        setWsStatus('disconnected')
-        if (reconnectAttempts < maxReconnectAttempts) {
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
-          reconnectTimeout = setTimeout(() => {
-            reconnectAttempts++
-            connect()
-          }, delay)
+        ws.onopen = () => {
+          setWsStatus('connected')
+          reconnectAttempts = 0
         }
-      }
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            if (data.type === 'notification') {
+              const notif = data.notification as NotificationItem
+              setNotifications((prev) => {
+                if (prev.some((n) => n.id === notif.id)) return prev
+                return [notif, ...prev]
+              })
+              setUnreadCount((prev) => prev + 1)
+            }
+            if (data.type === 'unread_count') {
+              setUnreadCount(data.count)
+            }
+          } catch {}
+        }
+
+        ws.onerror = () => setWsStatus('disconnected')
+        ws.onclose = () => {
+          setWsStatus('disconnected')
+          if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
+            reconnectTimeout = setTimeout(() => {
+              reconnectAttempts++
+              connect()
+            }, delay)
+          }
+        }
+      })
     }
 
     connect()

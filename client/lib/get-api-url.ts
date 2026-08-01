@@ -5,22 +5,40 @@ let patched = false
 let isNativePlatform = false
 let nativeResolvePromise: Promise<string> | null = null
 let rawFetch: typeof fetch | undefined
+let lastResolvedAt = 0
 
 const DEFAULT_API_URL = 'http://localhost:4000'
-const localApiOrigins = [DEFAULT_API_URL]
+const ANDROID_EMULATOR_API_URL = 'http://10.0.2.2:4000'
+const GENYMOTION_API_URL = 'http://10.0.3.2:4000'
+const PROBE_TIMEOUT_MS = 2500
+const PROBE_ATTEMPTS = 3
+const PROBE_BACKOFF_MS = 600
+const RESOLUTION_TTL_MS = 45_000
 
-function rewriteLocalApiOrigin(url: string, baseUrl: string): string {
-  const origins = [DEFAULT_API_URL, defaultApiUrl()]
-  for (const origin of origins) {
-    if (origin && url.startsWith(origin)) {
-      return `${baseUrl}${url.slice(origin.length)}`
-    }
-  }
-  return url
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '')
 }
 
 function defaultApiUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL
+  return normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL)
+}
+
+function getConfiguredFallbackUrls(): string[] {
+  const configured = process.env.NEXT_PUBLIC_API_FALLBACK_URLS
+  if (!configured) return []
+  return configured
+    .split(',')
+    .map((entry) => normalizeBaseUrl(entry.trim()))
+    .filter(Boolean)
+}
+
+function detectNativePlatform(): string | null {
+  try {
+    const Capacitor = require('@capacitor/core').Capacitor
+    return Capacitor.getPlatform()
+  } catch {
+    return null
+  }
 }
 
 function isDetectableNative(): boolean {
@@ -32,54 +50,137 @@ function isDetectableNative(): boolean {
   }
 }
 
-// On a real phone reachable addresses differ per setup:
-//  - "localhost" works when the app was launched with `adb reverse tcp:4000 tcp:4000` (USB)
-//  - the baked NEXT_PUBLIC_API_URL (LAN IP) works when phone + PC share Wi-Fi
 function nativeCandidates(): string[] {
-  const list: string[] = []
-  const env = process.env.NEXT_PUBLIC_API_URL
-  if (env && env !== DEFAULT_API_URL) list.push(env)
-  list.push(DEFAULT_API_URL)
-  return list
+  const candidates = new Set<string>()
+  const platform = detectNativePlatform()
+  const envUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (envUrl) candidates.add(normalizeBaseUrl(envUrl))
+  for (const fallback of getConfiguredFallbackUrls()) {
+    candidates.add(fallback)
+  }
+
+  if (platform === 'android') {
+    candidates.add(ANDROID_EMULATOR_API_URL)
+    candidates.add(GENYMOTION_API_URL)
+  }
+
+  candidates.add(DEFAULT_API_URL)
+  return [...candidates]
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 async function probeUrl(url: string): Promise<string | null> {
+  const baseUrl = normalizeBaseUrl(url)
+  const healthUrl = `${baseUrl}/api/health`
+  const fetcher = rawFetch || (typeof window !== 'undefined' ? window.fetch : undefined) || fetch
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS)
+
   try {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 2500)
-    const fetcher = rawFetch || (typeof window !== 'undefined' ? window.fetch : undefined) || fetch
-    const res = await fetcher(`${url}/api/health`, { signal: controller.signal })
-    clearTimeout(timer)
-    return res.ok ? url : null
+    const response = await fetcher(healthUrl, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+    return response.ok ? baseUrl : null
   } catch {
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 
-export async function resolveNativeApiUrl(): Promise<string> {
-  if (cachedUrl) return cachedUrl
-  if (nativeResolvePromise) return nativeResolvePromise
+async function probeCandidatesOnce(candidates: string[]): Promise<string | null> {
+  return new Promise((resolve) => {
+    let settled = 0
+    let winnerFound = false
+
+    for (const candidate of candidates) {
+      probeUrl(candidate).then((resolved) => {
+        settled += 1
+        if (resolved && !winnerFound) {
+          winnerFound = true
+          resolve(resolved)
+          return
+        }
+
+        if (settled === candidates.length && !winnerFound) {
+          resolve(null)
+        }
+      })
+    }
+  })
+}
+
+async function resolveCandidateWithRetries(candidates: string[], attempts = PROBE_ATTEMPTS): Promise<string | null> {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const winner = await probeCandidatesOnce(candidates)
+    if (winner) return winner
+    if (attempt < attempts) {
+      const delay = PROBE_BACKOFF_MS * attempt
+      await sleep(delay)
+    }
+  }
+  return null
+}
+
+function rewriteLocalApiOrigin(url: string, baseUrl: string): string {
+  const normalizedBase = normalizeBaseUrl(baseUrl)
+  const origins = [
+    DEFAULT_API_URL,
+    ANDROID_EMULATOR_API_URL,
+    GENYMOTION_API_URL,
+    defaultApiUrl(),
+    ...getConfiguredFallbackUrls(),
+  ]
+
+  for (const origin of origins) {
+    const normalizedOrigin = normalizeBaseUrl(origin)
+    if (normalizedOrigin && url.startsWith(normalizedOrigin)) {
+      return `${normalizedBase}${url.slice(normalizedOrigin.length)}`
+    }
+  }
+
+  return url
+}
+
+type ResolveOptions = {
+  force?: boolean
+  attempts?: number
+}
+
+export async function resolveNativeApiUrl(options: ResolveOptions = {}): Promise<string> {
+  const { force = false, attempts = PROBE_ATTEMPTS } = options
+
+  if (!force && cachedUrl && Date.now() - lastResolvedAt < RESOLUTION_TTL_MS) {
+    return cachedUrl
+  }
+
+  if (nativeResolvePromise && !force) return nativeResolvePromise
 
   nativeResolvePromise = (async () => {
     const candidates = nativeCandidates()
-    const winner = await new Promise<string | null>((resolve) => {
-      let settled = 0
-      let found: string | null = null
-      for (const candidate of candidates) {
-        probeUrl(candidate).then((url) => {
-          settled += 1
-          if (url && !found) {
-            found = url
-            resolve(url)
-            return
-          }
-          if (settled === candidates.length && !found) resolve(null)
-        })
-      }
-    })
-    if (winner) cachedUrl = winner
-    return cachedUrl || candidates[0]
-  })()
+    const winner = await resolveCandidateWithRetries(candidates, attempts)
+
+    if (winner) {
+      cachedUrl = winner
+      lastResolvedAt = Date.now()
+      return cachedUrl
+    }
+
+    const fallback = candidates[0] || defaultApiUrl()
+    cachedUrl = fallback
+    lastResolvedAt = Date.now()
+    console.warn(
+      `[API] No healthy native endpoint detected after ${attempts} probe attempts. Falling back to ${fallback}.`
+    )
+    return fallback
+  })().finally(() => {
+    nativeResolvePromise = null
+  })
 
   return nativeResolvePromise
 }
@@ -90,9 +191,8 @@ export function getApiUrl(): string {
   if (isDetectableNative()) {
     isNativePlatform = true
     cachedUrl = defaultApiUrl()
-    // Upgrade to a working host without blocking the first paint
-    resolveNativeApiUrl().then((url) => {
-      if (url && url !== cachedUrl) cachedUrl = url
+    resolveNativeApiUrl().catch((error) => {
+      console.warn('[API] Native endpoint probing failed:', error)
     })
     return cachedUrl
   }
@@ -112,9 +212,8 @@ export function getApiUrl(): string {
   return cachedUrl
 }
 
-// Waits until the native API host is confirmed reachable (used by auth / data calls).
 export async function getApiUrlAsync(): Promise<string> {
-  if (cachedUrl) return cachedUrl
+  if (cachedUrl && Date.now() - lastResolvedAt < RESOLUTION_TTL_MS) return cachedUrl
   if (isDetectableNative()) {
     isNativePlatform = true
     return resolveNativeApiUrl()
@@ -122,8 +221,23 @@ export async function getApiUrlAsync(): Promise<string> {
   return getApiUrl()
 }
 
+function toWsBaseUrl(baseUrl: string): string {
+  return normalizeBaseUrl(baseUrl).replace(/^http/i, 'ws')
+}
+
 export function getWsUrl(path = '/ws'): string {
-  return `${getApiUrl().replace(/^http/, 'ws')}${path}`
+  const override = process.env.NEXT_PUBLIC_WS_URL
+  const wsBase = override ? normalizeBaseUrl(override) : toWsBaseUrl(getApiUrl())
+  return `${wsBase}${path}`
+}
+
+export async function getWsUrlAsync(path = '/ws'): Promise<string> {
+  const override = process.env.NEXT_PUBLIC_WS_URL
+  if (override) {
+    return `${normalizeBaseUrl(override)}${path}`
+  }
+  const apiBase = await getApiUrlAsync()
+  return `${toWsBaseUrl(apiBase)}${path}`
 }
 
 export function getImageUrl(url: string | null | undefined): string {
@@ -131,14 +245,21 @@ export function getImageUrl(url: string | null | undefined): string {
   return rewriteLocalApiOrigin(url, getApiUrl())
 }
 
+function isRetryableNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return /failed to fetch|networkerror|network request failed/i.test(error.message)
+}
+
 export function patchFetchForCapacitor() {
   if (patched || typeof window === 'undefined') return
+
   try {
     const Capacitor = require('@capacitor/core').Capacitor
     isNativePlatform = Capacitor.isNativePlatform()
   } catch {
     return
   }
+
   if (!isNativePlatform) return
 
   const originalFetch = window.fetch
@@ -147,7 +268,9 @@ export function patchFetchForCapacitor() {
   getApiUrl()
 
   window.fetch = async function (input: RequestInfo | URL, init?: RequestInit) {
+    const originalInput = input
     let url: string
+
     if (input instanceof Request) {
       url = input.url
     } else if (typeof input === 'string') {
@@ -156,21 +279,31 @@ export function patchFetchForCapacitor() {
       url = input.toString()
     }
 
-    // Wait until a reachable API host is confirmed so first-load requests
-    // don't hit an unreachable default (localhost on a phone, etc.).
     const baseUrl = await resolveNativeApiUrl()
-
     const rewrittenUrl = rewriteLocalApiOrigin(url, baseUrl)
-    if (rewrittenUrl !== url) {
-      url = rewrittenUrl
-      if (input instanceof Request) {
-        input = new Request(url, input)
-      } else {
-        input = url
-      }
-    }
+    const finalInput =
+      rewrittenUrl !== url
+        ? input instanceof Request
+          ? new Request(rewrittenUrl, input)
+          : rewrittenUrl
+        : input
 
-    return originalFetch.call(window, input, init)
+    try {
+      return await originalFetch.call(window, finalInput, init)
+    } catch (error) {
+      if (!isRetryableNetworkError(error) || originalInput instanceof Request) {
+        throw error
+      }
+
+      const refreshedBase = await resolveNativeApiUrl({ force: true, attempts: PROBE_ATTEMPTS + 1 })
+      const retryUrl = rewriteLocalApiOrigin(url, refreshedBase)
+
+      if (retryUrl === url) {
+        throw error
+      }
+
+      return originalFetch.call(window, retryUrl, init)
+    }
   }
 
   patched = true

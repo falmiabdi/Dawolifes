@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { getApiUrl, getWsUrl } from '@/lib/get-api-url'
+import { getApiUrlAsync, getWsUrlAsync } from '@/lib/get-api-url'
 
 import { useEffect, useState, useCallback } from 'react'
 import { Bell } from 'lucide-react'
@@ -21,44 +21,59 @@ export function NotificationBell() {
 
   // Fetch userId from session
   useEffect(() => {
+    let cancelled = false
+
     ;(async () => {
-      const authHeaders = await getAuthHeaders()
-      fetch(`${getApiUrl()}/api/auth/session`, { headers: { ...authHeaders } })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data?.session?.user?.id) {
-            setUserId(data.session.user.id)
-            setRole(data.session.user.role || 'agent')
-          }
-        })
-        .catch(() => {})
+      try {
+        const authHeaders = await getAuthHeaders()
+        const apiBase = await getApiUrlAsync()
+        const response = await fetch(`${apiBase}/api/auth/session`, { headers: { ...authHeaders } })
+        const data = await response.json()
+        if (!cancelled && data?.session?.user?.id) {
+          setUserId(data.session.user.id)
+          setRole(data.session.user.role || 'agent')
+        }
+      } catch (error) {
+        console.error('[API] Failed to load session for notification bell:', error)
+      }
     })()
+
+    return () => {
+      cancelled = true
+    }
   }, [getAuthHeaders])
 
   // Poll unread count
   useEffect(() => {
     if (!userId) return
+    let cancelled = false
+
+    const loadUnreadCount = async () => {
+      try {
+        const authHeaders = await getAuthHeaders()
+        const apiBase = await getApiUrlAsync()
+        const response = await fetch(`${apiBase}/api/notifications/count`, { headers: { ...authHeaders } })
+        const data = await response.json()
+        if (!cancelled && typeof data.count === 'number') {
+          setUnreadCount(data.count)
+        }
+      } catch (error) {
+        console.error('[API] Failed to load unread notifications count:', error)
+      }
+    }
+
     ;(async () => {
-      const authHeaders = await getAuthHeaders()
-      fetch(`${getApiUrl()}/api/notifications/count`, { headers: { ...authHeaders } })
-        .then((r) => r.json())
-        .then((data) => {
-          if (typeof data.count === 'number') setUnreadCount(data.count)
-        })
-        .catch(() => {})
+      await loadUnreadCount()
     })()
 
     const interval = setInterval(async () => {
-      const authHeaders = await getAuthHeaders()
-      fetch(`${getApiUrl()}/api/notifications/count`, { headers: { ...authHeaders } })
-        .then((r) => r.json())
-        .then((data) => {
-          if (typeof data.count === 'number') setUnreadCount(data.count)
-        })
-        .catch(() => {})
+      await loadUnreadCount()
     }, 30000)
 
-    return () => clearInterval(interval)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [userId, getAuthHeaders])
 
   // WebSocket live updates
@@ -69,38 +84,48 @@ export function NotificationBell() {
     let reconnectTimeout: NodeJS.Timeout | null = null
     let reconnectAttempts = 0
 
-    function connect() {
-      ws = new WebSocket(getWsUrl(`/ws?userId=${userId}`))
+    let cancelled = false
 
-      ws.onopen = () => {
-        reconnectAttempts = 0
-      }
+    async function connect() {
+      try {
+        const wsUrl = await getWsUrlAsync(`/ws?userId=${userId}`)
+        if (cancelled || ws) return
+        ws = new WebSocket(wsUrl)
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.type === 'notification') {
-            setUnreadCount((prev) => prev + 1)
-          }
-          if (data.type === 'unread_count') {
-            setUnreadCount(data.count)
-          }
-        } catch {}
-      }
-
-      ws.onclose = () => {
-        if (reconnectAttempts < 5) {
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 15000)
-          reconnectTimeout = setTimeout(() => {
-            reconnectAttempts++
-            connect()
-          }, delay)
+        ws.onopen = () => {
+          reconnectAttempts = 0
         }
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            if (data.type === 'notification') {
+              setUnreadCount((prev) => prev + 1)
+            }
+            if (data.type === 'unread_count') {
+              setUnreadCount(data.count)
+            }
+          } catch {}
+        }
+
+        ws.onclose = () => {
+          ws = null
+          if (reconnectAttempts < 5) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 15000)
+            reconnectTimeout = setTimeout(() => {
+              reconnectAttempts++
+              void connect()
+            }, delay)
+          }
+        }
+      } catch (error) {
+        console.error('[WS] Failed to connect notification bell socket:', error)
       }
     }
 
-    connect()
+    void connect()
     return () => {
+      cancelled = true
       if (ws) ws.close()
       if (reconnectTimeout) clearTimeout(reconnectTimeout)
     }
@@ -122,4 +147,3 @@ export function NotificationBell() {
     </Link>
   )
 }
-
