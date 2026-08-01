@@ -40,6 +40,8 @@ export const propertySchema = z.object({
   name: z.string().optional(),
   phone: z.string().optional(),
   locationDocument: z.string().optional(),
+  posterType: z.string().optional(),
+  ownerType: z.string().optional(),
 })
 
 export const vehicleSchema = z.object({

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../utils/jwt.js'
+import { UserModel } from '../models/index.js'
 
 declare global {
   namespace Express {
@@ -56,4 +57,37 @@ export function agentMiddleware(req: AuthenticatedRequest, res: Response, next: 
     return res.status(403).json({ message: 'Agent access required' })
   }
   next()
+}
+
+// Blocks Rejected / Suspended users from performing actions (e.g. posting).
+// Admins bypass the status check so the admin console keeps working.
+export async function requireActiveUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'No token provided' })
+    }
+    if (req.user.role === 'admin') {
+      return next()
+    }
+
+    const user = await UserModel.findByPk(req.user.userId, { attributes: ['id', 'role', 'status', 'rejectionReason'] })
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' })
+    }
+
+    const status = user.getDataValue('status')
+    if (status === 'Rejected') {
+      return res.status(403).json({
+        message: 'Your account has been rejected and cannot post listings.',
+        rejectionReason: user.getDataValue('rejectionReason'),
+      })
+    }
+    if (status === 'Suspended') {
+      return res.status(403).json({ message: 'Your account has been suspended and cannot post listings.' })
+    }
+
+    next()
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to verify account status' })
+  }
 }

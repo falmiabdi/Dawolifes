@@ -52,10 +52,15 @@ function detectLanIp() {
   return null
 }
 
+function bin(name) {
+  const ext = process.platform === 'win32' ? '.cmd' : ''
+  return path.join(rootDir, 'node_modules', '.bin', name + ext)
+}
+
 function run(command, args, cwd) {
   const result = spawnSync(command, args, {
     cwd,
-    shell: true,
+    shell: false,
     stdio: 'inherit',
     env: { ...process.env },
   })
@@ -93,7 +98,7 @@ function main() {
   process.env.NEXT_PUBLIC_API_URL = apiUrl
   process.env.NEXT_PUBLIC_WS_URL = wsUrl
 
-  const okBuild = run('npx', ['--no-install', 'next', 'build'], clientDir)
+  const okBuild = run(bin('next'), ['build'], clientDir)
   if (!okBuild) {
     console.error('❌ Next.js build failed.')
     process.exit(1)
@@ -102,7 +107,7 @@ function main() {
 
   if (target === 'android' || target === 'all') {
     console.log('\n⏳ Syncing to Android...')
-    if (!run('npx', ['cap', 'sync', 'android'], rootDir)) {
+    if (!run(bin('cap'), ['sync', 'android'], rootDir)) {
       console.error('❌ cap sync android failed.')
       process.exit(1)
     }
@@ -111,7 +116,7 @@ function main() {
 
   if (target === 'ios' || target === 'all') {
     console.log('\n⏳ Syncing to iOS...')
-    if (!run('npx', ['cap', 'sync', 'ios'], rootDir)) {
+    if (!run(bin('cap'), ['sync', 'ios'], rootDir)) {
       console.error('❌ cap sync ios failed.')
       process.exit(1)
     }

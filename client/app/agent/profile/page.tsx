@@ -49,7 +49,10 @@ export default function AgentProfilePage() {
         <div className="flex items-center gap-4">
           <ProfilePhotoUploader
             currentPhoto={displayUser.profilePhoto || ''}
-            initials={displayUser.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser.username.charAt(0).toUpperCase()}
+            initials={(() => {
+              const name = displayUser.fullName || displayUser.username || displayUser.name || ''
+              return name ? name.charAt(0).toUpperCase() : '?'
+            })()}
           />
           <div>
             <div className="flex items-center gap-2">

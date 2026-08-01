@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#f0f0f0"/>
+  <g transform="translate(400,300)">
+    <path d="M0-80l-120 80h80v80h80v-80h80z" fill="#d0d0d0"/>
+    <rect x="-30" y="80" width="60" height="40" rx="2" fill="#bbbbbb"/>
+    <rect x="-60" y="-40" width="120" height="8" rx="2" fill="#e0e0e0"/>
+    <rect x="-70" y="-20" width="140" height="8" rx="2" fill="#e0e0e0"/>
+    <rect x="-50" y="0" width="100" height="8" rx="2" fill="#e0e0e0"/>
+  </g>
+  <text x="400" y="380" text-anchor="middle" fill="#aaaaaa" font-size="18" font-family="sans-serif">No Image Available</text>
+</svg>

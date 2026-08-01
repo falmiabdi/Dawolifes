@@ -120,6 +120,8 @@ function ListingPage() {
               legalizedYear: dbProp.legalizedYear || 2024,
               description: dbProp.description || '',
               features: dbProp.features || [],
+              posterType: dbProp.posterType || '',
+              ownerType: dbProp.ownerType || '',
                images: dbProp.images && dbProp.images.length > 0 ? dbProp.images.map((img: string) => getImageUrl(img)) : ["/placeholder.jpg"],
               videoUrl: dbProp.videoUrl || '',
               locationDocument: dbProp.locationDocument || '',
@@ -206,6 +208,8 @@ function ListingPage() {
   const info: [string, string][] = [
     ["Type", property.type],
     ["Status", property.listingType],
+    ["Listing By", property.posterType || 'N/A'],
+    ["Owner Type", property.ownerType || 'N/A'],
     ["Region", property.region],
     ["City", property.city],
     ["Sub-city", property.subCity],

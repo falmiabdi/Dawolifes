@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { authMiddleware, agentMiddleware } from '../middleware/auth.js'
+import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
 import { vehicleSchema } from '../utils/validation.js'
 import { VehicleModel, UserModel } from '../models/index.js'
 import { notifyAdmins } from '../utils/notifications.js'
@@ -67,7 +67,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // Create vehicle (agent only)
-router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
+router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const parsed = vehicleSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -96,7 +96,7 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
 })
 
 // Update vehicle
-router.patch('/:id', authMiddleware, agentMiddleware, async (req, res) => {
+router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const vehicle = await VehicleModel.findByPk(req.params.id)
     if (!vehicle) {
@@ -128,7 +128,7 @@ router.patch('/:id', authMiddleware, agentMiddleware, async (req, res) => {
 })
 
 // Delete vehicle
-router.delete('/:id', authMiddleware, agentMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const vehicle = await VehicleModel.findByPk(req.params.id)
     if (!vehicle) {

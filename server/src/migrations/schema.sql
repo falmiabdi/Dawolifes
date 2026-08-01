@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS properties (
   videoUrl VARCHAR,
   featured BOOLEAN DEFAULT FALSE,
   locationDocument VARCHAR,
+  posterType VARCHAR,
+  ownerType VARCHAR,
   agentId UUID NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
   agentName VARCHAR NOT NULL,
   status property_status DEFAULT 'Draft',

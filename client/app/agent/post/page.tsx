@@ -27,13 +27,15 @@ const steps = [
 
 export default function AgentPostPage() {
   const router = useRouter()
-  const { getToken } = useAuth()
+  const { getToken, user } = useAuth()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   // Form Fields
   const [title, setTitle] = useState('')
+  const [posterType, setPosterType] = useState('Agent')
+  const [ownerType, setOwnerType] = useState('Farmer Owner')
   const [propertyType, setPropertyType] = useState('House')
   const [listingType, setListingType] = useState('For Rent')
   const [price, setPrice] = useState('')
@@ -171,7 +173,7 @@ export default function AgentPostPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
-          title, type: propertyType, listingType, price: Number(price), priceType,
+          title, posterType, ownerType, type: propertyType, listingType, price: Number(price), priceType,
           area: area ? Number(area) : undefined,
           bedrooms: bedrooms ? Number(bedrooms) : undefined,
           bathrooms: bathrooms ? Number(bathrooms) : undefined,
@@ -223,6 +225,27 @@ export default function AgentPostPage() {
 
   const back = () => setStep((s) => Math.max(1, s - 1))
 
+  if (user && user.status !== 'Approved') {
+    return (
+      <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+          <Info className="h-7 w-7" />
+        </div>
+        <h1 className="mt-4 text-xl font-bold text-slate-900">Posting is unavailable</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Your account must be approved before you can post property listings. Your current status is{' '}
+          <span className="font-semibold">{user.status}</span>.
+        </p>
+        <Button
+          onClick={() => router.push('/agent')}
+          className="mt-6 rounded-full bg-orange-500 text-white hover:bg-orange-600"
+        >
+          Back to Dashboard
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="text-center">
@@ -269,6 +292,20 @@ export default function AgentPostPage() {
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <HomeIcon className="h-5 w-5" />
                 <h2>Basic Property Details</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Listing By *</Label>
+                  <select value={posterType} onChange={(e) => setPosterType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                    {['Agent', 'Owner'].map(o => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Owner Type</Label>
+                  <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                    {['Farmer Owner', 'Saving Owner'].map(o => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Property Title *</Label>
@@ -620,6 +657,14 @@ export default function AgentPostPage() {
             <span>Listing Summary</span>
           </p>
           <div className="divide-y divide-slate-100 text-xs">
+            <div className="py-2.5 flex justify-between">
+              <span className="text-slate-500">Listing By</span>
+              <span className="font-semibold text-slate-800">{posterType}</span>
+            </div>
+            <div className="py-2.5 flex justify-between">
+              <span className="text-slate-500">Owner Type</span>
+              <span className="font-semibold text-slate-800">{ownerType}</span>
+            </div>
             <div className="py-2.5 flex justify-between">
               <span className="text-slate-500">Type</span>
               <span className="font-semibold text-slate-800">{propertyType}</span>

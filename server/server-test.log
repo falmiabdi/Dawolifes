@@ -1,0 +1,10 @@
+✅ PostgreSQL connected
+✅ Tables synced
+WebSocket server started on /ws
+DawoLife API server running on port 4000 ✅ DB connected
+[2:37:21 PM] ✅ GET /api/health 200 542ms
+[2:39:14 PM] ✅ GET /api/health 200 7ms
+[2:42:26 PM] ✅ GET /api/health 200 25ms
+[2:43:36 PM] ✅ OPTIONS /api/auth/signin 204 18ms
+[2:43:37 PM] ❌ POST /api/auth/signin 400 670ms
+[2:44:51 PM] ❌ POST /api/auth/signin 401 1674ms

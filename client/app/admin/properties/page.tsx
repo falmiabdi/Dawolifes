@@ -37,6 +37,8 @@ interface Property {
   description: string
   features: string[]
   images: string[]
+  posterType?: string
+  ownerType?: string
   agentId: string
   agentName?: string
   displayPhone?: string
@@ -330,6 +332,8 @@ export default function AdminPropertiesPage() {
                   <div className="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3">
                     <p><span className="text-slate-400">Type:</span> <span className="font-semibold text-slate-700">{selectedProperty.type}</span></p>
                     <p><span className="text-slate-400">Listing:</span> <span className="font-semibold text-slate-700">{selectedProperty.listingType}</span></p>
+                    <p><span className="text-slate-400">Listing By:</span> <span className="font-semibold text-slate-700">{selectedProperty.posterType || '-'}</span></p>
+                    <p><span className="text-slate-400">Owner Type:</span> <span className="font-semibold text-slate-700">{selectedProperty.ownerType || '-'}</span></p>
                     <p><span className="text-slate-400">Price:</span> <span className="font-bold text-orange-600">{selectedProperty.price.toLocaleString()} ETB ({selectedProperty.priceType})</span></p>
                     <p><span className="text-slate-400">Area:</span> <span className="font-semibold text-slate-700">{selectedProperty.area} mÂ²</span></p>
                     <p><span className="text-slate-400">Beds/Baths:</span> <span className="font-semibold text-slate-700">{selectedProperty.bedrooms} / {selectedProperty.bathrooms}</span></p>

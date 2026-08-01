@@ -51,6 +51,8 @@ const steps = [
 
 type FormState = {
   title: string
+  posterType: string
+  ownerType: string
   propertyType: string
   listingType: string
   price: string
@@ -77,6 +79,8 @@ type FormState = {
 
 const initialState: FormState = {
   title: "",
+  posterType: "Agent",
+  ownerType: "Farmer Owner",
   propertyType: "House",
   listingType: "For Rent",
   price: "",
@@ -233,6 +237,8 @@ export function PostWizard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: form.title,
+          posterType: form.posterType,
+          ownerType: form.ownerType,
           type: form.propertyType,
           listingType: form.listingType,
           price: form.price,
@@ -350,6 +356,22 @@ export function PostWizard() {
           {step === 0 && (
             <div className="space-y-5">
               <SectionTitle icon={<HomeIcon className="h-5 w-5" />} title="Property Details" />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label="Listing By" required>
+                  <SelectBox
+                    value={form.posterType}
+                    onChange={(v) => set("posterType", v)}
+                    options={["Agent", "Owner"]}
+                  />
+                </Field>
+                <Field label="Owner Type">
+                  <SelectBox
+                    value={form.ownerType}
+                    onChange={(v) => set("ownerType", v)}
+                    options={["Farmer Owner", "Saving Owner"]}
+                  />
+                </Field>
+              </div>
               <Field label="Property Title" required>
                 <Input
                   value={form.title}
@@ -707,6 +729,8 @@ export function PostWizard() {
             <Building2 className="h-4 w-4 text-primary" /> Property Summary
           </p>
           <dl className="mt-4 space-y-3 text-sm">
+            <SummaryRow label="Listing By" value={form.posterType} />
+            <SummaryRow label="Owner Type" value={form.ownerType} />
             <SummaryRow label="Type" value={form.propertyType} />
             <SummaryRow label="Listing" value={form.listingType} />
             <SummaryRow

@@ -1,5 +1,5 @@
 ﻿import { Router } from 'express'
-import { authMiddleware, agentMiddleware } from '../middleware/auth.js'
+import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
 import { propertySchema } from '../utils/validation.js'
 import { PropertyModel, UserModel } from '../models/index.js'
 import { notifyAdmins } from '../utils/notifications.js'
@@ -11,6 +11,7 @@ const ALLOWED_UPDATE_FIELDS = [
   'subCity', 'woreda', 'kebele', 'parcel', 'block', 'homeNo', 'area',
   'bedrooms', 'bathrooms', 'condition', 'legalizedYear', 'description',
   'features', 'images', 'videoUrl', 'latitude', 'longitude', 'locationDocument',
+  'posterType', 'ownerType',
 ]
 
 const propertyIncludes = [
@@ -50,7 +51,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // Create property (agent only)
-router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
+router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const parsed = propertySchema.safeParse(req.body)
     if (!parsed.success) {
@@ -81,7 +82,7 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
 })
 
 // Update property
-router.patch('/:id', authMiddleware, agentMiddleware, async (req, res) => {
+router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const property = await PropertyModel.findByPk(req.params.id)
     if (!property) {
@@ -113,7 +114,7 @@ router.patch('/:id', authMiddleware, agentMiddleware, async (req, res) => {
 })
 
 // Delete property
-router.delete('/:id', authMiddleware, agentMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const property = await PropertyModel.findByPk(req.params.id)
     if (!property) {

@@ -27,6 +27,8 @@ export interface IProperty {
   videoUrl?: string;
   featured?: boolean;
   locationDocument?: string;
+  posterType?: string;
+  ownerType?: string;
   agentId: string;
   agentName: string;
   displayPhone?: string;
@@ -66,6 +68,8 @@ PropertyModel.init(
     videoUrl: { type: DataTypes.STRING },
     featured: { type: DataTypes.BOOLEAN, defaultValue: false },
     locationDocument: { type: DataTypes.STRING },
+    posterType: { type: DataTypes.STRING },
+    ownerType: { type: DataTypes.STRING },
     agentId: { type: DataTypes.UUID, allowNull: false },
     agentName: { type: DataTypes.STRING, allowNull: false },
     displayPhone: { type: DataTypes.STRING },
