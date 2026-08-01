@@ -12,14 +12,14 @@
     "build:ios": "node scripts/build-app.mjs ios",
     "capacitor:android": "npx cap open android",
     "capacitor:ios": "npx cap open ios",
-    "capacitor:run:android": "node scripts/build-app.mjs android && npx cap run android",
+    "capacitor:run:android": "node scripts/build-app.mjs android && npx cap run android --forwardPorts 4000:4000",
     "capacitor:run:ios": "node scripts/build-app.mjs ios && npx cap run ios",
     "server:dev": "cd server && pnpm dev",
     "server:build": "cd server && pnpm build",
     "server:start": "cd server && pnpm start",
     "dev:all": "concurrently \"pnpm dev\" \"pnpm server:dev\"",
     "cap:sync:all": "node scripts/build-app.mjs all",
-    "android:dev": "node scripts/build-app.mjs android && npx cap run android",
+    "android:dev": "node scripts/build-app.mjs android && npx cap run android --forwardPorts 4000:4000",
     "ios:dev": "node scripts/build-app.mjs ios && npx cap run ios"
   },
   "dependencies": {

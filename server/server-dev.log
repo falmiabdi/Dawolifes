@@ -1,0 +1,361 @@
+✅ PostgreSQL connected
+✅ Tables synced
+WebSocket server started on /ws
+node:events:487
+      throw er; // Unhandled 'error' even[7:13:03 AM] ✅ GET /api/health 200 30ms
+[7:13:19 AM] ✅ POST /api/upload 200 3987ms
+[7:17:43 AM] ❌ GET /api/auth/session 401 2ms
+[7:17:43 AM] ✅ GET /api/properties?status=Approved 304 156ms
+[7:17:43 AM] ✅ GET /api/properties 304 144ms
+[7:17:43 AM] ✅ GET /api/vehicles 304 168ms
+[7:18:09 AM] ✅ GET /api/health 200 1ms
+[7:25:48 AM] ✅ OPTIONS /api/auth/signin 204 0ms
+[7:25:48 AM] ✅ POST /api/auth/signin 200 463ms
+[7:25:49 AM] ✅ GET /api/properties?agentId=dd5d6b41-ad8d-42c3-a251-4588bc18f590 304 9ms
+[7:25:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:25:49 AM] ✅ GET /api/vehicles?agentId=dd5d6b41-ad8d-42c3-a251-4588bc18f590 304 35ms
+[7:25:49 AM] ✅ OPTIONS /api/auth/session 204 0ms
+[7:25:49 AM] ✅ GET /api/notifications/count 304 10ms
+[7:25:49 AM] ✅ GET /api/auth/session 304 7ms
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:25:50 AM] ✅ GET /api/notifications/count 304 6ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:26:20 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:26:20 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:26:20 AM] ✅ GET /api/notifications/count 304 75ms
+[7:26:20 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:26:50 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:26:50 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:26:50 AM] ✅ GET /api/notifications/count 304 57ms
+[7:26:50 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:29:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:29:49 AM] ✅ GET /api/notifications/count 304 74ms
+[7:29:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:30:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:30:19 AM] ✅ GET /api/notifications/count 304 57ms
+[7:30:19 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:30:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:30:49 AM] ✅ GET /api/notifications/count 304 62ms
+[7:30:49 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:31:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:31:19 AM] ✅ GET /api/notifications/count 304 62ms
+[7:31:19 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:31:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:31:49 AM] ✅ GET /api/notifications/count 304 59ms
+[7:31:49 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:32:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:32:19 AM] ✅ GET /api/notifications/count 304 61ms
+[7:32:19 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:32:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:32:49 AM] ✅ GET /api/notifications/count 304 68ms
+[7:32:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:33:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:33:19 AM] ✅ GET /api/notifications/count 304 64ms
+[7:33:19 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:33:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:33:49 AM] ✅ GET /api/notifications/count 304 175ms
+[7:33:49 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:34:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:34:19 AM] ✅ GET /api/notifications/count 304 134ms
+[7:34:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:34:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:34:49 AM] ✅ GET /api/notifications/count 304 118ms
+[7:34:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:35:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:35:19 AM] ✅ GET /api/notifications/count 304 122ms
+[7:35:19 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:35:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:35:49 AM] ✅ GET /api/notifications/count 304 118ms
+[7:35:49 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:36:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:36:19 AM] ✅ GET /api/notifications/count 304 101ms
+[7:36:19 AM] ✅ GET /api/notifications/count 304 4ms
+[7:36:32 AM] ✅ POST /api/agent/upload?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkZDVkNmI0MS1hZDhkLTQyYzMtYTI1MS00NTg4YmMxOGY1OTAiLCJlbWFpbCI6ImZhbG1pdGVzZmF5ZUBnbWFpbC5jb20iLCJyb2xlIjoiYWdlbnQiLCJpYXQiOjE3ODU1OTQzNDksImV4cCI6MTc4NjE5OTE0OX0.XUIBDk1aRWBel6lQRJg1JH_vt2Qi824habXN5EwMKSc 200 2249ms
+[7:36:41 AM] ✅ POST /api/agent/upload?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkZDVkNmI0MS1hZDhkLTQyYzMtYTI1MS00NTg4YmMxOGY1OTAiLCJlbWFpbCI6ImZhbG1pdGVzZmF5ZUBnbWFpbC5jb20iLCJyb2xlIjoiYWdlbnQiLCJpYXQiOjE3ODU1OTQzNDksImV4cCI6MTc4NjE5OTE0OX0.XUIBDk1aRWBel6lQRJg1JH_vt2Qi824habXN5EwMKSc 200 2635ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:36:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:36:49 AM] ✅ GET /api/notifications/count 304 146ms
+[7:36:49 AM] ✅ GET /api/notifications/count 304 2ms
+[7:36:57 AM] ✅ POST /api/agent/upload?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkZDVkNmI0MS1hZDhkLTQyYzMtYTI1MS00NTg4YmMxOGY1OTAiLCJlbWFpbCI6ImZhbG1pdGVzZmF5ZUBnbWFpbC5jb20iLCJyb2xlIjoiYWdlbnQiLCJpYXQiOjE3ODU1OTQzNDksImV4cCI6MTc4NjE5OTE0OX0.XUIBDk1aRWBel6lQRJg1JH_vt2Qi824habXN5EwMKSc 200 6983ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:37:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:37:19 AM] ✅ GET /api/notifications/count 304 133ms
+[7:37:19 AM] ✅ GET /api/notifications/count 304 6ms
+[7:37:36 AM] ✅ OPTIONS /api/properties 204 0ms
+[7:37:36 AM] ✅ POST /api/properties 201 223ms
+[7:37:36 AM] ❌ GET /api/agent/properties 401 1ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:37:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:37:49 AM] ✅ GET /api/notifications/count 304 131ms
+[7:37:50 AM] ✅ GET /api/notifications/count 304 3ms
+[7:37:56 AM] ❌ GET /api/agent/properties 401 2ms
+[7:38:04 AM] ❌ GET /api/agent/vehicles 401 1ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:38:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:38:19 AM] ✅ GET /api/notifications/count 304 162ms
+[7:38:20 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:38:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:38:49 AM] ✅ GET /api/notifications/count 304 86ms
+[7:38:49 AM] ✅ GET /api/notifications/count 304 5ms
+[7:38:58 AM] ✅ OPTIONS /api/agent/upload 204 0ms
+[7:38:59 AM] ✅ POST /api/agent/upload 200 2384ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:39:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:39:19 AM] ✅ OPTIONS /api/vehicles 204 1ms
+[7:39:19 AM] ✅ GET /api/notifications/count 304 147ms
+[7:39:20 AM] ✅ GET /api/notifications/count 304 64ms
+[7:39:19 AM] ✅ POST /api/vehicles 201 164ms
+[7:39:31 AM] ❌ GET /api/agent/vehicles 401 1ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:39:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:39:49 AM] ✅ GET /api/notifications/count 304 84ms
+[7:39:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:40:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:40:19 AM] ✅ GET /api/notifications/count 304 105ms
+[7:40:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:40:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:40:49 AM] ✅ GET /api/notifications/count 304 301ms
+[7:40:50 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:41:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:41:19 AM] ✅ GET /api/notifications/count 304 70ms
+[7:41:19 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:41:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:41:49 AM] ✅ GET /api/notifications/count 304 75ms
+[7:41:49 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:42:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:42:19 AM] ✅ GET /api/notifications/count 304 87ms
+[7:42:19 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:42:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:42:49 AM] ✅ GET /api/notifications/count 304 80ms
+[7:42:49 AM] ✅ GET /api/notifications/count 304 11ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:43:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:43:19 AM] ✅ GET /api/notifications/count 304 121ms
+[7:43:19 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:43:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:43:49 AM] ✅ GET /api/notifications/count 304 144ms
+[7:43:49 AM] ✅ GET /api/notifications/count 304 2ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:44:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:44:19 AM] ✅ GET /api/notifications/count 304 117ms
+[7:44:19 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:44:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:44:49 AM] ✅ GET /api/notifications/count 304 157ms
+[7:44:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:45:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:45:19 AM] ✅ GET /api/notifications/count 304 138ms
+[7:45:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:45:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:45:49 AM] ✅ GET /api/notifications/count 304 119ms
+[7:45:49 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:46:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:46:19 AM] ✅ GET /api/notifications/count 304 98ms
+[7:46:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:46:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:46:49 AM] ✅ GET /api/notifications/count 304 127ms
+[7:46:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:47:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:47:19 AM] ✅ GET /api/notifications/count 304 90ms
+[7:47:19 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:47:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:47:49 AM] ✅ GET /api/notifications/count 304 120ms
+[7:47:49 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:48:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:48:19 AM] ✅ GET /api/notifications/count 304 123ms
+[7:48:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:48:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:48:49 AM] ✅ GET /api/notifications/count 304 99ms
+[7:48:49 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:49:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:49:19 AM] ✅ GET /api/notifications/count 304 117ms
+[7:49:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:49:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:49:49 AM] ✅ GET /api/notifications/count 304 268ms
+[7:49:50 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:50:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:50:19 AM] ✅ GET /api/notifications/count 304 132ms
+[7:50:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:50:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:50:49 AM] ✅ GET /api/notifications/count 304 117ms
+[7:50:49 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:51:19 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:51:19 AM] ✅ GET /api/notifications/count 304 138ms
+[7:51:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:51:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:51:49 AM] ✅ GET /api/notifications/count 304 132ms
+[7:51:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:52:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:52:19 AM] ✅ GET /api/notifications/count 304 105ms
+[7:52:19 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:52:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:52:49 AM] ✅ GET /api/notifications/count 304 158ms
+[7:52:49 AM] ✅ GET /api/notifications/count 304 6ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:53:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:53:19 AM] ✅ GET /api/notifications/count 304 202ms
+[7:53:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:53:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:53:49 AM] ✅ GET /api/notifications/count 304 187ms
+[7:53:49 AM] ✅ GET /api/notifications/count 304 3ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:54:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:54:19 AM] ✅ GET /api/notifications/count 304 159ms
+[7:54:19 AM] ✅ GET /api/notifications/count 304 6ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:54:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:54:49 AM] ✅ GET /api/notifications/count 304 174ms
+[7:54:49 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:55:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:55:19 AM] ✅ GET /api/notifications/count 304 164ms
+[7:55:19 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:55:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:55:49 AM] ✅ GET /api/notifications/count 304 199ms
+[7:55:50 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:56:19 AM] ✅ OPTIONS /api/notifications/count 204 2ms
+[7:56:19 AM] ✅ GET /api/notifications/count 304 128ms
+[7:56:19 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:56:49 AM] ✅ OPTIONS /api/notifications/count 204 0ms
+[7:56:49 AM] ✅ GET /api/notifications/count 304 172ms
+[7:56:49 AM] ✅ GET /api/notifications/count 304 230ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:57:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:57:19 AM] ✅ GET /api/notifications/count 304 137ms
+[7:57:19 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:57:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:57:49 AM] ✅ GET /api/notifications/count 304 198ms
+[7:57:49 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:58:19 AM] ✅ OPTIONS /api/notifications/count 204 2ms
+[7:58:19 AM] ✅ GET /api/notifications/count 304 194ms
+[7:58:20 AM] ✅ GET /api/notifications/count 304 5ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:58:49 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:58:49 AM] ✅ GET /api/notifications/count 304 202ms
+[7:58:49 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:59:19 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:59:19 AM] ✅ GET /api/notifications/count 304 114ms
+[7:59:19 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[7:59:50 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:59:50 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[7:59:50 AM] ✅ GET /api/notifications/count 304 133ms
+[7:59:50 AM] ✅ GET /api/notifications/count 304 4ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+WebSocket client connected: dd5d6b41-ad8d-42c3-a251-4588bc18f590
+[8:00:20 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[8:00:20 AM] ✅ OPTIONS /api/notifications/count 204 1ms
+[8:00:20 AM] ✅ GET /api/notifications/count 304 195ms
+[8:00:20 AM] ✅ GET /api/notifications/count 304 6ms
+WebSocket client disconnected: dd5d6b41-ad8d-42c3-a251-4588bc18f590

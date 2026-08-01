@@ -16,7 +16,9 @@ export function initializeCapacitorPlugins() {
 
   // Hide splash screen after app is fully ready
   setTimeout(() => {
-    SplashScreen.hide().catch(() => {})
+    SplashScreen.hide().catch((error) => {
+      console.warn('[Capacitor] SplashScreen.hide failed:', error)
+    })
   }, 800)
 
   // Set status bar style
@@ -24,7 +26,9 @@ export function initializeCapacitorPlugins() {
   StatusBar.setBackgroundColor({ color: '#F97316' })
 
   // Configure keyboard resize
-  Keyboard.setResizeMode({ resize: 'body' })
+  Keyboard.setResizeMode({ resize: 'body' }).catch((error) => {
+    console.warn('[Capacitor] Keyboard.setResizeMode unavailable:', error)
+  })
 }
 
 export async function takePhoto(): Promise<string | null> {

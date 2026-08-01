@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: 'DawoLife',
   webDir: 'client/out',
   server: {
+    androidScheme: 'http',
     cleartext: true,
   },
   plugins: {

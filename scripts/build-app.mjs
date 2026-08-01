@@ -58,12 +58,19 @@ function bin(name) {
 }
 
 function run(command, args, cwd) {
-  const result = spawnSync(command, args, {
-    cwd,
-    shell: false,
-    stdio: 'inherit',
-    env: { ...process.env },
-  })
+  const isWindows = process.platform === 'win32'
+  // On Windows the npm shims are .cmd files, which can only be launched via cmd.exe
+  const result = isWindows
+    ? spawnSync('cmd.exe', ['/c', command, ...args], {
+        cwd,
+        stdio: 'inherit',
+        env: { ...process.env },
+      })
+    : spawnSync(command, args, {
+        cwd,
+        stdio: 'inherit',
+        env: { ...process.env },
+      })
   return result.status === 0
 }
 

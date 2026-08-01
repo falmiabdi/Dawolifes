@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { getApiUrl } from '@/lib/get-api-url'
+import { getApiUrlAsync } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -46,7 +46,7 @@ export default function RegisterPage() {
       return
     }
 
-    const response = await fetch(`${getApiUrl()}/api/auth/register`, {
+    const response = await fetch(`${await getApiUrlAsync()}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: values.username, email: values.email, password: values.password }),
