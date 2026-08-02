@@ -4,19 +4,20 @@ set -e
 echo "=== DawoLife Build Pipeline ==="
 echo ""
 
-# Step 1: Build the Next.js web app
-echo "Step 1: Building Next.js web app..."
-pnpm build
+# Step 1: Build the server
+echo "Step 1: Building server..."
+(cd server && pnpm build)
 
-# Step 2: Sync with Capacitor Android
-echo "Step 2: Syncing with Capacitor Android..."
-npx cap sync android
+# Step 2: Build the web app
+echo "Step 2: Building web app..."
+(cd web && pnpm build)
 
-# Step 3: Sync with Capacitor iOS
-echo "Step 3: Syncing with Capacitor iOS..."
-npx cap sync ios
+# Step 3: Build the mobile app (Android)
+echo "Step 3: Building mobile app (Android)..."
+(cd mobile && pnpm build:android)
 
 echo ""
 echo "=== Build Complete ==="
-echo "Android APK: android/app/build/outputs/apk/debug/"
-echo "iOS Xcode project: ios/"
+echo "Web: web/out/"
+echo "Mobile Android APK: mobile/android/app/build/outputs/apk/debug/"
+echo "Mobile iOS Xcode project: mobile/ios/"

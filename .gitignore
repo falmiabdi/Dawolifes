@@ -14,4 +14,7 @@ server/.env
 # Common ignores
 node_modules
 .next/
+out/
+tsconfig.tsbuildinfo
+*.log
 .DS_Store
