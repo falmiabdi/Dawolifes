@@ -1,5 +1,5 @@
-import { MobileHome } from "@/components/home/mobile-home"
+import { WebHome } from "@/components/site/web-home"
 
 export default function HomePage() {
-  return <MobileHome />
+  return <WebHome />
 }
