@@ -1,1 +1,0 @@
-﻿#import "CapacitorCordova.h"
