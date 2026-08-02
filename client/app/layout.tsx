@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/toast-provider'
 import { AuthProvider } from '@/components/auth/auth-guard'
 import { SmoothScroll } from '@/components/smooth-scroll'
+import { BottomNav } from '@/components/bottom-nav'
 import { CapacitorInit } from '@/components/capacitor-init'
 import { AnalyticsOnWeb } from '@/components/analytics-on-web'
 import './globals.css'
@@ -47,7 +48,10 @@ export default function RootLayout({
         <ToastProvider />
         <AuthProvider>
           <CapacitorInit />
-          <SmoothScroll>{children}</SmoothScroll>
+          <SmoothScroll>
+            <div className="max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+4rem)]">{children}</div>
+          </SmoothScroll>
+          <BottomNav />
         </AuthProvider>
         <AnalyticsOnWeb />
       </body>

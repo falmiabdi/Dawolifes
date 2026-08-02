@@ -5,7 +5,6 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { CheckCircle2, ArrowLeft, Home } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
@@ -49,7 +48,6 @@ function PaymentSuccessContent() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

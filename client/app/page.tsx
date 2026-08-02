@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Hero } from "@/components/home/hero"
 import { Categories } from "@/components/home/categories"
 import { LatestProperties } from "@/components/home/latest-properties"
@@ -19,7 +18,6 @@ export default function HomePage() {
         <MapBanner />
         <Services />
       </main>
-      <SiteFooter />
     </div>
   )
 }

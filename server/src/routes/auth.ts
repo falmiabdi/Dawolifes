@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import crypto from 'crypto'
-import { registerSchema, loginSchema } from '../utils/validation.js'
+import { registerSchema, buyerRegisterSchema, loginSchema } from '../utils/validation.js'
 import { hashPassword, comparePassword } from '../utils/password.js'
 import { signAccessToken, signRefreshToken, verifyAccessToken } from '../utils/jwt.js'
 import { UserModel } from '../models/index.js'
@@ -50,6 +50,60 @@ router.post('/register', async (req, res) => {
     ).catch(() => {})
 
     res.status(201).json({ message: 'Registration successful. Please check your email to verify your account.' })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Registration failed' })
+  }
+})
+
+// Buyer / user registration — account is verified on registration (verified = registered).
+router.post('/register-buyer', async (req, res) => {
+  try {
+    const parsed = buyerRegisterSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
+    }
+
+    const { name, email, phone, password, profilePhoto } = parsed.data
+
+    const existingUser = await UserModel.findOne({ where: { email } })
+    if (existingUser) {
+      return res.status(409).json({ message: 'Email already registered' })
+    }
+
+    const hashedPassword = await hashPassword(password)
+    const user = await UserModel.create({
+      username: name,
+      email,
+      phone,
+      password: hashedPassword,
+      role: 'user',
+      roles: ['user'],
+      status: 'Approved',
+      emailVerified: true,
+      profilePhoto,
+      onboardingComplete: true,
+    } as any)
+
+    const userId = user.getDataValue('id')
+    const accessToken = signAccessToken({ userId, email, role: 'user' })
+    const refreshToken = signRefreshToken({ userId, email, role: 'user' })
+
+    res.status(201).json({
+      message: 'Account created successfully',
+      user: {
+        id: userId,
+        name,
+        email,
+        phone,
+        role: 'user',
+        roles: ['user'],
+        status: 'Approved',
+        isRootAdmin: false,
+        profilePhoto: profilePhoto || null,
+      },
+      accessToken,
+      refreshToken,
+    })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
   }
@@ -126,6 +180,7 @@ router.post('/signin', async (req, res) => {
         rejectionReason: user.getDataValue('rejectionReason'),
         isRootAdmin: user.getDataValue('isRootAdmin'),
         profilePhoto: user.getDataValue('profilePhoto'),
+        phone: user.getDataValue('phone'),
       },
       accessToken,
       refreshToken,
@@ -163,11 +218,49 @@ router.get('/session', async (req, res) => {
           rejectionReason: user.getDataValue('rejectionReason'),
           isRootAdmin: user.getDataValue('isRootAdmin'),
           profilePhoto: user.getDataValue('profilePhoto'),
+          phone: user.getDataValue('phone'),
         },
       },
     })
   } catch (err: any) {
     res.status(401).json({ message: 'Invalid token' })
+  }
+})
+
+// Update profile (name / phone / profilePhoto)
+router.patch('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name, phone, profilePhoto } = req.body
+    if (!name && !phone && !profilePhoto) {
+      return res.status(400).json({ message: 'Nothing to update' })
+    }
+    const user = await UserModel.findByPk(req.user!.userId)
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    const updates: any = {}
+    if (typeof name === 'string' && name.trim().length >= 2) updates.username = name.trim()
+    if (typeof phone === 'string') updates.phone = phone
+    if (typeof profilePhoto === 'string') updates.profilePhoto = profilePhoto
+    await user.update(updates)
+
+    res.json({
+      message: 'Profile updated',
+      user: {
+        id: user.getDataValue('id'),
+        name: user.getDataValue('username'),
+        email: user.getDataValue('email'),
+        phone: user.getDataValue('phone'),
+        role: user.getDataValue('role'),
+        roles: user.getDataValue('roles'),
+        status: user.getDataValue('status'),
+        rejectionReason: user.getDataValue('rejectionReason'),
+        isRootAdmin: user.getDataValue('isRootAdmin'),
+        profilePhoto: user.getDataValue('profilePhoto'),
+      },
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to update profile' })
   }
 })
 

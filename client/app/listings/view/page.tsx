@@ -23,12 +23,12 @@ import {
 } from "lucide-react"
 import { formatPrice } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Gallery } from "@/components/listing/gallery"
 import { PropertyCard } from "@/components/property-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
+import { SaveButton } from "@/components/save-button"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 function getYouTubeEmbedUrl(url: string) {
@@ -70,7 +70,6 @@ export default function ListingPageWrapper() {
         <main className="flex-1 flex items-center justify-center bg-muted/30">
           <p className="text-muted-foreground">Loading property...</p>
         </main>
-        <SiteFooter />
       </div>
     }>
       <ListingPage />
@@ -183,7 +182,6 @@ function ListingPage() {
         <main className="flex-1 flex items-center justify-center bg-muted/30">
           <p className="text-muted-foreground">Loading property...</p>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -199,7 +197,6 @@ function ListingPage() {
             <Link href="/" className="mt-4 inline-block text-primary hover:underline">Go Home</Link>
           </div>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -424,13 +421,14 @@ function ListingPage() {
                 </dl>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="rounded-xl min-h-[44px]">
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
                   <Share2 className="h-4 w-4" /> Share
                 </Button>
-                <Button variant="outline" className="rounded-xl min-h-[44px]">
+                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
                   <CalendarDays className="h-4 w-4" /> Visit
                 </Button>
+                <SaveButton itemType="property" itemId={property.id} label="Save" />
               </div>
 
               <PayServiceCharge propertyId={property.id} propertyTitle={property.title} />
@@ -447,7 +445,6 @@ function ListingPage() {
           </section>
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

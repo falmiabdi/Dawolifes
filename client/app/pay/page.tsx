@@ -20,7 +20,6 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 
 const PAYMENT_METHODS = [
   { id: "telebirr", label: "TeleBirr", icon: Phone, color: "orange", description: "Pay with Ethio Telecom mobile money" },
@@ -464,7 +463,6 @@ function PayPageContent() {
           )}
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

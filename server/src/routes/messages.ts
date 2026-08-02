@@ -1,8 +1,85 @@
 import { Router } from 'express'
+import { Op } from 'sequelize'
 import { authMiddleware } from '../middleware/auth.js'
-import { MessageModel } from '../models/index.js'
+import { MessageModel, PropertyModel, UserModel } from '../models/index.js'
 
 const router = Router()
+
+// Unread message count for the current user (must be before /:propertyId)
+router.get('/unread', authMiddleware, async (req, res) => {
+  try {
+    const count = await MessageModel.count({
+      where: { recipientId: req.user!.userId, read: false },
+    })
+    res.json({ count })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to fetch unread count' })
+  }
+})
+
+// Inbox for the current user — all messages where they are sender or recipient,
+// enriched with the property title and the other party's name (must be before /:propertyId).
+router.get('/inbox', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user!.userId
+    const messages = await MessageModel.findAll({
+      where: {
+        [Op.or]: [{ recipientId: userId }, { senderId: userId }],
+      },
+      order: [['createdAt', 'DESC']],
+    })
+
+    const propertyIds = [...new Set(messages.map((m) => m.getDataValue('propertyId')))]
+    const properties: Record<string, string> = {}
+    if (propertyIds.length > 0) {
+      const rows = await PropertyModel.findAll({
+        where: { id: { [Op.in]: propertyIds } },
+        attributes: ['id', 'title'],
+      })
+      for (const row of rows) {
+        properties[row.getDataValue('id')] = row.getDataValue('title')
+      }
+    }
+
+    const userIds = new Set<string>()
+    for (const m of messages) {
+      userIds.add(m.getDataValue('senderId'))
+      userIds.add(m.getDataValue('recipientId'))
+    }
+    const users: Record<string, { name: string; phone?: string | null; profilePhoto?: string | null }> = {}
+    if (userIds.size > 0) {
+      const rows = await UserModel.findAll({
+        where: { id: { [Op.in]: [...userIds] } },
+        attributes: ['id', 'username', 'phone', 'profilePhoto'],
+      })
+      for (const row of rows) {
+        users[row.getDataValue('id')] = {
+          name: row.getDataValue('username'),
+          phone: row.getDataValue('phone'),
+          profilePhoto: row.getDataValue('profilePhoto'),
+        }
+      }
+    }
+
+    const serialized = messages.map((m) => ({
+      id: m.getDataValue('id'),
+      propertyId: m.getDataValue('propertyId'),
+      propertyTitle: properties[m.getDataValue('propertyId')] || 'Listing',
+      senderId: m.getDataValue('senderId'),
+      senderName: m.getDataValue('senderName'),
+      senderRole: m.getDataValue('senderRole'),
+      recipientId: m.getDataValue('recipientId'),
+      recipientName: m.getDataValue('recipientName'),
+      content: m.getDataValue('content'),
+      read: m.getDataValue('read'),
+      createdAt: m.getDataValue('createdAt'),
+    }))
+
+    res.json({ messages: serialized, users })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to fetch inbox' })
+  }
+})
 
 // Get messages for a property
 router.get('/:propertyId', authMiddleware, async (req, res) => {

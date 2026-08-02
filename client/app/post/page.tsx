@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { PostWizard } from "@/components/post/post-wizard"
 
 export default function PostPage() {
@@ -11,7 +10,6 @@ export default function PostPage() {
           <PostWizard />
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

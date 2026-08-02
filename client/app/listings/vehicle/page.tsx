@@ -36,12 +36,12 @@ import {
 import { formatPrice } from "@/lib/data"
 import type { Vehicle } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Gallery } from "@/components/listing/gallery"
 import { VehicleCard } from "@/components/vehicle-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
+import { SaveButton } from "@/components/save-button"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 function getYouTubeEmbedUrl(url: string) {
@@ -84,7 +84,6 @@ export default function VehicleListingPageWrapper() {
           <main className="flex-1 flex items-center justify-center bg-muted/30">
             <p className="text-muted-foreground">Loading vehicle...</p>
           </main>
-          <SiteFooter />
         </div>
       }
     >
@@ -240,7 +239,6 @@ function VehicleListingPage() {
         <main className="flex-1 flex items-center justify-center bg-muted/30">
           <p className="text-muted-foreground">Loading vehicle...</p>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -258,7 +256,6 @@ function VehicleListingPage() {
             </Link>
           </div>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -671,13 +668,14 @@ function VehicleListingPage() {
                 </dl>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="rounded-xl min-h-[44px]">
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
                   <Share2 className="h-4 w-4" /> Share
                 </Button>
-                <Button variant="outline" className="rounded-xl min-h-[44px]">
+                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
                   <CalendarDays className="h-4 w-4" /> Visit
                 </Button>
+                <SaveButton itemType="vehicle" itemId={vehicle.id} label="Save" />
               </div>
 
               <PayServiceCharge propertyId={vehicle.id} propertyTitle={vehicle.title} />
@@ -696,7 +694,6 @@ function VehicleListingPage() {
           )}
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }
