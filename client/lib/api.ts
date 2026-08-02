@@ -1,4 +1,4 @@
-import { getApiUrl } from '@/lib/get-api-url'
+import { getApiUrlAsync } from '@/lib/get-api-url'
 import { Capacitor } from '@capacitor/core'
 
 let cachedToken: string | null = null
@@ -27,7 +27,7 @@ export async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${getApiUrl()}${path}`
+  const url = `${await getApiUrlAsync()}${path}`
   const token = await getCachedToken()
 
   const headers: HeadersInit = {

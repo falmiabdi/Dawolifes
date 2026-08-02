@@ -36,7 +36,6 @@ import {
 import { cn } from "@/lib/utils"
 import { MapPicker } from "@/components/maps/map-picker"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import toast from "react-hot-toast"
 
 type FormState = {
@@ -337,7 +336,6 @@ function EditPropertyPage() {
         <main className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">No property ID provided.</p>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -800,7 +798,6 @@ function EditPropertyPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

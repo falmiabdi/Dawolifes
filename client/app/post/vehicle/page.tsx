@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { PostVehicleWizard } from "@/components/post/post-vehicle-wizard"
 
 export default function PostVehiclePage() {
@@ -11,7 +10,6 @@ export default function PostVehiclePage() {
           <PostVehicleWizard />
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

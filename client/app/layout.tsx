@@ -1,10 +1,12 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/toast-provider'
 import { AuthProvider } from '@/components/auth/auth-guard'
 import { SmoothScroll } from '@/components/smooth-scroll'
+import { BottomNav } from '@/components/bottom-nav'
 import { CapacitorInit } from '@/components/capacitor-init'
+import { AnalyticsOnWeb } from '@/components/analytics-on-web'
+import { I18nProvider } from '@/lib/i18n'
 import './globals.css'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -45,11 +47,16 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased overflow-x-hidden">
         <ToastProvider />
-        <AuthProvider>
-          <CapacitorInit />
-          <SmoothScroll>{children}</SmoothScroll>
-        </AuthProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <I18nProvider>
+          <AuthProvider>
+            <CapacitorInit />
+            <SmoothScroll>
+              <div className="max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+4rem)]">{children}</div>
+            </SmoothScroll>
+            <BottomNav />
+          </AuthProvider>
+        </I18nProvider>
+        <AnalyticsOnWeb />
       </body>
     </html>
   )

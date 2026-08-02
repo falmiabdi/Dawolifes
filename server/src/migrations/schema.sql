@@ -212,6 +212,16 @@ CREATE TABLE IF NOT EXISTS notifications (
   updatedAt TIMESTAMP NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS saved_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  userId UUID NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  itemType VARCHAR NOT NULL,
+  itemId UUID NOT NULL,
+  createdAt TIMESTAMP NOT NULL,
+  updatedAt TIMESTAMP NOT NULL,
+  CONSTRAINT saved_items_user_item_unique UNIQUE (userId, itemType, itemId)
+);
+
 CREATE INDEX IF NOT EXISTS idx_properties_agentId ON properties(agentId);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
 CREATE INDEX IF NOT EXISTS idx_properties_createdAt ON properties(createdAt);
@@ -227,5 +237,8 @@ CREATE INDEX IF NOT EXISTS idx_messages_recipientId ON messages(recipientId);
 CREATE INDEX IF NOT EXISTS idx_messages_createdAt ON messages(createdAt);
 CREATE INDEX IF NOT EXISTS idx_notifications_userId ON notifications(userId);
 CREATE INDEX IF NOT EXISTS idx_notifications_createdAt ON notifications(createdAt);
+CREATE INDEX IF NOT EXISTS idx_saved_items_userId ON saved_items(userId);
+CREATE INDEX IF NOT EXISTS idx_saved_items_itemType ON saved_items(itemType);
+CREATE INDEX IF NOT EXISTS idx_saved_items_itemId ON saved_items(itemId);
 
 SELECT 'Schema created successfully' AS result;

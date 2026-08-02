@@ -11,6 +11,7 @@ import notificationRoutes from './routes/notifications.js'
 import adminRoutes from './routes/admin.js'
 import vehicleRoutes from './routes/vehicles.js'
 import agentRoutes from './routes/agent.js'
+import favoriteRoutes from './routes/favorites.js'
 import { setupWebSocket } from './ws/server.js'
 
 dotenv.config()
@@ -64,6 +65,7 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/vehicles', vehicleRoutes)
 app.use('/api/agent', agentRoutes)
+app.use('/api/favorites', favoriteRoutes)
 
 // Health check
 app.get('/api/health', (_req, res) => {

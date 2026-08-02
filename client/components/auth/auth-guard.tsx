@@ -3,9 +3,33 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Capacitor } from '@capacitor/core'
-import { getApiUrl, patchFetchForCapacitor } from '@/lib/get-api-url'
+import { getApiUrlAsync, patchFetchForCapacitor } from '@/lib/get-api-url'
 
 patchFetchForCapacitor()
+
+// localStorage survives app restarts in the Android WebView (sessionStorage does not)
+function authStorage() {
+  try {
+    if (Capacitor.isNativePlatform()) return window.localStorage
+  } catch {}
+  return window.sessionStorage
+}
+
+function readCachedUser(): SessionUser | null {
+  try {
+    const cached = authStorage().getItem('auth_user')
+    return cached ? JSON.parse(cached) : null
+  } catch {
+    return null
+  }
+}
+
+function writeCachedUser(user: SessionUser | null) {
+  try {
+    if (user) authStorage().setItem('auth_user', JSON.stringify(user))
+    else authStorage().removeItem('auth_user')
+  } catch {}
+}
 
 export interface SessionUser {
   id: string
@@ -17,18 +41,44 @@ export interface SessionUser {
   rejectionReason?: string
   isRootAdmin?: boolean
   profilePhoto?: string | null
+  phone?: string | null
+}
+
+export type UserRole = 'buyer' | 'seller' | 'agent'
+
+export function mapUserRole(role?: string): UserRole {
+  if (role === 'agent') return 'seller'
+  if (role === 'admin') return 'agent'
+  return 'buyer'
 }
 
 interface AuthContextType {
   user: SessionUser | null
   loading: boolean
+  isLoggedIn: boolean
+  role: UserRole
+  isVerified: boolean
   login: (email: string, password: string) => Promise<any>
   register: (data: { username: string; email: string; password: string }) => Promise<any>
+  registerBuyer: (data: { name: string; email: string; phone: string; password: string; profilePhoto?: string }) => Promise<any>
+  refreshUser: () => Promise<void>
   logout: () => void
   getToken: () => Promise<string | null>
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true, login: async () => {}, register: async () => {}, logout: () => {}, getToken: async () => null })
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  isLoggedIn: false,
+  role: 'buyer',
+  isVerified: false,
+  login: async () => {},
+  register: async () => {},
+  registerBuyer: async () => {},
+  refreshUser: async () => {},
+  logout: () => {},
+  getToken: async () => null,
+})
 
 export function useAuth() {
   return useContext(AuthContext)
@@ -39,9 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const cached = sessionStorage.getItem('auth_user')
+    const cached = readCachedUser()
     if (cached) {
-      try { setUser(JSON.parse(cached)) } catch {}
+      setUser(cached)
       setLoading(false)
     }
     fetchAuthSession()
@@ -49,8 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   function setUserAndCache(u: SessionUser | null) {
     setUser(u)
-    if (u) sessionStorage.setItem('auth_user', JSON.stringify(u))
-    else sessionStorage.removeItem('auth_user')
+    writeCachedUser(u)
   }
 
   async function fetchAuthSession() {
@@ -61,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      const response = await fetch(`${getApiUrl()}/api/auth/session`, {
+      const response = await fetch(`${await getApiUrlAsync()}/api/auth/session`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -95,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function login(email: string, password: string) {
-    const response = await fetch(`${getApiUrl()}/api/auth/signin`, {
+    const response = await fetch(`${await getApiUrlAsync()}/api/auth/signin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -109,20 +158,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const data = await response.json()
 
-    // Store token based on platform
-    if (Capacitor.isNativePlatform()) {
-      const { Preferences } = await import('@capacitor/preferences')
-      await Preferences.set({ key: 'auth_token', value: data.accessToken })
-    } else {
-      document.cookie = `token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
-    }
-
+    await persistToken(data.accessToken)
     setUserAndCache(data.user)
     return data
   }
 
+  async function persistToken(accessToken: string) {
+    if (Capacitor.isNativePlatform()) {
+      const { Preferences } = await import('@capacitor/preferences')
+      await Preferences.set({ key: 'auth_token', value: accessToken })
+    } else {
+      document.cookie = `token=${accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+    }
+  }
+
+  async function registerBuyer(data: { name: string; email: string; phone: string; password: string; profilePhoto?: string }) {
+    const response = await fetch(`${await getApiUrlAsync()}/api/auth/register-buyer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Registration failed' }))
+      throw new Error(error.message || 'Registration failed')
+    }
+
+    const result = await response.json()
+    if (result.accessToken) {
+      await persistToken(result.accessToken)
+    }
+    setUserAndCache(result.user)
+    return result
+  }
+
   async function register(data: { username: string; email: string; password: string }) {
-    const response = await fetch(`${getApiUrl()}/api/auth/register`, {
+    const response = await fetch(`${await getApiUrlAsync()}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -137,6 +209,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response.json()
   }
 
+  async function refreshUser() {
+    try {
+      const token = await getToken()
+      if (!token) return
+      const response = await fetch(`${await getApiUrlAsync()}/api/auth/session`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        if (data?.session?.user) {
+          setUserAndCache(data.session.user)
+        }
+      }
+    } catch {
+      // Silently fail
+    }
+  }
+
   function logout() {
     if (Capacitor.isNativePlatform()) {
       const { Preferences } = require('@capacitor/preferences')
@@ -148,7 +239,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, getToken }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isLoggedIn: !!user,
+        role: mapUserRole(user?.role),
+        isVerified: !!user,
+        login,
+        register,
+        registerBuyer,
+        refreshUser,
+        logout,
+        getToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

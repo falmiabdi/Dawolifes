@@ -21,6 +21,7 @@
  *   API_URL=http://...:4000   use a full API URL instead of LAN_IP:4000
  */
 import { spawnSync } from 'node:child_process'
+import { existsSync, readdirSync, readFileSync, statSync, rmSync } from 'node:fs'
 import { networkInterfaces } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -58,13 +59,102 @@ function bin(name) {
 }
 
 function run(command, args, cwd) {
-  const result = spawnSync(command, args, {
-    cwd,
-    shell: false,
-    stdio: 'inherit',
-    env: { ...process.env },
-  })
+  const isWindows = process.platform === 'win32'
+  // On Windows the npm shims are .cmd files, which can only be launched via cmd.exe
+  const result = isWindows
+    ? spawnSync('cmd.exe', ['/c', command, ...args], {
+        cwd,
+        stdio: 'inherit',
+        env: { ...process.env },
+      })
+    : spawnSync(command, args, {
+        cwd,
+        stdio: 'inherit',
+        env: { ...process.env },
+      })
   return result.status === 0
+}
+
+function* walk(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      yield* walk(full)
+    } else {
+      yield full
+    }
+  }
+}
+
+// Confirms the compiled bundle actually contains the baked API URL.
+// The classic failure mode is a build that baked "http://localhost:4000",
+// which a real phone can never reach.
+function verifyBakedApiUrl(apiUrl) {
+  const outDir = path.join(clientDir, 'out')
+  let found = false
+  let staleDefault = false
+  for (const file of walk(outDir)) {
+    if (!/\.js$/.test(file)) continue
+    try {
+      if (statSync(file).size > 10_000_000) continue
+      const content = readFileSync(file, 'utf8')
+      if (content.includes(apiUrl)) {
+        found = true
+      }
+      if (content.includes('http://localhost:4000')) {
+        staleDefault = true
+      }
+    } catch {
+      // ignore unreadable files
+    }
+  }
+  if (!found) {
+    console.error('\n❌ VERIFY FAILED: baked API URL was not found in the built bundle.')
+    if (staleDefault) {
+      console.error(`   The bundle still contains "http://localhost:4000" (${apiUrl}).`)
+      console.error('   Next.js caches compiled output — clean the cache and rebuild:')
+      console.error('     Remove client/.next and client/out, then re-run this script.')
+    } else {
+      console.error(`   Expected to find: ${apiUrl}`)
+    }
+    process.exit(1)
+  }
+  console.log(`✅ Verified API URL baked into bundle: ${apiUrl}`)
+}
+
+function setupAdbReverse() {
+  // Lets the phone reach the API server over USB without Wi-Fi:
+  // adb reverse tcp:4000 tcp:4000  ->  phone's localhost:4000 forwards to this PC.
+  const candidates = []
+  if (process.env.ANDROID_HOME) {
+    candidates.push(path.join(process.env.ANDROID_HOME, 'platform-tools', `adb${process.platform === 'win32' ? '.exe' : ''}`))
+  }
+  if (process.env.ANDROID_SDK_ROOT) {
+    candidates.push(path.join(process.env.ANDROID_SDK_ROOT, 'platform-tools', `adb${process.platform === 'win32' ? '.exe' : ''}`))
+  }
+  if (process.platform === 'win32') {
+    const local = path.join(process.env.LOCALAPPDATA || '', 'Android', 'Sdk', 'platform-tools', 'adb.exe')
+    if (!candidates.includes(local)) candidates.push(local)
+  }
+  candidates.push('adb')
+  let adb = candidates.find((c) => {
+    try {
+      return spawnSync(c, ['version'], { stdio: 'pipe' }).status === 0
+    } catch {
+      return false
+    }
+  })
+  if (!adb) {
+    console.warn('⚠️  Could not locate adb. For USB debugging without Wi-Fi, run: adb reverse tcp:4000 tcp:4000')
+    return
+  }
+  const res = spawnSync(adb, ['reverse', 'tcp:4000', `tcp:${PORT}`], { stdio: 'pipe', encoding: 'utf8' })
+  if (res.status === 0) {
+    console.log(`✅ adb reverse tcp:${PORT} -> this PC (phone's localhost:${PORT} works over USB).`)
+  } else {
+    console.warn(`⚠️  adb reverse failed (${(res.stderr || res.stdout || 'unknown').trim()}).`)
+    console.warn('   For USB debugging without Wi-Fi, run: adb reverse tcp:4000 tcp:4000')
+  }
 }
 
 function main() {
@@ -98,12 +188,21 @@ function main() {
   process.env.NEXT_PUBLIC_API_URL = apiUrl
   process.env.NEXT_PUBLIC_WS_URL = wsUrl
 
+  // Next.js caches compiled output keyed on env values; a previous build that
+  // baked localhost:4000 can otherwise be reused. Clear it so the new API URL
+  // is guaranteed to land in the bundle.
+  for (const dir of [path.join(clientDir, '.next'), path.join(clientDir, 'out')]) {
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true })
+  }
+
   const okBuild = run(bin('next'), ['build'], clientDir)
   if (!okBuild) {
     console.error('❌ Next.js build failed.')
     process.exit(1)
   }
   console.log('✅ Next.js static export built.')
+
+  verifyBakedApiUrl(apiUrl)
 
   if (target === 'android' || target === 'all') {
     console.log('\n⏳ Syncing to Android...')
@@ -112,6 +211,7 @@ function main() {
       process.exit(1)
     }
     console.log('✅ Android project synced.')
+    setupAdbReverse()
   }
 
   if (target === 'ios' || target === 'all') {

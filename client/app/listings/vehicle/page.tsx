@@ -36,12 +36,11 @@ import {
 import { formatPrice } from "@/lib/data"
 import type { Vehicle } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Gallery } from "@/components/listing/gallery"
-import { VehicleCard } from "@/components/vehicle-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
+import { SaveButton } from "@/components/save-button"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
 function getYouTubeEmbedUrl(url: string) {
@@ -84,7 +83,6 @@ export default function VehicleListingPageWrapper() {
           <main className="flex-1 flex items-center justify-center bg-muted/30">
             <p className="text-muted-foreground">Loading vehicle...</p>
           </main>
-          <SiteFooter />
         </div>
       }
     >
@@ -97,7 +95,6 @@ function VehicleListingPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get("id")
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
-  const [similarVehicles, setSimilarVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -163,63 +160,14 @@ function VehicleListingPage() {
               inspectionCertificate: db.inspectionCertificate ?? false,
               agent: {
                 id: db.agentId || "unknown",
-                name: db.agentName || "Unknown Agent",
+                name: db.agent?.username || db.agentName || "Unknown Agent",
                 role: "Vehicle Agent",
-                phone: "+251 900 000 000",
-                avatar: "/placeholder-user.jpg",
+                phone: db.displayPhone || db.agent?.phone || "+251 900 000 000",
+                avatar: db.agent?.profilePhoto || "/placeholder-user.jpg",
               },
             }
             setVehicle(mapped)
             setLoading(false)
-
-            try {
-              const simRes = await fetch(`${getApiUrl()}/api/vehicles?category=${mapped.vehicleCategory}&limit=3`)
-              if (simRes.ok) {
-                const simData = await simRes.json()
-                const simArr: Vehicle[] = (simData.vehicles || [])
-                  .filter((v: any) => v.id !== mapped.id)
-                  .slice(0, 3)
-                  .map((v: any) => ({
-                    id: v.id,
-                    title: v.title || "",
-                    listingType: v.listingType || "For Sale",
-                    vehicleCategory: v.vehicleCategory || "",
-                    make: v.make || "",
-                    model: v.vehicleModel || v.model || "",
-                    trimVersion: v.trimVersion || "",
-                    manufacturingYear: v.manufacturingYear || 0,
-                    color: v.color || "",
-                    countryOfOrigin: v.countryOfOrigin || "",
-                    fuelType: v.fuelType || "",
-                    transmission: v.transmission || "",
-                    mileage: v.mileage || 0,
-                    condition: v.condition || "Used",
-                    safetyFeatures: v.safetyFeatures || [],
-                    interiorFeatures: v.interiorFeatures || [],
-                    exteriorFeatures: v.exteriorFeatures || [],
-                    price: v.price || 0,
-                    priceType: v.priceType || "",
-                    region: v.region || "",
-                    city: v.city || "",
-                    subCity: v.subCity || "",
-                    woreda: v.woreda || "",
-                    description: v.description || "",
-                    features: v.features || [],
-                    images: v.images && v.images.length > 0 ? v.images : ["/placeholder.jpg"],
-                    featured: v.featured || false,
-                    agent: {
-                      id: v.agentId || "unknown",
-                      name: v.agentName || "Agent",
-                      role: "Vehicle Agent",
-                      phone: "+251 900 000 000",
-                      avatar: "/placeholder-user.jpg",
-                    },
-                  }))
-                setSimilarVehicles(simArr)
-              }
-            } catch {
-              /* no similar vehicles */
-            }
             return
           }
         }
@@ -240,7 +188,6 @@ function VehicleListingPage() {
         <main className="flex-1 flex items-center justify-center bg-muted/30">
           <p className="text-muted-foreground">Loading vehicle...</p>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -258,7 +205,6 @@ function VehicleListingPage() {
             </Link>
           </div>
         </main>
-        <SiteFooter />
       </div>
     )
   }
@@ -671,32 +617,21 @@ function VehicleListingPage() {
                 </dl>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="rounded-xl min-h-[44px]">
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
                   <Share2 className="h-4 w-4" /> Share
                 </Button>
-                <Button variant="outline" className="rounded-xl min-h-[44px]">
+                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
                   <CalendarDays className="h-4 w-4" /> Visit
                 </Button>
+                <SaveButton itemType="vehicle" itemId={vehicle.id} label="Save" />
               </div>
 
               <PayServiceCharge propertyId={vehicle.id} propertyTitle={vehicle.title} />
             </aside>
           </div>
-
-          {similarVehicles.length > 0 && (
-            <section className="mt-14">
-              <h2 className="text-xl font-bold text-foreground">Similar Vehicles</h2>
-              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {similarVehicles.map((v) => (
-                  <VehicleCard key={v.id} vehicle={v} />
-                ))}
-              </div>
-            </section>
-          )}
         </div>
       </main>
-      <SiteFooter />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useAuth } from '@/components/auth/auth-guard'
+import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,9 +18,17 @@ interface LoginFormValues {
   password: string
 }
 
+function getRedirectParam(): string {
+  if (typeof window === 'undefined') return ''
+  const params = new URLSearchParams(window.location.search)
+  const redirect = params.get('redirect')
+  return redirect && redirect.startsWith('/') ? redirect : ''
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { user, login } = useAuth()
+  const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const {
@@ -35,8 +44,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return
+    const redirect = getRedirectParam()
+    if (redirect && redirect !== '/login' && redirect !== '/register') {
+      router.replace(redirect)
+      return
+    }
     if (user.role === 'admin') router.replace('/admin')
-    else router.replace('/agent')
+    else if (user.role === 'agent') router.replace('/agent')
+    else router.replace('/')
   }, [user, router])
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -57,14 +72,12 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="Welcome back to DawoLife"
-      subtitle="Sign in to access your agent workspace or the administrator console."
-      backgroundUrl="https://res.cloudinary.com/y7q39zm5/image/upload/v1783685710/delaharme/backgrounds/wevko9a3x8ulqwtnfcnx.jpg"
+      title={t('welcome_back')}
       footer={
         <p className="text-center text-sm text-slate-500">
-          New to DawoLife?{' '}
+          {t('new_to_dawolife')}{' '}
           <Link href="/register" className="font-semibold text-orange-600 hover:text-orange-700">
-            Create an agent account
+            {t('create_account_link')}
           </Link>
         </p>
       }

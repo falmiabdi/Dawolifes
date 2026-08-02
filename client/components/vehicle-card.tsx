@@ -3,8 +3,15 @@ import Image from "next/image"
 import { MapPin, Fuel, Gauge, Calendar, Users, Settings, CheckCircle2 } from "lucide-react"
 import { type Vehicle, formatPrice } from "@/lib/data"
 import { buttonVariants } from "@/components/ui/button"
+import { SaveButton } from "@/components/save-button"
 
-export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
+export function VehicleCard({
+  vehicle,
+  onSaveChange,
+}: {
+  vehicle: Vehicle
+  onSaveChange?: (saved: boolean) => void
+}) {
   const isRent = vehicle.listingType === "For Rent" || vehicle.listingType === "Both"
   return (
     <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -28,6 +35,12 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
             {vehicle.condition}
           </span>
         )}
+        <SaveButton
+          itemType="vehicle"
+          itemId={vehicle.id}
+          className="absolute right-3 top-12"
+          onChange={onSaveChange}
+        />
       </div>
 
       <div className="p-4 sm:p-5">
@@ -45,7 +58,7 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           <span className="flex items-center gap-1.5">
             <Calendar className="h-4 w-4" /> {vehicle.manufacturingYear}
           </span>
-          {vehicle.mileage !== undefined && (
+          {vehicle.mileage != null && vehicle.mileage > 0 && (
             <span className="flex items-center gap-1.5">
               <Gauge className="h-4 w-4" /> {vehicle.mileage.toLocaleString()} km
             </span>

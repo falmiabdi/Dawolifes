@@ -3,8 +3,15 @@ import Image from "next/image"
 import { BedDouble, MapPin, Phone, Ruler, CheckCircle2 } from "lucide-react"
 import { type Property, formatPrice } from "@/lib/data"
 import { buttonVariants } from "@/components/ui/button"
+import { SaveButton } from "@/components/save-button"
 
-export function PropertyCard({ property }: { property: Property }) {
+export function PropertyCard({
+  property,
+  onSaveChange,
+}: {
+  property: Property
+  onSaveChange?: (saved: boolean) => void
+}) {
   const isRent = property.listingType === "For Rent"
   return (
     <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -23,6 +30,12 @@ export function PropertyCard({ property }: { property: Property }) {
         >
           {property.listingType}
         </span>
+        <SaveButton
+          itemType="property"
+          itemId={property.id}
+          className="absolute right-3 top-3"
+          onChange={onSaveChange}
+        />
       </div>
 
       <div className="p-4 sm:p-5">
