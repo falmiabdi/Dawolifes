@@ -12,12 +12,6 @@ echo "Step 1: Building server..."
 echo "Step 2: Building web app..."
 (cd web && pnpm build)
 
-# Step 3: Build the mobile app (Android)
-echo "Step 3: Building mobile app (Android)..."
-(cd mobile && pnpm build:android)
-
 echo ""
 echo "=== Build Complete ==="
 echo "Web: web/out/"
-echo "Mobile Android APK: mobile/android/app/build/outputs/apk/debug/"
-echo "Mobile iOS Xcode project: mobile/ios/"

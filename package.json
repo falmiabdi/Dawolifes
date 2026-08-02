@@ -6,10 +6,8 @@
   "scripts": {
     "dev:server": "cd server && pnpm dev",
     "dev:web": "cd web && pnpm dev",
-    "dev:mobile": "cd mobile && pnpm dev",
     "build:server": "cd server && pnpm build",
     "build:web": "cd web && pnpm build",
-    "build:mobile": "cd mobile && pnpm build:android",
     "start:server": "cd server && pnpm start",
     "start:web": "cd web && pnpm start",
     "dev:all": "concurrently -n server,web -c blue,green \"pnpm dev:server\" \"pnpm dev:web\""
