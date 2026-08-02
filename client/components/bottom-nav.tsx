@@ -13,7 +13,7 @@ const SCROLL_THRESHOLD = 10
 const HIDE_ANIMATION = { duration: 0.25, ease: "easeInOut" as const }
 
 // Portals / auth flows have their own navigation — hide the bottom bar there.
-const HIDDEN_PATHS = ["/admin", "/agent", "/login", "/register", "/auth"]
+const HIDDEN_PATHS = ["/admin", "/agent", "/login", "/register", "/auth", "/listings"]
 
 interface NavItem {
   label: string

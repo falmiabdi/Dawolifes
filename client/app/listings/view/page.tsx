@@ -24,7 +24,6 @@ import {
 import { formatPrice } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
 import { Gallery } from "@/components/listing/gallery"
-import { PropertyCard } from "@/components/property-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
@@ -81,7 +80,6 @@ function ListingPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const [property, setProperty] = useState<any>(null)
-  const [similar, setSimilar] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -136,32 +134,6 @@ function ListingPage() {
             }
             setProperty(mapped)
             setLoading(false)
-
-            fetch(`${getApiUrl()}/api/properties?city=${encodeURIComponent(dbProp.city)}&limit=4`)
-              .then(r => r.json())
-              .then(d => {
-                const list = (d.properties || []).filter((p: any) => p.id !== dbProp.id).slice(0, 3).map((p: any) => ({
-                  id: p.id,
-                  title: p.title,
-                  type: p.type,
-                  listingType: p.listingType,
-                  price: p.price,
-                  priceType: p.priceType,
-                  region: p.region,
-                  city: p.city,
-                  subCity: p.subCity || '',
-                  area: p.area || 0,
-                  bedrooms: p.bedrooms || 0,
-                  bathrooms: p.bathrooms || 0,
-                  condition: p.condition || 'Finished',
-                  description: p.description || '',
-                  features: p.features || [],
-                  images: p.images && p.images.length > 0 ? p.images : ["/placeholder.jpg"],
-                  agent: { id: p.agent?.id || p.agentId || '', name: p.agent?.username || p.agentName || 'Agent', role: 'Real Estate Agent', phone: p.displayPhone || p.agent?.phone || '+251 900 000 000', avatar: p.agent?.profilePhoto || '/placeholder-user.jpg' },
-                }))
-                setSimilar(list)
-              })
-              .catch(() => {})
             return
           }
         }
@@ -434,15 +406,6 @@ function ListingPage() {
               <PayServiceCharge propertyId={property.id} propertyTitle={property.title} />
             </aside>
           </div>
-
-          <section className="mt-14">
-            <h2 className="text-xl font-bold text-foreground">Similar Properties</h2>
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {similar.map((p) => (
-                <PropertyCard key={p.id} property={p} />
-              ))}
-            </div>
-          </section>
         </div>
       </main>
     </div>

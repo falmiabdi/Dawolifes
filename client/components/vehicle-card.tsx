@@ -58,7 +58,7 @@ export function VehicleCard({
           <span className="flex items-center gap-1.5">
             <Calendar className="h-4 w-4" /> {vehicle.manufacturingYear}
           </span>
-          {vehicle.mileage !== undefined && (
+          {vehicle.mileage != null && vehicle.mileage > 0 && (
             <span className="flex items-center gap-1.5">
               <Gauge className="h-4 w-4" /> {vehicle.mileage.toLocaleString()} km
             </span>

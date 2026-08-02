@@ -393,5 +393,7 @@ export function getProperty(id: string) {
 }
 
 export function formatPrice(price: number) {
-  return new Intl.NumberFormat("en-US").format(price)
+  const value = Number(price)
+  if (!Number.isFinite(value)) return "0"
+  return new Intl.NumberFormat("en-US").format(value)
 }

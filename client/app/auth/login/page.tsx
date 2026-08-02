@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useAuth } from '@/components/auth/auth-guard'
+import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,6 +28,7 @@ function getRedirectParam(): string {
 export default function AuthLoginPage() {
   const router = useRouter()
   const { user, login } = useAuth()
+  const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const {
@@ -67,13 +69,12 @@ export default function AuthLoginPage() {
 
   return (
     <AuthShell
-      title="Sign in to DawoLife"
-      subtitle="Access your saved listings, messages and continue where you left off."
+      title={t('welcome_back')}
       footer={
         <p className="text-center text-sm text-slate-500">
-          New to DawoLife?{' '}
+          {t('new_to_dawolife')}{' '}
           <Link href="/auth/signup" className="font-semibold text-orange-600 hover:text-orange-700">
-            Create a free account
+            {t('create_account_link')}
           </Link>
         </p>
       }

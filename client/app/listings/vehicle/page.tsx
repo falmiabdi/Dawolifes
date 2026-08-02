@@ -37,7 +37,6 @@ import { formatPrice } from "@/lib/data"
 import type { Vehicle } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
 import { Gallery } from "@/components/listing/gallery"
-import { VehicleCard } from "@/components/vehicle-card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { PayServiceCharge } from "@/components/listing/pay-service-charge"
@@ -96,7 +95,6 @@ function VehicleListingPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get("id")
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
-  const [similarVehicles, setSimilarVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -162,63 +160,14 @@ function VehicleListingPage() {
               inspectionCertificate: db.inspectionCertificate ?? false,
               agent: {
                 id: db.agentId || "unknown",
-                name: db.agentName || "Unknown Agent",
+                name: db.agent?.username || db.agentName || "Unknown Agent",
                 role: "Vehicle Agent",
-                phone: "+251 900 000 000",
-                avatar: "/placeholder-user.jpg",
+                phone: db.displayPhone || db.agent?.phone || "+251 900 000 000",
+                avatar: db.agent?.profilePhoto || "/placeholder-user.jpg",
               },
             }
             setVehicle(mapped)
             setLoading(false)
-
-            try {
-              const simRes = await fetch(`${getApiUrl()}/api/vehicles?category=${mapped.vehicleCategory}&limit=3`)
-              if (simRes.ok) {
-                const simData = await simRes.json()
-                const simArr: Vehicle[] = (simData.vehicles || [])
-                  .filter((v: any) => v.id !== mapped.id)
-                  .slice(0, 3)
-                  .map((v: any) => ({
-                    id: v.id,
-                    title: v.title || "",
-                    listingType: v.listingType || "For Sale",
-                    vehicleCategory: v.vehicleCategory || "",
-                    make: v.make || "",
-                    model: v.vehicleModel || v.model || "",
-                    trimVersion: v.trimVersion || "",
-                    manufacturingYear: v.manufacturingYear || 0,
-                    color: v.color || "",
-                    countryOfOrigin: v.countryOfOrigin || "",
-                    fuelType: v.fuelType || "",
-                    transmission: v.transmission || "",
-                    mileage: v.mileage || 0,
-                    condition: v.condition || "Used",
-                    safetyFeatures: v.safetyFeatures || [],
-                    interiorFeatures: v.interiorFeatures || [],
-                    exteriorFeatures: v.exteriorFeatures || [],
-                    price: v.price || 0,
-                    priceType: v.priceType || "",
-                    region: v.region || "",
-                    city: v.city || "",
-                    subCity: v.subCity || "",
-                    woreda: v.woreda || "",
-                    description: v.description || "",
-                    features: v.features || [],
-                    images: v.images && v.images.length > 0 ? v.images : ["/placeholder.jpg"],
-                    featured: v.featured || false,
-                    agent: {
-                      id: v.agentId || "unknown",
-                      name: v.agentName || "Agent",
-                      role: "Vehicle Agent",
-                      phone: "+251 900 000 000",
-                      avatar: "/placeholder-user.jpg",
-                    },
-                  }))
-                setSimilarVehicles(simArr)
-              }
-            } catch {
-              /* no similar vehicles */
-            }
             return
           }
         }
@@ -681,17 +630,6 @@ function VehicleListingPage() {
               <PayServiceCharge propertyId={vehicle.id} propertyTitle={vehicle.title} />
             </aside>
           </div>
-
-          {similarVehicles.length > 0 && (
-            <section className="mt-14">
-              <h2 className="text-xl font-bold text-foreground">Similar Vehicles</h2>
-              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {similarVehicles.map((v) => (
-                  <VehicleCard key={v.id} vehicle={v} />
-                ))}
-              </div>
-            </section>
-          )}
         </div>
       </main>
     </div>
