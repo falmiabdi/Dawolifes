@@ -1,33 +1,22 @@
-# DelaHarme
+# DawoLife
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+Real-estate / vehicle listing platform.
 
-## Built with v0
+## Layout
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+| Path | What it is |
+| --- | --- |
+| `server/` | Express API (PostgreSQL + Sequelize). Deploy independently. |
+| `web/` | Next.js website. Deploy independently. |
+| `mobile-app` branch | The Capacitor mobile app (Android/iOS). |
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_jFVysgt9JFtEQSAIXVhZ3dLxp3IA)
+## Getting started
 
-## Getting Started
-
-First, run the development server:
+Install dependencies per project and run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+cd server && pnpm install && pnpm dev
+cd web && pnpm install && pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-## Learn More
-
-To learn more, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+See `build.sh` / `dev.sh` at the repo root for build and run commands.
