@@ -14,7 +14,7 @@ export const sequelize = new Sequelize(DATABASE_URL, {
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false, // required for Neon's TLS
+      rejectUnauthorized: false,
     },
   },
   logging: false,
