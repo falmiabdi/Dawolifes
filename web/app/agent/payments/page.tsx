@@ -3,6 +3,7 @@
 import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from "react"
+import { useAuth } from '@/components/auth/auth-guard'
 
 import {
   CreditCard,
@@ -11,7 +12,6 @@ import {
   Landmark,
   CheckCircle2,
   QrCode,
-  ArrowUpRight,
   ArrowDownLeft,
   RefreshCw,
   Clock,
@@ -21,9 +21,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 interface Payment {
-  _id: string
+  id: string
   orderId: string
-  title: string
+  propertyTitle: string
   amount: number
   status: string
   method: string
@@ -40,6 +40,7 @@ interface PaymentStats {
 }
 
 export default function AgentPaymentsPage() {
+  const { getToken } = useAuth()
   const [amount, setAmount] = useState("")
   const [selectedMethod, setSelectedMethod] = useState("telebirr")
   const [subscribing, setSubscribing] = useState(false)
@@ -53,19 +54,12 @@ export default function AgentPaymentsPage() {
   async function fetchPayments() {
     setLoading(true)
     try {
-      const res = await fetch(`${getApiUrl()}/api/auth/session`)
-      const session = await res.json()
-      const userId = session?.user?.id
-
-      if (!userId) {
-        setLoading(false)
-        return
-      }
-
-      const params = new URLSearchParams({ role: "agent", userId, limit: "10" })
-      const dataRes = await fetch(`${getApiUrl()}/api/payments?${params}`)
+      const token = await getToken()
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const dataRes = await fetch(`${getApiUrl()}/api/payments`, { headers })
       const data = await dataRes.json()
       setPayments(data.payments || [])
+      // stats is now a normalized object from the backend
       setStats(data.stats || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 })
     } catch {
       setPayments([])
@@ -281,7 +275,7 @@ export default function AgentPaymentsPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-semibold text-slate-900 leading-snug flex-1">
-                      {tx.title}
+                      {tx.propertyTitle || tx.paymentType}
                     </p>
                     <span
                       className={`shrink-0 text-sm font-bold ${
@@ -296,9 +290,9 @@ export default function AgentPaymentsPage() {
                   </div>
                   <div className="flex items-center gap-3 text-xs text-slate-400">
                     <span>{new Date(tx.createdAt).toLocaleDateString()}</span>
-                    <span>Â·</span>
+                    <span>·</span>
                     <span>{tx.method}</span>
-                    <span>Â·</span>
+                    <span>·</span>
                     <span
                       className={`rounded-full px-2 py-0.5 border ${
                         tx.status === "Completed"
@@ -330,7 +324,7 @@ export default function AgentPaymentsPage() {
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {payments.map((tx) => (
                     <tr key={tx.id} className="text-slate-700">
-                      <td className="py-3 text-slate-900">{tx.title}</td>
+                      <td className="py-3 text-slate-900">{tx.propertyTitle || tx.paymentType}</td>
                       <td className="py-3 text-slate-500 text-xs">
                         {new Date(tx.createdAt).toLocaleDateString()}
                       </td>

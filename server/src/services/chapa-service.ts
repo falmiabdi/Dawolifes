@@ -1,5 +1,4 @@
 ﻿import { signAccessToken, signRefreshToken } from '../utils/jwt.js'
-import { UserModel } from '../models/User.js'
 
 export async function initializeTransaction(data: {
   title: string
@@ -15,7 +14,6 @@ export async function initializeTransaction(data: {
   const txRef = `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
 
   // Chapa API call would go here
-  // For now, return a mock checkout URL
   const checkoutUrl = `https://checkout.chapa.co/hosted/${txRef}`
 
   return {
@@ -28,7 +26,6 @@ export async function initializeTransaction(data: {
 
 export async function verifyTransaction(txRef: string) {
   // Chapa API verification would go here
-  // For now, return a mock completed status
   return {
     status: 'Completed',
     txRef,

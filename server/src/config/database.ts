@@ -3,19 +3,23 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const DB_NAME = process.env.DB_NAME || "dawolife";
-const DB_USER = process.env.DB_USER || "postgres";
-const DB_PASSWORD = process.env.DB_PASSWORD || "postgres";
-const DB_HOST = process.env.DB_HOST || "localhost";
-const DB_PORT = parseInt(process.env.DB_PORT || "5432", 10);
+const DATABASE_URL = process.env.DATABASE_URL;
 
-export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
-  host: DB_HOST,
-  port: DB_PORT,
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set. Add it to your .env file.");
+}
+
+export const sequelize = new Sequelize(DATABASE_URL, {
   dialect: "postgres",
-  logging: process.env.NODE_ENV !== "production" ? false : false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // required for Neon's TLS
+    },
+  },
+  logging: false,
   pool: {
-    max: 10,
+    max: 5,   // keep low — Neon free tier has limited connections
     min: 0,
     acquire: 30000,
     idle: 10000,
@@ -25,21 +29,23 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
 export async function connectDB(retries = 5, interval = 5000) {
   for (let i = 0; i < retries; i++) {
     try {
-      await sequelize.authenticate()
-      console.log("✅ PostgreSQL connected")
-      await sequelize.sync({ alter: true })
-      console.log("✅ Tables synced")
-      return sequelize
+      await sequelize.authenticate();
+      console.log("✅ Neon PostgreSQL connected");
+
+      // sync({ alter: true }) compares the current DB schema against models
+      // and adds any missing columns/tables automatically — safe on a fresh DB
+      await sequelize.sync({ alter: true });
+      console.log("✅ All tables synced");
+
+      return sequelize;
     } catch (error: any) {
-      console.error(`❌ Database connection attempt ${i + 1}/${retries} failed`)
-      console.error("Name:", error.name)
-      console.error("Message:", error.message)
+      console.error(`❌ DB connection attempt ${i + 1}/${retries} failed: ${error.message}`);
       if (i < retries - 1) {
-        console.log(`⏳ Retrying in ${interval / 1000}s...`)
-        await new Promise((r) => setTimeout(r, interval))
+        console.log(`⏳ Retrying in ${interval / 1000}s...`);
+        await new Promise((r) => setTimeout(r, interval));
       }
     }
   }
-  console.error("❌ All database connection retries exhausted")
-  return null
+  console.error("❌ All database connection retries exhausted");
+  return null;
 }

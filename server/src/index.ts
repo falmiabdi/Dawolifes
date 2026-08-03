@@ -13,6 +13,7 @@ import vehicleRoutes from './routes/vehicles.js'
 import agentRoutes from './routes/agent.js'
 import favoriteRoutes from './routes/favorites.js'
 import { setupWebSocket } from './ws/server.js'
+import { errorHandler, notFoundHandler } from './middleware/error.js'
 
 dotenv.config()
 
@@ -67,6 +68,12 @@ app.use('/api/vehicles', vehicleRoutes)
 app.use('/api/agent', agentRoutes)
 app.use('/api/favorites', favoriteRoutes)
 
+// ── Payment gateway routes ─────────────────────────────────────────────────
+import chapaRoutes from './routes/chapa.js'
+import telebirrRoutes from './routes/telebirr.js'
+app.use('/api/chapa', chapaRoutes)
+app.use('/api/telebirr', telebirrRoutes)
+
 // Health check
 app.get('/api/health', (_req, res) => {
   const dbState = sequelize ? 'connected' : 'disconnected'
@@ -88,6 +95,10 @@ async function start() {
     console.log(`DawoLife API server running on port ${PORT} ✅ DB connected`)
   })
   setupWebSocket(server)
+
+  // 404 + error handlers must be after all routes
+  app.use(notFoundHandler)
+  app.use(errorHandler)
 }
 
 start().catch((err) => {

@@ -59,8 +59,6 @@ export function agentMiddleware(req: AuthenticatedRequest, res: Response, next: 
   next()
 }
 
-// Blocks Rejected / Suspended users from performing actions (e.g. posting).
-// Admins bypass the status check so the admin console keeps working.
 export async function requireActiveUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     if (!req.user) {

@@ -16,11 +16,14 @@ export default function AgentDashboardPage() {
 
   useEffect(() => {
     if (!user?.id) return
-    fetch(`${getApiUrl()}/api/properties?agentId=${user.id}`, { credentials: 'include' })
+    const token = document.cookie.split('; ').find(r => r.startsWith('token='))?.split('=')[1]
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+    // Use /api/agent/properties and /api/agent/vehicles — these return ALL statuses for the agent
+    fetch(`${getApiUrl()}/api/agent/properties`, { credentials: 'include', headers })
       .then((res) => res.json())
       .then((data) => setProperties(data.properties || []))
       .catch(() => {})
-    fetch(`${getApiUrl()}/api/vehicles?agentId=${user.id}`, { credentials: 'include' })
+    fetch(`${getApiUrl()}/api/agent/vehicles`, { credentials: 'include', headers })
       .then((res) => res.json())
       .then((data) => setVehicles(data.vehicles || []))
       .catch(() => {})

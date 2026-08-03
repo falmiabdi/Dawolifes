@@ -20,13 +20,9 @@ router.get('/', authMiddleware, async (req, res) => {
       let item: any = null
 
       if (itemType === 'property') {
-        item = await PropertyModel.findByPk(itemId, {
-          include: [agentInclude],
-        })
+        item = await PropertyModel.findByPk(itemId, { include: [agentInclude] })
       } else if (itemType === 'vehicle') {
-        item = await VehicleModel.findByPk(itemId, {
-          include: [agentInclude],
-        })
+        item = await VehicleModel.findByPk(itemId, { include: [agentInclude] })
       }
 
       if (!item) continue

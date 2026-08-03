@@ -13,11 +13,34 @@ router.get('/', authMiddleware, async (req, res) => {
       limit: 50,
     })
 
-    const [stats] = await sequelize.query(
-      `SELECT status, COUNT(*)::int AS count, SUM(amount) AS "totalAmount" FROM payments GROUP BY status`
+    const [rawStats] = await sequelize.query(
+      `SELECT status, COUNT(*)::int AS count, COALESCE(SUM(amount), 0) AS "totalAmount" FROM payments GROUP BY status`
     )
 
-    res.json({ payments, stats })
+    // Normalize raw SQL array into a friendly object for the frontend
+    const statsArr = rawStats as { status: string; count: number; totalAmount: string }[]
+    const statsObj = {
+      totalRevenue: 0,
+      completedCount: 0,
+      pendingCount: 0,
+      failedCount: 0,
+      totalCount: 0,
+    }
+    for (const row of statsArr) {
+      const amount = Number(row.totalAmount) || 0
+      const count = Number(row.count) || 0
+      statsObj.totalCount += count
+      if (row.status === 'Completed') {
+        statsObj.completedCount = count
+        statsObj.totalRevenue += amount
+      } else if (row.status === 'Pending') {
+        statsObj.pendingCount = count
+      } else if (row.status === 'Failed') {
+        statsObj.failedCount = count
+      }
+    }
+
+    res.json({ payments, stats: statsObj })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch payments' })
   }

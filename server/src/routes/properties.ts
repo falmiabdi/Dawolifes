@@ -24,6 +24,7 @@ router.get('/', async (req, res) => {
     const where: any = { status: 'Approved' }
     if (req.query.city) where.city = req.query.city
     if (req.query.type) where.type = req.query.type
+    if (req.query.agentId) where.agentId = req.query.agentId  // allow filtering by agent
     const limit = parseInt(req.query.limit as string) || 100
     const properties = await PropertyModel.findAll({
       where,
@@ -93,7 +94,6 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       return res.status(403).json({ message: 'Not authorized' })
     }
 
-    // Whitelist allowed fields
     const updates: Record<string, any> = {}
     for (const field of ALLOWED_UPDATE_FIELDS) {
       if (req.body[field] !== undefined) {
@@ -101,7 +101,6 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       }
     }
 
-    // Reset status to Pending when agent updates (admin updates preserve status)
     if (req.user!.role !== 'admin') {
       updates.status = 'Pending'
     }

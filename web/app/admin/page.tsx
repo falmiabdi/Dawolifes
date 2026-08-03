@@ -35,13 +35,15 @@ export default function AdminDashboardPage() {
         fetch(`${getApiUrl()}/api/admin/agents?status=all`, { headers }).then(r => r.json()),
         fetch(`${getApiUrl()}/api/admin/properties`, { headers }).then(r => r.json()),
         fetch(`${getApiUrl()}/api/admin/vehicles`, { headers }).then(r => r.json()),
-        fetch(`${getApiUrl()}/api/payments?role=admin&limit=5`, { headers }).then(r => r.json()),
-      ]).then(([agentsData, propertiesData, vehiclesData, paymentsData]) => {
+        fetch(`${getApiUrl()}/api/admin/stats`, { headers }).then(r => r.json()),
+        fetch(`${getApiUrl()}/api/payments`, { headers }).then(r => r.json()),
+      ]).then(([agentsData, propertiesData, vehiclesData, statsData, paymentsData]) => {
         setAgents(agentsData.agents || [])
         setProperties(propertiesData.properties || [])
         setVehicles(vehiclesData.vehicles || [])
         setPayments(paymentsData.payments || [])
-        setStats(paymentsData.stats || {})
+        // statsData from /api/admin/stats has { paymentStats: { totalRevenue, completedCount, ... } }
+        setStats(statsData.paymentStats || paymentsData.stats || {})
       }).catch(() => {})
     })()
   }, [user, getAuthHeaders])

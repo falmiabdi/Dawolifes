@@ -114,7 +114,6 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
 
     if (req.body.onboardingComplete === true) {
       updates.onboardingComplete = true
-      // Reset status to Pending if agent was rejected and is resubmitting
       if (user.getDataValue('status') === 'Rejected') {
         updates.status = 'Pending'
         updates.rejectionReason = null

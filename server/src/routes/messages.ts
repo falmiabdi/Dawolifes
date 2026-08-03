@@ -17,8 +17,7 @@ router.get('/unread', authMiddleware, async (req, res) => {
   }
 })
 
-// Inbox for the current user — all messages where they are sender or recipient,
-// enriched with the property title and the other party's name (must be before /:propertyId).
+// Inbox for the current user
 router.get('/inbox', authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId

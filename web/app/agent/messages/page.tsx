@@ -1,162 +1,187 @@
 ﻿"use client"
 
 import { getApiUrl } from '@/lib/get-api-url'
-
 import { useState, useEffect, useCallback, useRef } from 'react'
-
 import { MessageSquare, Send, Phone, Mail, ChevronLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useAuth } from '@/components/auth/auth-guard'
 
-interface Conversation {
-  id: string
+interface Thread {
   propertyId: string
-  propertyName: string
-  buyerName: string
-  buyerEmail: string
-  buyerPhone: string
+  propertyTitle: string
+  otherUserId: string
+  otherUserName: string
+  otherUserPhone: string | null
+  otherUserPhoto: string | null
   lastMessage: string
   lastTime: string
   unread: number
 }
 
 interface Message {
-  _id: string
-  sender: 'buyer' | 'agent'
-  text: string
-  createdAt: string
+  id: string
+  propertyId: string
+  senderId: string
+  senderName: string
+  senderRole: string
+  recipientId: string
+  recipientName: string
+  content: string
   read: boolean
+  createdAt: string
 }
 
-const POLL_INTERVAL = 3000
+const POLL_INTERVAL = 4000
 
 export default function AgentMessagesPage() {
-  const [agentId, setAgentId] = useState('')
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [activeConv, setActiveConv] = useState<Conversation | null>(null)
+  const { user, getToken } = useAuth()
+  const [threads, setThreads] = useState<Thread[]>([])
+  const [activeThread, setActiveThread] = useState<Thread | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [typedMessage, setTypedMessage] = useState('')
   const [showChatMobile, setShowChatMobile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const lastMessageCount = useRef(0)
+  const lastMsgCount = useRef(0)
 
-  // Get agent ID from session
-  useEffect(() => {
-    fetch(`${getApiUrl()}/api/auth/session`)
-      .then(r => r.json())
-      .then(data => {
-        const userId = data?.session?.user?.id || data?.user?.id
-        if (userId) setAgentId(userId)
-      })
-  }, [])
+  const authHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getToken()
+    return token
+      ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      : { 'Content-Type': 'application/json' }
+  }, [getToken])
 
-  // Fetch conversations
-  const fetchConversations = useCallback(async () => {
-    if (!agentId) return
+  // Fetch inbox and group into per-property threads
+  const fetchInbox = useCallback(async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/messages?agentId=${agentId}`)
+      const headers = await authHeaders()
+      const res = await fetch(`${getApiUrl()}/api/messages/inbox`, { headers })
+      if (!res.ok) return
       const data = await res.json()
-      setConversations(data.conversations || [])
+      const msgs: Message[] = data.messages || []
+      const usersMap: Record<string, any> = data.users || {}
+      const userId = user?.id
+
+      // Group messages by propertyId + other party
+      const threadMap = new Map<string, Thread>()
+      for (const m of msgs) {
+        const otherId = m.senderId === userId ? m.recipientId : m.senderId
+        const key = `${m.propertyId}__${otherId}`
+        const otherInfo = usersMap[otherId] || {}
+        const existing = threadMap.get(key)
+        const isUnread = !m.read && m.recipientId === userId
+
+        if (!existing) {
+          threadMap.set(key, {
+            propertyId: m.propertyId,
+            propertyTitle: m.propertyTitle || 'Listing',
+            otherUserId: otherId,
+            otherUserName: otherId === m.senderId ? m.senderName : m.recipientName,
+            otherUserPhone: otherInfo.phone || null,
+            otherUserPhoto: otherInfo.profilePhoto || null,
+            lastMessage: m.content,
+            lastTime: m.createdAt,
+            unread: isUnread ? 1 : 0,
+          })
+        } else {
+          if (isUnread) existing.unread++
+        }
+      }
+
+      setThreads(Array.from(threadMap.values()))
     } catch (err) {
-      console.error('Failed to fetch conversations:', err)
+      console.error('Inbox fetch failed:', err)
     } finally {
       setLoading(false)
     }
-  }, [agentId])
+  }, [authHeaders, user?.id])
 
-  // Poll conversations every 3s
   useEffect(() => {
-    fetchConversations()
-    const interval = setInterval(fetchConversations, POLL_INTERVAL)
+    fetchInbox()
+    const interval = setInterval(fetchInbox, POLL_INTERVAL)
     return () => clearInterval(interval)
-  }, [fetchConversations])
+  }, [fetchInbox])
 
-  // Fetch messages for active conversation
+  // Fetch messages for active thread
   const fetchMessages = useCallback(async () => {
-    if (!activeConv) return
+    if (!activeThread) return
     try {
-      const res = await fetch(`${getApiUrl()}/api/messages?propertyId=${activeConv.propertyId}&buyerEmail=${activeConv.buyerEmail}`)
+      const headers = await authHeaders()
+      const res = await fetch(`${getApiUrl()}/api/messages/${activeThread.propertyId}`, { headers })
+      if (!res.ok) return
       const data = await res.json()
-      setMessages(data.messages || [])
-    } catch (err) {
-      console.error('Failed to fetch messages:', err)
-    }
-  }, [activeConv])
-
-  // Initial fetch + poll messages every 3s
-  useEffect(() => {
-    if (!activeConv) return
-    fetchMessages()
-
-    // Mark as read
-    fetch(`${getApiUrl()}/api/messages`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        propertyId: activeConv.propertyId,
-        buyerEmail: activeConv.buyerEmail,
-        sender: 'buyer',
-      }),
-    }).then(() => {
-      setConversations(prev =>
-        prev.map(c => c.id === activeConv.id ? { ...c, unread: 0 } : c)
+      // Only show messages between this user and the other party
+      const filtered = (data.messages || []).filter((m: Message) =>
+        (m.senderId === user?.id && m.recipientId === activeThread.otherUserId) ||
+        (m.senderId === activeThread.otherUserId && m.recipientId === user?.id)
       )
-    })
+      setMessages(filtered)
+    } catch (err) {
+      console.error('Messages fetch failed:', err)
+    }
+  }, [activeThread, authHeaders, user?.id])
 
+  useEffect(() => {
+    if (!activeThread) return
+    fetchMessages()
+    // Mark messages as read
+    ;(async () => {
+      const headers = await authHeaders()
+      const res = await fetch(`${getApiUrl()}/api/messages/${activeThread.propertyId}`, { headers })
+      if (res.ok) {
+        const data = await res.json()
+        const unread = (data.messages || []).filter(
+          (m: Message) => !m.read && m.recipientId === user?.id && m.senderId === activeThread.otherUserId
+        )
+        for (const m of unread) {
+          fetch(`${getApiUrl()}/api/messages/${m.id}/read`, { method: 'PATCH', headers }).catch(() => {})
+        }
+      }
+    })()
     const interval = setInterval(fetchMessages, POLL_INTERVAL)
     return () => clearInterval(interval)
-  }, [activeConv, fetchMessages])
+  }, [activeThread, fetchMessages, authHeaders, user?.id])
 
-  // Auto-scroll when new messages arrive
+  // Auto-scroll
   useEffect(() => {
-    if (messages.length > lastMessageCount.current) {
+    if (messages.length > lastMsgCount.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-    lastMessageCount.current = messages.length
+    lastMsgCount.current = messages.length
   }, [messages])
 
   const handleSend = async () => {
-    if (!typedMessage.trim() || !activeConv || !agentId) return
+    if (!typedMessage.trim() || !activeThread || !user) return
     setSending(true)
     try {
+      const headers = await authHeaders()
       const res = await fetch(`${getApiUrl()}/api/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
-          propertyId: activeConv.propertyId,
-          agentId,
-          buyerName: activeConv.buyerName,
-          buyerEmail: activeConv.buyerEmail,
-          buyerPhone: activeConv.buyerPhone,
-          sender: 'agent',
-          text: typedMessage.trim(),
+          propertyId: activeThread.propertyId,
+          recipientId: activeThread.otherUserId,
+          recipientName: activeThread.otherUserName,
+          content: typedMessage.trim(),
         }),
       })
-      const data = await res.json()
-      if (res.ok && data.message) {
-        setMessages(prev => [...prev, data.message])
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConv.id
-              ? { ...c, lastMessage: typedMessage.trim(), lastTime: new Date().toISOString() }
-              : c
-          )
-        )
+      if (res.ok) {
+        setTypedMessage('')
+        fetchMessages()
+        fetchInbox()
       }
     } catch (err) {
-      console.error('Failed to send message:', err)
+      console.error('Send failed:', err)
     } finally {
       setSending(false)
-      setTypedMessage('')
     }
   }
 
   function formatTime(dateStr: string) {
     const d = new Date(dateStr)
-    const now = new Date()
-    const diff = now.getTime() - d.getTime()
+    const diff = Date.now() - d.getTime()
     if (diff < 60000) return 'Just now'
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
@@ -169,50 +194,55 @@ export default function AgentMessagesPage() {
       <div className={`w-full md:w-80 flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden ${showChatMobile ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-slate-100">
           <h1 className="text-lg font-bold text-slate-900">Conversations</h1>
-          <p className="text-xs text-slate-500">Inquiries from prospective buyers</p>
+          <p className="text-xs text-slate-500">Inquiries from buyers</p>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             </div>
-          ) : conversations.length === 0 ? (
+          ) : threads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-slate-400">
               <MessageSquare className="h-8 w-8 opacity-30 mb-2" />
               <p className="text-xs">No conversations yet</p>
             </div>
           ) : (
-            conversations.map((c) => (
+            threads.map((t) => (
               <button
-                key={c.id}
-                onClick={() => {
-                  setActiveConv(c)
-                  setShowChatMobile(true)
-                }}
-                className={`w-full text-left rounded-2xl p-3 transition flex gap-3 ${c.id === activeConv?.id ? 'bg-orange-50 text-orange-950 border-l-4 border-orange-500' : 'hover:bg-slate-50 text-slate-800'}`}
+                key={`${t.propertyId}__${t.otherUserId}`}
+                onClick={() => { setActiveThread(t); setShowChatMobile(true) }}
+                className={`w-full text-left rounded-2xl p-3 transition flex gap-3 ${
+                  activeThread?.propertyId === t.propertyId && activeThread?.otherUserId === t.otherUserId
+                    ? 'bg-orange-50 text-orange-950 border-l-4 border-orange-500'
+                    : 'hover:bg-slate-50 text-slate-800'
+                }`}
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600 font-bold">
-                  {c.buyerName.charAt(0)}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600 font-bold text-sm">
+                  {t.otherUserName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <span className="font-semibold text-sm truncate">{c.buyerName}</span>
-                    <span className="text-[10px] text-slate-400 font-medium shrink-0">{formatTime(c.lastTime)}</span>
+                    <span className="font-semibold text-sm truncate">{t.otherUserName}</span>
+                    <span className="text-[10px] text-slate-400 font-medium shrink-0">{formatTime(t.lastTime)}</span>
                   </div>
-                  <p className="text-xs font-medium text-slate-500 truncate mb-1">{c.propertyName}</p>
-                  <p className={`text-xs truncate ${c.unread > 0 ? 'font-bold text-slate-900' : 'text-slate-400'}`}>
-                    {c.lastMessage}
+                  <p className="text-xs font-medium text-slate-500 truncate mb-1">{t.propertyTitle}</p>
+                  <p className={`text-xs truncate ${t.unread > 0 ? 'font-bold text-slate-900' : 'text-slate-400'}`}>
+                    {t.lastMessage}
                   </p>
                 </div>
-                {c.unread > 0 && <span className="h-5 w-5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 self-center">{c.unread}</span>}
+                {t.unread > 0 && (
+                  <span className="h-5 w-5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 self-center">
+                    {t.unread}
+                  </span>
+                )}
               </button>
             ))
           )}
         </div>
       </div>
 
-      {/* Main chat window */}
-      {activeConv ? (
+      {/* Chat window */}
+      {activeThread ? (
         <div className={`flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden ${showChatMobile ? 'flex' : 'hidden md:flex'}`}>
           <div className="flex justify-between items-center px-4 py-4 md:px-6 border-b border-slate-100">
             <div className="flex items-center">
@@ -220,13 +250,16 @@ export default function AgentMessagesPage() {
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <div>
-                <h2 className="font-bold text-slate-950 text-sm md:text-base">{activeConv.buyerName}</h2>
-                <p className="text-[10px] md:text-xs text-slate-500 font-medium line-clamp-1">Inquiry about: {activeConv.propertyName}</p>
+                <h2 className="font-bold text-slate-950 text-sm md:text-base">{activeThread.otherUserName}</h2>
+                <p className="text-[10px] md:text-xs text-slate-500 font-medium">Inquiry about: {activeThread.propertyTitle}</p>
               </div>
             </div>
             <div className="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-4 text-[10px] md:text-xs text-slate-500">
-              {activeConv.buyerPhone && <span className="flex items-center gap-1 font-medium"><Phone className="h-3.5 w-3.5" /> {activeConv.buyerPhone}</span>}
-              {activeConv.buyerEmail && <span className="hidden sm:flex items-center gap-1 font-medium"><Mail className="h-3.5 w-3.5" /> {activeConv.buyerEmail}</span>}
+              {activeThread.otherUserPhone && (
+                <span className="flex items-center gap-1 font-medium">
+                  <Phone className="h-3.5 w-3.5" /> {activeThread.otherUserPhone}
+                </span>
+              )}
             </div>
           </div>
 
@@ -234,16 +267,20 @@ export default function AgentMessagesPage() {
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <MessageSquare className="h-8 w-8 opacity-30 mb-2" />
-                <p className="text-xs">No messages yet</p>
+                <p className="text-xs">No messages yet. Start the conversation!</p>
               </div>
             ) : (
               messages.map((m) => {
-                const isAgent = m.sender === 'agent'
+                const isMe = m.senderId === user?.id
                 return (
-                  <div key={m.id} className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] md:max-w-md rounded-2xl px-4 py-2.5 text-sm ${isAgent ? 'bg-orange-500 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
-                      <p>{m.text}</p>
-                      <span className={`block mt-1 text-[10px] text-right ${isAgent ? 'text-orange-100' : 'text-slate-400'}`}>
+                  <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] md:max-w-md rounded-2xl px-4 py-2.5 text-sm ${
+                      isMe
+                        ? 'bg-orange-500 text-white rounded-tr-none'
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
+                    }`}>
+                      <p>{m.content}</p>
+                      <span className={`block mt-1 text-[10px] text-right ${isMe ? 'text-orange-100' : 'text-slate-400'}`}>
                         {formatTime(m.createdAt)}
                       </span>
                     </div>
@@ -260,20 +297,21 @@ export default function AgentMessagesPage() {
               onChange={(e) => setTypedMessage(e.target.value)}
               placeholder="Type your message..."
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
               }}
               className="rounded-xl"
             />
-            <Button onClick={handleSend} disabled={sending || !typedMessage.trim()} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
+            <Button
+              onClick={handleSend}
+              disabled={sending || !typedMessage.trim()}
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl"
+            >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 bg-white border border-slate-200 rounded-3xl shadow-sm">
+        <div className="flex-1 hidden md:flex flex-col items-center justify-center text-slate-400 bg-white border border-slate-200 rounded-3xl shadow-sm">
           <MessageSquare className="h-12 w-12 opacity-30 mb-2" />
           <p className="text-sm">Select a conversation to start messaging</p>
         </div>
@@ -281,4 +319,3 @@ export default function AgentMessagesPage() {
     </div>
   )
 }
-

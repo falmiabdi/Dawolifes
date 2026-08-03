@@ -30,7 +30,6 @@ function flattenAgent(user: any) {
     phone: user.phone,
     onboardingComplete: user.onboardingComplete,
     createdAt: user.createdAt,
-    // Flattened onboarding fields
     fullName: user.username,
     gender: profile.gender || '',
     dateOfBirth: profile.dateOfBirth || '',
@@ -162,7 +161,6 @@ router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (
     const currentPhone = property.getDataValue('displayPhone') || ''
     const agentPhone = (property as any).agent?.phone || ''
 
-    // Cycle: admin1 → admin2 → agent → admin1 → ...
     let newPhone: string
     if (currentPhone === ADMIN_PHONES[0]) {
       newPhone = ADMIN_PHONES[1]
@@ -315,10 +313,10 @@ router.get('/users', authMiddleware, adminMiddleware, async (_req, res) => {
   }
 })
 
-// Unified user action handler (suspend, activate, delete)
+// Unified user action handler
 router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const { action, id, rejectionReason } = req.body
+    const { action, id } = req.body
 
     if (!id || !action) {
       return res.status(400).json({ message: 'Missing id or action' })
@@ -413,9 +411,30 @@ router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
       PaymentModel.count(),
     ])
 
-    const [paymentStats] = await sequelize.query(
-      `SELECT status, COUNT(*)::int AS count, SUM(amount) AS "totalAmount" FROM payments GROUP BY status`
+    const [rawStats] = await sequelize.query(
+      `SELECT status, COUNT(*)::int AS count, COALESCE(SUM(amount), 0) AS "totalAmount" FROM payments GROUP BY status`
     )
+
+    const statsArr = rawStats as { status: string; count: number; totalAmount: string }[]
+    const paymentStats = {
+      totalRevenue: 0,
+      completedCount: 0,
+      pendingCount: 0,
+      failedCount: 0,
+      totalCount: paymentCount,
+    }
+    for (const row of statsArr) {
+      const amount = Number(row.totalAmount) || 0
+      const count = Number(row.count) || 0
+      if (row.status === 'Completed') {
+        paymentStats.completedCount = count
+        paymentStats.totalRevenue += amount
+      } else if (row.status === 'Pending') {
+        paymentStats.pendingCount = count
+      } else if (row.status === 'Failed') {
+        paymentStats.failedCount = count
+      }
+    }
 
     res.json({
       users: userCount,

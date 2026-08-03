@@ -55,7 +55,7 @@ router.post('/register', async (req, res) => {
   }
 })
 
-// Buyer / user registration — account is verified on registration (verified = registered).
+// Buyer / user registration
 router.post('/register-buyer', async (req, res) => {
   try {
     const parsed = buyerRegisterSchema.safeParse(req.body)
@@ -157,16 +157,8 @@ router.post('/signin', async (req, res) => {
     const emailVal = user.getDataValue('email')
     const role = user.getDataValue('role')
 
-    const accessToken = signAccessToken({
-      userId,
-      email: emailVal,
-      role,
-    })
-    const refreshToken = signRefreshToken({
-      userId,
-      email: emailVal,
-      role,
-    })
+    const accessToken = signAccessToken({ userId, email: emailVal, role })
+    const refreshToken = signRefreshToken({ userId, email: emailVal, role })
 
     res.json({
       message: 'Login successful',
@@ -227,7 +219,7 @@ router.get('/session', async (req, res) => {
   }
 })
 
-// Update profile (name / phone / profilePhoto)
+// Update profile
 router.patch('/profile', authMiddleware, async (req, res) => {
   try {
     const { name, phone, profilePhoto } = req.body
