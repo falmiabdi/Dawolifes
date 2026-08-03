@@ -74,6 +74,30 @@ import telebirrRoutes from './routes/telebirr.js'
 app.use('/api/chapa', chapaRoutes)
 app.use('/api/telebirr', telebirrRoutes)
 
+// Root route
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'DawoLife API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth/*',
+      properties: '/api/properties',
+      vehicles: '/api/vehicles',
+      messages: '/api/messages',
+      notifications: '/api/notifications',
+      payments: '/api/payments',
+      chapa: '/api/chapa/*',
+      telebirr: '/api/telebirr/*',
+      agent: '/api/agent/*',
+      admin: '/api/admin/*',
+      favorites: '/api/favorites',
+      upload: '/api/upload',
+    },
+  })
+})
+
 // Health check
 app.get('/api/health', (_req, res) => {
   const dbState = sequelize ? 'connected' : 'disconnected'
@@ -91,14 +115,15 @@ async function start() {
     console.error("FATAL: Database connection failed after retries. Exiting.")
     process.exit(1)
   }
+  
+  // 404 + error handlers must be LAST after all routes
+  app.use(notFoundHandler)
+  app.use(errorHandler)
+  
   const server = app.listen(PORT, () => {
     console.log(`DawoLife API server running on port ${PORT} ✅ DB connected`)
   })
   setupWebSocket(server)
-
-  // 404 + error handlers must be after all routes
-  app.use(notFoundHandler)
-  app.use(errorHandler)
 }
 
 start().catch((err) => {

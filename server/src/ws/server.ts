@@ -1,5 +1,5 @@
 import { Server as HTTPServer } from 'http'
-import { Server as WSServer } from 'ws'
+import WebSocket, { WebSocketServer } from 'ws'
 import { NotificationModel } from '../models/index.js'
 
 interface WSClient {
@@ -11,7 +11,7 @@ interface WSClient {
 const clients = new Map<string, WSClient[]>()
 
 export function setupWebSocket(server: HTTPServer) {
-  const wss = new WSServer({ server, path: '/ws' })
+  const wss = new WebSocketServer({ server, path: '/ws' })
 
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url || '/', `http://${req.headers.host}`)
