@@ -1,39 +1,45 @@
 import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
-import { SavedItemModel, PropertyModel, VehicleModel, UserModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
+import { SavedItemType } from '@prisma/client'
 
 const router = Router()
 
-const agentInclude = { model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] }
+const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
 
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const saved = await SavedItemModel.findAll({
+    const saved = await prisma.savedItem.findMany({
       where: { userId: req.user!.userId },
-      order: [['createdAt', 'DESC']],
+      orderBy: { createdAt: 'desc' },
     })
 
     const items = []
     for (const row of saved) {
-      const itemType = row.getDataValue('itemType')
-      const itemId = row.getDataValue('itemId')
+      const { itemType, itemId } = row
       let item: any = null
 
       if (itemType === 'property') {
-        item = await PropertyModel.findByPk(itemId, { include: [agentInclude] })
+        item = await prisma.property.findUnique({
+          where: { id: itemId },
+          include: { agent: { select: agentSelect } },
+        })
       } else if (itemType === 'vehicle') {
-        item = await VehicleModel.findByPk(itemId, { include: [agentInclude] })
+        item = await prisma.vehicle.findUnique({
+          where: { id: itemId },
+          include: { agent: { select: agentSelect } },
+        })
       }
 
       if (!item) continue
 
-      const status = item.getDataValue('status')
+      const { status } = item
       if (status && status !== 'Approved') continue
 
       items.push({
         itemType,
         itemId,
-        savedAt: row.getDataValue('createdAt'),
+        savedAt: row.createdAt,
         item,
       })
     }
@@ -51,11 +57,13 @@ router.get('/status', authMiddleware, async (req, res) => {
     if (!itemType || !itemId) {
       return res.status(400).json({ message: 'Missing itemType or itemId' })
     }
-    const exists = await SavedItemModel.findOne({
+    const exists = await prisma.savedItem.findUnique({
       where: {
-        userId: req.user!.userId,
-        itemType: String(itemType),
-        itemId: String(itemId),
+        userId_itemType_itemId: {
+          userId: req.user!.userId,
+          itemType: String(itemType) as SavedItemType,
+          itemId: String(itemId),
+        },
       },
     })
     res.json({ saved: !!exists })
@@ -77,21 +85,31 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const item: any =
       itemType === 'property'
-        ? await PropertyModel.findByPk(itemId)
-        : await VehicleModel.findByPk(itemId)
+        ? await prisma.property.findUnique({ where: { id: itemId } })
+        : await prisma.vehicle.findUnique({ where: { id: itemId } })
 
     if (!item) {
       return res.status(404).json({ message: 'Item not found' })
     }
 
-    const [savedItem, created] = await SavedItemModel.findOrCreate({
-      where: { userId: req.user!.userId, itemType, itemId },
-      defaults: { userId: req.user!.userId, itemType, itemId },
-    } as any)
+    const userId = req.user!.userId
+    const typedItemType = itemType as SavedItemType
 
-    if (created && itemType === 'vehicle') {
-      const favorites = Number(item.getDataValue('favorites') || 0)
-      await item.update({ favorites: favorites + 1 })
+    const existing = await prisma.savedItem.findUnique({
+      where: { userId_itemType_itemId: { userId, itemType: typedItemType, itemId } },
+    })
+
+    let savedItem
+    if (existing) {
+      savedItem = existing
+    } else {
+      savedItem = await prisma.savedItem.create({
+        data: { userId, itemType: typedItemType, itemId },
+      })
+      if (itemType === 'vehicle') {
+        const favorites = Number(item.favorites || 0)
+        await prisma.vehicle.update({ where: { id: itemId }, data: { favorites: favorites + 1 } })
+      }
     }
 
     res.status(201).json({ message: 'Item saved', saved: true, savedItem })
@@ -108,15 +126,15 @@ router.delete('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Missing itemType or itemId' })
     }
 
-    const deleted = await SavedItemModel.destroy({
-      where: { userId: req.user!.userId, itemType, itemId },
+    const deleted = await prisma.savedItem.deleteMany({
+      where: { userId: req.user!.userId, itemType: itemType as SavedItemType, itemId },
     })
 
-    if (deleted > 0 && itemType === 'vehicle') {
-      const item: any = await VehicleModel.findByPk(itemId)
+    if (deleted.count > 0 && itemType === 'vehicle') {
+      const item: any = await prisma.vehicle.findUnique({ where: { id: itemId } })
       if (item) {
-        const favorites = Number(item.getDataValue('favorites') || 0)
-        await item.update({ favorites: Math.max(0, favorites - 1) })
+        const favorites = Number(item.favorites || 0)
+        await prisma.vehicle.update({ where: { id: itemId }, data: { favorites: Math.max(0, favorites - 1) } })
       }
     }
 

@@ -1,15 +1,13 @@
 ﻿import { Router } from 'express'
-import { Op } from 'sequelize'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
-import { UserModel, PropertyModel, VehicleModel, PaymentModel } from '../models/index.js'
-import { sequelize } from '../config/database.js'
+import { prisma } from '../lib/prisma.js'
 import { createAndBroadcastNotification } from '../utils/notifications.js'
 
 function flattenAgent(user: any) {
-  const profile = user.getDataValue?.('profile') || user.profile || {}
-  const documents = user.getDataValue?.('documents') || user.documents || []
-  const education = user.getDataValue?.('education') || user.education || {}
-  const professionalInfo = user.getDataValue?.('professionalInfo') || user.professionalInfo || {}
+  const profile = user.profile || {}
+  const documents = user.documents || []
+  const education = user.education || {}
+  const professionalInfo = user.professionalInfo || {}
 
   const docMap: Record<string, string> = {}
   if (Array.isArray(documents)) {
@@ -69,14 +67,14 @@ router.get('/agents', authMiddleware, adminMiddleware, async (req, res) => {
     }
 
     if (req.query.search) {
-      const search = `%${req.query.search}%`
-      where[Op.or] = [
-        { username: { [Op.iLike]: search } },
-        { email: { [Op.iLike]: search } },
+      const search = String(req.query.search)
+      where.OR = [
+        { username: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
       ]
     }
 
-    const agents = await UserModel.findAll({ where, order: [['createdAt', 'DESC']] })
+    const agents = await prisma.user.findMany({ where, orderBy: { createdAt: 'desc' } })
     res.json({ agents: agents.map(flattenAgent) })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch agents' })
@@ -92,14 +90,14 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Missing id or action' })
     }
 
-    const user = await UserModel.findByPk(id)
+    const user = await prisma.user.findUnique({ where: { id } })
     if (!user) {
       return res.status(404).json({ message: 'Agent not found' })
     }
 
     switch (action) {
       case 'approve':
-        await user.update({ status: 'Approved', rejectionReason: null as any })
+        await prisma.user.update({ where: { id }, data: { status: 'Approved', rejectionReason: null } })
         createAndBroadcastNotification(
           id,
           'Account Approved',
@@ -108,7 +106,7 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
         ).catch(() => {})
         break
       case 'reject':
-        await user.update({ status: 'Rejected', rejectionReason: rejectionReason || 'No reason provided' })
+        await prisma.user.update({ where: { id }, data: { status: 'Rejected', rejectionReason: rejectionReason || 'No reason provided' } })
         createAndBroadcastNotification(
           id,
           'Account Rejected',
@@ -117,7 +115,7 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
         ).catch(() => {})
         break
       case 'suspend':
-        await user.update({ status: 'Suspended' })
+        await prisma.user.update({ where: { id }, data: { status: 'Suspended' } })
         createAndBroadcastNotification(
           id,
           'Account Suspended',
@@ -126,7 +124,7 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
         ).catch(() => {})
         break
       case 'reactivate':
-        await user.update({ status: 'Approved', rejectionReason: null as any })
+        await prisma.user.update({ where: { id }, data: { status: 'Approved', rejectionReason: null } })
         createAndBroadcastNotification(
           id,
           'Account Reactivated',
@@ -135,7 +133,7 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
         ).catch(() => {})
         break
       case 'delete':
-        await user.destroy()
+        await prisma.user.delete({ where: { id } })
         return res.json({ message: 'Agent deleted' })
       default:
         return res.status(400).json({ message: `Unknown action: ${action}` })
@@ -151,15 +149,16 @@ const ADMIN_PHONES = ['+251962395282', '+251922477886']
 
 router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const property = await PropertyModel.findByPk(req.params.id, {
-      include: [{ model: UserModel, as: 'agent', attributes: ['id', 'phone'] }],
+    const property = await prisma.property.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: { id: true, phone: true } } },
     })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
 
-    const currentPhone = property.getDataValue('displayPhone') || ''
-    const agentPhone = (property as any).agent?.phone || ''
+    const currentPhone = property.displayPhone || ''
+    const agentPhone = property.agent?.phone || ''
 
     let newPhone: string
     if (currentPhone === ADMIN_PHONES[0]) {
@@ -169,7 +168,7 @@ router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (
     } else {
       newPhone = ADMIN_PHONES[0]
     }
-    await property.update({ displayPhone: newPhone })
+    await prisma.property.update({ where: { id: req.params.id }, data: { displayPhone: newPhone } })
 
     res.json({ message: 'Contact phone updated', displayPhone: newPhone })
   } catch (err: any) {
@@ -185,12 +184,12 @@ router.get('/properties', authMiddleware, adminMiddleware, async (req, res) => {
       where.status = req.query.status
     }
     if (req.query.search) {
-      where.title = { [Op.iLike]: `%${req.query.search}%` }
+      where.title = { contains: String(req.query.search), mode: 'insensitive' }
     }
-    const properties = await PropertyModel.findAll({
+    const properties = await prisma.property.findMany({
       where,
-      include: [{ model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] }],
-      order: [['createdAt', 'DESC']],
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+      orderBy: { createdAt: 'desc' },
     })
     res.json({ properties })
   } catch (err: any) {
@@ -201,10 +200,10 @@ router.get('/properties', authMiddleware, adminMiddleware, async (req, res) => {
 // Get pending properties
 router.get('/properties/pending', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
-    const properties = await PropertyModel.findAll({
+    const properties = await prisma.property.findMany({
       where: { status: 'Pending' },
-      include: [{ model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] }],
-      order: [['createdAt', 'DESC']],
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+      orderBy: { createdAt: 'desc' },
     })
     res.json({ properties })
   } catch (err: any) {
@@ -215,14 +214,15 @@ router.get('/properties/pending', authMiddleware, adminMiddleware, async (_req, 
 // Approve property
 router.patch('/properties/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const property = await PropertyModel.findByPk(req.params.id, {
-      include: [{ model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] }],
+    const property = await prisma.property.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
     })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
-    await property.update({ status: 'Approved' })
-    res.json({ message: 'Property approved', property })
+    const updated = await prisma.property.update({ where: { id: req.params.id }, data: { status: 'Approved' } })
+    res.json({ message: 'Property approved', property: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to approve property' })
   }
@@ -231,14 +231,15 @@ router.patch('/properties/:id/approve', authMiddleware, adminMiddleware, async (
 // Reject property
 router.patch('/properties/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const property = await PropertyModel.findByPk(req.params.id, {
-      include: [{ model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] }],
+    const property = await prisma.property.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
     })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
-    await property.update({ status: 'Rejected' })
-    res.json({ message: 'Property rejected', property })
+    const updated = await prisma.property.update({ where: { id: req.params.id }, data: { status: 'Rejected' } })
+    res.json({ message: 'Property rejected', property: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to reject property' })
   }
@@ -252,12 +253,12 @@ router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
       where.status = req.query.status
     }
     if (req.query.search) {
-      where.title = { [Op.iLike]: `%${req.query.search}%` }
+      where.title = { contains: String(req.query.search), mode: 'insensitive' }
     }
-    const vehicles = await VehicleModel.findAll({
+    const vehicles = await prisma.vehicle.findMany({
       where,
-      include: [{ model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] }],
-      order: [['createdAt', 'DESC']],
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+      orderBy: { createdAt: 'desc' },
     })
     res.json({ vehicles })
   } catch (err: any) {
@@ -268,7 +269,10 @@ router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
 // Get pending vehicles
 router.get('/vehicles/pending', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
-    const vehicles = await VehicleModel.findAll({ where: { status: 'Pending' }, order: [['createdAt', 'DESC']] })
+    const vehicles = await prisma.vehicle.findMany({
+      where: { status: 'Pending' },
+      orderBy: { createdAt: 'desc' },
+    })
     res.json({ vehicles })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch vehicles' })
@@ -278,12 +282,12 @@ router.get('/vehicles/pending', authMiddleware, adminMiddleware, async (_req, re
 // Approve vehicle
 router.patch('/vehicles/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const vehicle = await VehicleModel.findByPk(req.params.id)
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
-    await vehicle.update({ status: 'Approved' })
-    res.json({ message: 'Vehicle approved', vehicle })
+    const updated = await prisma.vehicle.update({ where: { id: req.params.id }, data: { status: 'Approved' } })
+    res.json({ message: 'Vehicle approved', vehicle: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to approve vehicle' })
   }
@@ -292,12 +296,12 @@ router.patch('/vehicles/:id/approve', authMiddleware, adminMiddleware, async (re
 // Reject vehicle
 router.patch('/vehicles/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const vehicle = await VehicleModel.findByPk(req.params.id)
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
-    await vehicle.update({ status: 'Rejected' })
-    res.json({ message: 'Vehicle rejected', vehicle })
+    const updated = await prisma.vehicle.update({ where: { id: req.params.id }, data: { status: 'Rejected' } })
+    res.json({ message: 'Vehicle rejected', vehicle: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to reject vehicle' })
   }
@@ -306,7 +310,7 @@ router.patch('/vehicles/:id/reject', authMiddleware, adminMiddleware, async (req
 // Get all users
 router.get('/users', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
-    const users = await UserModel.findAll({ order: [['createdAt', 'DESC']] })
+    const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
     res.json({ users })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch users' })
@@ -322,20 +326,20 @@ router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Missing id or action' })
     }
 
-    const user = await UserModel.findByPk(id)
+    const user = await prisma.user.findUnique({ where: { id } })
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
 
     switch (action) {
       case 'suspend':
-        await user.update({ status: 'Suspended' })
+        await prisma.user.update({ where: { id }, data: { status: 'Suspended' } })
         break
       case 'activate':
-        await user.update({ status: 'Approved' })
+        await prisma.user.update({ where: { id }, data: { status: 'Approved' } })
         break
       case 'delete':
-        await user.destroy()
+        await prisma.user.delete({ where: { id } })
         return res.json({ message: 'User deleted' })
       default:
         return res.status(400).json({ message: `Unknown action: ${action}` })
@@ -355,15 +359,16 @@ router.put('/profile', authMiddleware, adminMiddleware, async (req, res) => {
     if (phone !== undefined) updateData.phone = phone
     if (profilePhoto !== undefined) updateData.profilePhoto = profilePhoto
     if (email !== undefined) {
-      const existing = await UserModel.findOne({ where: { email } })
-      if (existing && existing.getDataValue('id') !== req.user!.userId) {
+      const existing = await prisma.user.findFirst({ where: { email } })
+      if (existing && existing.id !== req.user!.userId) {
         return res.status(409).json({ message: 'Email already in use' })
       }
       updateData.email = email
     }
-    await UserModel.update(updateData, { where: { id: req.user!.userId } })
-    const user = await UserModel.findByPk(req.user!.userId, {
-      attributes: ['id', 'username', 'email', 'phone', 'profilePhoto', 'role', 'isRootAdmin'],
+    await prisma.user.update({ where: { id: req.user!.userId }, data: updateData })
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { id: true, username: true, email: true, phone: true, profilePhoto: true, role: true, isRootAdmin: true },
     })
     res.json({ message: 'Profile updated', user })
   } catch (err: any) {
@@ -374,29 +379,31 @@ router.put('/profile', authMiddleware, adminMiddleware, async (req, res) => {
 // Create a new admin (root admin only)
 router.post('/create', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const currentUser = await UserModel.findByPk(req.user!.userId)
-    if (!currentUser?.getDataValue('isRootAdmin')) {
+    const currentUser = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+    if (!currentUser?.isRootAdmin) {
       return res.status(403).json({ message: 'Only root admin can create new admins' })
     }
     const { username, email, password } = req.body
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'Username, email, and password are required' })
     }
-    const existing = await UserModel.findOne({ where: { email } })
+    const existing = await prisma.user.findFirst({ where: { email } })
     if (existing) {
       return res.status(409).json({ message: 'Email already in use' })
     }
     const { hashPassword } = await import('../utils/password.js')
     const hashedPassword = await hashPassword(password)
-    const admin = await UserModel.create({
-      username,
-      email,
-      password: hashedPassword,
-      role: 'admin',
-      roles: ['admin'],
-      status: 'Approved',
-    } as any)
-    res.status(201).json({ message: 'Admin created', admin: { id: admin.getDataValue('id'), username, email, role: 'admin' } })
+    const admin = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+        role: 'admin',
+        roles: ['admin'],
+        status: 'Approved',
+      },
+    })
+    res.status(201).json({ message: 'Admin created', admin: { id: admin.id, username, email, role: 'admin' } })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to create admin' })
   }
@@ -406,14 +413,14 @@ router.post('/create', authMiddleware, adminMiddleware, async (req, res) => {
 router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
     const [userCount, propertyCount, paymentCount] = await Promise.all([
-      UserModel.count(),
-      PropertyModel.count(),
-      PaymentModel.count(),
+      prisma.user.count(),
+      prisma.property.count(),
+      prisma.payment.count(),
     ])
 
-    const [rawStats] = await sequelize.query(
-      `SELECT status, COUNT(*)::int AS count, COALESCE(SUM(amount), 0) AS "totalAmount" FROM payments GROUP BY status`
-    )
+    const rawStats = await prisma.$queryRaw<
+      { status: string; count: number; totalAmount: string }[]
+    >`SELECT status, COUNT(*)::int AS count, COALESCE(SUM(amount), 0) AS "totalAmount" FROM payments GROUP BY status`
 
     const statsArr = rawStats as { status: string; count: number; totalAmount: string }[]
     const paymentStats = {

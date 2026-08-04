@@ -1,14 +1,13 @@
 import { Router } from 'express'
-import { Op } from 'sequelize'
 import { authMiddleware } from '../middleware/auth.js'
-import { MessageModel, PropertyModel, UserModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 
 const router = Router()
 
 // Unread message count for the current user (must be before /:propertyId)
 router.get('/unread', authMiddleware, async (req, res) => {
   try {
-    const count = await MessageModel.count({
+    const count = await prisma.message.count({
       where: { recipientId: req.user!.userId, read: false },
     })
     res.json({ count })
@@ -21,57 +20,57 @@ router.get('/unread', authMiddleware, async (req, res) => {
 router.get('/inbox', authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId
-    const messages = await MessageModel.findAll({
+    const messages = await prisma.message.findMany({
       where: {
-        [Op.or]: [{ recipientId: userId }, { senderId: userId }],
+        OR: [{ recipientId: userId }, { senderId: userId }],
       },
-      order: [['createdAt', 'DESC']],
+      orderBy: { createdAt: 'desc' },
     })
 
-    const propertyIds = [...new Set(messages.map((m) => m.getDataValue('propertyId')))]
+    const propertyIds = [...new Set(messages.map((m) => m.propertyId))]
     const properties: Record<string, string> = {}
     if (propertyIds.length > 0) {
-      const rows = await PropertyModel.findAll({
-        where: { id: { [Op.in]: propertyIds } },
-        attributes: ['id', 'title'],
+      const rows = await prisma.property.findMany({
+        where: { id: { in: propertyIds } },
+        select: { id: true, title: true },
       })
       for (const row of rows) {
-        properties[row.getDataValue('id')] = row.getDataValue('title')
+        properties[row.id] = row.title
       }
     }
 
     const userIds = new Set<string>()
     for (const m of messages) {
-      userIds.add(m.getDataValue('senderId'))
-      userIds.add(m.getDataValue('recipientId'))
+      userIds.add(m.senderId)
+      userIds.add(m.recipientId)
     }
     const users: Record<string, { name: string; phone?: string | null; profilePhoto?: string | null }> = {}
     if (userIds.size > 0) {
-      const rows = await UserModel.findAll({
-        where: { id: { [Op.in]: [...userIds] } },
-        attributes: ['id', 'username', 'phone', 'profilePhoto'],
+      const rows = await prisma.user.findMany({
+        where: { id: { in: [...userIds] } },
+        select: { id: true, username: true, phone: true, profilePhoto: true },
       })
       for (const row of rows) {
-        users[row.getDataValue('id')] = {
-          name: row.getDataValue('username'),
-          phone: row.getDataValue('phone'),
-          profilePhoto: row.getDataValue('profilePhoto'),
+        users[row.id] = {
+          name: row.username,
+          phone: row.phone,
+          profilePhoto: row.profilePhoto,
         }
       }
     }
 
     const serialized = messages.map((m) => ({
-      id: m.getDataValue('id'),
-      propertyId: m.getDataValue('propertyId'),
-      propertyTitle: properties[m.getDataValue('propertyId')] || 'Listing',
-      senderId: m.getDataValue('senderId'),
-      senderName: m.getDataValue('senderName'),
-      senderRole: m.getDataValue('senderRole'),
-      recipientId: m.getDataValue('recipientId'),
-      recipientName: m.getDataValue('recipientName'),
-      content: m.getDataValue('content'),
-      read: m.getDataValue('read'),
-      createdAt: m.getDataValue('createdAt'),
+      id: m.id,
+      propertyId: m.propertyId,
+      propertyTitle: properties[m.propertyId] || 'Listing',
+      senderId: m.senderId,
+      senderName: m.senderName,
+      senderRole: m.senderRole,
+      recipientId: m.recipientId,
+      recipientName: m.recipientName,
+      content: m.content,
+      read: m.read,
+      createdAt: m.createdAt,
     }))
 
     res.json({ messages: serialized, users })
@@ -83,9 +82,9 @@ router.get('/inbox', authMiddleware, async (req, res) => {
 // Get messages for a property
 router.get('/:propertyId', authMiddleware, async (req, res) => {
   try {
-    const messages = await MessageModel.findAll({
+    const messages = await prisma.message.findMany({
       where: { propertyId: req.params.propertyId },
-      order: [['createdAt', 'ASC']],
+      orderBy: { createdAt: 'asc' },
     })
     res.json({ messages })
   } catch (err: any) {
@@ -102,15 +101,17 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' })
     }
 
-    const msgDoc = await MessageModel.create({
-      propertyId,
-      senderId: req.user!.userId,
-      senderName: req.user!.email,
-      senderRole: req.user!.role,
-      recipientId,
-      recipientName,
-      content,
-    } as any)
+    const msgDoc = await prisma.message.create({
+      data: {
+        propertyId,
+        senderId: req.user!.userId,
+        senderName: req.user!.email,
+        senderRole: req.user!.role,
+        recipientId,
+        recipientName,
+        content,
+      },
+    })
 
     res.status(201).json({ message: 'Message sent', data: msgDoc })
   } catch (err: any) {
@@ -121,11 +122,11 @@ router.post('/', authMiddleware, async (req, res) => {
 // Mark message as read
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
-    const message = await MessageModel.findByPk(req.params.id)
+    const message = await prisma.message.findUnique({ where: { id: req.params.id } })
     if (!message) {
       return res.status(404).json({ message: 'Message not found' })
     }
-    await message.update({ read: true })
+    await prisma.message.update({ where: { id: req.params.id }, data: { read: true } })
     res.json({ message: 'Message marked as read' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update message' })

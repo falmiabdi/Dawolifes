@@ -1,6 +1,6 @@
 import { Server as HTTPServer } from 'http'
 import WebSocket, { WebSocketServer } from 'ws'
-import { NotificationModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 
 interface WSClient {
   userId: string
@@ -37,32 +37,34 @@ export function setupWebSocket(server: HTTPServer) {
 
         switch (message.type) {
           case 'mark_read':
-            await NotificationModel.update(
-              { read: true },
-              { where: { userId, read: false } }
-            )
+            await prisma.notification.updateMany({
+              where: { userId, read: false },
+              data: { read: true },
+            })
             broadcastToUser(userId, { type: 'mark_read_ack', timestamp: Date.now() })
             break
 
           case 'mark_single_read':
             if (message.notificationId) {
-              await NotificationModel.update(
-                { read: true },
-                { where: { id: message.notificationId } }
-              )
+              await prisma.notification.updateMany({
+                where: { id: message.notificationId },
+                data: { read: true },
+              })
               broadcastToUser(userId, { type: 'mark_single_read_ack', notificationId: message.notificationId })
             }
             break
 
           case 'send_notification':
             if (message.targetUserId && message.title && message.body) {
-              const notification = await NotificationModel.create({
-                userId: message.targetUserId,
-                title: message.title,
-                body: message.body,
-                type: message.type || 'general',
-                data: message.data,
-              } as any)
+              const notification = await prisma.notification.create({
+                data: {
+                  userId: message.targetUserId,
+                  title: message.title,
+                  body: message.body,
+                  type: message.type || 'general',
+                  data: message.data,
+                },
+              })
               broadcastToUser(message.targetUserId, {
                 type: 'notification',
                 notification,
@@ -71,7 +73,7 @@ export function setupWebSocket(server: HTTPServer) {
             break
 
           case 'unread_count':
-            const unreadCount = await NotificationModel.count({ where: { userId, read: false } })
+            const unreadCount = await prisma.notification.count({ where: { userId, read: false } })
             broadcastToUser(userId, { type: 'unread_count', count: unreadCount })
             break
         }

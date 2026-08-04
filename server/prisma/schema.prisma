@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  agent
+  user
+}
+
+enum UserStatus {
+  Pending
+  Approved
+  Rejected
+  Suspended
+}
+
+enum PropertyStatus {
+  Draft
+  Pending
+  Approved
+  Rejected
+  Sold
+  Rented
+}
+
+enum VehicleStatus {
+  Draft
+  Pending
+  Approved
+  Rejected
+  Sold
+  Rented
+}
+
+enum PaymentStatus {
+  Pending
+  Completed
+  Failed
+  Refunded
+  Expired
+}
+
+enum PaymentMethod {
+  chapa
+  telebirr
+}
+
+enum SavedItemType {
+  property
+  vehicle
+}
+
+model User {
+  id                String         @id @default(uuid()) @db.Uuid
+  username          String         @db.VarChar(50)
+  email             String         @unique
+  password          String
+  role              UserRole       @default(user)
+  roles             Json           @default("[]")
+  status            UserStatus     @default(Pending)
+  rejectionReason   String?
+  isRootAdmin       Boolean        @default(false)
+  profilePhoto      String?
+  phone             String?
+  documents         Json           @default("[]")
+  education         Json           @default("[]")
+  professionalInfo  Json?
+  profile           Json           @default("{}")
+  emailVerified     Boolean        @default(false)
+  verificationToken String?
+  otp               String?        @db.VarChar(6)
+  otpExpiresAt      DateTime?      @db.Timestamptz(3)
+  onboardingComplete Boolean       @default(false)
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+
+  properties Property[]
+  vehicles   Vehicle[]
+  savedItems SavedItem[]
+
+  @@map("users")
+}
+
+model Property {
+  id              String              @id @default(uuid()) @db.Uuid
+  title           String              @db.VarChar(200)
+  type            String
+  listingType     String
+  price           Float
+  priceType       String
+  region          String
+  city            String
+  subCity         String?
+  woreda          String?
+  kebele          String?
+  parcel          String?
+  block           String?
+  homeNo          String?
+  area            Float?
+  bedrooms        Int?
+  bathrooms       Int?
+  condition       String?
+  legalizedYear   Int?
+  description     String?
+  features        Json                @default("[]")
+  images          Json                @default("[]")
+  videoUrl        String?
+  featured        Boolean             @default(false)
+  locationDocument String?
+  posterType      String?
+  ownerType       String?
+  agentId         String              @db.Uuid
+  agentName       String
+  displayPhone    String?
+  status          PropertyStatus      @default(Draft)
+  latitude        Float?
+  longitude       Float?
+  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @db.Timestamptz(3)
+
+  agent User @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("properties")
+}
+
+model Vehicle {
+  id                  String             @id @default(uuid()) @db.Uuid
+  title               String             @db.VarChar(200)
+  vehicleId           String             @unique
+  listingType         String
+  vehicleCategory     String
+  make                String
+  vehicleModel        String
+  trimVersion         String?
+  manufacturingYear   Int
+  registrationYear    Int?
+  vin                 String?
+  engineNumber        String?
+  plateNumber         String?
+  color               String
+  countryOfOrigin     String
+  fuelType            String?
+  engineSize          Float?
+  horsepower          Float?
+  transmission        String?
+  drivetrain          String?
+  cylinders           Int?
+  seatingCapacity     Int?
+  doors               Int?
+  mileage             Float?
+  fuelConsumption     String?
+  fuelTankCapacity    Float?
+  groundClearance     Float?
+  weight              Float?
+  tireSize            String?
+  condition           String
+  accidentFree        Boolean?
+  accidentHistory     String?
+  serviceHistoryAvailable Boolean?
+  ownershipCount      Int?
+  imported            Boolean?
+  locallyAssembled    Boolean?
+  safetyFeatures      Json             @default("[]")
+  interiorFeatures    Json             @default("[]")
+  exteriorFeatures    Json             @default("[]")
+  dailyRate           Float?
+  weeklyRate          Float?
+  monthlyRate         Float?
+  securityDeposit     Float?
+  minRentalDays       Int?
+  maxRentalDays       Int?
+  driverIncluded      Boolean?
+  selfDrive           Boolean?
+  fuelPolicy          String?
+  mileageLimit        Int?
+  extraKmCharge       Float?
+  deliveryAvailable   Boolean?
+  airportPickup       Boolean?
+  availableLocations  Json?
+  availableDates      String?
+  driverAgeRequirement Int?
+  minDrivingExperience Int?
+  drivingLicenseRequired String?
+  passportRequired    Boolean?
+  smokingAllowed      Boolean?
+  petsAllowed         Boolean?
+  offroadAllowed      Boolean?
+  crossborderAllowed  Boolean?
+  insuranceIncluded   Boolean?
+  damageLiability     String?
+  sellingPrice        Float?
+  negotiable          Boolean?
+  financingAvailable  Boolean?
+  exchangeAccepted    Boolean?
+  bankLoanAccepted    Boolean?
+  regionRegistration  String?
+  ownershipCertificate Boolean?
+  roadFundPaid        Boolean?
+  insuranceValid      Boolean?
+  inspectionCertificate Boolean?
+  customsClearance    Boolean?
+  dutyPaid            Boolean?
+  plateType           String?
+  region              String
+  city                String
+  subCity             String?
+  woreda              String?
+  latitude            Float?
+  longitude           Float?
+  pickupAddress       String?
+  description         String?
+  images              Json             @default("[]")
+  videoUrl            String?
+  price               Float
+  priceType           String
+  features            Json             @default("[]")
+  featured            Boolean          @default(false)
+  agentId             String           @db.Uuid
+  agentName           String
+  status              VehicleStatus     @default(Draft)
+  views               Int              @default(0)
+  favorites           Int              @default(0)
+  createdAt           DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime         @updatedAt @db.Timestamptz(3)
+
+  agent User @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([vehicleId])
+  @@map("vehicles")
+}
+
+model Payment {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderId         String        @unique
+  merchOrderId    String
+  txRef           String
+  status          PaymentStatus @default(Pending)
+  amount          Float
+  currency        String        @default("ETB")
+  method          PaymentMethod
+  paymentType     String
+  buyerName       String
+  buyerEmail      String
+  buyerPhone      String
+  propertyId      String?
+  propertyTitle   String?
+  notificationData Json?
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  title     String
+  body      String
+  type      String
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Message {
+  id           String   @id @default(uuid()) @db.Uuid
+  propertyId   String
+  senderId     String   @db.Uuid
+  senderName   String
+  senderRole   String
+  recipientId  String   @db.Uuid
+  recipientName String
+  content      String
+  read         Boolean  @default(false)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([propertyId])
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model SavedItem {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @db.Uuid
+  itemType  SavedItemType
+  itemId    String        @db.Uuid
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, itemType, itemId])
+  @@map("saved_items")
+}

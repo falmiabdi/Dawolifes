@@ -61,6 +61,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>
   register: (data: { username: string; email: string; password: string }) => Promise<any>
   registerBuyer: (data: { name: string; email: string; phone: string; password: string; profilePhoto?: string }) => Promise<any>
+  verifyOtp: (email: string, otp: string) => Promise<any>
   refreshUser: () => Promise<void>
   logout: () => void
   getToken: () => Promise<string | null>
@@ -75,6 +76,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   registerBuyer: async () => {},
+  verifyOtp: async () => {},
   refreshUser: async () => {},
   logout: () => {},
   getToken: async () => null,
@@ -185,12 +187,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(error.message || 'Registration failed')
     }
 
-    const result = await response.json()
-    if (result.accessToken) {
-      await persistToken(result.accessToken)
+    return response.json()
+  }
+
+  async function verifyOtp(email: string, otp: string) {
+    const response = await fetch(`${await getApiUrlAsync()}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, otp }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Verification failed' }))
+      throw new Error(error.message || 'Verification failed')
     }
-    setUserAndCache(result.user)
-    return result
+
+    const data = await response.json()
+    if (data.accessToken) {
+      await persistToken(data.accessToken)
+    }
+    if (data.user) {
+      setUserAndCache(data.user)
+    }
+    return data
   }
 
   async function register(data: { username: string; email: string; password: string }) {
@@ -249,6 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         registerBuyer,
+        verifyOtp,
         refreshUser,
         logout,
         getToken,

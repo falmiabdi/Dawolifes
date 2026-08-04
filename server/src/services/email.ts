@@ -56,6 +56,25 @@ export async function sendVerificationEmail(email: string, name: string, token: 
   });
 }
 
+export async function sendOtpEmail(email: string, name: string, otp: string) {
+  await sendEmail({
+    to: { email, name },
+    subject: 'Your DawoLife verification code',
+    htmlContent: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+        <h2 style="color:#f97316;">Verify your email</h2>
+        <p>Hi ${name},</p>
+        <p>Use the code below to verify your DawoLife email address:</p>
+        <p style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#0f172a;background:#f1f5f9;border-radius:12px;padding:16px;text-align:center;">
+          ${otp}
+        </p>
+        <p style="color:#64748b;font-size:14px;">This code expires in 10 minutes.</p>
+        <p style="color:#64748b;font-size:14px;">If you did not create a DawoLife account, you can ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendApprovalEmail(email: string, name: string) {
   await sendEmail({
     to: { email, name },

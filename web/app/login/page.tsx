@@ -62,6 +62,8 @@ export default function LoginPage() {
       const msg = err?.message || ''
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
         setMessage('Cannot connect to the server. Check your network connection.')
+      } else if (msg.includes('verify')) {
+        setMessage(msg)
       } else if (msg.includes('403') || msg.includes('rejected') || msg.includes('suspended')) {
         setMessage('Your account has been rejected or suspended.')
       } else {

@@ -1,21 +1,16 @@
-import { Sequelize } from "sequelize";
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 async function main() {
-  const sequelize = new Sequelize("dawolife", "postgres", "1234", {
-    host: "localhost",
-    port: 5432,
-    dialect: "postgres",
-    logging: console.log,
-  });
-
   try {
-    await sequelize.authenticate();
-    console.log("✅ Connection successful");
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Connection successful');
   } catch (err: any) {
-    console.error("❌ Connection failed:", err.message);
+    console.error('❌ Connection failed:', err.message);
     console.error(err);
   } finally {
-    await sequelize.close();
+    await prisma.$disconnect();
   }
 }
 

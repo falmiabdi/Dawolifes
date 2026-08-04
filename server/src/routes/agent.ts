@@ -2,7 +2,7 @@ import { Router } from 'express'
 import multer from 'multer'
 import { authMiddleware, agentMiddleware } from '../middleware/auth.js'
 import cloudinary from '../utils/cloudinary.js'
-import { UserModel, PropertyModel, VehicleModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -47,13 +47,13 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
 // Save onboarding step data
 router.post('/onboarding', authMiddleware, async (req, res) => {
   try {
-    const user = await UserModel.findByPk(req.user!.userId)
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
 
     const updates: Record<string, any> = {}
-    const currentProfile: any = user.getDataValue('profile') || {}
+    const currentProfile: any = user.profile || {}
     const profile: Record<string, any> = { ...currentProfile }
 
     if (req.body.fullName) updates.username = req.body.fullName
@@ -71,7 +71,7 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
     if (req.body.fullAddress) profile.fullAddress = req.body.fullAddress
 
     if (req.body.faydaFront || req.body.faydaBack || req.body.selfieFayda || req.body.passportPhoto) {
-      const docs: any[] = [...(user.getDataValue('documents') || [])]
+      const docs: any[] = [...((user.documents as any[]) || [])]
       if (req.body.faydaFront) {
         const idx = docs.findIndex((d: any) => d.type === 'faydaFront')
         if (idx >= 0) docs[idx] = { type: 'faydaFront', url: req.body.faydaFront }
@@ -96,12 +96,12 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
     }
 
     if (req.body.highestEducation) {
-      const currentEdu: any = user.getDataValue('education') || {}
+      const currentEdu: any = user.education || {}
       updates.education = { ...currentEdu, level: req.body.highestEducation, certificate: req.body.educationCertificate || '' }
     }
 
     if (req.body.agentExperience || req.body.companyName || req.body.officeAddress || req.body.businessLicenseNumber || req.body.businessLicenseFile || req.body.tinNumber) {
-      const currentProf: any = user.getDataValue('professionalInfo') || {}
+      const currentProf: any = user.professionalInfo || {}
       updates.professionalInfo = { ...currentProf,
         experience: req.body.agentExperience,
         companyName: req.body.companyName,
@@ -114,7 +114,7 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
 
     if (req.body.onboardingComplete === true) {
       updates.onboardingComplete = true
-      if (user.getDataValue('status') === 'Rejected') {
+      if (user.status === 'Rejected') {
         updates.status = 'Pending'
         updates.rejectionReason = null
       }
@@ -124,7 +124,7 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
       updates.profile = profile
     }
 
-    await user.update(updates)
+    await prisma.user.update({ where: { id: req.user!.userId }, data: updates })
     res.json({ message: 'Step saved' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to save step' })
@@ -134,26 +134,26 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
 // Get agent profile
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    const user = await UserModel.findByPk(req.user!.userId)
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
-    const profile = user.getDataValue('profile') || {}
-    const documents = user.getDataValue('documents') || []
-    const education = user.getDataValue('education') || {}
-    const professionalInfo = user.getDataValue('professionalInfo') || {}
+    const profile: any = user.profile || {}
+    const documents: any[] = (user.documents as any[]) || []
+    const education: any = user.education || {}
+    const professionalInfo: any = user.professionalInfo || {}
 
     res.json({
       user: {
-        id: user.getDataValue('id'),
-        username: user.getDataValue('username'),
-        email: user.getDataValue('email'),
-        role: user.getDataValue('role'),
-        status: user.getDataValue('status'),
-        rejectionReason: user.getDataValue('rejectionReason'),
-        profilePhoto: user.getDataValue('profilePhoto'),
-        phone: user.getDataValue('phone'),
-        onboardingComplete: user.getDataValue('onboardingComplete'),
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        rejectionReason: user.rejectionReason,
+        profilePhoto: user.profilePhoto,
+        phone: user.phone,
+        onboardingComplete: user.onboardingComplete,
         ...profile,
         documents,
         highestEducation: education.level || '',
@@ -174,9 +174,9 @@ router.get('/profile', authMiddleware, async (req, res) => {
 // Get agent's own properties (all statuses)
 router.get('/properties', authMiddleware, agentMiddleware, async (req, res) => {
   try {
-    const properties = await PropertyModel.findAll({
+    const properties = await prisma.property.findMany({
       where: { agentId: req.user!.userId },
-      order: [['createdAt', 'DESC']],
+      orderBy: { createdAt: 'desc' },
     })
     res.json({ properties })
   } catch (err: any) {
@@ -187,9 +187,9 @@ router.get('/properties', authMiddleware, agentMiddleware, async (req, res) => {
 // Get agent's own vehicles (all statuses)
 router.get('/vehicles', authMiddleware, agentMiddleware, async (req, res) => {
   try {
-    const vehicles = await VehicleModel.findAll({
+    const vehicles = await prisma.vehicle.findMany({
       where: { agentId: req.user!.userId },
-      order: [['createdAt', 'DESC']],
+      orderBy: { createdAt: 'desc' },
     })
     res.json({ vehicles })
   } catch (err: any) {

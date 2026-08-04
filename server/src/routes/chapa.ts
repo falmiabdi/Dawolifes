@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { PaymentModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 import { v4 as uuidv4 } from 'uuid'
 
 const router = Router()
@@ -18,22 +18,24 @@ router.post('/initialize', async (req, res) => {
     const checkoutUrl = `https://checkout.chapa.co/checkout/payment/${txRef}`
 
     // Record payment in DB
-    await PaymentModel.create({
-      id: orderId,
-      orderId,
-      merchOrderId: txRef,
-      txRef,
-      status: 'Pending',
-      amount: Number(amount),
-      currency: 'ETB',
-      method: 'chapa',
-      paymentType: paymentType || 'service_charge',
-      buyerName: `${firstName} ${lastName}`,
-      buyerEmail: email,
-      buyerPhone: phoneNumber,
-      propertyId: propertyId || null,
-      propertyTitle: propertyTitle || title,
-    } as any)
+    await prisma.payment.create({
+      data: {
+        id: orderId,
+        orderId,
+        merchOrderId: txRef,
+        txRef,
+        status: 'Pending',
+        amount: Number(amount),
+        currency: 'ETB',
+        method: 'chapa',
+        paymentType: paymentType || 'service_charge',
+        buyerName: `${firstName} ${lastName}`,
+        buyerEmail: email,
+        buyerPhone: phoneNumber,
+        propertyId: propertyId || null,
+        propertyTitle: propertyTitle || title,
+      },
+    })
 
     res.json({ checkoutUrl, txRef, orderId })
   } catch (err: any) {
@@ -48,14 +50,14 @@ router.get('/verify', async (req, res) => {
     const { txRef } = req.query
     if (!txRef) return res.status(400).json({ message: 'txRef required' })
 
-    const payment = await PaymentModel.findOne({ where: { txRef: String(txRef) } as any })
+    const payment = await prisma.payment.findFirst({ where: { txRef: String(txRef) } })
     if (!payment) return res.status(404).json({ message: 'Payment not found' })
 
     res.json({
-      status: payment.getDataValue('status'),
-      txRef: payment.getDataValue('txRef'),
-      amount: payment.getDataValue('amount'),
-      method: payment.getDataValue('method'),
+      status: payment.status,
+      txRef: payment.txRef,
+      amount: payment.amount,
+      method: payment.method,
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Verification failed' })
@@ -68,10 +70,10 @@ router.post('/webhook', async (req, res) => {
     const { trx_ref, status } = req.body
     if (!trx_ref) return res.status(400).json({ message: 'trx_ref required' })
 
-    const payment = await PaymentModel.findOne({ where: { txRef: trx_ref } as any })
+    const payment = await prisma.payment.findFirst({ where: { txRef: trx_ref } })
     if (payment) {
       const newStatus = status === 'success' ? 'Completed' : 'Failed'
-      await payment.update({ status: newStatus })
+      await prisma.payment.update({ where: { id: payment.id }, data: { status: newStatus } })
     }
 
     res.json({ message: 'Webhook received' })

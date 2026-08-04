@@ -1,7 +1,7 @@
 ﻿import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { connectDB, sequelize } from './utils/db.js'
+import { connectDB, prisma } from './utils/db.js'
 import authRoutes from './routes/auth.js'
 import propertyRoutes from './routes/properties.js'
 import paymentRoutes from './routes/payments.js'
@@ -100,7 +100,7 @@ app.get('/', (_req, res) => {
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  const dbState = sequelize ? 'connected' : 'disconnected'
+  const dbState = prisma ? 'connected' : 'disconnected'
   res.json({
     status: 'ok',
     db: dbState,

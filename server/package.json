@@ -8,14 +8,16 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "dev": "node --import tsx --watch src/index.ts",
+    "build": "node \"./node_modules/typescript/bin/tsc\"",
     "start": "node dist/index.js",
-    "db:migrate": "sequelize-cli db:migrate",
-    "db:migrate:undo": "sequelize-cli db:migrate:undo",
-    "db:seed": "sequelize-cli db:seed:all"
+    "db:migrate": "node \"./node_modules/prisma/build/index.js\" migrate dev",
+    "db:push": "node \"./node_modules/prisma/build/index.js\" db push",
+    "db:generate": "node \"./node_modules/prisma/build/index.js\" generate",
+    "db:studio": "node \"./node_modules/prisma/build/index.js\" studio"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "bcryptjs": "^2.4.3",
     "chapa": "^1.0.0",
     "cloudinary": "^2.5.0",
@@ -24,8 +26,6 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.0",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.22.0",
-    "sequelize": "^6.37.8",
     "uuid": "^9.0.0",
     "ws": "^8.16.0",
     "zod": "^4.4.3"
@@ -36,10 +36,9 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.0",
     "@types/multer": "^1.4.11",
-    "@types/pg": "^8.20.0",
     "@types/uuid": "^9.0.0",
     "@types/ws": "^8.5.10",
-    "sequelize-cli": "^6.6.5",
+    "prisma": "^6.19.3",
     "tsx": "^4.7.0",
     "typescript": "^5.7.0"
   }

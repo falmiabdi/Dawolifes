@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { PaymentModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 import { v4 as uuidv4 } from 'uuid'
 
 const router = Router()
@@ -18,22 +18,24 @@ router.post('/create-order', async (req, res) => {
     const toPayUrl = `https://app.ethiotelebirr.et/payment/h5/?merch_order_id=${merchOrderId}`
 
     // Record payment in DB
-    await PaymentModel.create({
-      id: orderId,
-      orderId,
-      merchOrderId,
-      txRef: merchOrderId,
-      status: 'Pending',
-      amount: Number(amount),
-      currency: 'ETB',
-      method: 'telebirr',
-      paymentType: paymentType || 'service_charge',
-      buyerName: 'TeleBirr User',
-      buyerEmail: 'customer@telebirr.et',
-      buyerPhone: '0900000000',
-      propertyId: propertyId || null,
-      propertyTitle: propertyTitle || title,
-    } as any)
+    await prisma.payment.create({
+      data: {
+        id: orderId,
+        orderId,
+        merchOrderId,
+        txRef: merchOrderId,
+        status: 'Pending',
+        amount: Number(amount),
+        currency: 'ETB',
+        method: 'telebirr',
+        paymentType: paymentType || 'service_charge',
+        buyerName: 'TeleBirr User',
+        buyerEmail: 'customer@telebirr.et',
+        buyerPhone: '0900000000',
+        propertyId: propertyId || null,
+        propertyTitle: propertyTitle || title,
+      },
+    })
 
     res.json({ toPayUrl, merchOrderId, orderId })
   } catch (err: any) {
@@ -48,14 +50,14 @@ router.get('/status', async (req, res) => {
     const { merchOrderId } = req.query
     if (!merchOrderId) return res.status(400).json({ message: 'merchOrderId required' })
 
-    const payment = await PaymentModel.findOne({ where: { merchOrderId: String(merchOrderId) } as any })
+    const payment = await prisma.payment.findFirst({ where: { merchOrderId: String(merchOrderId) } })
     if (!payment) return res.status(404).json({ message: 'Payment not found' })
 
     res.json({
-      status: payment.getDataValue('status'),
-      merchOrderId: payment.getDataValue('merchOrderId'),
-      amount: payment.getDataValue('amount'),
-      method: payment.getDataValue('method'),
+      status: payment.status,
+      merchOrderId: payment.merchOrderId,
+      amount: payment.amount,
+      method: payment.method,
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Status check failed' })
@@ -68,10 +70,10 @@ router.post('/notify', async (req, res) => {
     const { merch_order_id, status } = req.body
     if (!merch_order_id) return res.status(400).json({ message: 'merch_order_id required' })
 
-    const payment = await PaymentModel.findOne({ where: { merchOrderId: merch_order_id } as any })
+    const payment = await prisma.payment.findFirst({ where: { merchOrderId: merch_order_id } })
     if (payment) {
       const newStatus = status === 'success' || status === 'SUCCESS' ? 'Completed' : 'Failed'
-      await payment.update({ status: newStatus })
+      await prisma.payment.update({ where: { id: payment.id }, data: { status: newStatus } })
     }
 
     res.json({ message: 'Notification received' })

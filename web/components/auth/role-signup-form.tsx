@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { Camera, Eye, EyeOff, Loader2, ShoppingBag, Store, User as UserIcon, X, CheckCircle2 } from 'lucide-react'
@@ -25,14 +25,13 @@ interface SignupFormValues {
 
 export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   const router = useRouter()
-  const { user, login, registerBuyer } = useAuth()
+  const { registerBuyer } = useAuth()
   const { t } = useI18n()
   const [role, setRole] = useState<Role>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [registered, setRegistered] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const {
     register: reg,
@@ -41,17 +40,6 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   } = useForm<SignupFormValues>({
     defaultValues: { name: '', username: '', email: '', phone: '', password: '', confirmPassword: '' },
   })
-
-  const finalRedirect = redirectParam || '/saved'
-
-  useEffect(() => {
-    if (!user || !registered) return
-    if (user.role === 'agent') {
-      router.replace('/agent')
-    } else {
-      router.replace(finalRedirect)
-    }
-  }, [user, registered, router, finalRedirect])
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -88,6 +76,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
     }
 
     try {
+      let registeredEmail = ''
       if (role === 'buyer') {
         await registerBuyer({
           name: values.name,
@@ -96,7 +85,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           password: values.password,
           profilePhoto: photo || undefined,
         })
-        setRegistered(true)
+        registeredEmail = values.email
       } else {
         const response = await fetch(`${await getApiUrlAsync()}/api/auth/register`, {
           method: 'POST',
@@ -108,13 +97,11 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           setMessage(payload.message || 'Registration failed.')
           return
         }
-        try {
-          await login(values.email, values.password)
-          setRegistered(true)
-        } catch {
-          setMessage('Account created! Please sign in to continue.')
-          router.push('/login')
-        }
+        registeredEmail = values.email
+      }
+
+      if (registeredEmail) {
+        router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}`)
       }
     } catch (err: any) {
       const msg = err?.message || ''

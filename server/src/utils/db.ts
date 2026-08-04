@@ -1,1 +1,1 @@
-export { connectDB, sequelize } from "../config/database.js";
+export { connectDB, prisma } from "../config/database.js";

@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
 import { vehicleSchema } from '../utils/validation.js'
-import { VehicleModel, UserModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
 const router = Router()
@@ -26,6 +26,8 @@ const ALLOWED_UPDATE_FIELDS = [
   'latitude', 'longitude', 'features',
 ]
 
+const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
+
 // Get all vehicles (public)
 router.get('/', async (req, res) => {
   try {
@@ -35,13 +37,11 @@ router.get('/', async (req, res) => {
     if (req.query.make) where.make = req.query.make
     if (req.query.agentId) where.agentId = req.query.agentId
     const limit = parseInt(req.query.limit as string) || 100
-    const vehicles = await VehicleModel.findAll({
+    const vehicles = await prisma.vehicle.findMany({
       where,
-      include: [
-        { model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] },
-      ],
-      order: [['createdAt', 'DESC']],
-      limit,
+      include: { agent: { select: agentSelect } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
     })
     res.json({ vehicles })
   } catch (err: any) {
@@ -52,11 +52,10 @@ router.get('/', async (req, res) => {
 // Get vehicle by ID
 router.get('/:id', async (req, res) => {
   try {
-    const vehicle = await VehicleModel.findByPk(req.params.id, {
-      include: [
-        { model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] },
-      ],
-    } as any)
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: agentSelect } },
+    })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
@@ -75,18 +74,20 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
-    const vehicle = await VehicleModel.create({
-      ...parsed.data,
-      agentId: req.user!.userId,
-      agentName: req.user!.email,
-      status: 'Pending',
-    } as any)
+    const vehicle = await prisma.vehicle.create({
+      data: {
+        ...parsed.data,
+        agentId: req.user!.userId,
+        agentName: req.user!.email,
+        status: 'Pending',
+      },
+    })
 
     notifyAdmins(
       'New Vehicle Listing',
       `A new vehicle "${parsed.data.title}" has been posted and needs review.`,
       'info',
-      { type: 'vehicle', id: vehicle.getDataValue('id') }
+      { type: 'vehicle', id: vehicle.id }
     ).catch(() => {})
 
     res.status(201).json({ message: 'Vehicle created', vehicle })
@@ -98,12 +99,12 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 // Update vehicle
 router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
-    const vehicle = await VehicleModel.findByPk(req.params.id)
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
 
-    if (vehicle.getDataValue('agentId') !== req.user!.userId && req.user!.role !== 'admin') {
+    if (vehicle.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
     }
 
@@ -118,8 +119,8 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       updates.status = 'Pending'
     }
 
-    await vehicle.update(updates)
-    res.json({ message: 'Vehicle updated', vehicle })
+    const updated = await prisma.vehicle.update({ where: { id: req.params.id }, data: updates })
+    res.json({ message: 'Vehicle updated', vehicle: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update vehicle' })
   }
@@ -128,16 +129,16 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
 // Delete vehicle
 router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
-    const vehicle = await VehicleModel.findByPk(req.params.id)
+    const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
 
-    if (vehicle.getDataValue('agentId') !== req.user!.userId && req.user!.role !== 'admin') {
+    if (vehicle.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
     }
 
-    await vehicle.destroy()
+    await prisma.vehicle.delete({ where: { id: req.params.id } })
     res.json({ message: 'Vehicle deleted' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to delete vehicle' })

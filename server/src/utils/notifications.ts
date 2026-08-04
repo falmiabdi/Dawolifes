@@ -1,4 +1,4 @@
-import { NotificationModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 import { broadcastToUser } from '../ws/server.js'
 
 export async function createAndBroadcastNotification(
@@ -8,25 +8,27 @@ export async function createAndBroadcastNotification(
   type: string = 'info',
   data?: any
 ) {
-  const notification = await NotificationModel.create({
-    userId,
-    title,
-    body,
-    type,
-    data,
-  } as any)
+  const notification = await prisma.notification.create({
+    data: {
+      userId,
+      title,
+      body,
+      type,
+      data: data ?? undefined,
+    },
+  })
 
   broadcastToUser(userId, {
     type: 'notification',
     notification: {
-      id: notification.getDataValue('id'),
-      userId: notification.getDataValue('userId'),
-      title: notification.getDataValue('title'),
-      body: notification.getDataValue('body'),
-      type: notification.getDataValue('type'),
-      read: notification.getDataValue('read'),
-      data: notification.getDataValue('data'),
-      createdAt: notification.getDataValue('createdAt'),
+      id: notification.id,
+      userId: notification.userId,
+      title: notification.title,
+      body: notification.body,
+      type: notification.type,
+      read: notification.read,
+      data: notification.data,
+      createdAt: notification.createdAt,
     },
   })
 
@@ -39,19 +41,12 @@ export async function notifyAdmins(
   type: string = 'info',
   data?: any
 ) {
-  const { UserModel } = await import('../models/index.js')
-  const admins = await UserModel.findAll({
+  const admins = await prisma.user.findMany({
     where: { role: 'admin' },
-    attributes: ['id'],
+    select: { id: true },
   })
 
   for (const admin of admins) {
-    await createAndBroadcastNotification(
-      admin.getDataValue('id'),
-      title,
-      body,
-      type,
-      data
-    )
+    await createAndBroadcastNotification(admin.id, title, body, type, data)
   }
 }

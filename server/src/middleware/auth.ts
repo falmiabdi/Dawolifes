@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../utils/jwt.js'
-import { UserModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 
 declare global {
   namespace Express {
@@ -68,16 +68,19 @@ export async function requireActiveUser(req: AuthenticatedRequest, res: Response
       return next()
     }
 
-    const user = await UserModel.findByPk(req.user.userId, { attributes: ['id', 'role', 'status', 'rejectionReason'] })
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, role: true, status: true, rejectionReason: true },
+    })
     if (!user) {
       return res.status(401).json({ message: 'User not found' })
     }
 
-    const status = user.getDataValue('status')
+    const { status } = user
     if (status === 'Rejected') {
       return res.status(403).json({
         message: 'Your account has been rejected and cannot post listings.',
-        rejectionReason: user.getDataValue('rejectionReason'),
+        rejectionReason: user.rejectionReason,
       })
     }
     if (status === 'Suspended') {

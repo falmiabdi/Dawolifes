@@ -1,7 +1,7 @@
 ﻿import { Router } from 'express'
 import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
 import { propertySchema } from '../utils/validation.js'
-import { PropertyModel, UserModel } from '../models/index.js'
+import { prisma } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
 const router = Router()
@@ -14,9 +14,7 @@ const ALLOWED_UPDATE_FIELDS = [
   'posterType', 'ownerType',
 ]
 
-const propertyIncludes = [
-  { model: UserModel, as: 'agent', attributes: ['id', 'username', 'email', 'phone', 'profilePhoto'] },
-]
+const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
 
 // Get all properties (public)
 router.get('/', async (req, res) => {
@@ -26,11 +24,11 @@ router.get('/', async (req, res) => {
     if (req.query.type) where.type = req.query.type
     if (req.query.agentId) where.agentId = req.query.agentId  // allow filtering by agent
     const limit = parseInt(req.query.limit as string) || 100
-    const properties = await PropertyModel.findAll({
+    const properties = await prisma.property.findMany({
       where,
-      include: propertyIncludes,
-      order: [['createdAt', 'DESC']],
-      limit,
+      include: { agent: { select: agentSelect } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
     })
     res.json({ properties })
   } catch (err: any) {
@@ -41,7 +39,10 @@ router.get('/', async (req, res) => {
 // Get property by ID
 router.get('/:id', async (req, res) => {
   try {
-    const property = await PropertyModel.findByPk(req.params.id, { include: propertyIncludes })
+    const property = await prisma.property.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: agentSelect } },
+    })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
@@ -60,19 +61,21 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     }
 
     const ADMIN_PHONES = ['+251962395282', '+251922477886']
-    const property = await PropertyModel.create({
-      ...parsed.data,
-      agentId: req.user!.userId,
-      agentName: req.user!.email,
-      status: 'Pending',
-      displayPhone: ADMIN_PHONES[0],
-    } as any)
+    const property = await prisma.property.create({
+      data: {
+        ...parsed.data,
+        agentId: req.user!.userId,
+        agentName: req.user!.email,
+        status: 'Pending',
+        displayPhone: ADMIN_PHONES[0],
+      },
+    })
 
     notifyAdmins(
       'New Property Listing',
       `A new property "${parsed.data.title}" has been posted and needs review.`,
       'info',
-      { type: 'property', id: property.getDataValue('id') }
+      { type: 'property', id: property.id }
     ).catch(() => {})
 
     res.status(201).json({ message: 'Property created', property })
@@ -85,12 +88,12 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 // Update property
 router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
-    const property = await PropertyModel.findByPk(req.params.id)
+    const property = await prisma.property.findUnique({ where: { id: req.params.id } })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
 
-    if (property.getDataValue('agentId') !== req.user!.userId && req.user!.role !== 'admin') {
+    if (property.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
     }
 
@@ -105,8 +108,8 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       updates.status = 'Pending'
     }
 
-    await property.update(updates)
-    res.json({ message: 'Property updated', property })
+    const updated = await prisma.property.update({ where: { id: req.params.id }, data: updates })
+    res.json({ message: 'Property updated', property: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update property' })
   }
@@ -115,16 +118,16 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
 // Delete property
 router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
-    const property = await PropertyModel.findByPk(req.params.id)
+    const property = await prisma.property.findUnique({ where: { id: req.params.id } })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
 
-    if (property.getDataValue('agentId') !== req.user!.userId && req.user!.role !== 'admin') {
+    if (property.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
     }
 
-    await property.destroy()
+    await prisma.property.delete({ where: { id: req.params.id } })
     res.json({ message: 'Property deleted' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to delete property' })
