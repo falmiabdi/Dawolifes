@@ -14,7 +14,8 @@
     "db:migrate": "node \"./node_modules/prisma/build/index.js\" migrate dev",
     "db:push": "node \"./node_modules/prisma/build/index.js\" db push",
     "db:generate": "node \"./node_modules/prisma/build/index.js\" generate",
-    "db:studio": "node \"./node_modules/prisma/build/index.js\" studio"
+    "db:studio": "node \"./node_modules/prisma/build/index.js\" studio",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

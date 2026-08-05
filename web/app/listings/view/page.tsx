@@ -12,7 +12,6 @@ import {
   Phone,
   Ruler,
   Share2,
-  CalendarDays,
   Video,
   Mail,
   Building2,
@@ -26,9 +25,10 @@ import { SiteHeader } from "@/components/site-header"
 import { Gallery } from "@/components/listing/gallery"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
-import { PayServiceCharge } from "@/components/listing/pay-service-charge"
 import { SaveButton } from "@/components/save-button"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
+import { useAuth } from "@/components/auth/auth-guard"
+import toast from "react-hot-toast"
 
 function getYouTubeEmbedUrl(url: string) {
   if (!url) return ''
@@ -79,6 +79,7 @@ export default function ListingPageWrapper() {
 function ListingPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
+  const { getToken } = useAuth()
   const [property, setProperty] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -90,7 +91,10 @@ function ListingPage() {
 
     const fetchProperty = async () => {
       try {
-        const res = await fetch(`${getApiUrl()}/api/properties/${id}`)
+        const token = await getToken()
+        const res = await fetch(`${getApiUrl()}/api/properties/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
         if (res.ok) {
           const data = await res.json()
           const dbProp = data.property
@@ -145,7 +149,7 @@ function ListingPage() {
     }
 
     fetchProperty()
-  }, [id])
+  }, [getToken, id])
 
   if (loading) {
     return (
@@ -191,6 +195,39 @@ function ListingPage() {
     ["Legalized Year", String(property.legalizedYear)],
   ]
   const embedUrl = property.videoUrl ? getYouTubeEmbedUrl(property.videoUrl) : ''
+
+  const handleShare = async () => {
+    const url = window.location.href
+    const shareData = {
+      title: property.title,
+      text: `View ${property.title} on DawoLife`,
+      url,
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+        return
+      }
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url)
+        toast.success('Listing link copied')
+        return
+      }
+      window.prompt('Copy this listing link:', url)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      toast.error('Unable to share this listing. Please copy the URL from your browser.')
+    }
+  }
+
+  const handleVisitVideo = () => {
+    if (!property.videoUrl) {
+      toast('This listing does not have a video tour yet.')
+      return
+    }
+    window.open(property.videoUrl, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -394,16 +431,20 @@ function ListingPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
+                <Button variant="outline" onClick={handleShare} className="rounded-xl min-h-[44px] px-2">
                   <Share2 className="h-4 w-4" /> Share
                 </Button>
-                <Button variant="outline" className="rounded-xl min-h-[44px] px-2">
-                  <CalendarDays className="h-4 w-4" /> Visit
+                <Button
+                  variant="outline"
+                  onClick={handleVisitVideo}
+                  disabled={!property.videoUrl}
+                  title={property.videoUrl ? 'Open video tour' : 'No video tour uploaded'}
+                  className="rounded-xl min-h-[44px] px-2"
+                >
+                  <Video className="h-4 w-4" /> Video
                 </Button>
                 <SaveButton itemType="property" itemId={property.id} label="Save" />
               </div>
-
-              <PayServiceCharge propertyId={property.id} propertyTitle={property.title} />
             </aside>
           </div>
         </div>

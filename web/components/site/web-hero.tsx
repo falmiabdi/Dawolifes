@@ -1,12 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { ArrowRight, Building2, Car, Search, ShieldCheck, Star, Users } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { categories } from "@/lib/data"
 
 const HERO_VIDEO =
   "https://res.cloudinary.com/y7q39zm5/video/upload/v1783767160/sytelecity_background_uu31gf.mp4"
@@ -30,12 +31,31 @@ const fadeUp = {
 export function WebHero() {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const paramsString = searchParams.toString()
   const [search, setSearch] = useState("")
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "")
+    setSelectedCats((searchParams.get("category") || "").split(",").filter(Boolean))
+  }, [paramsString]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggleCat(key: string) {
+    setSelectedCats((prev) =>
+      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]
+    )
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const term = search.trim()
-    router.push(`${pathname}${term ? `?search=${encodeURIComponent(term)}` : ""}#listings`)
+    const sp = new URLSearchParams()
+    if (term) sp.set("search", term)
+    if (selectedCats.length) sp.set("category", selectedCats.join(","))
+    const qs = sp.toString()
+    const onlyCars = selectedCats.length > 0 && selectedCats.every((c) => c === "cars")
+    router.push(`${pathname}${qs ? `?${qs}` : ""}#${onlyCars ? "vehicles" : "listings"}`)
   }
 
   const trustItems = useMemo(
@@ -62,8 +82,9 @@ export function WebHero() {
       <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/85 to-secondary/40" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-secondary to-transparent" />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-        <motion.div initial="hidden" animate="show" className="max-w-3xl">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:gap-12">
+          <motion.div initial="hidden" animate="show" className="max-w-3xl">
           <motion.span
             variants={fadeUp}
             custom={0}
@@ -116,6 +137,30 @@ export function WebHero() {
             </Button>
           </motion.form>
 
+          <motion.div
+            variants={fadeUp}
+            custom={3.5}
+            className="mt-3 flex w-full max-w-xl flex-wrap gap-2"
+          >
+            {categories.map((cat) => {
+              const active = selectedCats.includes(cat.key)
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => toggleCat(cat.key)}
+                  className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-white/25 bg-white/10 text-white/85 backdrop-blur-sm hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              )
+            })}
+          </motion.div>
+
           <motion.div variants={fadeUp} custom={4} className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/#listings"
@@ -146,21 +191,22 @@ export function WebHero() {
               </span>
             ))}
           </motion.div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.6 }}
-          className="mt-14 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4"
-        >
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm">
-              <p className="text-2xl font-extrabold text-primary sm:text-3xl">{stat.value}</p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wide text-white/60">{stat.label}</p>
-            </div>
-          ))}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.6 }}
+            className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+          >
+            {stats.map((stat) => (
+              <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm">
+                <p className="text-2xl font-extrabold text-primary sm:text-3xl">{stat.value}</p>
+                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-white/60">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
         </motion.div>
+        </div>
       </div>
     </section>
   )

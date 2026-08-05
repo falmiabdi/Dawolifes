@@ -212,20 +212,15 @@ See `http://localhost:4000/` for full endpoint list.
 
 ## 🚀 Deployment
 
-### Backend (Render.com):
-1. Push code to GitHub
-2. Connect repository in Render
-3. Set root directory: `server`
-4. Build command: `npm install && npm run build`
-5. Start command: `npm start`
-6. Add environment variables
+### Local:
+1. Start the backend: `cd server && npm run build && npm start`
+2. Start the frontend: `cd web && pnpm build && pnpm start`
+3. Or simply run `pnpm dev:all`
 
-### Frontend (Vercel):
-1. Connect GitHub repository
-2. Set root directory: `web`
-3. Build command: `pnpm build`
-4. Output directory: `.next`
-5. Add environment variables
+### Mobile (LAN):
+1. Find your PC's LAN IP (e.g. `ipconfig`)
+2. Set `NEXT_PUBLIC_API_URL=http://<LAN-IP>:4000` in `web/.env.local`
+3. Rebuild the frontend and repackage the mobile app so it connects to your local backend
 
 ---
 

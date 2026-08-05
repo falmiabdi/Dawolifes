@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -26,11 +26,21 @@ function getRedirectParam(): string {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, login } = useAuth()
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
+  const [messageIsSuccess, setMessageIsSuccess] = useState(false)
   const {
     register,
     handleSubmit,
@@ -54,8 +64,16 @@ export default function LoginPage() {
     else router.replace('/')
   }, [user, router])
 
+  useEffect(() => {
+    if (searchParams.get('verified') === '1') {
+      setMessage('Email verified. You can now sign in.')
+      setMessageIsSuccess(true)
+    }
+  }, [searchParams])
+
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
+    setMessageIsSuccess(false)
     try {
       await login(values.email, values.password)
     } catch (err: any) {
@@ -86,7 +104,7 @@ export default function LoginPage() {
     >
       <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('email')}</Label>
           <Input
             id="email"
             type="email"
@@ -97,12 +115,12 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('password')}</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder={t('enter_password')}
               {...register('password', { required: 'Password is required' })}
             />
             <button
@@ -116,11 +134,15 @@ export default function LoginPage() {
           {errors.password ? <p className="text-sm text-red-600">{errors.password.message}</p> : null}
         </div>
 
-        {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
+        {message ? (
+          <p className={`rounded-lg border px-3 py-2 text-sm ${messageIsSuccess ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
+            {message}
+          </p>
+        ) : null}
 
         <Button type="submit" className="w-full rounded-full" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Sign in
+          {t('sign_in')}
         </Button>
       </form>
 

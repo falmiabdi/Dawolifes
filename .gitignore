@@ -11,6 +11,9 @@ __v0_jsx-dev-runtime.ts
 .env
 server/.env
 
+# Scratch / one-off scripts
+server/fix*.cjs
+
 # Common ignores
 node_modules
 .next/

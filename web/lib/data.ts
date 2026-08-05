@@ -321,6 +321,42 @@ export const amenityOptions = [
   "Water Tank",
 ]
 
+export const houseSafetyFeatureOptions = [
+  "Security Guard",
+  "CCTV",
+  "Alarm System",
+  "Perimeter Wall",
+  "Electronic Gate",
+  "Fire Extinguisher",
+  "Smoke Detector",
+  "Safe Room",
+]
+
+export const houseInteriorFeatureOptions = [
+  "Furnished",
+  "Built-in Wardrobes",
+  "Kitchen Cabinets",
+  "Tiled Flooring",
+  "Ceiling Work",
+  "TV Lounge",
+  "Study Room",
+  "Maids Room",
+  "Storage Room",
+]
+
+export const houseExteriorFeatureOptions = [
+  "Garden",
+  "Parking",
+  "Compound",
+  "Balcony",
+  "Terrace",
+  "Water Tank",
+  "Borehole",
+  "Solar Power",
+  "Generator",
+  "Swimming Pool",
+]
+
 export const vehicleCategories = [
   "Sedan",
   "SUV",

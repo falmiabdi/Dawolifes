@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { getApiUrl } from '@/lib/get-api-url'
+import { useI18n } from '@/lib/i18n'
 
 import { useState } from 'react'
 import { Bell, Lock, CheckCircle2 } from 'lucide-react'
@@ -12,22 +13,25 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
-
-const passwordSchema = z
-  .object({
-    current: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-    confirm: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.newPassword === data.confirm, {
-    message: "Passwords don't match",
-    path: ['confirm'],
-  })
-
-type PasswordForm = z.infer<typeof passwordSchema>
+import { useAuth } from '@/components/auth/auth-guard'
 
 export default function AgentSettingsPage() {
+  const { t } = useI18n()
+  const { getToken } = useAuth()
   const [success, setSuccess] = useState(false)
+
+  const passwordSchema = z
+    .object({
+      current: z.string().min(1, t('current_password_required')),
+      newPassword: z.string().min(8, t('password_min_8')),
+      confirm: z.string().min(1, t('confirm_password_required')),
+    })
+    .refine((data) => data.newPassword === data.confirm, {
+      message: t('passwords_dont_match'),
+      path: ['confirm'],
+    })
+
+  type PasswordForm = z.infer<typeof passwordSchema>
 
   const {
     register,
@@ -39,33 +43,37 @@ export default function AgentSettingsPage() {
   })
 
   async function onSubmit(data: PasswordForm) {
+    const token = await getToken()
     const res = await fetch(`${getApiUrl()}/api/auth/change-password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ currentPassword: data.current, newPassword: data.newPassword }),
     })
     if (res.ok) {
-      toast.success('Password updated successfully')
+      toast.success(t('password_updated'))
       setSuccess(true)
       reset()
       setTimeout(() => setSuccess(false), 3000)
     } else {
       const err = await res.json().catch(() => ({}))
-      toast.error(err.message || 'Failed to update password')
+      toast.error(err.message || t('failed_to_update_password'))
     }
   }
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500">Configure account preferences, notifications and security parameters.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('settings')}</h1>
+        <p className="text-sm text-slate-500">{t('settings_subtitle')}</p>
       </div>
 
       {success && (
         <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>Security preferences updated successfully!</span>
+          <span>{t('security_updated')}</span>
         </div>
       )}
 
@@ -73,11 +81,11 @@ export default function AgentSettingsPage() {
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Lock className="h-5 w-5" />
-          <h2>Change Password</h2>
+          <h2>{t('change_password')}</h2>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label>Current Password</Label>
+            <Label>{t('current_password')}</Label>
             <Input
               type="password"
               {...register('current')}
@@ -88,7 +96,7 @@ export default function AgentSettingsPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>New Password</Label>
+              <Label>{t('new_password')}</Label>
               <Input
                 type="password"
                 {...register('newPassword')}
@@ -98,7 +106,7 @@ export default function AgentSettingsPage() {
               {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label>Confirm New Password</Label>
+              <Label>{t('confirm_password')}</Label>
               <Input
                 type="password"
                 {...register('confirm')}
@@ -109,7 +117,7 @@ export default function AgentSettingsPage() {
             </div>
           </div>
           <Button type="submit" disabled={isSubmitting} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
-            Update Password
+            {t('change_password')}
           </Button>
         </form>
       </div>
@@ -118,13 +126,13 @@ export default function AgentSettingsPage() {
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Bell className="h-5 w-5" />
-          <h2>Notification Preferences</h2>
+          <h2>{t('notification_preferences')}</h2>
         </div>
         <div className="space-y-3 text-sm text-slate-700">
           {[
-            { id: 'notify1', title: 'New Leads Inquiries', desc: 'Receive instant notifications when a customer sends an inquiry about your property listings.' },
-            { id: 'notify2', title: 'Listing Approval Status', desc: 'Get notified when your posted properties are approved or rejected by the admin team.' },
-            { id: 'notify3', title: 'Monthly Billing & Invoices', desc: 'Email alerts when subscriptions or premium features are processed.' },
+            { id: 'notify1', title: t('notify1_title'), desc: t('notify1_desc') },
+            { id: 'notify2', title: t('notify2_title'), desc: t('notify2_desc') },
+            { id: 'notify3', title: t('notify3_title'), desc: t('notify3_desc') },
           ].map((item) => (
             <label key={item.id} className="flex items-start gap-4 p-3 rounded-2xl border border-slate-50 hover:bg-slate-50/50 cursor-pointer">
               <input type="checkbox" defaultChecked className="mt-1 accent-orange-500" />

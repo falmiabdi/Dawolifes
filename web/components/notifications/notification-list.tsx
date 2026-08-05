@@ -4,6 +4,7 @@ import { getApiUrl, getWsUrlAsync } from '@/lib/get-api-url'
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/components/auth/auth-guard'
+import { useI18n } from '@/lib/i18n'
 
 import { Bell, Wifi, WifiOff, Info, CheckCircle2, AlertTriangle, AlertCircle, CheckCheck } from 'lucide-react'
 
@@ -26,6 +27,7 @@ const iconConfig: Record<string, { icon: any; color: string }> = {
 
 export function NotificationList() {
   const { getToken } = useAuth()
+  const { t } = useI18n()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
@@ -76,43 +78,46 @@ export function NotificationList() {
 
     function connect() {
       setWsStatus('connecting')
-      getWsUrlAsync(`/ws?userId=${userId}`).then((wsUrl) => {
-        if (ws) return
-        ws = new WebSocket(wsUrl)
+      getToken().then((token) => {
+        if (!token) return
+        getWsUrlAsync(`/ws?token=${encodeURIComponent(token)}&userId=${userId}`).then((wsUrl) => {
+          if (ws) return
+          ws = new WebSocket(wsUrl)
 
-        ws.onopen = () => {
-          setWsStatus('connected')
-          reconnectAttempts = 0
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            if (data.type === 'notification') {
-              const notif = data.notification as NotificationItem
-              setNotifications((prev) => {
-                if (prev.some((n) => n.id === notif.id)) return prev
-                return [notif, ...prev]
-              })
-              setUnreadCount((prev) => prev + 1)
-            }
-            if (data.type === 'unread_count') {
-              setUnreadCount(data.count)
-            }
-          } catch {}
-        }
-
-        ws.onerror = () => setWsStatus('disconnected')
-        ws.onclose = () => {
-          setWsStatus('disconnected')
-          if (reconnectAttempts < maxReconnectAttempts) {
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
-            reconnectTimeout = setTimeout(() => {
-              reconnectAttempts++
-              connect()
-            }, delay)
+          ws.onopen = () => {
+            setWsStatus('connected')
+            reconnectAttempts = 0
           }
-        }
+
+          ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data)
+              if (data.type === 'notification') {
+                const notif = data.notification as NotificationItem
+                setNotifications((prev) => {
+                  if (prev.some((n) => n.id === notif.id)) return prev
+                  return [notif, ...prev]
+                })
+                setUnreadCount((prev) => prev + 1)
+              }
+              if (data.type === 'unread_count') {
+                setUnreadCount(data.count)
+              }
+            } catch {}
+          }
+
+          ws.onerror = () => setWsStatus('disconnected')
+          ws.onclose = () => {
+            setWsStatus('disconnected')
+            if (reconnectAttempts < maxReconnectAttempts) {
+              const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
+              reconnectTimeout = setTimeout(() => {
+                reconnectAttempts++
+                connect()
+              }, delay)
+            }
+          }
+        })
       })
     }
 
@@ -148,10 +153,10 @@ export function NotificationList() {
     const now = new Date()
     const diff = now.getTime() - d.getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Just now'
-    if (mins < 60) return `${mins}m ago`
+    if (mins < 1) return t('just_now')
+    if (mins < 60) return t('minutes_ago').replace('{n}', String(mins))
     const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours}h ago`
+    if (hours < 24) return t('hours_ago').replace('{n}', String(hours))
     return d.toLocaleDateString()
   }
 
@@ -160,14 +165,14 @@ export function NotificationList() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            Notifications
+            {t('notifications')}
             {unreadCount > 0 && (
               <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                 {unreadCount}
               </span>
             )}
           </h1>
-          <p className="text-sm text-slate-500">System updates, listing approvals, and announcements.</p>
+          <p className="text-sm text-slate-500">{t('notifications_subtitle')}</p>
         </div>
 
         <div className="flex items-center gap-3 self-start">
@@ -176,7 +181,7 @@ export function NotificationList() {
               onClick={markAllRead}
               className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-200 transition"
             >
-              <CheckCheck className="h-3 w-3" /> Mark all read
+              <CheckCheck className="h-3 w-3" /> {t('mark_all_read')}
             </button>
           )}
 
@@ -187,7 +192,7 @@ export function NotificationList() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="flex items-center gap-1"><Wifi className="h-3 w-3 text-emerald-500" /> Live</span>
+                <span className="flex items-center gap-1"><Wifi className="h-3 w-3 text-emerald-500" /> {t('live')}</span>
               </>
             ) : wsStatus === 'connecting' ? (
               <>
@@ -195,14 +200,14 @@ export function NotificationList() {
                   <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
-                <span>Connecting...</span>
+                <span>{t('connecting')}</span>
               </>
             ) : (
               <>
                 <span className="relative flex h-2 w-2">
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
                 </span>
-                <span className="flex items-center gap-1"><WifiOff className="h-3 w-3 text-slate-400" /> Offline</span>
+                <span className="flex items-center gap-1"><WifiOff className="h-3 w-3 text-slate-400" /> {t('offline')}</span>
               </>
             )}
           </div>
@@ -213,7 +218,7 @@ export function NotificationList() {
         {notifications.length === 0 && (
           <div className="text-center py-12 text-slate-400">
             <Bell className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm font-medium">No notifications yet</p>
+            <p className="text-sm font-medium">{t('no_notifications')}</p>
           </div>
         )}
 

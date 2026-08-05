@@ -209,7 +209,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
               disabled={uploading}
               className="absolute inset-x-0 -bottom-2 mx-auto w-max rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:opacity-60"
             >
-              {uploading ? 'Uploading…' : 'Add photo'}
+              {uploading ? t('uploading') : t('add_photo')}
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
@@ -278,7 +278,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
         {t('create_account')}
       </Button>
       <p className="text-center text-xs text-slate-400">
-        {isBuyer ? 'Your registration is immediately verified.' : 'Your application will be reviewed by our team.'}
+        {isBuyer ? t('registration_verified') : t('application_reviewed')}
       </p>
     </form>
   )

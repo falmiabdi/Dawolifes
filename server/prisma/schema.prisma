@@ -119,6 +119,7 @@ model Property {
   agentName       String
   displayPhone    String?
   status          PropertyStatus      @default(Draft)
+  rejectionReason String?
   latitude        Float?
   longitude       Float?
   createdAt       DateTime            @default(now()) @db.Timestamptz(3)
@@ -226,7 +227,9 @@ model Vehicle {
   featured            Boolean          @default(false)
   agentId             String           @db.Uuid
   agentName           String
+  displayPhone        String?
   status              VehicleStatus     @default(Draft)
+  rejectionReason     String?
   views               Int              @default(0)
   favorites           Int              @default(0)
   createdAt           DateTime         @default(now()) @db.Timestamptz(3)

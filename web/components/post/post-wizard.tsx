@@ -1,6 +1,8 @@
 ﻿"use client"
 
 import { getApiUrl } from '@/lib/get-api-url'
+import { getCachedToken } from '@/lib/api'
+import { useI18n } from '@/lib/i18n'
 
 import { useState } from "react"
 
@@ -21,7 +23,7 @@ import {
   AlertCircle,
   FileText
 } from "lucide-react"
-import { amenityOptions, formatPrice } from "@/lib/data"
+import { amenityOptions, formatPrice, houseSafetyFeatureOptions, houseInteriorFeatureOptions, houseExteriorFeatureOptions } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -64,6 +66,9 @@ type FormState = {
   legalizedYear: string
   description: string
   features: string[]
+  customSafetyFeature: string
+  customInteriorFeature: string
+  customExteriorFeature: string
   region: string
   city: string
   subCity: string
@@ -92,6 +97,9 @@ const initialState: FormState = {
   legalizedYear: "",
   description: "",
   features: [],
+  customSafetyFeature: "",
+  customInteriorFeature: "",
+  customExteriorFeature: "",
   region: "",
   city: "",
   subCity: "",
@@ -106,6 +114,14 @@ const initialState: FormState = {
 }
 
 export function PostWizard() {
+  const { t, tv } = useI18n()
+  const stepLabels: Record<string, string> = {
+    'Basic Info': t('basic_info'),
+    'Location & Map': t('location_map'),
+    'Photos & Media': t('photos_media'),
+    'Location Map': t('location_map2'),
+    'Contact': t('contact'),
+  }
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState>(initialState)
   const [customFeature, setCustomFeature] = useState("")
@@ -131,6 +147,14 @@ export function PostWizard() {
       set("features", [...form.features, value])
     }
     setCustomFeature("")
+  }
+
+  const addFeatureValue = (value: string, setter: (v: string) => void) => {
+    const trimmed = value.trim()
+    if (trimmed && !form.features.includes(trimmed)) {
+      set("features", [...form.features, trimmed])
+    }
+    setter("")
   }
 
   const next = () => {
@@ -227,14 +251,22 @@ export function PostWizard() {
       setError("Please select the property location on the map.")
       return
     }
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Please provide your contact name and phone number.")
+      return
+    }
 
     try {
       setSubmitting(true)
       setError("")
 
+      const token = await getCachedToken()
       const res = await fetch(`${getApiUrl()}/api/properties`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           title: form.title,
           posterType: form.posterType,
@@ -281,10 +313,9 @@ export function PostWizard() {
         <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
           <CheckCircle2 className="h-8 w-8" />
         </span>
-        <h2 className="mt-5 text-2xl font-bold text-foreground">Property Submitted!</h2>
+        <h2 className="mt-5 text-2xl font-bold text-foreground">{t('property_submitted')}</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Your listing has been received and is pending review. Our team will verify the details and publish it
-          shortly.
+          {t('property_submitted_note')}
         </p>
         <Button
           className="mt-6 rounded-xl font-semibold"
@@ -294,7 +325,7 @@ export function PostWizard() {
             setSubmitted(false)
           }}
         >
-          Post Another Property
+          {t('post_another_property')}
         </Button>
       </div>
     )
@@ -303,8 +334,8 @@ export function PostWizard() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground">Post a Property</h1>
-        <p className="mt-1 text-sm text-muted-foreground">List your property for millions of buyers across Ethiopia</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('post_property')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('list_property_note')}</p>
       </div>
 
       {/* Stepper */}
@@ -332,7 +363,7 @@ export function PostWizard() {
                     current ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {s.label}
+                  {stepLabels[s.label]}
                 </span>
               </div>
               {i < steps.length - 1 && (
@@ -355,16 +386,16 @@ export function PostWizard() {
         <div className="rounded-2xl border border-border bg-card p-6">
           {step === 0 && (
             <div className="space-y-5">
-              <SectionTitle icon={<HomeIcon className="h-5 w-5" />} title="Property Details" />
+              <SectionTitle icon={<HomeIcon className="h-5 w-5" />} title={t('property_details')} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Listing By" required>
+                <Field label={t('listing_by')} required>
                   <SelectBox
                     value={form.posterType}
                     onChange={(v) => set("posterType", v)}
                     options={["Agent", "Owner"]}
                   />
                 </Field>
-                <Field label="Owner Type">
+                <Field label={t('owner_type')}>
                   <SelectBox
                     value={form.ownerType}
                     onChange={(v) => set("ownerType", v)}
@@ -372,7 +403,7 @@ export function PostWizard() {
                   />
                 </Field>
               </div>
-              <Field label="Property Title" required>
+              <Field label={t('property_title')} required>
                 <Input
                   value={form.title}
                   onChange={(e) => set("title", e.target.value)}
@@ -380,14 +411,14 @@ export function PostWizard() {
                 />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Property Type" required>
+                <Field label={t('property_type')} required>
                   <SelectBox
                     value={form.propertyType}
                     onChange={(v) => set("propertyType", v)}
                     options={["House", "Apartment", "Land", "Commercial", "Villa"]}
                   />
                 </Field>
-                <Field label="Listing Type" required>
+                <Field label={t('listing_type')} required>
                   <SelectBox
                     value={form.listingType}
                     onChange={(v) => set("listingType", v)}
@@ -396,7 +427,7 @@ export function PostWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Price (ETB)" required>
+                <Field label={t('price_etb')} required>
                   <Input
                     type="number"
                     value={form.price}
@@ -404,7 +435,7 @@ export function PostWizard() {
                     placeholder="e.g. 7000000"
                   />
                 </Field>
-                <Field label="Price Type">
+                <Field label={t('price_type')}>
                   <SelectBox
                     value={form.priceType}
                     onChange={(v) => set("priceType", v)}
@@ -413,25 +444,25 @@ export function PostWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Area (mÂ²)">
+                <Field label={t('area')}>
                   <Input value={form.area} onChange={(e) => set("area", e.target.value)} placeholder="214" />
                 </Field>
-                <Field label="Bedrooms">
+                <Field label={t('bedrooms')}>
                   <Input value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} placeholder="3" />
                 </Field>
-                <Field label="Bathrooms">
+                <Field label={t('bathrooms')}>
                   <Input value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} placeholder="2" />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Condition">
+                <Field label={t('condition')}>
                   <SelectBox
                     value={form.condition}
                     onChange={(v) => set("condition", v)}
                     options={["Finished", "Semi-finished", "Under Construction"]}
                   />
                 </Field>
-                <Field label="Legalized Year">
+                <Field label={t('legalized_year')}>
                   <Input
                     value={form.legalizedYear}
                     onChange={(e) => set("legalizedYear", e.target.value)}
@@ -439,7 +470,7 @@ export function PostWizard() {
                   />
                 </Field>
               </div>
-              <Field label="Description">
+              <Field label={t('description')}>
                 <Textarea
                   rows={4}
                   value={form.description}
@@ -449,7 +480,7 @@ export function PostWizard() {
               </Field>
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-foreground">Features &amp; Amenities</p>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('features_amenities')}</p>
                 <div className="flex flex-wrap gap-2">
                   {amenityOptions.map((a) => (
                     <button
@@ -477,10 +508,133 @@ export function PostWizard() {
                         addCustomFeature()
                       }
                     }}
-                    placeholder="Add custom feature..."
+                    placeholder={t('add_custom_feature')}
                   />
                   <Button type="button" onClick={addCustomFeature} className="shrink-0 rounded-lg">
-                    Add <Plus className="h-4 w-4" />
+                    {t('add')} <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('safety_features')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {houseSafetyFeatureOptions.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => toggleFeature(a)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                        form.features.includes(a)
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:border-primary",
+                      )}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Input
+                    value={form.customSafetyFeature}
+                    onChange={(e) => set("customSafetyFeature", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                        e.preventDefault()
+                        addFeatureValue(form.customSafetyFeature, (v) => set("customSafetyFeature", v))
+                      }
+                    }}
+                    placeholder={t('add_custom_feature')}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => addFeatureValue(form.customSafetyFeature, (v) => set("customSafetyFeature", v))}
+                    className="shrink-0 rounded-lg"
+                  >
+                    {t('add')} <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('interior_features')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {houseInteriorFeatureOptions.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => toggleFeature(a)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                        form.features.includes(a)
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:border-primary",
+                      )}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Input
+                    value={form.customInteriorFeature}
+                    onChange={(e) => set("customInteriorFeature", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                        e.preventDefault()
+                        addFeatureValue(form.customInteriorFeature, (v) => set("customInteriorFeature", v))
+                      }
+                    }}
+                    placeholder={t('add_custom_feature')}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => addFeatureValue(form.customInteriorFeature, (v) => set("customInteriorFeature", v))}
+                    className="shrink-0 rounded-lg"
+                  >
+                    {t('add')} <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('exterior_features')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {houseExteriorFeatureOptions.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => toggleFeature(a)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                        form.features.includes(a)
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:border-primary",
+                      )}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Input
+                    value={form.customExteriorFeature}
+                    onChange={(e) => set("customExteriorFeature", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                        e.preventDefault()
+                        addFeatureValue(form.customExteriorFeature, (v) => set("customExteriorFeature", v))
+                      }
+                    }}
+                    placeholder={t('add_custom_feature')}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => addFeatureValue(form.customExteriorFeature, (v) => set("customExteriorFeature", v))}
+                    className="shrink-0 rounded-lg"
+                  >
+                    {t('add')} <Plus className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -489,7 +643,7 @@ export function PostWizard() {
 
           {step === 1 && (
             <div className="space-y-5">
-              <SectionTitle icon={<MapPin className="h-5 w-5" />} title="Property Location" />
+              <SectionTitle icon={<MapPin className="h-5 w-5" />} title={t('property_location')} />
               <div className="flex items-start gap-2 rounded-xl bg-accent/10 p-3 text-sm text-accent">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
@@ -504,16 +658,16 @@ export function PostWizard() {
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Region">
+                <Field label={t('region')}>
                   <Input value={form.region} onChange={(e) => set("region", e.target.value)} placeholder="e.g. Oromia" />
                 </Field>
-                <Field label="City">
+                <Field label={t('city')}>
                   <Input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="e.g. Addis Ababa" />
                 </Field>
-                <Field label="Sub-city">
+                <Field label={t('sub_city')}>
                   <Input value={form.subCity} onChange={(e) => set("subCity", e.target.value)} placeholder="e.g. Bole" />
                 </Field>
-                <Field label="Woreda">
+                <Field label={t('woreda')}>
                   <Input
                     value={form.woreda}
                     onChange={(e) => set("woreda", e.target.value)}
@@ -526,23 +680,23 @@ export function PostWizard() {
 
           {step === 2 && (
             <div className="space-y-5">
-              <SectionTitle icon={<Upload className="h-5 w-5" />} title="Photos & Media" />
+              <SectionTitle icon={<Upload className="h-5 w-5" />} title={t('photos_media_title')} />
               <div>
                 <Label className="mb-2 block font-semibold text-slate-800">
-                  Property Photos <span className="text-red-500">* (at least 3 photos required)</span>
+                  {t('property_photos')} <span className="text-red-500">* {t('at_least_3')}</span>
                 </Label>
                 
                 <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 text-center transition hover:bg-slate-50 cursor-pointer">
                   {uploadingImage ? (
                     <>
                       <Loader2 className="h-8 w-8 text-orange-500 animate-spin" />
-                      <span className="text-sm font-semibold text-slate-700">Uploading photos to Cloudinary...</span>
+                      <span className="text-sm font-semibold text-slate-700">{t('uploading_photos')}</span>
                     </>
                   ) : (
                     <>
                       <Upload className="h-8 w-8 text-orange-500" />
-                      <span className="text-sm font-semibold text-slate-700">Click to upload photos</span>
-                      <span className="text-xs text-slate-400">Select one or more images (JPG, PNG, WEBP)</span>
+                      <span className="text-sm font-semibold text-slate-700">{t('click_upload_photos')}</span>
+                      <span className="text-xs text-slate-400">{t('select_images')}</span>
                     </>
                   )}
                   <input
@@ -558,7 +712,7 @@ export function PostWizard() {
                 {form.images.length > 0 && (
                   <div className="mt-5 space-y-2">
                     <p className="text-xs font-semibold text-orange-600">
-                      {form.images.length} photo(s) added {form.images.length < 3 && `(need ${3 - form.images.length} more)`}
+                      {form.images.length} {t('photos_added')} {form.images.length < 3 && '(' + t('need_more') + ' ' + (3 - form.images.length) + ')'}
                     </p>
                     
                     <div className="grid grid-cols-3 gap-3">
@@ -579,7 +733,7 @@ export function PostWizard() {
                 )}
               </div>
               
-              <Field label="Video URL (YouTube/Vimeo) â€” Optional">
+              <Field label={t('video_url')}>
                 <Input
                   value={form.videoUrl}
                   onChange={(e) => set("videoUrl", e.target.value)}
@@ -591,7 +745,7 @@ export function PostWizard() {
 
           {step === 3 && (
             <div className="space-y-5">
-              <SectionTitle icon={<MapPin className="h-5 w-5" />} title="Property Location Map" />
+              <SectionTitle icon={<MapPin className="h-5 w-5" />} title={t('property_location_map')} />
               <div className="flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
@@ -609,7 +763,7 @@ export function PostWizard() {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Latitude">
+                <Field label={t('latitude')}>
                   <Input
                     type="number"
                     step="any"
@@ -618,7 +772,7 @@ export function PostWizard() {
                     placeholder="e.g. 9.0375"
                   />
                 </Field>
-                <Field label="Longitude">
+                <Field label={t('longitude')}>
                   <Input
                     type="number"
                     step="any"
@@ -631,22 +785,22 @@ export function PostWizard() {
 
               <div className="space-y-2">
                 <Label className="font-semibold text-slate-800">
-                  Location Document (Optional)
+                  {t('location_document')} (Optional)
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Upload a document showing property boundaries, land title, or location verification
+                  {t('location_document_note')}
                 </p>
                 <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-8 text-center transition hover:bg-slate-50 cursor-pointer">
                   {uploadingImage ? (
                     <>
                       <Loader2 className="h-6 w-6 text-orange-500 animate-spin" />
-                      <span className="text-sm font-semibold text-slate-700">Uploading document...</span>
+                      <span className="text-sm font-semibold text-slate-700">{t('uploading_document')}</span>
                     </>
                   ) : (
                     <>
                       <FileText className="h-6 w-6 text-orange-500" />
-                      <span className="text-sm font-semibold text-slate-700">Click to upload document</span>
-                      <span className="text-xs text-slate-400">PDF, JPG, PNG (Max 10MB)</span>
+                      <span className="text-sm font-semibold text-slate-700">{t('click_upload_document')}</span>
+                      <span className="text-xs text-slate-400">{t('doc_types')}</span>
                     </>
                   )}
                   <input
@@ -660,7 +814,7 @@ export function PostWizard() {
                 {form.locationDocument && (
                   <div className="mt-2 flex items-center gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>Document uploaded successfully</span>
+                    <span>{t('upload_success')}</span>
                     <button
                       type="button"
                       onClick={() => set("locationDocument", "")}
@@ -676,11 +830,11 @@ export function PostWizard() {
 
           {step === 4 && (
             <div className="space-y-5">
-              <SectionTitle icon={<Phone className="h-5 w-5" />} title="Contact Information" />
-              <Field label="Your Name" required>
+              <SectionTitle icon={<Phone className="h-5 w-5" />} title={t('contact_info_title')} />
+              <Field label={t('your_name')} required>
                 <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Full Name" />
               </Field>
-              <Field label="Phone Number" required>
+              <Field label={t('phone_number_label')} required>
                 <Input
                   value={form.phone}
                   onChange={(e) => set("phone", e.target.value)}
@@ -693,7 +847,7 @@ export function PostWizard() {
           {/* Nav buttons */}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
             <Button variant="outline" onClick={back} disabled={step === 0 || submitting} className="rounded-xl">
-              <ArrowLeft className="h-4 w-4" /> Back
+              <ArrowLeft className="h-4 w-4" /> {t('back')}
             </Button>
             {step < steps.length - 1 ? (
               <Button
@@ -701,7 +855,7 @@ export function PostWizard() {
                 disabled={(step === 2 && form.images.length < 3) || (step === 3 && (form.latitude === 0 || form.longitude === 0))}
                 className="rounded-xl font-semibold"
               >
-                Next <ArrowRight className="h-4 w-4" />
+                {t('next')} <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
               <Button
@@ -711,11 +865,11 @@ export function PostWizard() {
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Submitting...
+                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t('submitting')}
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4" /> Submit Property
+                    <Send className="h-4 w-4" /> {t('submit_property')}
                   </>
                 )}
               </Button>
@@ -726,21 +880,21 @@ export function PostWizard() {
         {/* Live summary */}
         <aside className="rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24 lg:self-start">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Building2 className="h-4 w-4 text-primary" /> Property Summary
+            <Building2 className="h-4 w-4 text-primary" /> {t('property_summary')}
           </p>
           <dl className="mt-4 space-y-3 text-sm">
-            <SummaryRow label="Listing By" value={form.posterType} />
-            <SummaryRow label="Owner Type" value={form.ownerType} />
-            <SummaryRow label="Type" value={form.propertyType} />
-            <SummaryRow label="Listing" value={form.listingType} />
+            <SummaryRow label={t('listing_by')} value={tv(form.posterType)} />
+            <SummaryRow label={t('owner_type')} value={tv(form.ownerType)} />
+            <SummaryRow label={t('type')} value={tv(form.propertyType)} />
+            <SummaryRow label={t('listing')} value={tv(form.listingType)} />
             <SummaryRow
-              label="Price"
-              value={form.price ? `${formatPrice(Number(form.price))} ETB` : "Not set"}
+              label={t('price')}
+              value={form.price ? `${formatPrice(Number(form.price))} ETB` : t('not_set')}
               highlight={!!form.price}
             />
-            <SummaryRow label="Location" value={form.subCity || form.city || "Not set"} />
-            <SummaryRow label="Photos" value={form.images.length > 0 ? `${form.images.length} uploaded` : "None"} />
-            <SummaryRow label="Features" value={form.features.length ? `${form.features.length} selected` : "None"} />
+            <SummaryRow label={t('location')} value={form.subCity || form.city || t('not_set')} />
+            <SummaryRow label={t('photos')} value={form.images.length > 0 ? `${form.images.length} ${t('uploaded')}` : t('none')} />
+            <SummaryRow label={t('features')} value={form.features.length ? `${form.features.length} ${t('selected')}` : t('none')} />
           </dl>
         </aside>
       </div>
@@ -784,6 +938,7 @@ function SelectBox({
   onChange: (v: string) => void
   options: string[]
 }) {
+  const { tv } = useI18n()
   return (
     <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
       <SelectTrigger className="w-full">
@@ -792,7 +947,7 @@ function SelectBox({
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o} value={o}>
-            {o}
+            {tv(o)}
           </SelectItem>
         ))}
       </SelectContent>

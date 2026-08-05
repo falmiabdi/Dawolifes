@@ -4,6 +4,7 @@ import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useCallback, useEffect } from 'react'
 import { Camera, Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
+import { useI18n } from '@/lib/i18n'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ import toast from 'react-hot-toast'
 
 export default function AdminSettingsPage() {
   const { user, getToken } = useAuth()
+  const { t } = useI18n()
   const [saving, setSaving] = useState(false)
 
   // Profile
@@ -157,15 +159,15 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Admin Settings</h1>
-        <p className="text-sm text-slate-500">Manage your profile, credentials, and team.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('admin_settings')}</h1>
+        <p className="text-sm text-slate-500">{t('manage_profile')}</p>
       </div>
 
       {/* Profile */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Camera className="h-5 w-5" />
-          <h2>Profile</h2>
+          <h2>{t('profile')}</h2>
         </div>
 
         <div className="flex items-center gap-5">
@@ -191,16 +193,16 @@ export default function AdminSettingsPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Phone Number</Label>
+            <Label>{t('phone_number')}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+251 900 000 000" className="rounded-xl" />
           </div>
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label>{t('email')}</Label>
             <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="rounded-xl" />
           </div>
         </div>
         <Button onClick={saveProfile} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
-          {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Saving...</> : 'Save Profile'}
+          {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t('saving')}</> : t('save_profile')}
         </Button>
       </div>
 
@@ -208,25 +210,25 @@ export default function AdminSettingsPage() {
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Lock className="h-5 w-5" />
-          <h2>Change Password</h2>
+          <h2>{t('change_password')}</h2>
         </div>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Current Password</Label>
+            <Label>{t('current_password')}</Label>
             <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>New Password</Label>
+              <Label>{t('new_password')}</Label>
               <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>Confirm Password</Label>
+              <Label>{t('confirm_password')}</Label>
               <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
             </div>
           </div>
           <Button onClick={handleChangePassword} disabled={changingPassword} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
-            {changingPassword ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Changing...</> : 'Update Password'}
+            {changingPassword ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t('changing')}</> : t('change_password')}
           </Button>
         </div>
       </div>
@@ -236,25 +238,25 @@ export default function AdminSettingsPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2 text-orange-600 font-bold">
             <UserPlus className="h-5 w-5" />
-            <h2>Create New Admin</h2>
+            <h2>{t('create_new_admin')}</h2>
           </div>
-          <p className="text-xs text-slate-400">Only root administrators can create new admin accounts.</p>
+          <p className="text-xs text-slate-400">{t('only_root_admin')}</p>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label>Username</Label>
+              <Label>{t('username')}</Label>
               <Input value={newAdmin.username} onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{t('email')}</Label>
               <Input value={newAdmin.email} onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })} type="email" className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>Password</Label>
+              <Label>{t('password')}</Label>
               <Input value={newAdmin.password} onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} type="password" className="rounded-xl" />
             </div>
           </div>
           <Button onClick={handleCreateAdmin} disabled={creatingAdmin} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
-            {creatingAdmin ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Creating...</> : 'Create Admin'}
+            {creatingAdmin ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t('creating')}</> : t('create_admin')}
           </Button>
         </div>
       )}

@@ -1,8 +1,8 @@
 import { Capacitor } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
-import { StatusBar } from '@capacitor/status-bar'
-import { Keyboard } from '@capacitor/keyboard'
-import { Camera } from '@capacitor/camera'
+import { StatusBar, Style } from '@capacitor/status-bar'
+import { Keyboard, KeyboardResize } from '@capacitor/keyboard'
+import { Camera, CameraResultType } from '@capacitor/camera'
 import { Geolocation } from '@capacitor/geolocation'
 import { Network } from '@capacitor/network'
 import { Share } from '@capacitor/share'
@@ -22,13 +22,13 @@ export function initializeCapacitorPlugins() {
   }, 800)
 
   // Set status bar style
-  StatusBar.setStyle({ style: 'LIGHT' })
+  StatusBar.setStyle({ style: Style.Light })
   StatusBar.setBackgroundColor({ color: '#F97316' })
 
   // Configure keyboard resize (iOS-only runtime API; on Android it is
   // configured statically via the "Keyboard" entry in capacitor.config.ts)
   if (Capacitor.getPlatform() === 'ios') {
-    Keyboard.setResizeMode({ resize: 'body' }).catch((error) => {
+    Keyboard.setResizeMode({ mode: KeyboardResize.Body }).catch((error) => {
       console.warn('[Capacitor] Keyboard.setResizeMode unavailable:', error)
     })
   }
@@ -42,7 +42,7 @@ export async function takePhoto(): Promise<string | null> {
   const image = await Camera.getPhoto({
     quality: 90,
     allowEditing: true,
-    resultType: 'uri',
+    resultType: CameraResultType.Uri,
   })
 
   return image.webPath || null
@@ -106,7 +106,9 @@ export function setupPushNotifications() {
     return
   }
 
-  PushNotifications.registerPermissions()
+  PushNotifications.requestPermissions().then(({ receive }) => {
+    if (receive === 'granted') return PushNotifications.register()
+  }).catch((error) => console.warn('[Capacitor] Push permission request failed:', error))
 
   PushNotifications.addListener('registration', (token) => {
     console.log('Push notification token:', token.value)

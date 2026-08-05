@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from '@/lib/i18n'
 
 interface Payment {
   id: string
@@ -41,6 +42,7 @@ interface PaymentStats {
 
 export default function AgentPaymentsPage() {
   const { getToken } = useAuth()
+  const { t } = useI18n()
   const [amount, setAmount] = useState("")
   const [selectedMethod, setSelectedMethod] = useState("telebirr")
   const [subscribing, setSubscribing] = useState(false)
@@ -76,7 +78,7 @@ export default function AgentPaymentsPage() {
     e.preventDefault()
     if (!amount || Number(amount) <= 0) return
     setStatusMsg(
-      `Successfully initiated withdrawal of ETB ${amount} via ${selectedMethod.toUpperCase()}!`
+      t('withdraw_success').replace('{amount}', amount).replace('{method}', selectedMethod.toUpperCase())
     )
     setAmount("")
     setTimeout(() => setStatusMsg(""), 4000)
@@ -88,10 +90,10 @@ export default function AgentPaymentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
-            Payments &amp; Billings
+            {t('payments_billings')}
           </h1>
           <p className="text-sm text-slate-500">
-            Track listing fees, premium feature upgrades, and withdraw agent commissions.
+            {t('payments_note')}
           </p>
         </div>
         <button
@@ -99,7 +101,7 @@ export default function AgentPaymentsPage() {
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          {t('refresh')}
         </button>
       </div>
 
@@ -118,7 +120,7 @@ export default function AgentPaymentsPage() {
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 h-32 w-32 rounded-full bg-orange-500/10" />
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Total Earned
+              {t('total_earned')}
             </span>
             <Wallet className="h-5 w-5 text-orange-500" />
           </div>
@@ -126,7 +128,7 @@ export default function AgentPaymentsPage() {
             <h2 className="text-2xl font-extrabold md:text-3xl">
               ETB {stats.totalRevenue.toLocaleString()}
             </h2>
-            <p className="text-xs text-slate-400 mt-1">From completed payments</p>
+            <p className="text-xs text-slate-400 mt-1">{t('from_completed_payments')}</p>
           </div>
         </div>
 
@@ -134,13 +136,13 @@ export default function AgentPaymentsPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between md:p-6">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              System Platform Fee
+              {t('system_platform_fee')}
             </span>
             <ShieldCheck className="h-5 w-5 text-orange-500" />
           </div>
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900 md:text-3xl">2.5%</h2>
-            <p className="text-xs text-slate-500 mt-1">Applied per completed transaction</p>
+            <p className="text-xs text-slate-500 mt-1">{t('applied_per_transaction')}</p>
           </div>
         </div>
 
@@ -148,15 +150,15 @@ export default function AgentPaymentsPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between sm:col-span-2 lg:col-span-1 md:p-6">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Current Plan
+              {t('current_plan')}
             </span>
             <span className="rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-[10px] font-bold">
               Standard
             </span>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 md:text-2xl">Free Tier</h2>
-            <p className="text-xs text-slate-500 mt-1">Max 5 active property listings</p>
+            <h2 className="text-xl font-bold text-slate-900 md:text-2xl">{t('free_tier')}</h2>
+            <p className="text-xs text-slate-500 mt-1">{t('max_5_listings')}</p>
           </div>
         </div>
       </div>
@@ -165,10 +167,10 @@ export default function AgentPaymentsPage() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Withdraw Form */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 md:p-6">
-          <h3 className="font-bold text-slate-900">Withdraw Funds</h3>
+          <h3 className="font-bold text-slate-900">{t('withdraw_funds')}</h3>
           <form onSubmit={handleWithdraw} className="space-y-4">
             <div className="space-y-2">
-              <Label>Select Payment Network</Label>
+              <Label>{t('select_payment_network')}</Label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { id: "telebirr", name: "Telebirr", icon: QrCode },
@@ -193,7 +195,7 @@ export default function AgentPaymentsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Withdrawal Amount (ETB)</Label>
+              <Label>{t('withdrawal_amount')}</Label>
               <Input
                 type="number"
                 value={amount}
@@ -207,7 +209,7 @@ export default function AgentPaymentsPage() {
               type="submit"
               className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-xl h-11"
             >
-              Withdraw to {selectedMethod.toUpperCase()}
+              {t('withdraw_to').replace('{method}', selectedMethod.toUpperCase())}
             </Button>
           </form>
         </div>
@@ -216,15 +218,14 @@ export default function AgentPaymentsPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between md:p-6">
           <div>
             <h3 className="font-bold text-slate-900 mb-2">
-              Upgrade Account to Premium
+              {t('upgrade_premium')}
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Boost your sales by unlocking unlimited listings, detailed lead analytics, featured
-              badges, and instant matching notifications.
+              {t('upgrade_premium_note')}
             </p>
             <div className="mt-4 p-4 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-orange-950">Premium Agent Plan</p>
+                <p className="text-sm font-bold text-orange-950">{t('premium_agent_plan')}</p>
                 <p className="text-[10px] text-orange-700">ETB 499 / month</p>
               </div>
               <button
@@ -232,19 +233,19 @@ export default function AgentPaymentsPage() {
                   setSubscribing(true)
                   setTimeout(() => {
                     setSubscribing(false)
-                    setStatusMsg("Premium plan upgrade successful!")
+                    setStatusMsg(t('premium_upgrade_success'))
                   }, 1500)
                 }}
                 disabled={subscribing}
                 className="shrink-0 rounded-xl bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 text-xs font-semibold min-h-[36px] transition"
               >
-                {subscribing ? "Processing..." : "Subscribe"}
+                {subscribing ? t('processing') : t('subscribe')}
               </button>
             </div>
           </div>
           <div className="border-t border-slate-100 pt-4 mt-4 flex items-center justify-between text-xs text-slate-400">
-            <span>Powered by Telebirr &amp; Chapa</span>
-            <span>Secured TLS 1.3</span>
+            <span>{t('powered_by')}</span>
+            <span>{t('secured_tls')}</span>
           </div>
         </div>
       </div>

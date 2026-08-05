@@ -27,12 +27,12 @@ export function AuthShell({
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${backgroundUrl})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/35 to-black/55" />
 
       {/* Header */}
       <header className="relative z-10 border-b border-white/10 bg-black/30 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Logo className="text-white" />
+          <Logo dark />
           <div className="flex items-center gap-3">
             <LanguageDropdown dark />
             <Link

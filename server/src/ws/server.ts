@@ -1,33 +1,47 @@
 import { Server as HTTPServer } from 'http'
 import WebSocket, { WebSocketServer } from 'ws'
 import { prisma } from '../lib/prisma.js'
+import { verifyAccessToken } from '../utils/jwt.js'
 
 interface WSClient {
   userId: string
-  ws: any
   isAlive: boolean
 }
 
-const clients = new Map<string, WSClient[]>()
+const clients = new Map<string, Set<WebSocket>>()
 
 export function setupWebSocket(server: HTTPServer) {
   const wss = new WebSocketServer({ server, path: '/ws' })
 
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url || '/', `http://${req.headers.host}`)
-    const userId = url.searchParams.get('userId')
+    const token = url.searchParams.get('token')
 
-    if (!userId) {
-      ws.close(4001, 'userId required')
+    if (!token) {
+      ws.close(4001, 'token required')
       return
     }
 
-    const client: WSClient = { userId, ws, isAlive: true }
+    let userId: string
+    try {
+      const decoded = verifyAccessToken(token)
+      userId = decoded.userId
+    } catch {
+      ws.close(4001, 'invalid token')
+      return
+    }
 
     if (!clients.has(userId)) {
-      clients.set(userId, [])
+      clients.set(userId, new Set())
     }
-    clients.get(userId)!.push(client)
+    clients.get(userId)!.add(ws)
+
+    // Track liveness on the actual socket so the heartbeat can terminate
+    // dead connections instead of killing everyone on the first tick.
+    ;(ws as any).isAlive = true
+    ws.on('pong', () => {
+      ;(ws as any).isAlive = true
+    })
 
     console.log(`WebSocket client connected: ${userId}`)
 
@@ -47,28 +61,10 @@ export function setupWebSocket(server: HTTPServer) {
           case 'mark_single_read':
             if (message.notificationId) {
               await prisma.notification.updateMany({
-                where: { id: message.notificationId },
+                where: { id: message.notificationId, userId },
                 data: { read: true },
               })
               broadcastToUser(userId, { type: 'mark_single_read_ack', notificationId: message.notificationId })
-            }
-            break
-
-          case 'send_notification':
-            if (message.targetUserId && message.title && message.body) {
-              const notification = await prisma.notification.create({
-                data: {
-                  userId: message.targetUserId,
-                  title: message.title,
-                  body: message.body,
-                  type: message.type || 'general',
-                  data: message.data,
-                },
-              })
-              broadcastToUser(message.targetUserId, {
-                type: 'notification',
-                notification,
-              })
             }
             break
 
@@ -85,19 +81,12 @@ export function setupWebSocket(server: HTTPServer) {
     ws.on('close', () => {
       const userClients = clients.get(userId)
       if (userClients) {
-        const index = userClients.indexOf(client)
-        if (index > -1) {
-          userClients.splice(index, 1)
-        }
-        if (userClients.length === 0) {
+        userClients.delete(ws)
+        if (userClients.size === 0) {
           clients.delete(userId)
         }
       }
       console.log(`WebSocket client disconnected: ${userId}`)
-    })
-
-    ws.on('pong', () => {
-      client.isAlive = true
     })
   })
 
@@ -121,12 +110,11 @@ export function setupWebSocket(server: HTTPServer) {
 
 export function broadcastToUser(userId: string, data: any) {
   const userClients = clients.get(userId)
-  if (userClients) {
-    const message = JSON.stringify(data)
-    userClients.forEach((client) => {
-      if (client.ws.readyState === 1) {
-        client.ws.send(message)
-      }
-    })
+  if (!userClients) return
+  const message = JSON.stringify(data)
+  for (const ws of userClients) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(message)
+    }
   }
 }

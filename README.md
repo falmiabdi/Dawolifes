@@ -116,8 +116,8 @@ pnpm start             # Production
 
 ## 🚀 Deployment
 
-- **Backend:** Render.com (see `render.yaml`)
-- **Frontend:** Vercel
+- **Backend:** Local server (see `start.bat` / `pnpm dev:all`)
+- **Frontend:** Local server (see `start.bat` / `pnpm dev:all`)
 - **Database:** Neon PostgreSQL
 
 ---

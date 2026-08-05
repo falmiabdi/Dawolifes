@@ -21,7 +21,7 @@ import {
   FileText,
   ChevronLeft,
 } from "lucide-react"
-import { amenityOptions, formatPrice } from "@/lib/data"
+import { amenityOptions, formatPrice, houseSafetyFeatureOptions, houseInteriorFeatureOptions, houseExteriorFeatureOptions } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -95,6 +95,9 @@ function EditPropertyPage() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState | null>(null)
   const [customFeature, setCustomFeature] = useState("")
+  const [customSafetyFeature, setCustomSafetyFeature] = useState("")
+  const [customInteriorFeature, setCustomInteriorFeature] = useState("")
+  const [customExteriorFeature, setCustomExteriorFeature] = useState("")
   const [uploadingImage, setUploadingImage] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -129,6 +132,14 @@ function EditPropertyPage() {
     setCustomFeature("")
   }
 
+  const addFeatureValue = (value: string, setter: (v: string) => void) => {
+    const trimmed = value.trim()
+    if (trimmed && form && !form.features.includes(trimmed)) {
+      set("features", [...form.features, trimmed])
+    }
+    setter("")
+  }
+
   useEffect(() => {
     if (!id) {
       toast.error("No property ID provided.")
@@ -138,7 +149,8 @@ function EditPropertyPage() {
 
     async function fetchProperty() {
       try {
-        const res = await fetch(`${getApiUrl()}/api/properties/${id}`)
+        const authHeaders = await getAuthHeaders()
+        const res = await fetch(`${getApiUrl()}/api/properties/${id}`, { headers: authHeaders })
         if (!res.ok) {
           toast.error("Failed to load property.")
           router.push("/agent/properties")
@@ -180,7 +192,7 @@ function EditPropertyPage() {
       }
     }
     fetchProperty()
-  }, [id, router])
+  }, [getAuthHeaders, id, router])
 
   const next = () => {
     if (step === 2 && form && form.images.length < 3) {
@@ -556,6 +568,117 @@ function EditPropertyPage() {
                           placeholder="Add custom feature..."
                         />
                         <Button type="button" onClick={addCustomFeature} className="shrink-0 rounded-lg">
+                          Add <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-3 text-sm font-semibold text-foreground">Safety Features</p>
+                      <div className="flex flex-wrap gap-2">
+                        {houseSafetyFeatureOptions.map((a) => (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => toggleFeature(a)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                              form.features.includes(a)
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card text-foreground hover:border-primary",
+                            )}
+                          >
+                            {a}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Input
+                          value={customSafetyFeature}
+                          onChange={(e) => setCustomSafetyFeature(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                              e.preventDefault()
+                              addFeatureValue(customSafetyFeature, setCustomSafetyFeature)
+                            }
+                          }}
+                          placeholder="Add custom safety feature..."
+                        />
+                        <Button type="button" onClick={() => addFeatureValue(customSafetyFeature, setCustomSafetyFeature)} className="shrink-0 rounded-lg">
+                          Add <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-3 text-sm font-semibold text-foreground">Interior Features</p>
+                      <div className="flex flex-wrap gap-2">
+                        {houseInteriorFeatureOptions.map((a) => (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => toggleFeature(a)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                              form.features.includes(a)
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card text-foreground hover:border-primary",
+                            )}
+                          >
+                            {a}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Input
+                          value={customInteriorFeature}
+                          onChange={(e) => setCustomInteriorFeature(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                              e.preventDefault()
+                              addFeatureValue(customInteriorFeature, setCustomInteriorFeature)
+                            }
+                          }}
+                          placeholder="Add custom interior feature..."
+                        />
+                        <Button type="button" onClick={() => addFeatureValue(customInteriorFeature, setCustomInteriorFeature)} className="shrink-0 rounded-lg">
+                          Add <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-3 text-sm font-semibold text-foreground">Exterior Features</p>
+                      <div className="flex flex-wrap gap-2">
+                        {houseExteriorFeatureOptions.map((a) => (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => toggleFeature(a)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                              form.features.includes(a)
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card text-foreground hover:border-primary",
+                            )}
+                          >
+                            {a}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Input
+                          value={customExteriorFeature}
+                          onChange={(e) => setCustomExteriorFeature(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                              e.preventDefault()
+                              addFeatureValue(customExteriorFeature, setCustomExteriorFeature)
+                            }
+                          }}
+                          placeholder="Add custom exterior feature..."
+                        />
+                        <Button type="button" onClick={() => addFeatureValue(customExteriorFeature, setCustomExteriorFeature)} className="shrink-0 rounded-lg">
                           Add <Plus className="h-4 w-4" />
                         </Button>
                       </div>

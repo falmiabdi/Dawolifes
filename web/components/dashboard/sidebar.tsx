@@ -6,6 +6,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useAuth } from "@/components/auth/auth-guard"
+import { useI18n } from "@/lib/i18n"
 
 import {
   LayoutDashboard,
@@ -24,27 +25,27 @@ import {
 import { cn } from "@/lib/utils"
 
 const agentNav = [
-  { href: "/agent", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/agent/profile", label: "Profile", icon: User },
-  { href: "/agent/properties", label: "My Properties", icon: Building2 },
-  { href: "/agent/post", label: "Post Property", icon: PlusCircle },
-  { href: "/agent/vehicles", label: "My Vehicles", icon: Car },
-  { href: "/agent/post/vehicle", label: "Post Vehicle", icon: PlusCircle },
-  { href: "/agent/messages", label: "Messages", icon: MessageSquare },
-  { href: "/agent/notifications", label: "Notifications", icon: Bell },
-  { href: "/agent/payments", label: "Payments", icon: CreditCard },
-  { href: "/agent/settings", label: "Settings", icon: Settings },
+  { href: "/agent", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/agent/profile", labelKey: "profile", icon: User },
+  { href: "/agent/properties", labelKey: "my_properties", icon: Building2 },
+  { href: "/agent/post", labelKey: "post_property", icon: PlusCircle },
+  { href: "/agent/vehicles", labelKey: "my_vehicles", icon: Car },
+  { href: "/agent/post/vehicle", labelKey: "post_vehicle", icon: PlusCircle },
+  { href: "/agent/messages", labelKey: "messages", icon: MessageSquare },
+  { href: "/agent/notifications", labelKey: "notifications", icon: Bell },
+  { href: "/agent/payments", labelKey: "payments", icon: CreditCard },
+  { href: "/agent/settings", labelKey: "settings", icon: Settings },
 ]
 
 const adminNav = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/agents", label: "Agent Management", icon: User },
-  { href: "/admin/properties", label: "Properties", icon: Building2 },
-  { href: "/admin/vehicles", label: "Vehicles", icon: Car },
-  { href: "/admin/users", label: "Users", icon: User },
-  { href: "/admin/notifications", label: "Notifications", icon: Bell },
-  { href: "/admin/payments", label: "Payments", icon: CreditCard },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/admin/agents", labelKey: "agent_management", icon: User },
+  { href: "/admin/properties", labelKey: "properties", icon: Building2 },
+  { href: "/admin/vehicles", labelKey: "vehicles", icon: Car },
+  { href: "/admin/users", labelKey: "users", icon: User },
+  { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
+  { href: "/admin/payments", labelKey: "payments", icon: CreditCard },
+  { href: "/admin/settings", labelKey: "settings", icon: Settings },
 ]
 
 interface SidebarProps {
@@ -57,6 +58,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { logout, getToken } = useAuth()
+  const { t } = useI18n()
   const nav = role === "admin" ? adminNav : agentNav
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -98,7 +100,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
             <Home className="h-4 w-4 text-white" />
           </div>
           <span className="text-lg font-extrabold tracking-tight">
-            Dela<span className="text-orange-400">Harme</span>
+            Dawo<span className="text-orange-400">life</span>
           </span>
         </div>
         {/* Close button â€” only useful in mobile drawer mode */}
@@ -114,7 +116,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
       {/* Role tag */}
       <div className="px-6 py-3">
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          {role} portal
+          {role} {t('portal')}
         </span>
       </div>
 
@@ -137,7 +139,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1">{t(item.labelKey)}</span>
               {showBadge && (
                 <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px]">
                   {unreadCount > 99 ? "99+" : unreadCount}
@@ -158,7 +160,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
           className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-red-900/30 hover:text-red-400"
         >
           <LogOut className="h-4 w-4" />
-          Sign out
+          {t('sign_out')}
         </button>
       </div>
     </aside>

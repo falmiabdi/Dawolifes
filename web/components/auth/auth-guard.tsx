@@ -42,6 +42,7 @@ export interface SessionUser {
   isRootAdmin?: boolean
   profilePhoto?: string | null
   phone?: string | null
+  onboardingComplete?: boolean
 }
 
 export type UserRole = 'buyer' | 'seller' | 'agent'

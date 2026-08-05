@@ -1,20 +1,35 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { VehicleCard } from "@/components/vehicle-card"
+import { SearchSummary } from "@/components/home/search-summary"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
+import { matchesVehicle, parseSearchFilters } from "@/lib/search"
 
 export function LatestVehicles() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const searchParams = useSearchParams()
+  const { term, cats } = parseSearchFilters(searchParams.get("search"), searchParams.get("category"))
+  const isSearching = term !== "" || cats.length > 0
+  const showSection = !isSearching || cats.includes("cars")
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/api/vehicles`)
-      .then((res) => res.json())
+    const limit = isSearching ? 100 : 20
+    setLoading(true)
+    fetch(`${getApiUrl()}/api/vehicles?limit=${limit}`)
+      .then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch vehicles')
+        return data
+      })
       .then((data) => {
-        const dbVehicles = data.vehicles || data || []
+        // The public API returns { vehicles: [...] }. On an API error it
+        // returns an object, so never call array methods on the raw payload.
+        const dbVehicles = Array.isArray(data?.vehicles) ? data.vehicles : Array.isArray(data) ? data : []
         const transformed = dbVehicles
-          .filter((v: any) => v.agentId && v.agentId.status !== 'Suspended')
+          .filter((v: any) => v.agent && v.agent.status !== 'Suspended')
           .map((v: any) => ({
             id: v.id,
             title: v.title || `${v.make} ${v.vehicleModel || v.model || ''} ${v.trimVersion || ''}`.trim(),
@@ -52,39 +67,54 @@ export function LatestVehicles() {
             videoUrl: v.videoUrl || undefined,
             featured: v.featured || false,
             agent: {
-              id: v.agentId || 'unknown',
-              name: v.agentId?.fullName || v.agentId?.username || 'Unknown Agent',
-              role: v.agentId?.role === 'admin' ? 'Administrator' : 'Vehicle Agent',
-              phone: v.agentId?.ethPhone || v.agentId?.safaricomPhone || '+251 900 000 000',
-              avatar: v.agentId?.profilePhoto || '/placeholder.svg',
+              id: v.agent.id,
+              name: v.agent.fullName || v.agent.username || 'Unknown Agent',
+              role: v.agent.role === 'admin' ? 'Administrator' : 'Vehicle Agent',
+              phone: v.agent.ethPhone || v.agent.safaricomPhone || v.agent.phone || '+251 900 000 000',
+              avatar: v.agent.profilePhoto || '/placeholder.svg',
             }
           }))
         setVehicles(transformed)
       })
-      .catch((err) => console.error('[API] ❌ Vehicles fetch failed:', err))
+      .catch(() => setVehicles([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [isSearching])
+
+  const filtered = useMemo(() => {
+    if (!isSearching) return vehicles
+    return vehicles.filter((v) => matchesVehicle(v, term, cats))
+  }, [vehicles, isSearching, term, cats])
+
+  if (!showSection) return null
 
   return (
     <section id="vehicles" className="bg-muted/40 py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-foreground md:text-2xl">Latest Vehicles</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Newly listed cars across Ethiopia</p>
+            <h2 className="text-xl font-bold text-foreground md:text-2xl">
+              {isSearching ? "Search Results" : "Latest Vehicles"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isSearching
+                ? "Vehicles matching your search"
+                : "Newly listed cars across Ethiopia"}
+            </p>
           </div>
         </div>
 
+        {isSearching && <SearchSummary anchor="vehicles" type="vehicle" count={filtered.length} />}
+
         <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {vehicles.map((vehicle) => (
+          {filtered.map((vehicle) => (
             <VehicleCard key={vehicle.id} vehicle={vehicle} />
           ))}
         </div>
 
-        {!loading && vehicles.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="mt-12 text-center text-muted-foreground">
-            <p className="text-lg font-semibold">No vehicles listed yet</p>
-            <p className="mt-1 text-sm">Check back soon for new listings.</p>
+            <p className="text-lg font-semibold">No vehicles found</p>
+            <p className="mt-1 text-sm">Try a different search term or category.</p>
           </div>
         )}
       </div>

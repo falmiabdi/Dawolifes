@@ -67,12 +67,15 @@ router.patch('/read-all', authMiddleware, async (req, res) => {
   }
 })
 
-// Mark single notification as read
+// Mark single notification as read (owner only)
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
     const notification = await prisma.notification.findUnique({ where: { id: req.params.id } })
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' })
+    }
+    if (notification.userId !== req.user!.userId) {
+      return res.status(403).json({ message: 'Not authorized' })
     }
     await prisma.notification.update({ where: { id: req.params.id }, data: { read: true } })
     res.json({ message: 'Notification marked as read' })

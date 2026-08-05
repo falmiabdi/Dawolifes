@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { Globe, Menu, Plus, X, User } from "lucide-react"
+import { Menu, Plus, X, User } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { buttonVariants } from "@/components/ui/button"
 import Image from "next/image"
-import { getApiUrl } from "@/lib/get-api-url"
+import { LanguageDropdown } from "@/components/language-dropdown"
+import { useI18n } from "@/lib/i18n"
+import { useAuth } from "@/components/auth/auth-guard"
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -19,16 +21,8 @@ const navLinks = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
-  const [session, setSession] = useState<any>(null)
-
-  useEffect(() => {
-    fetch(`${getApiUrl()}/api/auth/session`)
-      .then(r => r.json())
-      .then(data => setSession(data?.session || null))
-      .catch(() => {})
-  }, [])
-
-  const user = session?.user
+  const { t } = useI18n()
+  const { user } = useAuth()
   const isAuth = !!user
   const photoUrl = user?.profilePhoto || null
 
@@ -37,9 +31,7 @@ export function SiteHeader() {
       <div className="hidden items-center justify-between bg-secondary px-6 py-1.5 text-xs text-secondary-foreground/80 md:flex">
         <span>dawolife@gmail.com</span>
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
-            <Globe className="h-3.5 w-3.5" /> English
-          </span>
+          <LanguageDropdown className="hidden sm:block" />
           {isAuth ? (
             <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"} className="flex items-center gap-2 hover:opacity-80 transition">
               {photoUrl ? (
@@ -55,9 +47,9 @@ export function SiteHeader() {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="hover:text-primary">Login</Link>
+              <Link href="/login" className="hover:text-primary">{t('login')}</Link>
               <span className="text-secondary-foreground/30">|</span>
-              <Link href="/register" className="hover:text-primary">Register</Link>
+              <Link href="/register" className="hover:text-primary">{t('register')}</Link>
             </>
           )}
         </div>
@@ -134,7 +126,7 @@ export function SiteHeader() {
                         {(user.name || user.email || "?").charAt(0).toUpperCase()}
                       </div>
                     )}
-                    Dashboard
+                    {t('dashboard')}
                   </Link>
                 ) : (
                   <>
@@ -143,14 +135,14 @@ export function SiteHeader() {
                       onClick={() => setOpen(false)}
                       className="rounded-lg px-3 py-3 text-sm font-semibold text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
                     >
-                      Login
+                    {t('login')}
                     </Link>
                     <Link
                       href="/register"
                       onClick={() => setOpen(false)}
                       className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center"
                     >
-                      Register
+                      {t('register')}
                     </Link>
                   </>
                 )}

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { broadcastToUser } from '../ws/server.js'
 
 const router = Router()
 
@@ -79,11 +80,15 @@ router.get('/inbox', authMiddleware, async (req, res) => {
   }
 })
 
-// Get messages for a property
+// Get messages for a property (participants only)
 router.get('/:propertyId', authMiddleware, async (req, res) => {
   try {
+    const userId = req.user!.userId
     const messages = await prisma.message.findMany({
-      where: { propertyId: req.params.propertyId },
+      where: {
+        propertyId: req.params.propertyId,
+        OR: [{ senderId: userId }, { recipientId: userId }],
+      },
       orderBy: { createdAt: 'asc' },
     })
     res.json({ messages })
@@ -113,18 +118,23 @@ router.post('/', authMiddleware, async (req, res) => {
       },
     })
 
+    broadcastToUser(recipientId, { type: 'message', message: msgDoc })
+
     res.status(201).json({ message: 'Message sent', data: msgDoc })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to send message' })
   }
 })
 
-// Mark message as read
+// Mark message as read (recipient only)
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
     const message = await prisma.message.findUnique({ where: { id: req.params.id } })
     if (!message) {
       return res.status(404).json({ message: 'Message not found' })
+    }
+    if (message.recipientId !== req.user!.userId) {
+      return res.status(403).json({ message: 'Not authorized' })
     }
     await prisma.message.update({ where: { id: req.params.id }, data: { read: true } })
     res.json({ message: 'Message marked as read' })

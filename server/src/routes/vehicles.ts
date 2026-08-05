@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
 import { vehicleSchema } from '../utils/validation.js'
-import { prisma } from '../lib/prisma.js'
+import { verifyAccessToken } from '../utils/jwt.js'
+import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
 const router = Router()
@@ -26,7 +27,18 @@ const ALLOWED_UPDATE_FIELDS = [
   'latitude', 'longitude', 'features',
 ]
 
-const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
+const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true, role: true, status: true }
+
+function getRequestUserId(req: any): { userId: string; role: string } | null {
+  const header = req.headers.authorization
+  if (!header || !header.startsWith('Bearer ')) return null
+  try {
+    const decoded = verifyAccessToken(header.split(' ')[1])
+    return { userId: decoded.userId, role: decoded.role }
+  } catch {
+    return null
+  }
+}
 
 // Get all vehicles (public)
 router.get('/', async (req, res) => {
@@ -36,14 +48,21 @@ router.get('/', async (req, res) => {
     if (req.query.category) where.vehicleCategory = req.query.category
     if (req.query.make) where.make = req.query.make
     if (req.query.agentId) where.agentId = req.query.agentId
-    const limit = parseInt(req.query.limit as string) || 100
-    const vehicles = await prisma.vehicle.findMany({
-      where,
-      include: { agent: { select: agentSelect } },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    })
-    res.json({ vehicles })
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 100))
+    const [total, vehicles] = await withPrismaRetry(() =>
+      Promise.all([
+        prisma.vehicle.count({ where }),
+        prisma.vehicle.findMany({
+          where,
+          include: { agent: { select: agentSelect } },
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ])
+    )
+    res.json({ vehicles, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch vehicles' })
   }
@@ -59,6 +78,17 @@ router.get('/:id', async (req, res) => {
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
+
+    // Only expose approved listings publicly; owner and admins may preview
+    // drafts/pending/rejected listings via their own dashboards.
+    if (vehicle.status !== 'Approved') {
+      const caller = getRequestUserId(req)
+      const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === vehicle.agentId)
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({ message: 'Vehicle not found' })
+      }
+    }
+
     res.json({ vehicle })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch vehicle' })
@@ -74,12 +104,14 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
+    const ADMIN_PHONES = ['+251962395282', '+251922477886']
     const vehicle = await prisma.vehicle.create({
       data: {
         ...parsed.data,
         agentId: req.user!.userId,
         agentName: req.user!.email,
         status: 'Pending',
+        displayPhone: ADMIN_PHONES[0],
       },
     })
 
@@ -108,15 +140,21 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       return res.status(403).json({ message: 'Not authorized' })
     }
 
+    const parsed = vehicleSchema.partial().safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
+    }
+
     const updates: Record<string, any> = {}
     for (const field of ALLOWED_UPDATE_FIELDS) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field]
+      if (parsed.data[field as keyof typeof parsed.data] !== undefined) {
+        updates[field] = parsed.data[field as keyof typeof parsed.data]
       }
     }
 
     if (req.user!.role !== 'admin') {
       updates.status = 'Pending'
+      updates.rejectionReason = null
     }
 
     const updated = await prisma.vehicle.update({ where: { id: req.params.id }, data: updates })

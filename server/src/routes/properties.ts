@@ -1,7 +1,8 @@
 ﻿import { Router } from 'express'
 import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
 import { propertySchema } from '../utils/validation.js'
-import { prisma } from '../lib/prisma.js'
+import { verifyAccessToken } from '../utils/jwt.js'
+import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
 const router = Router()
@@ -16,6 +17,17 @@ const ALLOWED_UPDATE_FIELDS = [
 
 const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
 
+function getRequestUserId(req: any): { userId: string; role: string } | null {
+  const header = req.headers.authorization
+  if (!header || !header.startsWith('Bearer ')) return null
+  try {
+    const decoded = verifyAccessToken(header.split(' ')[1])
+    return { userId: decoded.userId, role: decoded.role }
+  } catch {
+    return null
+  }
+}
+
 // Get all properties (public)
 router.get('/', async (req, res) => {
   try {
@@ -23,14 +35,21 @@ router.get('/', async (req, res) => {
     if (req.query.city) where.city = req.query.city
     if (req.query.type) where.type = req.query.type
     if (req.query.agentId) where.agentId = req.query.agentId  // allow filtering by agent
-    const limit = parseInt(req.query.limit as string) || 100
-    const properties = await prisma.property.findMany({
-      where,
-      include: { agent: { select: agentSelect } },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    })
-    res.json({ properties })
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 100))
+    const [total, properties] = await withPrismaRetry(() =>
+      Promise.all([
+        prisma.property.count({ where }),
+        prisma.property.findMany({
+          where,
+          include: { agent: { select: agentSelect } },
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+      ]),
+    )
+    res.json({ properties, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch properties' })
   }
@@ -39,13 +58,26 @@ router.get('/', async (req, res) => {
 // Get property by ID
 router.get('/:id', async (req, res) => {
   try {
-    const property = await prisma.property.findUnique({
-      where: { id: req.params.id },
-      include: { agent: { select: agentSelect } },
-    })
+    const property = await withPrismaRetry(() =>
+      prisma.property.findUnique({
+        where: { id: req.params.id },
+        include: { agent: { select: agentSelect } },
+      }),
+    )
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
+
+    // Only expose approved listings publicly; owner and admins may preview
+    // drafts/pending/rejected listings via their own dashboards.
+    if (property.status !== 'Approved') {
+      const caller = getRequestUserId(req)
+      const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === property.agentId)
+      if (!isOwnerOrAdmin) {
+        return res.status(404).json({ message: 'Property not found' })
+      }
+    }
+
     res.json({ property })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch property' })
@@ -61,13 +93,16 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     }
 
     const ADMIN_PHONES = ['+251962395282', '+251922477886']
+    const contactName = parsed.data.name?.trim() || ''
+    const contactPhone = parsed.data.phone?.trim() || ''
+    const { name: _name, phone: _phone, ...propertyData } = parsed.data
     const property = await prisma.property.create({
       data: {
-        ...parsed.data,
+        ...propertyData,
         agentId: req.user!.userId,
-        agentName: req.user!.email,
+        agentName: contactName || req.user!.email,
         status: 'Pending',
-        displayPhone: ADMIN_PHONES[0],
+        displayPhone: contactPhone || ADMIN_PHONES[0],
       },
     })
 
@@ -97,15 +132,21 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       return res.status(403).json({ message: 'Not authorized' })
     }
 
+    const parsed = propertySchema.partial().safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
+    }
+
     const updates: Record<string, any> = {}
     for (const field of ALLOWED_UPDATE_FIELDS) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field]
+      if (parsed.data[field as keyof typeof parsed.data] !== undefined) {
+        updates[field] = parsed.data[field as keyof typeof parsed.data]
       }
     }
 
     if (req.user!.role !== 'admin') {
       updates.status = 'Pending'
+      updates.rejectionReason = null
     }
 
     const updated = await prisma.property.update({ where: { id: req.params.id }, data: updates })

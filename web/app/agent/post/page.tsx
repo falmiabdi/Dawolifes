@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { getApiUrl } from '@/lib/get-api-url'
+import { useI18n } from '@/lib/i18n'
 
 import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -10,7 +11,7 @@ import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2,
   Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info, FileText
 } from 'lucide-react'
-import { amenityOptions, formatPrice } from '@/lib/data'
+import { amenityOptions, formatPrice, houseSafetyFeatureOptions, houseInteriorFeatureOptions, houseExteriorFeatureOptions } from '@/lib/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,15 +19,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { MapPicker } from '@/components/maps/map-picker'
 
 const steps = [
-  { id: 1, label: 'Basic Info', icon: HomeIcon },
-  { id: 2, label: 'Location Details', icon: MapPin },
-  { id: 3, label: 'Media Upload', icon: Upload },
-  { id: 4, label: 'Location Map', icon: MapPin },
-  { id: 5, label: 'Review & Submit', icon: CheckCircle2 },
+  { id: 1, labelKey: 'basic_info', icon: HomeIcon },
+  { id: 2, labelKey: 'location_details', icon: MapPin },
+  { id: 3, labelKey: 'media_upload', icon: Upload },
+  { id: 4, labelKey: 'location_map2', icon: MapPin },
+  { id: 5, labelKey: 'review_submit', icon: CheckCircle2 },
 ]
 
 export default function AgentPostPage() {
   const router = useRouter()
+  const { t, tv } = useI18n()
   const { getToken, user } = useAuth()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
@@ -71,6 +73,9 @@ export default function AgentPostPage() {
   const [locationDocument, setLocationDocument] = useState('')
   
   const [customFeature, setCustomFeature] = useState('')
+  const [customSafetyFeature, setCustomSafetyFeature] = useState('')
+  const [customInteriorFeature, setCustomInteriorFeature] = useState('')
+  const [customExteriorFeature, setCustomExteriorFeature] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
@@ -92,27 +97,33 @@ export default function AgentPostPage() {
     setCustomFeature('')
   }
 
+  const addFeatureValue = (value: string, setter: (v: string) => void) => {
+    const val = value.trim()
+    if (val && !features.includes(val)) {
+      setFeatures((prev) => [...prev, val])
+    }
+    setter('')
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
     if (!files || files.length === 0) return
     setUploadingImage(true)
     setError('')
     try {
-      const token = await getToken()
-      const uploadUrl = token
-        ? `${getApiUrl()}/api/agent/upload?token=${encodeURIComponent(token)}`
-        : `${getApiUrl()}/api/agent/upload`
+      const headers = await getAuthHeaders()
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const fd = new FormData()
         fd.append('file', file)
-        const res = await fetch(uploadUrl, {
+        const res = await fetch(`${getApiUrl()}/api/agent/upload`, {
           method: 'POST',
+          headers,
           body: fd,
         })
         const data = await res.json()
         if (!res.ok) {
-          throw new Error(data.message || `Failed to upload ${file.name}`)
+          throw new Error(data.message || t('failed_upload_file').replace('{name}', file.name))
         }
         if (data.url) {
           setUploadedImages((prev) => [...prev, data.url])
@@ -120,7 +131,7 @@ export default function AgentPostPage() {
       }
     } catch (err: any) {
       console.error('[Image Upload Error]', err)
-      setError(err.message || 'Failed to upload image(s). Please try again.')
+      setError(err.message || t('failed_upload_images'))
     } finally {
       setUploadingImage(false)
       // Reset file input so the same file can be re-selected
@@ -151,14 +162,14 @@ export default function AgentPostPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to upload document')
+        throw new Error(data.message || t('failed_upload_document'))
       }
       if (data.url) {
         setLocationDocument(data.url)
       }
     } catch (err: any) {
       console.error('[Document Upload Error]', err)
-      setError(err.message || 'Failed to upload document. Please try again.')
+      setError(err.message || t('failed_upload_document_retry'))
     } finally {
       setUploadingImage(false)
     }
@@ -197,11 +208,11 @@ export default function AgentPostPage() {
             .map(([field, errs]) => `${field}: ${(errs as string[]).join(', ')}`)
           setError(msgs.join(' | '))
         } else {
-          setError(data.message || 'Failed to submit property listing.')
+          setError(data.message || t('failed_submit_property'))
         }
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(t('error_occurred'))
     } finally {
       setSaving(false)
     }
@@ -210,15 +221,15 @@ export default function AgentPostPage() {
   const next = () => {
     setError('')
     if (step === 1) {
-      if (!title.trim()) { setError('Title is required.'); return }
-      if (!price.trim()) { setError('Price is required.'); return }
+      if (!title.trim()) { setError(t('title_required')); return }
+      if (!price.trim()) { setError(t('price_required')); return }
     } else if (step === 2) {
-      if (!region.trim()) { setError('Region is required.'); return }
-      if (!city.trim()) { setError('City is required.'); return }
+      if (!region.trim()) { setError(t('region_required')); return }
+      if (!city.trim()) { setError(t('city_required')); return }
     } else if (step === 3) {
-      if (uploadedImages.length === 0) { setError('Please upload at least one image.'); return }
+      if (uploadedImages.length === 0) { setError(t('upload_at_least_one')); return }
     } else if (step === 4) {
-      if (latitude === 0 || longitude === 0) { setError('Please select the property location on the map.'); return }
+      if (latitude === 0 || longitude === 0) { setError(t('select_location_map')); return }
     }
     setStep((s) => s + 1)
   }
@@ -231,16 +242,16 @@ export default function AgentPostPage() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
           <Info className="h-7 w-7" />
         </div>
-        <h1 className="mt-4 text-xl font-bold text-slate-900">Posting is unavailable</h1>
+        <h1 className="mt-4 text-xl font-bold text-slate-900">{t('posting_unavailable')}</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Your account must be approved before you can post property listings. Your current status is{' '}
-          <span className="font-semibold">{user.status}</span>.
+          {t('posting_unavailable_property_note')}{' '}
+          <span className="font-semibold">{tv(user.status)}</span>.
         </p>
         <Button
           onClick={() => router.push('/agent')}
           className="mt-6 rounded-full bg-orange-500 text-white hover:bg-orange-600"
         >
-          Back to Dashboard
+          {t('back_to_dashboard')}
         </Button>
       </div>
     )
@@ -249,8 +260,8 @@ export default function AgentPostPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-900">Post a Property Listing</h1>
-        <p className="mt-1 text-sm text-slate-500">Add a property to DawoLife platform. Listings will be reviewed by administrators.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('post_property_listing')}</h1>
+        <p className="mt-1 text-sm text-slate-500">{t('post_property_note')}</p>
       </div>
 
       {/* Stepper */}
@@ -268,7 +279,7 @@ export default function AgentPostPage() {
                   {done ? <Check className="h-4 w-4" /> : s.id}
                 </span>
                 <span className={`hidden text-xs font-semibold sm:block ${active ? 'text-orange-500' : 'text-slate-400'}`}>
-                  {s.label}
+                  {t(s.labelKey)}
                 </span>
               </div>
               {i < steps.length - 1 && (
@@ -291,35 +302,35 @@ export default function AgentPostPage() {
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <HomeIcon className="h-5 w-5" />
-                <h2>Basic Property Details</h2>
+                <h2>{t('basic_property_details')}</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Listing By *</Label>
+                  <Label>{t('listing_by')} *</Label>
                   <select value={posterType} onChange={(e) => setPosterType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['Agent', 'Owner'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Owner Type</Label>
+                  <Label>{t('owner_type')}</Label>
                   <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['Farmer Owner', 'Saving Owner'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Property Title *</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. 3-Bedroom Villa in Old Airport" />
+                <Label>{t('property_title')} *</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('property_title_placeholder')} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Property Type *</Label>
+                  <Label>{t('property_type')} *</Label>
                   <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['House', 'Apartment', 'Land', 'Commercial', 'Villa'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Listing Type *</Label>
+                  <Label>{t('listing_type')} *</Label>
                   <select value={listingType} onChange={(e) => setListingType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['For Rent', 'For Sale'].map(o => <option key={o}>{o}</option>)}
                   </select>
@@ -327,11 +338,11 @@ export default function AgentPostPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Price (ETB) *</Label>
-                  <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 15000000" />
+                  <Label>{t('price_etb')} *</Label>
+                  <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={t('price_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Price Type</Label>
+                  <Label>{t('price_type')}</Label>
                   <select value={priceType} onChange={(e) => setPriceType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['Fixed Price', 'Negotiable', 'per month'].map(o => <option key={o}>{o}</option>)}
                   </select>
@@ -339,37 +350,37 @@ export default function AgentPostPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Area (mÂ²)</Label>
-                  <Input type="number" value={area} onChange={(e) => setArea(e.target.value)} placeholder="e.g. 150" />
+                  <Label>{t('area')}</Label>
+                  <Input type="number" value={area} onChange={(e) => setArea(e.target.value)} placeholder={t('area_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Bedrooms</Label>
-                  <Input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder="e.g. 3" />
+                  <Label>{t('bedrooms')}</Label>
+                  <Input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} placeholder={t('bedrooms_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Bathrooms</Label>
-                  <Input type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder="e.g. 2" />
+                  <Label>{t('bathrooms')}</Label>
+                  <Input type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} placeholder={t('bathrooms_placeholder')} />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Condition</Label>
+                  <Label>{t('condition')}</Label>
                   <select value={condition} onChange={(e) => setCondition(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['Finished', 'Semi-finished', 'Under Construction'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Legalized Year</Label>
+                  <Label>{t('legalized_year')}</Label>
                   <Input type="number" value={legalizedYear} onChange={(e) => setLegalizedYear(e.target.value)} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Describe the property, features, environment..." />
+                <Label>{t('description')}</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder={t('description_placeholder')} />
               </div>
 
               <div className="space-y-3">
-                <Label>Amenities & Features</Label>
+                <Label>{t('features_amenities')}</Label>
                 <div className="flex flex-wrap gap-2">
                   {amenityOptions.map((opt) => {
                     const active = features.includes(opt)
@@ -386,8 +397,77 @@ export default function AgentPostPage() {
                   })}
                 </div>
                 <div className="flex gap-2">
-                  <Input value={customFeature} onChange={(e) => setCustomFeature(e.target.value)} placeholder="Add custom feature..." />
-                  <Button type="button" onClick={addCustomFeature} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">Add</Button>
+                  <Input value={customFeature} onChange={(e) => setCustomFeature(e.target.value)} placeholder={t('add_custom_feature')} />
+                  <Button type="button" onClick={addCustomFeature} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">{t('add')}</Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>{t('safety_features')}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {houseSafetyFeatureOptions.map((opt) => {
+                    const active = features.includes(opt)
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => toggleFeature(opt)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-300 ${active ? 'border-orange-500 bg-orange-500 text-white shadow-md' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-orange-300'}`}
+                      >
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Input value={customSafetyFeature} onChange={(e) => setCustomSafetyFeature(e.target.value)} placeholder={t('add_custom_feature')} />
+                  <Button type="button" onClick={() => addFeatureValue(customSafetyFeature, setCustomSafetyFeature)} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">{t('add')}</Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>{t('interior_features')}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {houseInteriorFeatureOptions.map((opt) => {
+                    const active = features.includes(opt)
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => toggleFeature(opt)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-300 ${active ? 'border-orange-500 bg-orange-500 text-white shadow-md' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-orange-300'}`}
+                      >
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Input value={customInteriorFeature} onChange={(e) => setCustomInteriorFeature(e.target.value)} placeholder={t('add_custom_feature')} />
+                  <Button type="button" onClick={() => addFeatureValue(customInteriorFeature, setCustomInteriorFeature)} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">{t('add')}</Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>{t('exterior_features')}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {houseExteriorFeatureOptions.map((opt) => {
+                    const active = features.includes(opt)
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => toggleFeature(opt)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-300 ${active ? 'border-orange-500 bg-orange-500 text-white shadow-md' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-orange-300'}`}
+                      >
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Input value={customExteriorFeature} onChange={(e) => setCustomExteriorFeature(e.target.value)} placeholder={t('add_custom_feature')} />
+                  <Button type="button" onClick={() => addFeatureValue(customExteriorFeature, setCustomExteriorFeature)} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">{t('add')}</Button>
                 </div>
               </div>
             </div>
@@ -398,43 +478,43 @@ export default function AgentPostPage() {
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <MapPin className="h-5 w-5" />
-                <h2>Property Location</h2>
+                <h2>{t('property_location')}</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Region *</Label>
+                  <Label>{t('region')} *</Label>
                   <select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option value="">Select region</option>
+                    <option value="">{t('select_region')}</option>
                     {['Addis Ababa', 'Afar', 'Amhara', 'Benishangul-Gumuz', 'Central Ethiopia', 'Dire Dawa', 'Gambela', 'Harari', 'Oromia', 'Sidama', 'Somali', 'South Ethiopia', 'SNNPR', 'Tigray'].map(r => <option key={r}>{r}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>City *</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Addis Ababa" />
+                  <Label>{t('city')} *</Label>
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('city_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Sub City</Label>
-                  <Input value={subCity} onChange={(e) => setSubCity(e.target.value)} placeholder="e.g. Bole" />
+                  <Label>{t('sub_city')}</Label>
+                  <Input value={subCity} onChange={(e) => setSubCity(e.target.value)} placeholder={t('sub_city_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Woreda</Label>
-                  <Input value={woreda} onChange={(e) => setWoreda(e.target.value)} placeholder="e.g. 03" />
+                  <Label>{t('woreda')}</Label>
+                  <Input value={woreda} onChange={(e) => setWoreda(e.target.value)} placeholder={t('woreda_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Kebele</Label>
-                  <Input value={kebele} onChange={(e) => setKebele(e.target.value)} placeholder="e.g. 05" />
+                  <Label>{t('kebele')}</Label>
+                  <Input value={kebele} onChange={(e) => setKebele(e.target.value)} placeholder={t('kebele_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Parcel Number</Label>
-                  <Input value={parcel} onChange={(e) => setParcel(e.target.value)} placeholder="e.g. 102" />
+                  <Label>{t('parcel_number')}</Label>
+                  <Input value={parcel} onChange={(e) => setParcel(e.target.value)} placeholder={t('parcel_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Block Number</Label>
-                  <Input value={block} onChange={(e) => setBlock(e.target.value)} placeholder="e.g. 5" />
+                  <Label>{t('block_number')}</Label>
+                  <Input value={block} onChange={(e) => setBlock(e.target.value)} placeholder={t('block_placeholder')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>House Number</Label>
-                  <Input value={homeNo} onChange={(e) => setHomeNo(e.target.value)} placeholder="e.g. 450" />
+                  <Label>{t('house_number')}</Label>
+                  <Input value={homeNo} onChange={(e) => setHomeNo(e.target.value)} placeholder={t('home_no_placeholder')} />
                 </div>
               </div>
             </div>
@@ -445,9 +525,9 @@ export default function AgentPostPage() {
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <Upload className="h-5 w-5" />
-                <h2>Photos & Media</h2>
+                <h2>{t('photos_media_title')}</h2>
               </div>
-              <p className="text-sm text-slate-500">Upload high quality photos of the property. Add at least one photo. First image will be used as the listing thumbnail.</p>
+              <p className="text-sm text-slate-500">{t('upload_note')}</p>
               
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -456,13 +536,13 @@ export default function AgentPostPage() {
                 {uploadingImage ? (
                   <div className="flex flex-col items-center gap-2 text-orange-500">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="text-xs">Uploading images...</span>
+                    <span className="text-xs">{t('uploading_images')}</span>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-slate-400">
                     <Upload className="h-8 w-8 text-slate-400" />
-                    <span className="text-sm font-semibold">Click to upload photos</span>
-                    <span className="text-xs">Supports JPG, PNG, WEBP files</span>
+                    <span className="text-sm font-semibold">{t('click_upload_photos')}</span>
+                    <span className="text-xs">{t('supported_image_formats')}</span>
                   </div>
                 )}
                 <input
@@ -493,13 +573,13 @@ export default function AgentPostPage() {
               )}
 
               <div className="space-y-2">
-                <Label>YouTube Video URL <span className="text-slate-400 font-normal">(optional)</span></Label>
+                <Label>{t('video_url')}</Label>
                 <Input
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="e.g. https://www.youtube.com/watch?v=..."
+                  placeholder={t('video_url_placeholder')}
                 />
-                <p className="text-xs text-slate-400">Paste a YouTube or Vimeo link to add a video tour of the property.</p>
+                <p className="text-xs text-slate-400">{t('video_tour_note')}</p>
               </div>
             </div>
           )}
@@ -509,13 +589,11 @@ export default function AgentPostPage() {
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <MapPin className="h-5 w-5" />
-                <h2>Property Location Map</h2>
+                <h2>{t('property_location_map')}</h2>
               </div>
               <div className="flex items-start gap-2 rounded-xl bg-orange-50 p-3 text-sm text-orange-700">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>
-                  Click on the map to select the exact location of the property. This helps buyers find your property easily.
-                </p>
+                <p>{t('map_note')}</p>
               </div>
               
               <MapPicker
@@ -529,45 +607,45 @@ export default function AgentPostPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Latitude</Label>
+                  <Label>{t('latitude')}</Label>
                   <Input
                     type="number"
                     step="any"
                     value={latitude || ''}
                     onChange={(e) => setLatitude(parseFloat(e.target.value) || 0)}
-                    placeholder="e.g. 9.0375"
+                    placeholder={t('latitude_placeholder')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Longitude</Label>
+                  <Label>{t('longitude')}</Label>
                   <Input
                     type="number"
                     step="any"
                     value={longitude || ''}
                     onChange={(e) => setLongitude(parseFloat(e.target.value) || 0)}
-                    placeholder="e.g. 38.7612"
+                    placeholder={t('longitude_placeholder')}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label className="font-semibold text-slate-800">
-                  Location Document (Optional)
+                  {t('location_document_optional')}
                 </Label>
                 <p className="text-xs text-slate-500">
-                  Upload a document showing property boundaries, land title, or location verification
+                  {t('location_document_note')}
                 </p>
                 <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 py-8 text-center transition hover:border-orange-500 hover:bg-orange-50/50 cursor-pointer">
                   {uploadingImage ? (
                     <div className="flex flex-col items-center gap-2 text-orange-500">
                       <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="text-xs">Uploading document...</span>
+                      <span className="text-xs">{t('uploading_document')}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <FileText className="h-6 w-6 text-slate-400" />
-                      <span className="text-sm font-semibold">Click to upload document</span>
-                      <span className="text-xs">PDF, JPG, PNG (Max 10MB)</span>
+                      <span className="text-sm font-semibold">{t('click_upload_document')}</span>
+                      <span className="text-xs">{t('doc_types')}</span>
                     </div>
                   )}
                   <input
@@ -580,7 +658,7 @@ export default function AgentPostPage() {
                 {locationDocument && (
                   <div className="mt-2 flex items-center gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
                     <Check className="h-4 w-4" />
-                    <span>Document uploaded successfully</span>
+                    <span>{t('upload_success')}</span>
                     <button
                       type="button"
                       onClick={() => setLocationDocument('')}
@@ -599,21 +677,21 @@ export default function AgentPostPage() {
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
                 <CheckCircle2 className="h-5 w-5" />
-                <h2>Review Listing Information</h2>
+                <h2>{t('review_listing_info')}</h2>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 space-y-2">
                 <p className="font-bold text-slate-800 text-base mb-2">{title}</p>
                 <div className="grid grid-cols-2 gap-y-2">
-                  <p><span className="font-semibold">Type:</span> {propertyType} ({listingType})</p>
-                  <p><span className="font-semibold">Price:</span> {formatPrice(Number(price))} ETB ({priceType})</p>
-                  <p><span className="font-semibold">Location:</span> {city}, {region}</p>
-                  <p><span className="font-semibold">Beds/Baths:</span> {bedrooms} / {bathrooms}</p>
-                  <p><span className="font-semibold">Area:</span> {area} mÂ²</p>
-                  <p><span className="font-semibold">Condition:</span> {condition}</p>
+                  <p><span className="font-semibold">{t('type_label')}</span> {tv(propertyType)} ({tv(listingType)})</p>
+                  <p><span className="font-semibold">{t('price_label')}</span> {formatPrice(Number(price))} ETB ({tv(priceType)})</p>
+                  <p><span className="font-semibold">{t('location_label')}</span> {city}, {tv(region)}</p>
+                  <p><span className="font-semibold">{t('beds_baths_label')}</span> {bedrooms} / {bathrooms}</p>
+                  <p><span className="font-semibold">{t('area_label')}</span> {area} mÂ²</p>
+                  <p><span className="font-semibold">{t('condition_label')}</span> {tv(condition)}</p>
                 </div>
                 {description && (
                   <div className="mt-3 border-t border-slate-200 pt-3">
-                    <p className="font-semibold text-slate-700">Description</p>
+                    <p className="font-semibold text-slate-700">{t('description')}</p>
                     <p className="text-slate-600 line-clamp-3">{description}</p>
                   </div>
                 )}
@@ -621,7 +699,7 @@ export default function AgentPostPage() {
 
               <div className="flex gap-2 rounded-xl bg-orange-50 p-4 border border-orange-100 text-xs text-orange-800">
                 <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                <p>By submitting this property listing, you agree that the details are accurate. The listing will remain in Pending status until approved by an administrator.</p>
+                <p>{t('submit_agree_note')}</p>
               </div>
             </div>
           )}
@@ -635,16 +713,16 @@ export default function AgentPostPage() {
               disabled={step === 1 || saving}
               className="rounded-full"
             >
-              <ArrowLeft className="mr-1 h-4 w-4" /> Back
+              <ArrowLeft className="mr-1 h-4 w-4" /> {t('back')}
             </Button>
             {step < 4 ? (
               <Button type="button" onClick={next} className="rounded-full bg-orange-500 text-white hover:bg-orange-600">
-                Next <ArrowRight className="ml-1 h-4 w-4" />
+                {t('next')} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             ) : (
               <Button type="button" onClick={handleSubmit} disabled={saving} className="rounded-full bg-orange-500 text-white hover:bg-orange-600 px-6">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                Submit Listing
+                {t('submit_listing')}
               </Button>
             )}
           </div>
@@ -654,40 +732,40 @@ export default function AgentPostPage() {
         <aside className="rounded-3xl border border-slate-200 bg-white p-5 lg:sticky lg:top-24 lg:self-start space-y-4 shadow-sm">
           <p className="flex items-center gap-2 text-sm font-bold text-slate-800">
             <Building2 className="h-4 w-4 text-orange-500" />
-            <span>Listing Summary</span>
+            <span>{t('property_summary')}</span>
           </p>
           <div className="divide-y divide-slate-100 text-xs">
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Listing By</span>
-              <span className="font-semibold text-slate-800">{posterType}</span>
+              <span className="text-slate-500">{t('listing_by')}</span>
+              <span className="font-semibold text-slate-800">{tv(posterType)}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Owner Type</span>
-              <span className="font-semibold text-slate-800">{ownerType}</span>
+              <span className="text-slate-500">{t('owner_type')}</span>
+              <span className="font-semibold text-slate-800">{tv(ownerType)}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Type</span>
-              <span className="font-semibold text-slate-800">{propertyType}</span>
+              <span className="text-slate-500">{t('type')}</span>
+              <span className="font-semibold text-slate-800">{tv(propertyType)}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Listing</span>
-              <span className="font-semibold text-slate-800">{listingType}</span>
+              <span className="text-slate-500">{t('listing')}</span>
+              <span className="font-semibold text-slate-800">{tv(listingType)}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Price</span>
-              <span className="font-bold text-orange-600">{price ? `${formatPrice(Number(price))} ETB` : 'Not set'}</span>
+              <span className="text-slate-500">{t('price')}</span>
+              <span className="font-bold text-orange-600">{price ? `${formatPrice(Number(price))} ETB` : t('not_set')}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Location</span>
-              <span className="font-semibold text-slate-800 truncate max-w-[120px]">{city || 'Not set'}</span>
+              <span className="text-slate-500">{t('location')}</span>
+              <span className="font-semibold text-slate-800 truncate max-w-[120px]">{city || t('not_set')}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Images</span>
-              <span className="font-semibold text-slate-800">{uploadedImages.length} uploaded</span>
+              <span className="text-slate-500">{t('photos')}</span>
+              <span className="font-semibold text-slate-800">{uploadedImages.length} {t('uploaded')}</span>
             </div>
             <div className="py-2.5 flex justify-between">
-              <span className="text-slate-500">Features</span>
-              <span className="font-semibold text-slate-800">{features.length} selected</span>
+              <span className="text-slate-500">{t('features')}</span>
+              <span className="font-semibold text-slate-800">{features.length} {t('selected')}</span>
             </div>
           </div>
         </aside>

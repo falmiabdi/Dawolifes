@@ -23,15 +23,11 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  let token: string | undefined
   const authHeader = req.headers.authorization
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1]
-  } else if (req.query.token) {
-    token = req.query.token as string
-  } else {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'No token provided' })
   }
+  const token = authHeader.split(' ')[1]
   try {
     const decoded = verifyAccessToken(token)
     req.user = {
@@ -70,7 +66,7 @@ export async function requireActiveUser(req: AuthenticatedRequest, res: Response
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { id: true, role: true, status: true, rejectionReason: true },
+      select: { id: true, role: true, status: true, rejectionReason: true, onboardingComplete: true },
     })
     if (!user) {
       return res.status(401).json({ message: 'User not found' })
@@ -85,6 +81,12 @@ export async function requireActiveUser(req: AuthenticatedRequest, res: Response
     }
     if (status === 'Suspended') {
       return res.status(403).json({ message: 'Your account has been suspended and cannot post listings.' })
+    }
+    if (!user.onboardingComplete) {
+      return res.status(403).json({ message: 'Please complete your profile before posting listings.' })
+    }
+    if (status !== 'Approved') {
+      return res.status(403).json({ message: 'Your account is awaiting admin approval and cannot post listings yet.' })
     }
 
     next()

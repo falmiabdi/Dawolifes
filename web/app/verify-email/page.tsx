@@ -62,12 +62,10 @@ function VerifyEmailForm() {
     }
     setVerifying(true)
     try {
-      const data = await verifyOtp(email.trim(), otp.trim())
-      if (data.user) {
-        router.replace('/saved')
-      } else {
-        router.replace('/login')
-      }
+      await verifyOtp(email.trim(), otp.trim())
+      // Verification only activates the account. The user should sign in with
+      // the password they chose during registration.
+      router.replace('/login?verified=1')
     } catch (err: any) {
       showMessage(err?.message || 'Verification failed. Please try again.', true)
     } finally {
@@ -107,7 +105,7 @@ function VerifyEmailForm() {
       <div className="flex items-start gap-3 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-800">
         <Mail className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          We sent a 6-digit code to <span className="font-semibold">{email || 'your email'}</span>. Enter it below to
+          Enter the 6-digit verification code for <span className="font-semibold">{email || 'your email'}</span> to
           verify your account.
         </p>
       </div>

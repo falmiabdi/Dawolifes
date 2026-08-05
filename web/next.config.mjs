@@ -5,9 +5,6 @@ const nextConfig = {
   // Only use static export for production Capacitor builds — not in dev
   ...(isDev ? {} : { output: 'export' }),
 
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
   },

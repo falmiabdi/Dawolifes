@@ -81,7 +81,7 @@ export default function AuthLoginPage() {
     >
       <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('email')}</Label>
           <Input
             id="email"
             type="email"
@@ -92,12 +92,12 @@ export default function AuthLoginPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('password')}</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder={t('enter_password')}
               {...register('password', { required: 'Password is required' })}
             />
             <button
@@ -115,7 +115,7 @@ export default function AuthLoginPage() {
 
         <Button type="submit" className="w-full rounded-full" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Sign in
+          {t('sign_in')}
         </Button>
       </form>
     </AuthShell>

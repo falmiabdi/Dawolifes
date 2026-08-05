@@ -3,6 +3,8 @@
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect } from "react"
 
+import { useAuth } from '@/components/auth/auth-guard'
+
 import {
   CreditCard, TrendingUp, Download, ShieldCheck, RefreshCw,
   Clock, CheckCircle2, XCircle, Filter,
@@ -10,16 +12,16 @@ import {
 import { StatsCard } from "@/components/admin/stats-card"
 
 interface Payment {
-  _id: string
+  id: string
   orderId: string
-  title: string
+  propertyTitle: string
   amount: number
   status: string
   method: string
   paymentType: string
-  buyerPhone: string
+  buyerName: string | null
+  buyerEmail: string | null
   createdAt: string
-  user?: { fullName: string; username: string } | null
 }
 
 interface PaymentStats {
@@ -31,6 +33,7 @@ interface PaymentStats {
 }
 
 export default function AdminPaymentsPage() {
+  const { getToken } = useAuth()
   const [payments, setPayments] = useState<Payment[]>([])
   const [stats, setStats] = useState<PaymentStats>({
     totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0,
@@ -43,14 +46,16 @@ export default function AdminPaymentsPage() {
   async function fetchPayments() {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ role: "admin", page: String(page), limit: "15" })
+      const token = await getToken()
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const params = new URLSearchParams({ page: String(page), limit: "15" })
       if (filter) params.set("status", filter)
 
-      const res = await fetch(`${getApiUrl()}/api/payments?${params}`)
+      const res = await fetch(`${getApiUrl()}/api/payments?${params}`, { headers })
       const data = await res.json()
       setPayments(data.payments || [])
       setStats(data.stats || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 })
-      setTotalPages(data.totalPages || 1)
+      setTotalPages(data.pagination?.totalPages || 1)
     } catch {
       setPayments([])
     } finally {
@@ -63,10 +68,10 @@ export default function AdminPaymentsPage() {
   }, [page, filter])
 
   function exportCSV() {
-    const headers = ["Agent", "Description", "Date", "Method", "Type", "Status", "Amount"]
+    const headers = ["Buyer", "Description", "Date", "Method", "Type", "Status", "Amount"]
     const rows = payments.map((tx) => [
-      tx.user?.fullName || "Direct",
-      tx.title,
+      tx.buyerName || tx.buyerEmail || "Direct",
+      tx.propertyTitle,
       new Date(tx.createdAt).toLocaleDateString(),
       tx.method,
       tx.paymentType,
@@ -193,9 +198,9 @@ export default function AdminPaymentsPage() {
                   {payments.map((tx) => (
                     <tr key={tx.id}>
                       <td className="py-3.5 font-bold text-slate-900">
-                        {tx.user?.fullName || tx.user?.username || "Direct Payment"}
+                        {tx.buyerName || tx.buyerEmail || "Direct Payment"}
                       </td>
-                      <td className="py-3.5 text-xs text-slate-500 max-w-[200px] truncate">{tx.title}</td>
+                      <td className="py-3.5 text-xs text-slate-500 max-w-[200px] truncate">{tx.propertyTitle}</td>
                       <td className="py-3.5 text-xs text-slate-500">
                         {new Date(tx.createdAt).toLocaleDateString()}
                       </td>

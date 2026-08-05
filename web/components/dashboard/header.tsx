@@ -2,6 +2,7 @@ import { Menu } from "lucide-react"
 import { StatusBadge } from "@/components/ui/status-badge"
 import Image from "next/image"
 import { NotificationBell } from "@/components/dashboard/notification-bell"
+import { LanguageDropdown } from "@/components/language-dropdown"
 
 interface DashboardHeaderProps {
   name: string
@@ -39,6 +40,7 @@ export function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        <LanguageDropdown className="hidden sm:block" />
         <NotificationBell />
         <div className="flex items-center gap-2 md:gap-3">
           {profilePhoto ? (
@@ -48,6 +50,7 @@ export function DashboardHeader({
                 alt={name || "Profile"}
                 width={36}
                 height={36}
+                loading="eager"
                 className="h-full w-full object-cover"
               />
             </div>

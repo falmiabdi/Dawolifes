@@ -37,6 +37,7 @@ interface Vehicle {
   description?: string
   agentId: string
   agentName?: string
+  displayPhone?: string
   agent?: {
     id: string
     username: string
@@ -102,6 +103,29 @@ export default function AdminVehiclesPage() {
       } else {
         const data = await res.json()
         toast.error(data.message || 'Action failed')
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
+  const handleSwitchContact = async (id: string) => {
+    setSubmittingAction(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${getApiUrl()}/api/admin/vehicles/${id}/contact`, {
+        method: 'PATCH',
+        headers: authHeaders,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        toast.success(`Contact switched to ${data.displayPhone}`)
+        setSelectedVehicle(prev => prev ? { ...prev, displayPhone: data.displayPhone } : null)
+        fetchVehicles()
+      } else {
+        toast.error('Failed to toggle contact')
       }
     } catch {
       toast.error('Something went wrong')
@@ -253,7 +277,7 @@ export default function AdminVehiclesPage() {
                 <p className="text-slate-400">Listed by:</p>
                 <p className="font-semibold text-slate-700">{selectedVehicle.agent?.username || selectedVehicle.agentName || 'Unknown'}</p>
                 <p className="text-slate-400 mt-1">Contact:</p>
-                <p className="font-semibold text-slate-700">{selectedVehicle.agent?.phone || 'No phone set'}</p>
+                <p className="font-semibold text-slate-700">{selectedVehicle.displayPhone || selectedVehicle.agent?.phone || 'No phone set'}</p>
               </div>
 
               {selectedVehicle.status === 'Rejected' && selectedVehicle.rejectionReason && (
@@ -299,13 +323,24 @@ export default function AdminVehiclesPage() {
                     />
                   </>
                 )}
-                <Button
-                  onClick={() => handleDelete(selectedVehicle.id)}
-                  disabled={submittingAction}
-                  className="w-full bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold py-1.5 text-xs"
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Listing
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleSwitchContact(selectedVehicle.id)}
+                    disabled={submittingAction}
+                    className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
+                    title="Toggle contact phone"
+                  >
+                    <Phone className="h-3.5 w-3.5 mr-1" /> Switch Contact
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(selectedVehicle.id)}
+                    disabled={submittingAction}
+                    className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                    title="Delete Listing"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               {selectedVehicle.description && (

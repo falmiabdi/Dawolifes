@@ -7,6 +7,7 @@ import { Camera, CheckCircle2, Loader2, LogOut, ShieldCheck } from 'lucide-react
 import { useAuth } from '@/components/auth/auth-guard'
 import { SiteHeader } from '@/components/site-header'
 import { getApiUrl, getApiUrlAsync } from '@/lib/get-api-url'
+import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label'
 export default function VerifyPage() {
   const router = useRouter()
   const { user, loading, getToken, refreshUser, logout } = useAuth()
+  const { t, tv } = useI18n()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
@@ -113,14 +115,14 @@ export default function VerifyPage() {
         <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold text-foreground sm:text-2xl">My Account</h1>
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">{t('my_account')}</h1>
           </div>
 
           <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-            <CheckCircle2 className="h-4 w-4" /> Account verified
+            <CheckCircle2 className="h-4 w-4" /> {t('account_verified')}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your account was verified when you registered. You can browse, save and message sellers.
+            {t('account_verified_note')}
           </p>
 
           <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -151,15 +153,15 @@ export default function VerifyPage() {
 
             <div className="mt-6 space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t('full_name')}</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email_readonly')}</Label>
                 <Input id="email" value={user.email} readOnly className="bg-muted/40" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">{t('phone')}</Label>
                 <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+251 91 234 5678" />
               </div>
 
@@ -169,7 +171,7 @@ export default function VerifyPage() {
 
               <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Save Changes
+                {t('save_changes')}
               </Button>
 
               <Button
@@ -181,7 +183,7 @@ export default function VerifyPage() {
                 className="w-full rounded-xl"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign out
+                {t('logout')}
               </Button>
             </div>
           </div>

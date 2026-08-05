@@ -39,7 +39,6 @@ import { SiteHeader } from "@/components/site-header"
 import { Gallery } from "@/components/listing/gallery"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
-import { PayServiceCharge } from "@/components/listing/pay-service-charge"
 import { SaveButton } from "@/components/save-button"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 
@@ -626,8 +625,6 @@ function VehicleListingPage() {
                 </Button>
                 <SaveButton itemType="vehicle" itemId={vehicle.id} label="Save" />
               </div>
-
-              <PayServiceCharge propertyId={vehicle.id} propertyTitle={vehicle.title} />
             </aside>
           </div>
         </div>

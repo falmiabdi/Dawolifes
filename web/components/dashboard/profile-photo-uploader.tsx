@@ -5,6 +5,7 @@ import { getApiUrl } from '@/lib/get-api-url'
 import { useState } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/auth/auth-guard'
 
 import toast from 'react-hot-toast'
 
@@ -17,6 +18,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
   const [photoUrl, setPhotoUrl] = useState(currentPhoto)
   const [uploading, setUploading] = useState(false)
   const router = useRouter()
+  const { getToken } = useAuth()
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -34,6 +36,10 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
 
     try {
       setUploading(true)
+      const token = await getToken()
+      if (!token) {
+        throw new Error('Your session has expired. Please sign in again.')
+      }
 
       const formData = new FormData()
       formData.append('file', file)
@@ -41,6 +47,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       // 1. Upload to Cloudinary via server-side /api/agent/upload
       const uploadRes = await fetch(`${getApiUrl()}/api/agent/upload`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       })
 
@@ -50,11 +57,12 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       }
       const newUrl = uploadData.url
 
-      // 2. Save profilePhoto url to MongoDB via /api/agent/profile
-      const saveRes = await fetch(`${getApiUrl()}/api/agent/profile`, {
-        method: 'PUT',
+      // 2. Save the returned URL to the authenticated user's profile.
+      const saveRes = await fetch(`${getApiUrl()}/api/auth/profile`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ profilePhoto: newUrl }),
       })

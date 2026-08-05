@@ -4,6 +4,16 @@ import { v4 as uuidv4 } from 'uuid'
 
 const router = Router()
 
+function isNotifyAuthorized(req: any): boolean {
+  const secret = process.env.PAYMENT_WEBHOOK_SECRET
+  if (!secret) {
+    console.warn('[TeleBirr] PAYMENT_WEBHOOK_SECRET not set — notify not authenticated (dev only)')
+    return true
+  }
+  const header = req.headers['x-webhook-secret'] || req.headers['x-telebirr-signature']
+  return header === secret
+}
+
 // Create a TeleBirr order
 router.post('/create-order', async (req, res) => {
   try {
@@ -11,6 +21,27 @@ router.post('/create-order', async (req, res) => {
 
     if (!title || !amount) {
       return res.status(400).json({ message: 'Missing title or amount' })
+    }
+
+    const paymentTypeVal = paymentType || 'service_charge'
+
+    // Prevent duplicate payments for the same item.
+    const completed = await prisma.payment.findFirst({
+      where: { propertyId: propertyId || null, status: 'Completed', method: 'telebirr' },
+    })
+    if (completed) {
+      return res.status(409).json({ message: 'Payment already completed for this item' })
+    }
+    const existing = await prisma.payment.findFirst({
+      where: { propertyId: propertyId || null, status: 'Pending', method: 'telebirr', paymentType: paymentTypeVal },
+    })
+    if (existing) {
+      return res.json({
+        toPayUrl: `https://app.ethiotelebirr.et/payment/h5/?merch_order_id=${existing.merchOrderId}`,
+        merchOrderId: existing.merchOrderId,
+        orderId: existing.orderId,
+        duplicate: true,
+      })
     }
 
     const merchOrderId = `TB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
@@ -28,7 +59,7 @@ router.post('/create-order', async (req, res) => {
         amount: Number(amount),
         currency: 'ETB',
         method: 'telebirr',
-        paymentType: paymentType || 'service_charge',
+        paymentType: paymentTypeVal,
         buyerName: 'TeleBirr User',
         buyerEmail: 'customer@telebirr.et',
         buyerPhone: '0900000000',
@@ -69,6 +100,10 @@ router.post('/notify', async (req, res) => {
   try {
     const { merch_order_id, status } = req.body
     if (!merch_order_id) return res.status(400).json({ message: 'merch_order_id required' })
+
+    if (!isNotifyAuthorized(req)) {
+      return res.status(401).json({ message: 'Unauthorized notification' })
+    }
 
     const payment = await prisma.payment.findFirst({ where: { merchOrderId: merch_order_id } })
     if (payment) {

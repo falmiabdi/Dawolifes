@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const publicRoutes = ['/', '/login', '/register', '/listings', '/pay']
+const publicRoutes = ['/', '/login', '/register', '/verify-email', '/auth/login', '/auth/signup', '/listings']
 const onboardingRoute = '/agent/onboarding'
 const agentOnlyRoutes = ['/post']
 

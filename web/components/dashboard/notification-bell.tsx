@@ -34,7 +34,9 @@ export function NotificationBell() {
           setRole(data.session.user.role || 'agent')
         }
       } catch (error) {
-        console.error('[API] Failed to load session for notification bell:', error)
+        if (!(error instanceof TypeError)) {
+          console.error('[API] Failed to load session for notification bell:', error)
+        }
       }
     })()
 
@@ -58,7 +60,11 @@ export function NotificationBell() {
           setUnreadCount(data.count)
         }
       } catch (error) {
-        console.error('[API] Failed to load unread notifications count:', error)
+        if (error instanceof TypeError) {
+          console.warn('[API] Notifications count unreachable (retrying on next poll)')
+        } else {
+          console.error('[API] Failed to load unread notifications count:', error)
+        }
       }
     }
 
@@ -88,7 +94,9 @@ export function NotificationBell() {
 
     async function connect() {
       try {
-        const wsUrl = await getWsUrlAsync(`/ws?userId=${userId}`)
+        const token = await getToken()
+        if (!token) return
+        const wsUrl = await getWsUrlAsync(`/ws?token=${encodeURIComponent(token)}&userId=${userId}`)
         if (cancelled || ws) return
         ws = new WebSocket(wsUrl)
 
@@ -129,7 +137,7 @@ export function NotificationBell() {
       if (ws) ws.close()
       if (reconnectTimeout) clearTimeout(reconnectTimeout)
     }
-  }, [userId])
+  }, [userId, getToken])
 
   return (
     <Link

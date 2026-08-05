@@ -6,6 +6,7 @@ import { Bookmark, X } from "lucide-react"
 import { useAuth } from "@/components/auth/auth-guard"
 import { getApiUrl } from "@/lib/get-api-url"
 import { cn } from "@/lib/utils"
+import toast from "react-hot-toast"
 
 export function SaveButton({
   itemType,
@@ -66,6 +67,10 @@ export function SaveButton({
     setBusy(true)
     try {
       const token = await getToken()
+      if (!token) {
+        setShowPrompt(true)
+        return
+      }
       const res = await fetch(`${getApiUrl()}/api/favorites`, {
         method: saved ? "DELETE" : "POST",
         headers: {
@@ -79,9 +84,13 @@ export function SaveButton({
         const next = !saved
         setSaved(next)
         onChange?.(next)
+        toast.success(next ? 'Property saved' : 'Property removed from saved items')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.message || 'Unable to update saved properties')
       }
     } catch {
-      // silently ignore
+      toast.error('Unable to update saved properties')
     } finally {
       setBusy(false)
     }

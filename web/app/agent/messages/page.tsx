@@ -6,6 +6,7 @@ import { MessageSquare, Send, Phone, Mail, ChevronLeft, Loader2 } from 'lucide-r
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/components/auth/auth-guard'
+import { useI18n } from '@/lib/i18n'
 
 interface Thread {
   propertyId: string
@@ -22,6 +23,7 @@ interface Thread {
 interface Message {
   id: string
   propertyId: string
+  propertyTitle?: string
   senderId: string
   senderName: string
   senderRole: string
@@ -36,6 +38,7 @@ const POLL_INTERVAL = 4000
 
 export default function AgentMessagesPage() {
   const { user, getToken } = useAuth()
+  const { t } = useI18n()
   const [threads, setThreads] = useState<Thread[]>([])
   const [activeThread, setActiveThread] = useState<Thread | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -182,9 +185,9 @@ export default function AgentMessagesPage() {
   function formatTime(dateStr: string) {
     const d = new Date(dateStr)
     const diff = Date.now() - d.getTime()
-    if (diff < 60000) return 'Just now'
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+    if (diff < 60000) return t('just_now')
+    if (diff < 3600000) return t('minutes_ago').replace('{n}', String(Math.floor(diff / 60000)))
+    if (diff < 86400000) return t('hours_ago').replace('{n}', String(Math.floor(diff / 3600000)))
     return d.toLocaleDateString()
   }
 
@@ -193,8 +196,8 @@ export default function AgentMessagesPage() {
       {/* Threads list */}
       <div className={`w-full md:w-80 flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden ${showChatMobile ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-slate-100">
-          <h1 className="text-lg font-bold text-slate-900">Conversations</h1>
-          <p className="text-xs text-slate-500">Inquiries from buyers</p>
+          <h1 className="text-lg font-bold text-slate-900">{t('conversations')}</h1>
+          <p className="text-xs text-slate-500">{t('inquiries_from_buyers')}</p>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {loading ? (
@@ -204,7 +207,7 @@ export default function AgentMessagesPage() {
           ) : threads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-slate-400">
               <MessageSquare className="h-8 w-8 opacity-30 mb-2" />
-              <p className="text-xs">No conversations yet</p>
+              <p className="text-xs">{t('no_conversations')}</p>
             </div>
           ) : (
             threads.map((t) => (
@@ -251,7 +254,7 @@ export default function AgentMessagesPage() {
               </button>
               <div>
                 <h2 className="font-bold text-slate-950 text-sm md:text-base">{activeThread.otherUserName}</h2>
-                <p className="text-[10px] md:text-xs text-slate-500 font-medium">Inquiry about: {activeThread.propertyTitle}</p>
+                <p className="text-[10px] md:text-xs text-slate-500 font-medium">{t('inquiry_about').replace('{title}', activeThread.propertyTitle)}</p>
               </div>
             </div>
             <div className="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-4 text-[10px] md:text-xs text-slate-500">
@@ -267,7 +270,7 @@ export default function AgentMessagesPage() {
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <MessageSquare className="h-8 w-8 opacity-30 mb-2" />
-                <p className="text-xs">No messages yet. Start the conversation!</p>
+                <p className="text-xs">{t('no_messages_yet')}</p>
               </div>
             ) : (
               messages.map((m) => {
@@ -295,7 +298,7 @@ export default function AgentMessagesPage() {
             <Input
               value={typedMessage}
               onChange={(e) => setTypedMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={t('type_message')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
               }}
@@ -313,7 +316,7 @@ export default function AgentMessagesPage() {
       ) : (
         <div className="flex-1 hidden md:flex flex-col items-center justify-center text-slate-400 bg-white border border-slate-200 rounded-3xl shadow-sm">
           <MessageSquare className="h-12 w-12 opacity-30 mb-2" />
-          <p className="text-sm">Select a conversation to start messaging</p>
+          <p className="text-sm">{t('select_conversation')}</p>
         </div>
       )}
     </div>

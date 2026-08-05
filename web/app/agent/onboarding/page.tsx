@@ -5,6 +5,7 @@ import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
+import { useI18n } from '@/lib/i18n'
 
 import { CheckCircle2, ChevronRight, ChevronLeft, Upload, X, Loader2, User, Phone, Shield, GraduationCap, Briefcase, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,7 @@ function FileUpload({ label, value, onChange, field, uploadFile }: {
   field: string
   uploadFile: (file: File, field: string) => Promise<string>
 }) {
+  const { t } = useI18n()
   const ref = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const previewRef = useRef<string | null>(null)
@@ -102,7 +104,7 @@ function FileUpload({ label, value, onChange, field, uploadFile }: {
         ) : (
           <div className="flex flex-col items-center gap-2 text-slate-400">
             <Upload className="h-6 w-6" />
-            <span className="text-xs">Click to upload</span>
+            <span className="text-xs">{t('click_to_upload')}</span>
           </div>
         )}
         <input ref={ref} type="file" accept="image/*,.pdf" className="hidden" onChange={handle} />
@@ -113,7 +115,8 @@ function FileUpload({ label, value, onChange, field, uploadFile }: {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { getToken } = useAuth()
+  const { getToken, refreshUser } = useAuth()
+  const { t, tv } = useI18n()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [agreed, setAgreed] = useState({ terms: false, privacy: false })
@@ -213,7 +216,8 @@ export default function OnboardingPage() {
       } else if (step === 6) {
         if (!agreed.terms || !agreed.privacy) { setError('You must accept both the Terms & Conditions and Privacy Policy.'); setSaving(false); return }
         await saveStep({ onboardingComplete: true })
-        toast.success('Application submitted successfully!')
+        await refreshUser()
+        toast.success(t('application_submitted'))
         router.push('/agent')
         return
       }
@@ -230,9 +234,9 @@ export default function OnboardingPage() {
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <div className="mb-8 text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-orange-500">Agent Registration</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">Complete Your Profile</h1>
-          <p className="mt-2 text-slate-500">Step {step} of {STEPS.length} â€” {STEPS[step - 1].label}</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-orange-500">{t('agent_registration')}</p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900">{t('complete_profile')}</h1>
+          <p className="mt-2 text-slate-500">{t('step_of')} {step}/{STEPS.length} â€” {({ Personal: t('personal'), Contact: t('contact'), Identity: t('identity'), Education: t('education'), Professional: t('professional'), Submit: t('submit') } as Record<string, string>)[STEPS[step - 1].label]}</p>
         </div>
 
         {/* Step progress */}
@@ -263,33 +267,33 @@ export default function OnboardingPage() {
           {/* â”€â”€ STEP 1 â”€â”€ */}
           {step === 1 && (
             <div className="space-y-5">
-              <h2 className="text-xl font-bold text-slate-800">Personal Information</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('personal_info')}</h2>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Full Name <span className="text-red-500">*</span></Label>
+                  <Label>{t('full_name')} <span className="text-red-500">*</span></Label>
                   <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Abebe Girma" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Gender</Label>
+                  <Label>{t('gender')}</Label>
                   <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option value="">Select gender</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
+                    <option value="">{t('select_gender')}</option>
+                    <option>{t('male')}</option>
+                    <option>{t('female')}</option>
+                    <option>{t('other')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Date of Birth</Label>
+                  <Label>{t('date_of_birth')}</Label>
                   <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nationality</Label>
+                  <Label>{t('nationality')}</Label>
                   <Input value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="Ethiopian" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Preferred Language</Label>
+                  <Label>{t('preferred_language')}</Label>
                   <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option value="">Select language</option>
+                    <option value="">{t('select_language')}</option>
                     <option>English</option>
                     <option>Afaan Oromo</option>
                     <option>Amharic</option>
@@ -302,37 +306,37 @@ export default function OnboardingPage() {
           {/* â”€â”€ STEP 2 â”€â”€ */}
           {step === 2 && (
             <div className="space-y-5">
-              <h2 className="text-xl font-bold text-slate-800">Contact Information</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('contact_info')}</h2>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Ethiopian Telecom Phone <span className="text-red-500">*</span></Label>
+                  <Label>{t('ethio_telecom_phone')} <span className="text-red-500">*</span></Label>
                   <Input value={ethPhone} onChange={(e) => setEthPhone(e.target.value)} placeholder="+251 9XX XXX XXX" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Safaricom Ethiopia Phone (Optional)</Label>
+                  <Label>{t('safaricom_phone')} ({t('optional')})</Label>
                   <Input value={safaricomPhone} onChange={(e) => setSafaricomPhone(e.target.value)} placeholder="+251 7XX XXX XXX" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Region</Label>
+                  <Label>{t('region')}</Label>
                   <select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option value="">Select region</option>
-                    {['Addis Ababa', 'Afar', 'Amhara', 'Benishangul-Gumuz', 'Central Ethiopia', 'Dire Dawa', 'Gambela', 'Harari', 'Oromia', 'Sidama', 'Somali', 'South Ethiopia', 'SNNPR', 'Tigray'].map(r => <option key={r}>{r}</option>)}
+                    <option value="">{t('select_region')}</option>
+                    {['Addis Ababa', 'Afar', 'Amhara', 'Benishangul-Gumuz', 'Central Ethiopia', 'Dire Dawa', 'Gambela', 'Harari', 'Oromia', 'Sidama', 'Somali', 'South Ethiopia', 'SNNPR', 'Tigray'].map(r => <option key={r} value={r}>{tv(r)}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>City</Label>
+                  <Label>{t('city')}</Label>
                   <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Woreda / Sub City</Label>
+                  <Label>{t('woreda_subcity')}</Label>
                   <Input value={woreda} onChange={(e) => setWoreda(e.target.value)} placeholder="Woreda or Sub City" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Kebele</Label>
+                  <Label>{t('kebele')}</Label>
                   <Input value={kebele} onChange={(e) => setKebele(e.target.value)} placeholder="Kebele number" />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Full Address</Label>
+                  <Label>{t('full_address')}</Label>
                   <Input value={fullAddress} onChange={(e) => setFullAddress(e.target.value)} placeholder="Full mailing address" />
                 </div>
               </div>
@@ -342,13 +346,13 @@ export default function OnboardingPage() {
           {/* â”€â”€ STEP 3 â”€â”€ */}
           {step === 3 && (
             <div className="space-y-5">
-              <h2 className="text-xl font-bold text-slate-800">Identity Verification</h2>
-              <p className="text-sm text-slate-500">Upload clear photos of your identification documents. All fields are required.</p>
+              <h2 className="text-xl font-bold text-slate-800">{t('identity_verification')}</h2>
+              <p className="text-sm text-slate-500">{t('identity_upload_note')}</p>
               <div className="grid gap-5 sm:grid-cols-2">
-                <FileUpload label="Fayda ID Front *" value={faydaFront} onChange={setFaydaFront} field="faydaFront" uploadFile={uploadFile} />
-                <FileUpload label="Fayda ID Back *" value={faydaBack} onChange={setFaydaBack} field="faydaBack" uploadFile={uploadFile} />
-                <FileUpload label="Selfie Holding Fayda ID *" value={selfie} onChange={setSelfie} field="selfie" uploadFile={uploadFile} />
-                <FileUpload label="Passport Size Photo *" value={passport} onChange={setPassport} field="passport" uploadFile={uploadFile} />
+                <FileUpload label={`${t('fayda_front')} *`} value={faydaFront} onChange={setFaydaFront} field="faydaFront" uploadFile={uploadFile} />
+                <FileUpload label={`${t('fayda_back')} *`} value={faydaBack} onChange={setFaydaBack} field="faydaBack" uploadFile={uploadFile} />
+                <FileUpload label={`${t('selfie_fayda')} *`} value={selfie} onChange={setSelfie} field="selfie" uploadFile={uploadFile} />
+                <FileUpload label={`${t('passport_photo')} *`} value={passport} onChange={setPassport} field="passport" uploadFile={uploadFile} />
               </div>
             </div>
           )}
@@ -356,56 +360,54 @@ export default function OnboardingPage() {
           {/* â”€â”€ STEP 4 â”€â”€ */}
           {step === 4 && (
             <div className="space-y-5">
-              <h2 className="text-xl font-bold text-slate-800">Education</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('education')}</h2>
               <div className="space-y-2">
-                <Label>Highest Education Level <span className="text-red-500">*</span></Label>
+                <Label>{t('highest_education')} <span className="text-red-500">*</span></Label>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {['Grade 10', 'Grade 12', 'TVET Certificate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD'].map((lvl) => (
                     <label key={lvl} className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3 transition ${education === lvl ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-orange-300'}`}>
                       <input type="radio" name="edu" value={lvl} checked={education === lvl} onChange={(e) => setEducation(e.target.value)} className="accent-orange-500" />
-                      <span className="text-sm font-medium text-slate-700">{lvl}</span>
+                      <span className="text-sm font-medium text-slate-700">{tv(lvl)}</span>
                     </label>
                   ))}
                 </div>
               </div>
-              <FileUpload label="Upload Certificate (Optional)" value={eduCert} onChange={setEduCert} field="eduCert" uploadFile={uploadFile} />
+              <FileUpload label={`${t('upload_certificate')} (${t('optional')})`} value={eduCert} onChange={setEduCert} field="eduCert" uploadFile={uploadFile} />
             </div>
           )}
 
           {/* â”€â”€ STEP 5 â”€â”€ */}
           {step === 5 && (
             <div className="space-y-5">
-              <h2 className="text-xl font-bold text-slate-800">Professional Information</h2>
-              <p className="text-sm text-slate-500">All fields in this step are optional.</p>
+              <h2 className="text-xl font-bold text-slate-800">{t('professional_info')}</h2>
+              <p className="text-sm text-slate-500">{t('professional_optional_note')}</p>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Agent Experience</Label>
+                  <Label>{t('agent_experience')}</Label>
                   <select value={experience} onChange={(e) => setExperience(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option value="">Select experience</option>
-                    <option>Less than 1 year</option>
-                    <option>1â€“3 years</option>
-                    <option>3â€“5 years</option>
-                    <option>5â€“10 years</option>
-                    <option>More than 10 years</option>
+                    <option value="">{t('select_experience')}</option>
+                    {[{ v: 'Less than 1 year', k: 'exp_less_1' }, { v: '1â€“3 years', k: 'exp_1_3' }, { v: '3â€“5 years', k: 'exp_3_5' }, { v: '5â€“10 years', k: 'exp_5_10' }, { v: 'More than 10 years', k: 'exp_more_10' }].map((o) => (
+                      <option key={o.v} value={o.v}>{t(o.k)}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Company Name (Optional)</Label>
+                  <Label>{t('company_name')} ({t('optional')})</Label>
                   <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Your company name" />
                 </div>
                 <div className="space-y-2">
-                  <Label>TIN Number (Optional)</Label>
+                  <Label>{t('tin_number')} ({t('optional')})</Label>
                   <Input value={tin} onChange={(e) => setTin(e.target.value)} placeholder="Tax Identification Number" />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Office Address (Optional)</Label>
+                  <Label>{t('office_address')} ({t('optional')})</Label>
                   <Input value={officeAddr} onChange={(e) => setOfficeAddr(e.target.value)} placeholder="Office location" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Business License Number (Optional)</Label>
+                  <Label>{t('business_license_number')} ({t('optional')})</Label>
                   <Input value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} placeholder="License number" />
                 </div>
-                <FileUpload label="Business License Upload (Optional)" value={licenseFile} onChange={setLicenseFile} field="license" uploadFile={uploadFile} />
+                <FileUpload label={`${t('business_license_upload')} (${t('optional')})`} value={licenseFile} onChange={setLicenseFile} field="license" uploadFile={uploadFile} />
               </div>
             </div>
           )}
@@ -413,28 +415,28 @@ export default function OnboardingPage() {
           {/* â”€â”€ STEP 6 â”€â”€ */}
           {step === 6 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-slate-800">Review & Submit</h2>
+              <h2 className="text-xl font-bold text-slate-800">{t('review_submit')}</h2>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 space-y-1">
-                <p className="font-semibold text-slate-800 mb-3">Application Summary</p>
-                <p><span className="font-medium">Name:</span> {fullName}</p>
-                <p><span className="font-medium">Phone:</span> {ethPhone}</p>
-                <p><span className="font-medium">Region:</span> {region}, {city}</p>
-                <p><span className="font-medium">Education:</span> {education}</p>
-                <p><span className="font-medium">Experience:</span> {experience || 'Not specified'}</p>
+                <p className="font-semibold text-slate-800 mb-3">{t('application_summary')}</p>
+                <p><span className="font-medium">{t('name_label')}</span> {fullName}</p>
+                <p><span className="font-medium">{t('phone_label')}</span> {ethPhone}</p>
+                <p><span className="font-medium">{t('region_label')}</span> {region}, {city}</p>
+                <p><span className="font-medium">{t('education_label')}</span> {education}</p>
+                <p><span className="font-medium">{t('experience_label')}</span> {experience || t('not_specified')}</p>
               </div>
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.terms} onChange={(e) => setAgreed((a) => ({ ...a, terms: e.target.checked }))} />
-                  <span className="text-sm text-slate-600">I agree to the <span className="font-semibold text-orange-600 underline cursor-pointer">Terms & Conditions</span> of the DawoLife platform.</span>
+                  <span className="text-sm text-slate-600">{t('agree_terms')} <span className="font-semibold text-orange-600 underline cursor-pointer">{t('terms_conditions')}</span> {t('of_platform')}</span>
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.privacy} onChange={(e) => setAgreed((a) => ({ ...a, privacy: e.target.checked }))} />
-                  <span className="text-sm text-slate-600">I agree to the <span className="font-semibold text-orange-600 underline cursor-pointer">Privacy Policy</span> and consent to data processing.</span>
+                  <span className="text-sm text-slate-600">{t('agree_terms')} <span className="font-semibold text-orange-600 underline cursor-pointer">{t('privacy_policy')}</span> {t('agree_privacy')}</span>
                 </label>
               </div>
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                <p className="font-semibold">After Submission</p>
-                <p className="mt-1">Your account will be in <strong>Pending Approval</strong> status. You cannot publish properties until an administrator approves your account. If rejected, a reason will be provided and you may resubmit.</p>
+                <p className="font-semibold">{t('after_submission')}</p>
+                <p className="mt-1">{t('after_submission_note')} <strong>{t('pending_approval')}</strong> {t('after_submission_note2')}</p>
               </div>
             </div>
           )}
@@ -448,11 +450,11 @@ export default function OnboardingPage() {
               disabled={step === 1 || saving}
               className="rounded-full"
             >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Back
+              <ChevronLeft className="mr-1 h-4 w-4" /> {t('back')}
             </Button>
             <Button type="button" onClick={next} disabled={saving} className="rounded-full bg-orange-500 px-6 text-white hover:bg-orange-600">
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {step === 6 ? 'Submit Application' : 'Save & Continue'}
+              {step === 6 ? t('submit_application') : t('save_continue')}
               {step < 6 && <ChevronRight className="ml-1 h-4 w-4" />}
             </Button>
           </div>

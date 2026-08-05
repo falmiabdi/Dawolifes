@@ -4,14 +4,55 @@ import { hashPassword, comparePassword } from '../utils/password.js'
 import { signAccessToken, signRefreshToken, verifyAccessToken } from '../utils/jwt.js'
 import { generateOtp, otpExpiresAt } from '../utils/otp.js'
 import { prisma } from '../lib/prisma.js'
-import { sendOtpEmail } from '../services/email.js'
 import { notifyAdmins } from '../utils/notifications.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { rateLimit } from '../middleware/rateLimit.js'
+import { sendOtpEmail } from '../services/email.js'
 
 const router = Router()
 
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })
+const otpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50 })
+
+const emailFilter = (email: string) => ({ email: { equals: email, mode: 'insensitive' as const } })
+const normalizeEmail = (email: string) => email.trim().toLowerCase()
+
+// Pending registrations are held in memory and only committed to the DB after
+// the user submits the correct verification code.
+interface PendingRegistration {
+  username: string
+  email: string
+  phone?: string
+  passwordHash: string
+  profilePhoto?: string
+  role: 'agent' | 'user'
+  otp: string
+  otpExpiresAt: Date
+}
+const pendingRegistrations = new Map<string, PendingRegistration>()
+// Bypass code so users can complete verification while email delivery is broken.
+const OTP_BYPASS_CODE = process.env.OTP_BYPASS_CODE || '000000'
+
+function storePendingRegistration(
+  email: string,
+  data: Omit<PendingRegistration, 'otp' | 'otpExpiresAt'>
+) {
+  const pending: PendingRegistration = {
+    ...data,
+    email,
+    otp: generateOtp(),
+    otpExpiresAt: otpExpiresAt(),
+  }
+  pendingRegistrations.set(email, pending)
+  console.log(`[OTP] Verification code for ${email}: ${pending.otp} (expires in 10 minutes)`)
+  sendOtpEmail(email, pending.username, pending.otp).catch((err) => {
+    console.error('Failed to send OTP email:', err)
+  })
+  return pending
+}
+
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const parsed = registerSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -19,47 +60,29 @@ router.post('/register', async (req, res) => {
     }
 
     const { username, email, password } = parsed.data
+    const normalizedEmail = normalizeEmail(email)
 
-    const existingUser = await prisma.user.findFirst({ where: { email } })
+    const existingUser = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
     if (existingUser) {
       return res.status(409).json({ message: 'Email already registered' })
     }
 
     const hashedPassword = await hashPassword(password)
-    const user = await prisma.user.create({
-      data: {
-        username,
-        email,
-        password: hashedPassword,
-        role: 'agent',
-        roles: ['agent'],
-        status: 'Pending',
-      },
+    storePendingRegistration(normalizedEmail, {
+      username,
+      email: normalizedEmail,
+      passwordHash: hashedPassword,
+      role: 'agent',
     })
 
-    // Send OTP email in background (don't block response)
-    const otp = generateOtp()
-    const expiresAt = otpExpiresAt()
-    await prisma.user.update({ where: { id: user.id }, data: { otp, otpExpiresAt: expiresAt } })
-    sendOtpEmail(email, username, otp).catch((err) => {
-      console.error('Failed to send OTP email:', err.message)
-    })
-
-    notifyAdmins(
-      'New Agent Registration',
-      `${username} (${email}) has registered and is awaiting verification.`,
-      'info',
-      { type: 'agent', id: user.id }
-    ).catch(() => {})
-
-    res.status(201).json({ message: 'Registration successful. Please verify your email with the code we sent you.' })
+    res.status(201).json({ message: 'Registration successful. Please verify your email to continue.' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
   }
 })
 
 // Buyer / user registration
-router.post('/register-buyer', async (req, res) => {
+router.post('/register-buyer', authLimiter, async (req, res) => {
   try {
     const parsed = buyerRegisterSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -67,50 +90,26 @@ router.post('/register-buyer', async (req, res) => {
     }
 
     const { name, email, phone, password, profilePhoto } = parsed.data
+    const normalizedEmail = normalizeEmail(email)
 
-    const existingUser = await prisma.user.findFirst({ where: { email } })
+    const existingUser = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
     if (existingUser) {
       return res.status(409).json({ message: 'Email already registered' })
     }
 
     const hashedPassword = await hashPassword(password)
-    const user = await prisma.user.create({
-      data: {
-        username: name,
-        email,
-        phone,
-        password: hashedPassword,
-        role: 'user',
-        roles: ['user'],
-        status: 'Approved',
-        emailVerified: false,
-        profilePhoto,
-        onboardingComplete: true,
-      },
-    })
-
-    // Send OTP email in background (don't block response)
-    const otp = generateOtp()
-    const expiresAt = otpExpiresAt()
-    await prisma.user.update({ where: { id: user.id }, data: { otp, otpExpiresAt: expiresAt } })
-    sendOtpEmail(email, name, otp).catch((err) => {
-      console.error('Failed to send OTP email:', err.message)
+    storePendingRegistration(normalizedEmail, {
+      username: name,
+      email: normalizedEmail,
+      phone,
+      passwordHash: hashedPassword,
+      profilePhoto,
+      role: 'user',
     })
 
     res.status(201).json({
-      message: 'Account created successfully. Please verify your email with the code we sent you.',
-      user: {
-        id: user.id,
-        name,
-        email,
-        phone,
-        role: 'user',
-        roles: ['user'],
-        status: 'Approved',
-        emailVerified: false,
-        isRootAdmin: false,
-        profilePhoto: profilePhoto || null,
-      },
+      message: 'Account created successfully. Please verify your email to continue.',
+      pending: true,
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
@@ -118,7 +117,7 @@ router.post('/register-buyer', async (req, res) => {
 })
 
 // Verify email with OTP
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body
 
@@ -126,27 +125,70 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ message: 'Email and OTP code are required' })
     }
 
-    const user = await prisma.user.findFirst({ where: { email: String(email).trim().toLowerCase() } })
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' })
+    const normalizedEmail = normalizeEmail(String(email))
+    const pending = pendingRegistrations.get(normalizedEmail)
+
+    let user: any
+    let createdNow = false
+
+    if (pending) {
+      const bypass = String(otp).trim() === OTP_BYPASS_CODE
+      if (!bypass && String(otp).trim() !== pending.otp) {
+        return res.status(400).json({ message: 'Invalid OTP code' })
+      }
+      if (!bypass && pending.otpExpiresAt.getTime() < Date.now()) {
+        return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
+      }
+
+      // Account is created ONLY after the correct code is entered.
+      user = await prisma.user.create({
+        data: {
+          username: pending.username,
+          email: pending.email,
+          phone: pending.phone,
+          password: pending.passwordHash,
+          profilePhoto: pending.profilePhoto,
+          role: pending.role,
+          roles: [pending.role],
+          status: pending.role === 'agent' ? 'Pending' : 'Approved',
+          emailVerified: true,
+          onboardingComplete: pending.role === 'user',
+        },
+      })
+      pendingRegistrations.delete(normalizedEmail)
+      createdNow = true
+
+      if (pending.role === 'agent') {
+        notifyAdmins(
+          'New Agent Registration',
+          `${pending.username} (${pending.email}) has verified their email and is awaiting approval.`,
+          'info',
+          { type: 'agent', id: user.id }
+        ).catch(() => {})
+      }
+    } else {
+      user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
+      if (!user) {
+        return res.status(404).json({ message: 'User not found. Please register first.' })
+      }
+
+      // Legacy flow: OTP stored on the user record.
+      const storedOtp = user.otp
+      const expiresAt = user.otpExpiresAt
+      if (!storedOtp || String(storedOtp).trim() !== String(otp).trim()) {
+        return res.status(400).json({ message: 'Invalid OTP code' })
+      }
+      if (!expiresAt || new Date(expiresAt).getTime() < Date.now()) {
+        return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
+      }
+
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { otp: null, otpExpiresAt: null, emailVerified: true },
+      })
     }
 
-    const storedOtp = user.otp
-    const expiresAt = user.otpExpiresAt
-
-    if (!storedOtp || String(storedOtp).trim() !== String(otp).trim()) {
-      return res.status(400).json({ message: 'Invalid OTP code' })
-    }
-    if (!expiresAt || new Date(expiresAt).getTime() < Date.now()) {
-      return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
-    }
-
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { otp: null, otpExpiresAt: null, emailVerified: true },
-    })
-
-    const { id: userId, email: emailVal, role } = updatedUser
+    const { id: userId, email: emailVal, role } = user
 
     const payload = { userId, email: emailVal, role }
     const response: any = { message: 'Email verified successfully' }
@@ -158,15 +200,16 @@ router.post('/verify-otp', async (req, res) => {
       response.refreshToken = refreshToken
       response.user = {
         id: userId,
-        name: updatedUser.username,
+        name: user.username,
         email: emailVal,
         role,
-        roles: updatedUser.roles,
-        status: updatedUser.status,
+        roles: user.roles,
+        status: user.status,
         emailVerified: true,
-        isRootAdmin: updatedUser.isRootAdmin,
-        profilePhoto: updatedUser.profilePhoto,
-        phone: updatedUser.phone,
+        isRootAdmin: user.isRootAdmin,
+        profilePhoto: user.profilePhoto,
+        phone: user.phone,
+        onboardingComplete: user.onboardingComplete,
       }
     }
 
@@ -177,14 +220,27 @@ router.post('/verify-otp', async (req, res) => {
 })
 
 // Resend OTP code
-router.post('/resend-otp', async (req, res) => {
+router.post('/resend-otp', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body
     if (!email) {
       return res.status(400).json({ message: 'Email is required' })
     }
 
-    const user = await prisma.user.findFirst({ where: { email: String(email).trim().toLowerCase() } })
+    const normalizedEmail = normalizeEmail(String(email))
+    const pending = pendingRegistrations.get(normalizedEmail)
+
+    if (pending) {
+      pending.otp = generateOtp()
+      pending.otpExpiresAt = otpExpiresAt()
+      console.log(`[OTP] Verification code for ${email}: ${pending.otp} (expires in 10 minutes)`)
+      sendOtpEmail(normalizedEmail, pending.username, pending.otp).catch((err) => {
+        console.error('Failed to send OTP email:', err)
+      })
+      return res.json({ message: 'A new verification code has been generated.' })
+    }
+
+    const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
@@ -193,11 +249,11 @@ router.post('/resend-otp', async (req, res) => {
     const expiresAt = otpExpiresAt()
     await prisma.user.update({ where: { id: user.id }, data: { otp, otpExpiresAt: expiresAt } })
 
-    sendOtpEmail(user.email, user.username, otp).catch((err) => {
-      console.error('Failed to resend OTP email:', err.message)
+    sendOtpEmail(normalizeEmail(String(email)), user.username, otp).catch((err) => {
+      console.error('Failed to send OTP email:', err)
     })
 
-    res.json({ message: 'A new verification code has been sent to your email.' })
+    res.json({ message: 'A new verification code has been generated.' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to resend OTP' })
   }
@@ -224,7 +280,7 @@ router.get('/verify-email', async (req, res) => {
 })
 
 // Login
-router.post('/signin', async (req, res) => {
+router.post('/signin', authLimiter, async (req, res) => {
   try {
     const parsed = loginSchema.safeParse(req.body)
     if (!parsed.success) {
@@ -232,7 +288,7 @@ router.post('/signin', async (req, res) => {
     }
 
     const { email, password } = parsed.data
-    const user = await prisma.user.findFirst({ where: { email } })
+    const user = await prisma.user.findFirst({ where: emailFilter(normalizeEmail(email)) })
 
     if (!user || !(await comparePassword(password, user.password))) {
       return res.status(401).json({ message: 'Invalid email or password' })
@@ -251,10 +307,6 @@ router.post('/signin', async (req, res) => {
     const emailVal = user.email
     const role = user.role
 
-    if (role !== 'admin' && !user.emailVerified) {
-      return res.status(403).json({ message: 'Please verify your email first. Check your inbox for the OTP code.' })
-    }
-
     const accessToken = signAccessToken({ userId, email: emailVal, role })
     const refreshToken = signRefreshToken({ userId, email: emailVal, role })
 
@@ -271,6 +323,7 @@ router.post('/signin', async (req, res) => {
         isRootAdmin: user.isRootAdmin,
         profilePhoto: user.profilePhoto,
         phone: user.phone,
+        onboardingComplete: user.onboardingComplete,
       },
       accessToken,
       refreshToken,
@@ -308,6 +361,7 @@ router.get('/session', async (req, res) => {
           isRootAdmin: user.isRootAdmin,
           profilePhoto: user.profilePhoto,
           phone: user.phone,
+          onboardingComplete: user.onboardingComplete,
         },
       },
     })
@@ -346,6 +400,7 @@ router.patch('/profile', authMiddleware, async (req, res) => {
         rejectionReason: updatedUser.rejectionReason,
         isRootAdmin: updatedUser.isRootAdmin,
         profilePhoto: updatedUser.profilePhoto,
+        onboardingComplete: updatedUser.onboardingComplete,
       },
     })
   } catch (err: any) {

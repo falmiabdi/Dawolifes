@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
 import { ToastProvider } from '@/components/ui/toast-provider'
 import { AuthProvider } from '@/components/auth/auth-guard'
 import { SmoothScroll } from '@/components/smooth-scroll'
@@ -8,12 +7,6 @@ import { CapacitorInit } from '@/components/capacitor-init'
 import { AnalyticsOnWeb } from '@/components/analytics-on-web'
 import { I18nProvider } from '@/lib/i18n'
 import './globals.css'
-
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-plus-jakarta',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: 'DawoLife — Ethiopia\'s Digital Real Estate Marketplace',
@@ -40,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} bg-background`}>
+    <html lang="en" className="bg-background">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

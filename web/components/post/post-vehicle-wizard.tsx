@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { getApiUrl } from '@/lib/get-api-url'
+import { useI18n } from '@/lib/i18n'
 
 import { useState, useCallback } from "react"
 import { useAuth } from "@/components/auth/auth-guard"
@@ -132,7 +133,7 @@ type VehicleFormState = {
   woreda: string
   pickupAddress: string
   regionRegistration: string
-  ownershipCertificate: string
+  ownershipCertificate: boolean
   roadFundPaid: boolean
   insuranceValid: boolean
   inspectionCertificate: boolean
@@ -208,7 +209,7 @@ const initialState: VehicleFormState = {
   woreda: "",
   pickupAddress: "",
   regionRegistration: "",
-  ownershipCertificate: "",
+  ownershipCertificate: false,
   roadFundPaid: false,
   insuranceValid: false,
   inspectionCertificate: false,
@@ -225,6 +226,17 @@ const initialState: VehicleFormState = {
 
 export function PostVehicleWizard() {
   const { getToken } = useAuth()
+  const { t, tv } = useI18n()
+  const stepLabels: Record<string, string> = {
+    'Basic Info': t('basic_info'),
+    'Technical': t('technical'),
+    'Condition & Features': t('condition_features'),
+    'Pricing': t('pricing'),
+    'Location & Legal': t('location_legal'),
+    'Photos': t('photos_step'),
+    'Map': t('map_step'),
+    'Review': t('review'),
+  }
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<VehicleFormState>(initialState)
   const [submitted, setSubmitted] = useState(false)
@@ -248,11 +260,11 @@ export function PostVehicleWizard() {
 
   const next = () => {
     if (step === 5 && form.images.length < 3) {
-      setError("Please upload at least 3 photos of the vehicle to continue.")
+      setError(t('at_least_3_continue_vehicle'))
       return
     }
     if (step === 6 && (form.latitude === 0 || form.longitude === 0)) {
-      setError("Please select the vehicle location on the map to continue.")
+      setError(t('select_location_map_continue_vehicle'))
       return
     }
     setError("")
@@ -286,7 +298,7 @@ export function PostVehicleWizard() {
 
         if (!res.ok) {
           const errData = await res.json()
-          throw new Error(errData.message || `Failed to upload ${files[i].name}`)
+          throw new Error(errData.message || t('upload_failed').replace('{name}', files[i].name))
         }
 
         const data = await res.json()
@@ -295,7 +307,7 @@ export function PostVehicleWizard() {
 
       set("images", [...form.images, ...uploadedUrls])
     } catch (err: any) {
-      setError(err.message || "Error uploading image")
+      setError(err.message || t('error_uploading_image'))
     } finally {
       setUploadingImage(false)
     }
@@ -303,11 +315,11 @@ export function PostVehicleWizard() {
 
   const handleSubmit = async () => {
     if (form.images.length < 3) {
-      setError("At least 3 photos are required to list a vehicle.")
+      setError(t('at_least_3_list_vehicle'))
       return
     }
     if (form.latitude === 0 || form.longitude === 0) {
-      setError("Please select the vehicle location on the map.")
+      setError(t('select_location_map_vehicle'))
       return
     }
 
@@ -392,10 +404,6 @@ export function PostVehicleWizard() {
       if (form.videoUrl) body.videoUrl = form.videoUrl
       if (form.latitude) body.latitude = form.latitude
       if (form.longitude) body.longitude = form.longitude
-      // Convert string "" to undefined for boolean fields
-      for (const key of ['ownershipCertificate']) {
-        if (!(body as any)[key]) delete (body as any)[key]
-      }
       const res = await fetch(`${getApiUrl()}/api/vehicles`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -409,12 +417,12 @@ export function PostVehicleWizard() {
             .map(([field, errs]) => `${field}: ${(errs as string[]).join(', ')}`)
           throw new Error(msgs.join(' | '))
         }
-        throw new Error(data.message || "Failed to submit vehicle")
+        throw new Error(data.message || t('failed_submit_vehicle'))
       }
 
       setSubmitted(true)
     } catch (err: any) {
-      setError(err.message || "Something went wrong while submitting the vehicle.")
+      setError(err.message || t('submit_vehicle_error'))
     } finally {
       setSubmitting(false)
     }
@@ -426,11 +434,8 @@ export function PostVehicleWizard() {
         <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
           <CheckCircle2 className="h-8 w-8" />
         </span>
-        <h2 className="mt-5 text-2xl font-bold text-foreground">Vehicle Submitted!</h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Your vehicle listing has been received and is pending review. Our team will verify the details and publish
-          it shortly.
-        </p>
+        <h2 className="mt-5 text-2xl font-bold text-foreground">{t('vehicle_submitted')}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t('vehicle_submitted_note')}</p>
         <Button
           className="mt-6 rounded-xl font-semibold"
           onClick={() => {
@@ -439,7 +444,7 @@ export function PostVehicleWizard() {
             setSubmitted(false)
           }}
         >
-          Post Another Vehicle
+          {t('post_another_vehicle')}
         </Button>
       </div>
     )
@@ -448,8 +453,8 @@ export function PostVehicleWizard() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground">Post a Vehicle</h1>
-        <p className="mt-1 text-sm text-muted-foreground">List your vehicle for millions of buyers across Ethiopia</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('post_vehicle')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('list_vehicle_note')}</p>
       </div>
 
       {/* Stepper */}
@@ -477,7 +482,7 @@ export function PostVehicleWizard() {
                     current ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {s.label}
+                  {stepLabels[s.label]}
                 </span>
               </div>
               {i < steps.length - 1 && (
@@ -549,7 +554,7 @@ export function PostVehicleWizard() {
           }}
           className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer"
         >
-          Fill Demo Data
+          {t('fill_demo_data')}
         </button>
       </div>
 
@@ -558,23 +563,23 @@ export function PostVehicleWizard() {
         <div className="rounded-2xl border border-border bg-card p-6">
           {step === 0 && (
             <div className="space-y-5">
-              <SectionTitle icon={<Car className="h-5 w-5" />} title="Basic Vehicle Info" />
-              <Field label="Vehicle Title" required>
+              <SectionTitle icon={<Car className="h-5 w-5" />} title={t('basic_vehicle_info')} />
+              <Field label={t('vehicle_title')} required>
                 <Input
                   value={form.title}
                   onChange={(e) => set("title", e.target.value)}
-                  placeholder="e.g. 2020 Toyota Land Cruiser V8"
+                  placeholder={t('ph_vehicle_title')}
                 />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Listing Type" required>
+                <Field label={t('listing_type')} required>
                   <SelectBox
                     value={form.listingType}
                     onChange={(v) => set("listingType", v)}
                     options={["For Sale", "For Rent", "Both"]}
                   />
                 </Field>
-                <Field label="Vehicle Category" required>
+                <Field label={t('vehicle_category')} required>
                   <SelectBox
                     value={form.vehicleCategory}
                     onChange={(v) => set("vehicleCategory", v)}
@@ -583,30 +588,30 @@ export function PostVehicleWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Make" required>
+                <Field label={t('make')} required>
                   <SelectBox
                     value={form.make}
                     onChange={(v) => set("make", v)}
                     options={vehicleMakes}
                   />
                 </Field>
-                <Field label="Model" required>
+                <Field label={t('model')} required>
                   <Input
                     value={form.model}
                     onChange={(e) => set("model", e.target.value)}
-                    placeholder="e.g. Land Cruiser"
+                    placeholder={t('ph_model')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Trim / Version">
+                <Field label={t('trim_version')}>
                   <Input
                     value={form.trimVersion}
                     onChange={(e) => set("trimVersion", e.target.value)}
-                    placeholder="e.g. VX-R"
+                    placeholder={t('ph_trim_version')}
                   />
                 </Field>
-                <Field label="Condition" required>
+                <Field label={t('vehicle_condition')} required>
                   <SelectBox
                     value={form.condition}
                     onChange={(v) => set("condition", v)}
@@ -615,21 +620,21 @@ export function PostVehicleWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Manufacturing Year" required>
+                <Field label={t('manufacturing_year')} required>
                   <Input
                     value={form.manufacturingYear}
                     onChange={(e) => set("manufacturingYear", e.target.value)}
                     placeholder="2020"
                   />
                 </Field>
-                <Field label="Registration Year">
+                <Field label={t('registration_year')}>
                   <Input
                     value={form.registrationYear}
                     onChange={(e) => set("registrationYear", e.target.value)}
                     placeholder="2020"
                   />
                 </Field>
-                <Field label="Color">
+                <Field label={t('color')}>
                   <SelectBox
                     value={form.color}
                     onChange={(v) => set("color", v)}
@@ -637,19 +642,19 @@ export function PostVehicleWizard() {
                   />
                 </Field>
               </div>
-              <Field label="Country of Origin">
+              <Field label={t('country_of_origin')}>
                 <SelectBox
                   value={form.countryOfOrigin}
                   onChange={(v) => set("countryOfOrigin", v)}
                   options={countryOfOriginOptions}
                 />
               </Field>
-              <Field label="Description">
+              <Field label={t('description')}>
                 <Textarea
                   rows={4}
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
-                  placeholder="Describe the vehicle..."
+                  placeholder={t('ph_describe_vehicle')}
                 />
               </Field>
             </div>
@@ -657,113 +662,113 @@ export function PostVehicleWizard() {
 
           {step === 1 && (
             <div className="space-y-5">
-              <SectionTitle icon={<Settings className="h-5 w-5" />} title="Technical Specifications" />
+              <SectionTitle icon={<Settings className="h-5 w-5" />} title={t('technical_specs')} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Fuel Type">
+                <Field label={t('fuel_type')}>
                   <SelectBox
                     value={form.fuelType}
                     onChange={(v) => set("fuelType", v)}
                     options={fuelTypes}
                   />
                 </Field>
-                <Field label="Engine Size (L)">
+                <Field label={t('engine_size')}>
                   <Input
                     value={form.engineSize}
                     onChange={(e) => set("engineSize", e.target.value)}
-                    placeholder="e.g. 4.5"
+                    placeholder={t('ph_engine_size')}
                   />
                 </Field>
-                <Field label="Horsepower">
+                <Field label={t('horsepower')}>
                   <Input
                     value={form.horsepower}
                     onChange={(e) => set("horsepower", e.target.value)}
-                    placeholder="e.g. 381"
+                    placeholder={t('ph_horsepower')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Transmission">
+                <Field label={t('transmission')}>
                   <SelectBox
                     value={form.transmission}
                     onChange={(v) => set("transmission", v)}
                     options={transmissionTypes}
                   />
                 </Field>
-                <Field label="Drivetrain">
+                <Field label={t('drivetrain')}>
                   <SelectBox
                     value={form.drivetrain}
                     onChange={(v) => set("drivetrain", v)}
                     options={drivetrainTypes}
                   />
                 </Field>
-                <Field label="Cylinders">
+                <Field label={t('cylinders')}>
                   <Input
                     value={form.cylinders}
                     onChange={(e) => set("cylinders", e.target.value)}
-                    placeholder="e.g. 6"
+                    placeholder={t('ph_cylinders')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Seating Capacity">
+                <Field label={t('seating_capacity')}>
                   <Input
                     value={form.seatingCapacity}
                     onChange={(e) => set("seatingCapacity", e.target.value)}
-                    placeholder="e.g. 7"
+                    placeholder={t('ph_seating_capacity')}
                   />
                 </Field>
-                <Field label="Doors">
+                <Field label={t('doors')}>
                   <Input
                     value={form.doors}
                     onChange={(e) => set("doors", e.target.value)}
-                    placeholder="e.g. 5"
+                    placeholder={t('ph_doors')}
                   />
                 </Field>
-                <Field label="Mileage (km)">
+                <Field label={t('mileage')}>
                   <Input
                     type="number"
                     value={form.mileage}
                     onChange={(e) => set("mileage", e.target.value)}
-                    placeholder="e.g. 45000"
+                    placeholder={t('ph_mileage')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Fuel Consumption (L/100km)">
+                <Field label={t('fuel_consumption')}>
                   <Input
                     value={form.fuelConsumption}
                     onChange={(e) => set("fuelConsumption", e.target.value)}
-                    placeholder="e.g. 12.5"
+                    placeholder={t('ph_fuel_consumption')}
                   />
                 </Field>
-                <Field label="Fuel Tank Capacity (L)">
+                <Field label={t('fuel_tank_capacity')}>
                   <Input
                     value={form.fuelTankCapacity}
                     onChange={(e) => set("fuelTankCapacity", e.target.value)}
-                    placeholder="e.g. 93"
+                    placeholder={t('ph_fuel_tank_capacity')}
                   />
                 </Field>
-                <Field label="Ground Clearance (mm)">
+                <Field label={t('ground_clearance')}>
                   <Input
                     value={form.groundClearance}
                     onChange={(e) => set("groundClearance", e.target.value)}
-                    placeholder="e.g. 225"
+                    placeholder={t('ph_ground_clearance')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Weight (kg)">
+                <Field label={t('weight')}>
                   <Input
                     value={form.weight}
                     onChange={(e) => set("weight", e.target.value)}
-                    placeholder="e.g. 2650"
+                    placeholder={t('ph_weight')}
                   />
                 </Field>
-                <Field label="Tire Size">
+                <Field label={t('tire_size')}>
                   <Input
                     value={form.tireSize}
                     onChange={(e) => set("tireSize", e.target.value)}
-                    placeholder="e.g. 265/65R18"
+                    placeholder={t('ph_tire_size')}
                   />
                 </Field>
               </div>
@@ -772,40 +777,40 @@ export function PostVehicleWizard() {
 
           {step === 2 && (
             <div className="space-y-5">
-              <SectionTitle icon={<Shield className="h-5 w-5" />} title="Vehicle Condition & Features" />
+              <SectionTitle icon={<Shield className="h-5 w-5" />} title={t('vehicle_condition_features')} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Accident Free">
+                <Field label={t('accident_free')}>
                   <SelectBox
                     value={form.accidentFree ? "Yes" : "No"}
                     onChange={(v) => set("accidentFree", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Service History Available">
+                <Field label={t('service_history')}>
                   <SelectBox
                     value={form.serviceHistoryAvailable ? "Yes" : "No"}
                     onChange={(v) => set("serviceHistoryAvailable", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Ownership Count">
+                <Field label={t('ownership_count')}>
                   <Input
                     type="number"
                     value={form.ownershipCount}
                     onChange={(e) => set("ownershipCount", e.target.value)}
-                    placeholder="e.g. 2"
+                    placeholder={t('ph_ownership_count')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Imported">
+                <Field label={t('imported')}>
                   <SelectBox
                     value={form.imported ? "Yes" : "No"}
                     onChange={(v) => set("imported", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Locally Assembled">
+                <Field label={t('locally_assembled')}>
                   <SelectBox
                     value={form.locallyAssembled ? "Yes" : "No"}
                     onChange={(v) => set("locallyAssembled", v === "Yes")}
@@ -813,17 +818,17 @@ export function PostVehicleWizard() {
                   />
                 </Field>
               </div>
-              <Field label="Accident History">
+              <Field label={t('accident_history')}>
                 <Textarea
                   rows={3}
                   value={form.accidentHistory}
                   onChange={(e) => set("accidentHistory", e.target.value)}
-                  placeholder="Describe any accident history..."
+                  placeholder={t('ph_describe_accident_history')}
                 />
               </Field>
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-foreground">Safety Features</p>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('safety_features')}</p>
                 <div className="flex flex-wrap gap-2">
                   {safetyFeatureOptions.map((f) => (
                     <button
@@ -844,7 +849,7 @@ export function PostVehicleWizard() {
               </div>
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-foreground">Interior Features</p>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('interior_features')}</p>
                 <div className="flex flex-wrap gap-2">
                   {interiorFeatureOptions.map((f) => (
                     <button
@@ -865,7 +870,7 @@ export function PostVehicleWizard() {
               </div>
 
               <div>
-                <p className="mb-3 text-sm font-semibold text-foreground">Exterior Features</p>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('exterior_features')}</p>
                 <div className="flex flex-wrap gap-2">
                   {exteriorFeatureOptions.map((f) => (
                     <button
@@ -889,17 +894,17 @@ export function PostVehicleWizard() {
 
           {step === 3 && (
             <div className="space-y-5">
-              <SectionTitle icon={<DollarSign className="h-5 w-5" />} title="Pricing & Rental/Sale Info" />
+              <SectionTitle icon={<DollarSign className="h-5 w-5" />} title={t('pricing_info')} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Price (ETB)" required>
+                <Field label={t('price_etb')} required>
                   <Input
                     type="number"
                     value={form.price}
                     onChange={(e) => set("price", e.target.value)}
-                    placeholder="e.g. 3500000"
+                    placeholder={t('ph_price')}
                   />
                 </Field>
-                <Field label="Price Type">
+                <Field label={t('price_type')}>
                   <SelectBox
                     value={form.priceType}
                     onChange={(v) => set("priceType", v)}
@@ -908,15 +913,15 @@ export function PostVehicleWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Selling Price (ETB)">
+                <Field label={t('selling_price')}>
                   <Input
                     type="number"
                     value={form.sellingPrice}
                     onChange={(e) => set("sellingPrice", e.target.value)}
-                    placeholder="e.g. 3500000"
+                    placeholder={t('ph_price')}
                   />
                 </Field>
-                <Field label="Negotiable">
+                <Field label={t('negotiable')}>
                   <SelectBox
                     value={form.negotiable ? "Yes" : "No"}
                     onChange={(v) => set("negotiable", v === "Yes")}
@@ -925,21 +930,21 @@ export function PostVehicleWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Financing Available">
+                <Field label={t('financing_available')}>
                   <SelectBox
                     value={form.financingAvailable ? "Yes" : "No"}
                     onChange={(v) => set("financingAvailable", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Exchange Accepted">
+                <Field label={t('exchange_accepted')}>
                   <SelectBox
                     value={form.exchangeAccepted ? "Yes" : "No"}
                     onChange={(v) => set("exchangeAccepted", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Bank Loan Accepted">
+                <Field label={t('bank_loan')}>
                   <SelectBox
                     value={form.bankLoanAccepted ? "Yes" : "No"}
                     onChange={(v) => set("bankLoanAccepted", v === "Yes")}
@@ -951,76 +956,76 @@ export function PostVehicleWizard() {
               {(form.listingType === "For Rent" || form.listingType === "Both") && (
                 <>
                   <div className="border-t border-border pt-5">
-                    <p className="mb-3 text-sm font-semibold text-foreground">Rental Information</p>
+                    <p className="mb-3 text-sm font-semibold text-foreground">{t('rental_info')}</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <Field label="Daily Rate (ETB)">
+                    <Field label={t('daily_rate')}>
                       <Input
                         type="number"
                         value={form.dailyRate}
                         onChange={(e) => set("dailyRate", e.target.value)}
-                        placeholder="e.g. 5000"
+                        placeholder={t('ph_daily_rate')}
                       />
                     </Field>
-                    <Field label="Weekly Rate (ETB)">
+                    <Field label={t('weekly_rate')}>
                       <Input
                         type="number"
                         value={form.weeklyRate}
                         onChange={(e) => set("weeklyRate", e.target.value)}
-                        placeholder="e.g. 30000"
+                        placeholder={t('ph_weekly_rate')}
                       />
                     </Field>
-                    <Field label="Monthly Rate (ETB)">
+                    <Field label={t('monthly_rate')}>
                       <Input
                         type="number"
                         value={form.monthlyRate}
                         onChange={(e) => set("monthlyRate", e.target.value)}
-                        placeholder="e.g. 100000"
+                        placeholder={t('ph_monthly_rate')}
                       />
                     </Field>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <Field label="Security Deposit (ETB)">
+                    <Field label={t('security_deposit')}>
                       <Input
                         type="number"
                         value={form.securityDeposit}
                         onChange={(e) => set("securityDeposit", e.target.value)}
-                        placeholder="e.g. 50000"
+                        placeholder={t('ph_security_deposit')}
                       />
                     </Field>
-                    <Field label="Min Rental Days">
+                    <Field label={t('min_rental_days')}>
                       <Input
                         type="number"
                         value={form.minRentalDays}
                         onChange={(e) => set("minRentalDays", e.target.value)}
-                        placeholder="e.g. 1"
+                        placeholder={t('ph_min_rental_days')}
                       />
                     </Field>
-                    <Field label="Max Rental Days">
+                    <Field label={t('max_rental_days')}>
                       <Input
                         type="number"
                         value={form.maxRentalDays}
                         onChange={(e) => set("maxRentalDays", e.target.value)}
-                        placeholder="e.g. 30"
+                        placeholder={t('ph_max_rental_days')}
                       />
                     </Field>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <Field label="Driver Included">
+                    <Field label={t('driver_included')}>
                       <SelectBox
                         value={form.driverIncluded ? "Yes" : "No"}
                         onChange={(v) => set("driverIncluded", v === "Yes")}
                         options={["Yes", "No"]}
                       />
                     </Field>
-                    <Field label="Self Drive">
+                    <Field label={t('self_drive')}>
                       <SelectBox
                         value={form.selfDrive ? "Yes" : "No"}
                         onChange={(v) => set("selfDrive", v === "Yes")}
                         options={["Yes", "No"]}
                       />
                     </Field>
-                    <Field label="Fuel Policy">
+                    <Field label={t('fuel_policy')}>
                       <SelectBox
                         value={form.fuelPolicy}
                         onChange={(v) => set("fuelPolicy", v)}
@@ -1029,22 +1034,22 @@ export function PostVehicleWizard() {
                     </Field>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <Field label="Mileage Limit (km/day)">
+                    <Field label={t('mileage_limit')}>
                       <Input
                         value={form.mileageLimit}
                         onChange={(e) => set("mileageLimit", e.target.value)}
-                        placeholder="e.g. 200"
+                        placeholder={t('ph_mileage_limit')}
                       />
                     </Field>
-                    <Field label="Extra Km Charge (ETB)">
+                    <Field label={t('extra_km_charge')}>
                       <Input
                         type="number"
                         value={form.extraKmCharge}
                         onChange={(e) => set("extraKmCharge", e.target.value)}
-                        placeholder="e.g. 15"
+                        placeholder={t('ph_extra_km_charge')}
                       />
                     </Field>
-                    <Field label="Delivery Available">
+                    <Field label={t('delivery_available')}>
                       <SelectBox
                         value={form.deliveryAvailable ? "Yes" : "No"}
                         onChange={(v) => set("deliveryAvailable", v === "Yes")}
@@ -1052,7 +1057,7 @@ export function PostVehicleWizard() {
                       />
                     </Field>
                   </div>
-                  <Field label="Airport Pickup">
+                  <Field label={t('airport_pickup')}>
                     <SelectBox
                       value={form.airportPickup ? "Yes" : "No"}
                       onChange={(v) => set("airportPickup", v === "Yes")}
@@ -1066,82 +1071,82 @@ export function PostVehicleWizard() {
 
           {step === 4 && (
             <div className="space-y-5">
-              <SectionTitle icon={<FileCheck className="h-5 w-5" />} title="Location & Legal Info" />
+              <SectionTitle icon={<FileCheck className="h-5 w-5" />} title={t('location_legal_info')} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Region">
+                <Field label={t('region')}>
                   <Input
                     value={form.region}
                     onChange={(e) => set("region", e.target.value)}
-                    placeholder="e.g. Addis Ababa"
+                    placeholder={t('ph_region_city')}
                   />
                 </Field>
-                <Field label="City">
+                <Field label={t('city')}>
                   <Input
                     value={form.city}
                     onChange={(e) => set("city", e.target.value)}
-                    placeholder="e.g. Addis Ababa"
+                    placeholder={t('ph_region_city')}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Sub-city">
+                <Field label={t('sub_city')}>
                   <Input
                     value={form.subCity}
                     onChange={(e) => set("subCity", e.target.value)}
-                    placeholder="e.g. Bole"
+                    placeholder={t('ph_sub_city')}
                   />
                 </Field>
-                <Field label="Woreda">
+                <Field label={t('woreda')}>
                   <Input
                     value={form.woreda}
                     onChange={(e) => set("woreda", e.target.value)}
-                    placeholder="e.g. 03"
+                    placeholder={t('ph_woreda')}
                   />
                 </Field>
               </div>
-              <Field label="Pickup Address">
+              <Field label={t('pickup_address')}>
                 <Input
                   value={form.pickupAddress}
                   onChange={(e) => set("pickupAddress", e.target.value)}
-                  placeholder="e.g. Bole Road, near Edna Mall"
+                  placeholder={t('ph_pickup_address')}
                 />
               </Field>
 
               <div className="border-t border-border pt-5">
-                <p className="mb-3 text-sm font-semibold text-foreground">Legal Documents</p>
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('legal_documents')}</p>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Region of Registration">
+                <Field label={t('region_registration')}>
                   <Input
                     value={form.regionRegistration}
                     onChange={(e) => set("regionRegistration", e.target.value)}
-                    placeholder="e.g. Addis Ababa"
+                    placeholder={t('ph_region_city')}
                   />
                 </Field>
-                <Field label="Ownership Certificate">
+                <Field label={t('ownership_certificate')}>
                   <SelectBox
-                    value={form.ownershipCertificate}
-                    onChange={(v) => set("ownershipCertificate", v)}
-                    options={["Yes", "No", "Pending"]}
+                    value={form.ownershipCertificate ? "Yes" : "No"}
+                    onChange={(v) => set("ownershipCertificate", v === "Yes")}
+                    options={["Yes", "No"]}
                   />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Road Fund Paid">
+                <Field label={t('road_fund_paid')}>
                   <SelectBox
                     value={form.roadFundPaid ? "Yes" : "No"}
                     onChange={(v) => set("roadFundPaid", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Insurance Valid">
+                <Field label={t('insurance_valid')}>
                   <SelectBox
                     value={form.insuranceValid ? "Yes" : "No"}
                     onChange={(v) => set("insuranceValid", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Inspection Certificate">
+                <Field label={t('inspection_certificate')}>
                   <SelectBox
                     value={form.inspectionCertificate ? "Yes" : "No"}
                     onChange={(v) => set("inspectionCertificate", v === "Yes")}
@@ -1150,21 +1155,21 @@ export function PostVehicleWizard() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Customs Clearance">
+                <Field label={t('customs_clearance')}>
                   <SelectBox
                     value={form.customsClearance ? "Yes" : "No"}
                     onChange={(v) => set("customsClearance", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Duty Paid">
+                <Field label={t('duty_paid')}>
                   <SelectBox
                     value={form.dutyPaid ? "Yes" : "No"}
                     onChange={(v) => set("dutyPaid", v === "Yes")}
                     options={["Yes", "No"]}
                   />
                 </Field>
-                <Field label="Plate Type">
+                <Field label={t('plate_type')}>
                   <SelectBox
                     value={form.plateType}
                     onChange={(v) => set("plateType", v)}
@@ -1172,11 +1177,11 @@ export function PostVehicleWizard() {
                   />
                 </Field>
               </div>
-              <Field label="Plate Number">
+              <Field label={t('plate_number')}>
                 <Input
                   value={form.plateNumber}
                   onChange={(e) => set("plateNumber", e.target.value)}
-                  placeholder="e.g. AA-123456"
+                  placeholder={t('ph_plate_number')}
                 />
               </Field>
             </div>
@@ -1184,23 +1189,23 @@ export function PostVehicleWizard() {
 
           {step === 5 && (
             <div className="space-y-5">
-              <SectionTitle icon={<Image className="h-5 w-5" />} title="Photos & Media" />
+              <SectionTitle icon={<Image className="h-5 w-5" />} title={t('photos_media_title')} />
               <div>
                 <Label className="mb-2 block font-semibold text-slate-800">
-                  Vehicle Photos <span className="text-red-500">* (at least 3 photos required)</span>
+                  {t('vehicle_photos')} <span className="text-red-500">* {t('at_least_3')}</span>
                 </Label>
 
                 <label className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 text-center transition hover:bg-slate-50 cursor-pointer">
                   {uploadingImage ? (
                     <>
                       <Loader2 className="h-8 w-8 text-orange-500 animate-spin" />
-                      <span className="text-sm font-semibold text-slate-700">Uploading photos...</span>
+                      <span className="text-sm font-semibold text-slate-700">{t('uploading_photos')}</span>
                     </>
                   ) : (
                     <>
                       <Upload className="h-8 w-8 text-orange-500" />
-                      <span className="text-sm font-semibold text-slate-700">Click to upload photos</span>
-                      <span className="text-xs text-slate-400">Select one or more images (JPG, PNG, WEBP)</span>
+                      <span className="text-sm font-semibold text-slate-700">{t('click_upload_photos')}</span>
+                      <span className="text-xs text-slate-400">{t('select_images')}</span>
                     </>
                   )}
                   <input
@@ -1216,8 +1221,8 @@ export function PostVehicleWizard() {
                 {form.images.length > 0 && (
                   <div className="mt-5 space-y-2">
                     <p className="text-xs font-semibold text-orange-600">
-                      {form.images.length} photo(s) added{" "}
-                      {form.images.length < 3 && "(need " + (3 - form.images.length) + " more)"}
+                      {form.images.length} {t('photos_added')}{" "}
+                      {form.images.length < 3 && '(' + t('need_more') + ' ' + (3 - form.images.length) + ')'}
                     </p>
 
                     <div className="grid grid-cols-3 gap-3">
@@ -1226,7 +1231,7 @@ export function PostVehicleWizard() {
                           key={idx}
                           className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group/item shadow-sm"
                         >
-                          <img src={url} alt={'Upload ' + (idx + 1)} className="w-full h-full object-cover" />
+                          <img src={url} alt={t('upload') + ' ' + (idx + 1)} className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => set("images", form.images.filter((_, i) => i !== idx))}
@@ -1241,7 +1246,7 @@ export function PostVehicleWizard() {
                 )}
               </div>
 
-              <Field label="Video URL (YouTube/Vimeo) â€” Optional">
+              <Field label={t('video_url')}>
                 <Input
                   value={form.videoUrl}
                   onChange={(e) => set("videoUrl", e.target.value)}
@@ -1253,7 +1258,7 @@ export function PostVehicleWizard() {
 
           {step === 6 && (
             <div className="space-y-5">
-              <SectionTitle icon={<MapIcon className="h-5 w-5" />} title="Vehicle Location Map" />
+              <SectionTitle icon={<MapIcon className="h-5 w-5" />} title={t('vehicle_location_map')} />
               <div className="flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
@@ -1271,22 +1276,22 @@ export function PostVehicleWizard() {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Latitude">
+                <Field label={t('latitude')}>
                   <Input
                     type="number"
                     step="any"
                     value={form.latitude || ""}
                     onChange={(e) => set("latitude", parseFloat(e.target.value) || 0)}
-                    placeholder="e.g. 9.0375"
+                    placeholder={t('ph_latitude')}
                   />
                 </Field>
-                <Field label="Longitude">
+                <Field label={t('longitude')}>
                   <Input
                     type="number"
                     step="any"
                     value={form.longitude || ""}
                     onChange={(e) => set("longitude", parseFloat(e.target.value) || 0)}
-                    placeholder="e.g. 38.7612"
+                    placeholder={t('ph_longitude')}
                   />
                 </Field>
               </div>
@@ -1295,44 +1300,42 @@ export function PostVehicleWizard() {
 
           {step === 7 && (
             <div className="space-y-5">
-              <SectionTitle icon={<ClipboardCheck className="h-5 w-5" />} title="Review & Submit" />
-              <p className="text-sm text-muted-foreground">
-                Please review all the information below before submitting your vehicle listing.
-              </p>
+              <SectionTitle icon={<ClipboardCheck className="h-5 w-5" />} title={t('review_submit_title')} />
+              <p className="text-sm text-muted-foreground">{t('review_vehicle_note')}</p>
 
               <div className="space-y-4 rounded-xl border border-border bg-muted/50 p-4">
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Basic Info</p>
-                  <p className="mt-1 text-sm text-foreground">{form.title || "No title set"}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('basic_info')}</p>
+                  <p className="mt-1 text-sm text-foreground">{form.title || t('no_title_set')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {form.vehicleCategory} Â· {form.make} {form.model} Â· {form.manufacturingYear}
+                    {tv(form.vehicleCategory)} Â· {form.make} {form.model} Â· {form.manufacturingYear}
                   </p>
                 </div>
                 <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pricing</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('pricing')}</p>
                   <p className="mt-1 text-sm font-semibold text-primary">
-                    {form.price ? formatPrice(Number(form.price)) + ' ETB' : "Price not set"}
+                    {form.price ? formatPrice(Number(form.price)) + ' ETB' : t('price_not_set')}
                   </p>
-                  <p className="text-sm text-muted-foreground">{form.listingType} Â· {form.priceType}</p>
+                  <p className="text-sm text-muted-foreground">{tv(form.listingType)} Â· {tv(form.priceType)}</p>
                 </div>
                 <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Technical</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('technical')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {[form.fuelType, form.transmission, form.drivetrain, form.mileage ? Number(form.mileage).toLocaleString() + ' km' : ""]
+                    {[tv(form.fuelType), tv(form.transmission), tv(form.drivetrain), form.mileage ? Number(form.mileage).toLocaleString() + ' km' : ""]
                       .filter(Boolean)
-                      .join(" Â· ") || "Not specified"}
+                      .join(" Â· ") || t('not_specified')}
                   </p>
                 </div>
                 <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Location</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('location')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {[form.subCity, form.city, form.region].filter(Boolean).join(", ") || "Not set"}
+                    {[form.subCity, form.city, form.region].filter(Boolean).join(", ") || t('not_set')}
                   </p>
                 </div>
                 <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Media</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('photos_media_title')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {form.images.length} photo(s) Â· {form.videoUrl ? "Video attached" : "No video"}
+                    {form.images.length} {t('photos_plural')} Â· {form.videoUrl ? t('video_attached') : t('no_video')}
                   </p>
                 </div>
               </div>
@@ -1342,7 +1345,7 @@ export function PostVehicleWizard() {
           {/* Nav buttons */}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
             <Button variant="outline" onClick={back} disabled={step === 0 || submitting} className="rounded-xl">
-              <ArrowLeft className="h-4 w-4" /> Back
+              <ArrowLeft className="h-4 w-4" /> {t('back')}
             </Button>
             {step < steps.length - 1 ? (
               <Button
@@ -1350,7 +1353,7 @@ export function PostVehicleWizard() {
                 disabled={(step === 5 && form.images.length < 3) || (step === 6 && (form.latitude === 0 || form.longitude === 0))}
                 className="rounded-xl font-semibold"
               >
-                Next <ArrowRight className="h-4 w-4" />
+                {t('next')} <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
               <Button
@@ -1360,11 +1363,11 @@ export function PostVehicleWizard() {
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Submitting...
+                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t('submitting')}
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4" /> Submit Vehicle
+                    <Send className="h-4 w-4" /> {t('submit_vehicle')}
                   </>
                 )}
               </Button>
@@ -1375,30 +1378,30 @@ export function PostVehicleWizard() {
         {/* Live summary */}
         <aside className="rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24 lg:self-start">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Car className="h-4 w-4 text-primary" /> Vehicle Summary
+            <Car className="h-4 w-4 text-primary" /> {t('vehicle_summary')}
           </p>
           <dl className="mt-4 space-y-3 text-sm">
-            <SummaryRow label="Category" value={form.vehicleCategory || "Not set"} />
-            <SummaryRow label="Make/Model" value={form.make && form.model ? form.make + ' ' + form.model : "Not set"} />
-            <SummaryRow label="Year" value={form.manufacturingYear || "Not set"} />
-            <SummaryRow label="Listing" value={form.listingType} />
+            <SummaryRow label={t('category')} value={form.vehicleCategory ? tv(form.vehicleCategory) : t('not_set')} />
+            <SummaryRow label={t('make_model')} value={form.make && form.model ? form.make + ' ' + form.model : t('not_set')} />
+            <SummaryRow label={t('year')} value={form.manufacturingYear || t('not_set')} />
+            <SummaryRow label={t('listing')} value={tv(form.listingType)} />
             <SummaryRow
-              label="Price"
-              value={form.price ? formatPrice(Number(form.price)) + ' ETB' : "Not set"}
+              label={t('price')}
+              value={form.price ? formatPrice(Number(form.price)) + ' ETB' : t('not_set')}
               highlight={!!form.price}
             />
-            <SummaryRow label="Condition" value={form.condition || "Not set"} />
-            <SummaryRow label="Fuel" value={form.fuelType || "Not set"} />
-            <SummaryRow label="Transmission" value={form.transmission || "Not set"} />
-            <SummaryRow label="Mileage" value={form.mileage ? Number(form.mileage).toLocaleString() + ' km' : "Not set"} />
-            <SummaryRow label="Location" value={form.subCity || form.city || "Not set"} />
-            <SummaryRow label="Photos" value={form.images.length > 0 ? form.images.length + ' uploaded' : "None"} />
+            <SummaryRow label={t('condition')} value={form.condition ? tv(form.condition) : t('not_set')} />
+            <SummaryRow label={t('fuel')} value={form.fuelType ? tv(form.fuelType) : t('not_set')} />
+            <SummaryRow label={t('transmission')} value={form.transmission ? tv(form.transmission) : t('not_set')} />
+            <SummaryRow label={t('mileage')} value={form.mileage ? Number(form.mileage).toLocaleString() + ' km' : t('not_set')} />
+            <SummaryRow label={t('location')} value={form.subCity || form.city || t('not_set')} />
+            <SummaryRow label={t('photos')} value={form.images.length > 0 ? form.images.length + ' ' + t('uploaded') : t('none')} />
             <SummaryRow
-              label="Features"
+              label={t('features')}
               value={
                 form.safetyFeatures.length + form.interiorFeatures.length + form.exteriorFeatures.length > 0
-                  ? (form.safetyFeatures.length + form.interiorFeatures.length + form.exteriorFeatures.length) + ' selected'
-                  : "None"
+                  ? (form.safetyFeatures.length + form.interiorFeatures.length + form.exteriorFeatures.length) + ' ' + t('selected')
+                  : t('none')
               }
             />
           </dl>
@@ -1444,6 +1447,7 @@ function SelectBox({
   onChange: (v: string) => void
   options: string[]
 }) {
+  const { tv } = useI18n()
   return (
     <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
       <SelectTrigger className="w-full">
@@ -1452,7 +1456,7 @@ function SelectBox({
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o} value={o}>
-            {o}
+            {tv(o)}
           </SelectItem>
         ))}
       </SelectContent>
