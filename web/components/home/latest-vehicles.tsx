@@ -13,7 +13,7 @@ export function LatestVehicles() {
   const searchParams = useSearchParams()
   const { term, cats } = parseSearchFilters(searchParams.get("search"), searchParams.get("category"))
   const isSearching = term !== "" || cats.length > 0
-  const showSection = !isSearching || cats.includes("cars")
+  const showSection = !isSearching || !cats.length || cats.includes("cars")
 
   useEffect(() => {
     const limit = isSearching ? 100 : 20

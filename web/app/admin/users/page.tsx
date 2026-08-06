@@ -48,8 +48,6 @@ export default function AdminUsersPage() {
 
   if (!authUser) return null
 
-  const adminEmails = ["felmitesfaye@gmail.com"]
-
   return (
     <div className="space-y-6">
       <div>
@@ -107,8 +105,8 @@ export default function AdminUsersPage() {
                     {new Date(u.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                {!adminEmails.includes(u.email?.toLowerCase() || "") ? (
-                  <div className="flex items-center gap-1">
+                    {!u.isRootAdmin ? (
+                      <div className="flex items-center gap-1">
                     {u.status !== 'Suspended' ? (
                       <button
                         onClick={() => handleAction('suspend', u.id.toString())}
@@ -183,7 +181,7 @@ export default function AdminUsersPage() {
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-3.5 text-right">
-                    {!adminEmails.includes(u.email?.toLowerCase() || "") ? (
+                {!u.isRootAdmin ? (
                       <div className="flex items-center justify-end gap-1">
                         {u.status !== 'Suspended' ? (
                           <button

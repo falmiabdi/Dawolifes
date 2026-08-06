@@ -15,11 +15,12 @@ export function VehicleCard({
   const isRent = vehicle.listingType === "For Rent" || vehicle.listingType === "Both"
   return (
     <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <Link href={`/listings/vehicle?id=${vehicle.id}`} className="relative block aspect-[4/3] overflow-hidden">
         <Image
           src={vehicle.images[0] || "/placeholder.svg"}
           alt={vehicle.title}
           fill
+          loading="eager"
           sizes="(max-width: 768px) 100vw, 400px"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -41,7 +42,7 @@ export function VehicleCard({
           className="absolute right-3 top-12"
           onChange={onSaveChange}
         />
-      </div>
+      </Link>
 
       <div className="p-4 sm:p-5">
         <p className="text-lg font-bold text-primary">

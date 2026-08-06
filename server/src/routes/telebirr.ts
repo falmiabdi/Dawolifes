@@ -7,6 +7,10 @@ const router = Router()
 function isNotifyAuthorized(req: any): boolean {
   const secret = process.env.PAYMENT_WEBHOOK_SECRET
   if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[TeleBirr] PAYMENT_WEBHOOK_SECRET not set — notify rejected')
+      return false
+    }
     console.warn('[TeleBirr] PAYMENT_WEBHOOK_SECRET not set — notify not authenticated (dev only)')
     return true
   }

@@ -1,6 +1,7 @@
 ﻿import { Router } from 'express'
 import multer from 'multer'
 import cloudinary from '../utils/cloudinary.js'
+import { authMiddleware } from '../middleware/auth.js'
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -19,7 +20,7 @@ const upload = multer({
 
 const router = Router()
 
-router.post('/', upload.single('file'), async (_req, res) => {
+router.post('/', authMiddleware, upload.single('file'), async (_req, res) => {
   try {
     if (!_req.file) {
       return res.status(400).json({ message: 'No file uploaded' })
@@ -45,7 +46,7 @@ router.post('/', upload.single('file'), async (_req, res) => {
   }
 })
 
-router.post('/multiple', upload.array('files', 10), async (_req, res) => {
+router.post('/multiple', authMiddleware, upload.array('files', 10), async (_req, res) => {
   try {
     if (!_req.files || _req.files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded' })

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { SavedItemType } from '@prisma/client'
+import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
@@ -82,6 +83,9 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!itemId) {
       return res.status(400).json({ message: 'itemId is required' })
     }
+    if (!isValidUuid(itemId)) {
+      return res.status(400).json({ message: 'itemId must be a valid id' })
+    }
 
     const item: any =
       itemType === 'property'
@@ -124,6 +128,9 @@ router.delete('/', authMiddleware, async (req, res) => {
     const { itemType, itemId } = req.body
     if (!itemType || !itemId) {
       return res.status(400).json({ message: 'Missing itemType or itemId' })
+    }
+    if (!isValidUuid(itemId)) {
+      return res.status(400).json({ message: 'itemId must be a valid id' })
     }
 
     const deleted = await prisma.savedItem.deleteMany({

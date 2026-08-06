@@ -1,6 +1,7 @@
 ﻿import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
@@ -70,6 +71,9 @@ router.patch('/read-all', authMiddleware, async (req, res) => {
 // Mark single notification as read (owner only)
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Notification not found' })
+    }
     const notification = await prisma.notification.findUnique({ where: { id: req.params.id } })
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' })

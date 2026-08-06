@@ -11,7 +11,7 @@ if (!DATABASE_URL) {
 
 export { prisma }
 
-export async function connectDB(retries = 5, interval = 5000) {
+export async function connectDB(retries = 6, interval = 5000) {
   for (let i = 0; i < retries; i++) {
     try {
       await prisma.$queryRaw`SELECT 1`
@@ -25,6 +25,6 @@ export async function connectDB(retries = 5, interval = 5000) {
       }
     }
   }
-  console.error('❌ All database connection retries exhausted')
-  return null
+  console.warn('⚠️  Database connection failed after retries. Starting server anyway — DB-dependent routes will return errors until the database is available.')
+  return prisma
 }

@@ -16,8 +16,8 @@ export function WebHome() {
       <main>
         <WebHero />
         <LatestProperties />
-        <Services />
         <LatestVehicles />
+        <Services />
         <Categories />
         <MapBanner />
       </main>

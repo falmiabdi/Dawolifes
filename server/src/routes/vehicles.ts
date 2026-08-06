@@ -1,7 +1,6 @@
 import { Router } from 'express'
-import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
-import { vehicleSchema } from '../utils/validation.js'
-import { verifyAccessToken } from '../utils/jwt.js'
+import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } from '../middleware/auth.js'
+import { vehicleSchema, isValidUuid } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
@@ -28,17 +27,6 @@ const ALLOWED_UPDATE_FIELDS = [
 ]
 
 const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true, role: true, status: true }
-
-function getRequestUserId(req: any): { userId: string; role: string } | null {
-  const header = req.headers.authorization
-  if (!header || !header.startsWith('Bearer ')) return null
-  try {
-    const decoded = verifyAccessToken(header.split(' ')[1])
-    return { userId: decoded.userId, role: decoded.role }
-  } catch {
-    return null
-  }
-}
 
 // Get all vehicles (public)
 router.get('/', async (req, res) => {
@@ -71,6 +59,9 @@ router.get('/', async (req, res) => {
 // Get vehicle by ID
 router.get('/:id', async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Vehicle not found' })
+    }
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: req.params.id },
       include: { agent: { select: agentSelect } },
@@ -104,14 +95,13 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
-    const ADMIN_PHONES = ['+251962395282', '+251922477886']
     const vehicle = await prisma.vehicle.create({
       data: {
         ...parsed.data,
         agentId: req.user!.userId,
         agentName: req.user!.email,
         status: 'Pending',
-        displayPhone: ADMIN_PHONES[0],
+        displayPhone: null,
       },
     })
 
@@ -131,6 +121,9 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 // Update vehicle
 router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Vehicle not found' })
+    }
     const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
@@ -167,6 +160,9 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
 // Delete vehicle
 router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Vehicle not found' })
+    }
     const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })

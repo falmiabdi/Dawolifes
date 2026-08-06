@@ -4,13 +4,13 @@
   "private": true,
   "packageManager": "pnpm@10.34.5",
   "scripts": {
-    "dev:server": "cd server && pnpm dev",
+    "dev:server": "cd server && npm run dev",
     "dev:web": "cd web && pnpm dev",
-    "build:server": "cd server && pnpm build",
+    "build:server": "cd server && npm run build",
     "build:web": "cd web && pnpm build",
-    "start:server": "cd server && pnpm start",
+    "start:server": "cd server && npm start",
     "start:web": "cd web && pnpm start",
-    "dev:all": "concurrently -n server,web -c blue,green \"pnpm dev:server\" \"pnpm dev:web\""
+    "dev:all": "concurrently -n server,web -c blue,green \"npm run dev:server\" \"pnpm dev:web\""
   },
   "devDependencies": {
     "concurrently": "^10.0.4"

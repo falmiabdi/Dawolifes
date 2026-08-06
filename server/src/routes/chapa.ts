@@ -7,6 +7,10 @@ const router = Router()
 function isWebhookAuthorized(req: any): boolean {
   const secret = process.env.PAYMENT_WEBHOOK_SECRET
   if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[Chapa] PAYMENT_WEBHOOK_SECRET not set — webhooks rejected')
+      return false
+    }
     console.warn('[Chapa] PAYMENT_WEBHOOK_SECRET not set — webhook not authenticated (dev only)')
     return true
   }

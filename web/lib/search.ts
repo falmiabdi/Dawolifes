@@ -34,6 +34,7 @@ export function matchesProperty(
   term: string,
   cats: string[]
 ): boolean {
+  if (cats.some((c) => !PROPERTY_CATEGORY_KEYS.includes(c))) return false
   const propCats = cats.filter((c) => PROPERTY_CATEGORY_KEYS.includes(c))
   if (propCats.length > 0) {
     const types = propCats.flatMap((c) => CATEGORY_TYPES[c] || [])

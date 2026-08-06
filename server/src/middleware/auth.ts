@@ -2,23 +2,33 @@ import { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../utils/jwt.js'
 import { prisma } from '../lib/prisma.js'
 
+interface RequestUser {
+  userId: string
+  email: string
+  role: string
+}
+
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        userId: string
-        email: string
-        role: string
-      }
+      user?: RequestUser
     }
   }
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string
-    email: string
-    role: string
+  user?: RequestUser
+}
+
+/** Resolves the authenticated user from the Authorization header without rejecting the request. */
+export function getRequestUserId(req: Request): RequestUser | null {
+  const header = req.headers.authorization
+  if (!header || !header.startsWith('Bearer ')) return null
+  try {
+    const decoded = verifyAccessToken(header.split(' ')[1])
+    return { userId: decoded.userId, email: decoded.email, role: decoded.role }
+  } catch {
+    return null
   }
 }
 

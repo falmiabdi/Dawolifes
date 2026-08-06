@@ -59,7 +59,8 @@ function EditVehiclePage() {
 
     async function fetchVehicle() {
       try {
-        const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`)
+        const authHeaders = await getAuthHeaders()
+        const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`, { headers: authHeaders })
         if (!res.ok) throw new Error("Not found")
         const data = await res.json()
         const v = data.vehicle
@@ -80,7 +81,7 @@ function EditVehiclePage() {
       }
     }
     fetchVehicle()
-  }, [id, router])
+  }, [id, router, getAuthHeaders])
 
   async function handleSubmit() {
     if (!title.trim()) { setError("Title is required."); return }

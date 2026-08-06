@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { broadcastToUser } from '../ws/server.js'
+import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
@@ -100,10 +101,22 @@ router.get('/:propertyId', authMiddleware, async (req, res) => {
 // Send a message
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { propertyId, recipientId, recipientName, content } = req.body
+    const { propertyId, recipientId, content } = req.body
 
     if (!propertyId || !recipientId || !content) {
       return res.status(400).json({ message: 'Missing required fields' })
+    }
+
+    if (recipientId === req.user!.userId) {
+      return res.status(400).json({ message: 'You cannot message yourself' })
+    }
+
+    const recipient = await prisma.user.findUnique({
+      where: { id: recipientId },
+      select: { username: true },
+    })
+    if (!recipient) {
+      return res.status(404).json({ message: 'Recipient not found' })
     }
 
     const msgDoc = await prisma.message.create({
@@ -113,7 +126,7 @@ router.post('/', authMiddleware, async (req, res) => {
         senderName: req.user!.email,
         senderRole: req.user!.role,
         recipientId,
-        recipientName,
+        recipientName: recipient.username,
         content,
       },
     })
@@ -129,6 +142,9 @@ router.post('/', authMiddleware, async (req, res) => {
 // Mark message as read (recipient only)
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Message not found' })
+    }
     const message = await prisma.message.findUnique({ where: { id: req.params.id } })
     if (!message) {
       return res.status(404).json({ message: 'Message not found' })

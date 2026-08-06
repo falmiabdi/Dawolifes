@@ -500,64 +500,6 @@ export function PostVehicleWizard() {
         </div>
       )}
 
-      <div className="mt-4 flex justify-center">
-        <button
-          type="button"
-          onClick={() => {
-            const demoImgs = [
-              'https://images.unsplash.com/photo-1541899481282-d53b9a353a1f?w=800',
-              'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
-              'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800',
-            ]
-            setForm({
-              ...initialState,
-              title: "Toyota Corolla 2020",
-              listingType: "For Sale",
-              vehicleCategory: "Sedan",
-              make: "Toyota",
-              model: "Corolla",
-              trimVersion: "LE",
-              manufacturingYear: "2020",
-              registrationYear: "2020",
-              color: "White",
-              countryOfOrigin: "Japan",
-              condition: "Used",
-              fuelType: "Petrol",
-              engineSize: "1800",
-              horsepower: "140",
-              transmission: "Automatic",
-              drivetrain: "FWD",
-              cylinders: "4",
-              seatingCapacity: "5",
-              doors: "4",
-              mileage: "45000",
-              fuelConsumption: "7.5L/100km",
-              tireSize: "205/55R16",
-              accidentFree: true,
-              serviceHistoryAvailable: true,
-              ownershipCount: "1",
-              imported: true,
-              safetyFeatures: ["ABS", "Airbags", "Rear Camera"],
-              interiorFeatures: ["AC", "Leather Seats", "Touch Screen"],
-              exteriorFeatures: ["Alloy Wheels", "Fog Lights"],
-              price: "1850000",
-              priceType: "Fixed Price",
-              region: "Addis Ababa",
-              city: "Bole",
-              subCity: "Bole",
-              woreda: "03",
-              description: "Well-maintained Toyota Corolla 2020, single owner, full service history. Perfect condition, driven only in city.",
-              images: demoImgs,
-              latitude: 9.0192,
-              longitude: 38.7525,
-            })
-          }}
-          className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer"
-        >
-          {t('fill_demo_data')}
-        </button>
-      </div>
-
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         {/* Form panel */}
         <div className="rounded-2xl border border-border bg-card p-6">

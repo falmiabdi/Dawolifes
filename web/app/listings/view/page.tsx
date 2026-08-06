@@ -123,7 +123,7 @@ function ListingPage() {
               features: dbProp.features || [],
               posterType: dbProp.posterType || '',
               ownerType: dbProp.ownerType || '',
-               images: dbProp.images && dbProp.images.length > 0 ? dbProp.images.map((img: string) => getImageUrl(img)) : ["/placeholder.jpg"],
+               images: dbProp.images && dbProp.images.length > 0 ? dbProp.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
               videoUrl: dbProp.videoUrl || '',
               locationDocument: dbProp.locationDocument || '',
               status: dbProp.status || '',
@@ -133,7 +133,7 @@ function ListingPage() {
                 name: dbProp.agent?.username || dbProp.agentName || 'Unknown Agent',
                 role: 'Real Estate Agent',
                 phone: dbProp.displayPhone || dbProp.agent?.phone || '+251 900 000 000',
-                avatar: dbProp.agent?.profilePhoto || '/placeholder-user.jpg',
+                avatar: dbProp.agent?.profilePhoto || '/placeholder-user.svg',
               }
             }
             setProperty(mapped)
@@ -362,7 +362,7 @@ function ListingPage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Advertised by</p>
                 <div className="mt-3 flex items-center gap-3">
                   <img
-                    src={property.agent.avatar || "/placeholder-user.jpg"}
+                    src={property.agent.avatar || "/placeholder-user.svg"}
                     alt={property.agent.name}
                     className="h-12 w-12 rounded-full object-cover border border-slate-100"
                   />

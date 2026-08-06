@@ -58,7 +58,9 @@ export function SaveButton({
     }
   }, [user, getToken, itemType, itemId])
 
-  const toggle = async () => {
+  const toggle = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
     if (!user) {
       setShowPrompt(true)
       return

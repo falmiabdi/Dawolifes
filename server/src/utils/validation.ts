@@ -16,6 +16,10 @@ export const num = (schema: z.ZodNumber) => z.preprocess(toNumber, schema)
 export const optNum = (schema: z.ZodNumber) => z.preprocess(toNumber, schema.optional())
 export const requiredStr = z.string().min(1)
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export const isValidUuid = (value: unknown): boolean =>
+  typeof value === 'string' && UUID_RE.test(value)
+
 // Strip empty/null so blank optional fields (Flutter sends null) are dropped
 // rather than rejected, while still validating anything that is present.
 const strip = (value: unknown) => (value === undefined || value === null || value === '' ? undefined : value)

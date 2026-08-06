@@ -23,9 +23,10 @@ function VerifyEmailForm() {
   const { t } = useI18n()
 
   const initialEmail = searchParams.get('email') || ''
+  const initialCode = searchParams.get('code') || ''
   const [email, setEmail] = useState(initialEmail)
-  const [otp, setOtp] = useState('')
-  const [message, setMessage] = useState('')
+  const [otp, setOtp] = useState(initialCode)
+  const [message, setMessage] = useState(initialCode ? `Dev code auto-filled: ${initialCode}` : '')
   const [isError, setIsError] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [sending, setSending] = useState(false)

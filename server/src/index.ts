@@ -2,6 +2,7 @@
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { connectDB, prisma } from './utils/db.js'
+import { withPrismaRetry, startKeepAlive } from './lib/prisma.js'
 import authRoutes from './routes/auth.js'
 import propertyRoutes from './routes/properties.js'
 import paymentRoutes from './routes/payments.js'
@@ -12,6 +13,8 @@ import adminRoutes from './routes/admin.js'
 import vehicleRoutes from './routes/vehicles.js'
 import agentRoutes from './routes/agent.js'
 import favoriteRoutes from './routes/favorites.js'
+import chapaRoutes from './routes/chapa.js'
+import telebirrRoutes from './routes/telebirr.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
 
@@ -20,14 +23,13 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 4000
 
-// Request logging middleware
+// Request logging middleware (path only — never log query strings which can
+// contain payment references or verification codes).
 app.use((req, res, next) => {
   const start = Date.now()
-  const timestamp = new Date().toLocaleTimeString()
-  res.on("finish", () => {
-    const ms = Date.now() - start
-    const icon = res.statusCode < 400 ? "✅" : "❌"
-    console.log(`[${timestamp}] ${icon} ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms`)
+  const path = (req.originalUrl || req.url || '/').split('?')[0]
+  res.on('finish', () => {
+    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${path} ${res.statusCode} ${Date.now() - start}ms`)
   })
   next()
 })
@@ -43,12 +45,14 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || '',
 ].filter(Boolean)
 
+const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === 'true'
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (allowAllOrigins || !origin || allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
-      callback(null, true)
+      callback(new Error('Not allowed by CORS'))
     }
   },
   credentials: true,
@@ -67,10 +71,6 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/vehicles', vehicleRoutes)
 app.use('/api/agent', agentRoutes)
 app.use('/api/favorites', favoriteRoutes)
-
-// ── Payment gateway routes ─────────────────────────────────────────────────
-import chapaRoutes from './routes/chapa.js'
-import telebirrRoutes from './routes/telebirr.js'
 app.use('/api/chapa', chapaRoutes)
 app.use('/api/telebirr', telebirrRoutes)
 
@@ -99,10 +99,16 @@ app.get('/', (_req, res) => {
 })
 
 // Health check
-app.get('/api/health', (_req, res) => {
-  const dbState = prisma ? 'connected' : 'disconnected'
-  res.json({
-    status: 'ok',
+app.get('/api/health', async (_req, res) => {
+  let dbState = 'disconnected'
+  try {
+    await withPrismaRetry(() => prisma.$queryRaw`SELECT 1`)
+    dbState = 'connected'
+  } catch {
+    dbState = 'disconnected'
+  }
+  res.status(dbState === 'connected' ? 200 : 503).json({
+    status: dbState === 'connected' ? 'ok' : 'degraded',
     db: dbState,
     timestamp: new Date().toISOString(),
   })
@@ -111,17 +117,16 @@ app.get('/api/health', (_req, res) => {
 // Start server
 async function start() {
   const db = await connectDB()
-  if (!db) {
-    console.error("FATAL: Database connection failed after retries. Exiting.")
-    process.exit(1)
+  if (db) {
+    startKeepAlive()
   }
-  
+
   // 404 + error handlers must be LAST after all routes
   app.use(notFoundHandler)
   app.use(errorHandler)
-  
+
   const server = app.listen(PORT, () => {
-    console.log(`DawoLife API server running on port ${PORT} ✅ DB connected`)
+    console.log(`DawoLife API server running on port ${PORT} ✅`)
   })
   setupWebSocket(server)
 }

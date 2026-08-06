@@ -30,8 +30,18 @@ interface PendingRegistration {
   otpExpiresAt: Date
 }
 const pendingRegistrations = new Map<string, PendingRegistration>()
-// Bypass code so users can complete verification while email delivery is broken.
-const OTP_BYPASS_CODE = process.env.OTP_BYPASS_CODE || '000000'
+// The universal bypass code is ONLY active when explicitly configured via env.
+// Never enable it in production.
+const OTP_BYPASS_CODE = process.env.OTP_BYPASS_CODE
+
+setInterval(() => {
+  const now = Date.now()
+  for (const [email, pending] of pendingRegistrations) {
+    if (pending.otpExpiresAt.getTime() < now) {
+      pendingRegistrations.delete(email)
+    }
+  }
+}, 10 * 60 * 1000)
 
 function storePendingRegistration(
   email: string,
@@ -44,7 +54,9 @@ function storePendingRegistration(
     otpExpiresAt: otpExpiresAt(),
   }
   pendingRegistrations.set(email, pending)
-  console.log(`[OTP] Verification code for ${email}: ${pending.otp} (expires in 10 minutes)`)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[OTP] Verification code for ${email}: ${pending.otp} (expires in 10 minutes)`)
+  }
   sendOtpEmail(email, pending.username, pending.otp).catch((err) => {
     console.error('Failed to send OTP email:', err)
   })
@@ -68,14 +80,17 @@ router.post('/register', authLimiter, async (req, res) => {
     }
 
     const hashedPassword = await hashPassword(password)
-    storePendingRegistration(normalizedEmail, {
+    const pending = storePendingRegistration(normalizedEmail, {
       username,
       email: normalizedEmail,
       passwordHash: hashedPassword,
       role: 'agent',
     })
 
-    res.status(201).json({ message: 'Registration successful. Please verify your email to continue.' })
+    res.status(201).json({
+      message: 'Registration successful. Please verify your email to continue.',
+      ...(process.env.NODE_ENV !== 'production' ? { devOtp: pending.otp } : {}),
+    })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
   }
@@ -98,7 +113,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
     }
 
     const hashedPassword = await hashPassword(password)
-    storePendingRegistration(normalizedEmail, {
+    const pending = storePendingRegistration(normalizedEmail, {
       username: name,
       email: normalizedEmail,
       phone,
@@ -110,6 +125,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
     res.status(201).json({
       message: 'Account created successfully. Please verify your email to continue.',
       pending: true,
+      ...(process.env.NODE_ENV !== 'production' ? { devOtp: pending.otp } : {}),
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
@@ -132,13 +148,13 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     let createdNow = false
 
     if (pending) {
-      const bypass = String(otp).trim() === OTP_BYPASS_CODE
-      if (!bypass && String(otp).trim() !== pending.otp) {
-        return res.status(400).json({ message: 'Invalid OTP code' })
-      }
-      if (!bypass && pending.otpExpiresAt.getTime() < Date.now()) {
-        return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
-      }
+    const bypass = !!OTP_BYPASS_CODE && String(otp).trim() === OTP_BYPASS_CODE
+    if (!bypass && String(otp).trim() !== pending.otp) {
+      return res.status(400).json({ message: 'Invalid OTP code' })
+    }
+    if (!bypass && pending.otpExpiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
+    }
 
       // Account is created ONLY after the correct code is entered.
       user = await prisma.user.create({
@@ -233,11 +249,13 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     if (pending) {
       pending.otp = generateOtp()
       pending.otpExpiresAt = otpExpiresAt()
-      console.log(`[OTP] Verification code for ${email}: ${pending.otp} (expires in 10 minutes)`)
       sendOtpEmail(normalizedEmail, pending.username, pending.otp).catch((err) => {
         console.error('Failed to send OTP email:', err)
       })
-      return res.json({ message: 'A new verification code has been generated.' })
+      return res.json({
+        message: 'A new verification code has been generated.',
+        ...(process.env.NODE_ENV !== 'production' ? { devOtp: pending.otp } : {}),
+      })
     }
 
     const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
@@ -253,29 +271,12 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
       console.error('Failed to send OTP email:', err)
     })
 
-    res.json({ message: 'A new verification code has been generated.' })
+    res.json({
+      message: 'A new verification code has been generated.',
+      ...(process.env.NODE_ENV !== 'production' ? { devOtp: otp } : {}),
+    })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to resend OTP' })
-  }
-})
-
-// Verify email
-router.get('/verify-email', async (req, res) => {
-  try {
-    const token = req.query.token as string
-    if (!token) {
-      return res.status(400).json({ message: 'Verification token is required' })
-    }
-
-    const user = await prisma.user.findFirst({ where: { verificationToken: token } })
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired verification token' })
-    }
-
-    await prisma.user.update({ where: { id: user.id }, data: { verificationToken: null, emailVerified: true } })
-    res.json({ message: 'Email verified successfully. You can now sign in.' })
-  } catch (err: any) {
-    res.status(500).json({ message: err.message || 'Verification failed' })
   }
 })
 
@@ -422,7 +423,6 @@ router.post('/change-password', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
-    const { comparePassword, hashPassword } = await import('../utils/password.js')
     const valid = await comparePassword(currentPassword, user.password)
     if (!valid) {
       return res.status(401).json({ message: 'Current password is incorrect' })

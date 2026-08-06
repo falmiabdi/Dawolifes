@@ -197,7 +197,7 @@ export default function AdminPropertiesPage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={p.images?.[0] || '/placeholder.jpg'}
+                      src={p.images?.[0] || '/placeholder.svg'}
                       alt={p.title}
                       className="h-12 w-12 rounded-xl object-cover bg-slate-100 shrink-0"
                     />
@@ -224,7 +224,7 @@ export default function AdminPropertiesPage() {
               {/* Image preview */}
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
                 <img
-                  src={selectedProperty.images?.[0] || '/placeholder.jpg'}
+                  src={selectedProperty.images?.[0] || '/placeholder.svg'}
                   alt={selectedProperty.title}
                   className="h-full w-full object-cover"
                 />

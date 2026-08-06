@@ -14,13 +14,11 @@
     "db:migrate": "node \"./node_modules/prisma/build/index.js\" migrate dev",
     "db:push": "node \"./node_modules/prisma/build/index.js\" db push",
     "db:generate": "node \"./node_modules/prisma/build/index.js\" generate",
-    "db:studio": "node \"./node_modules/prisma/build/index.js\" studio",
-    "test": "node --import tsx --test src/**/*.test.ts"
+    "db:studio": "node \"./node_modules/prisma/build/index.js\" studio"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^2.4.3",
-    "chapa": "^1.0.0",
     "cloudinary": "^2.5.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
@@ -35,6 +35,28 @@ export function WebHero() {
   const paramsString = searchParams.toString()
   const [search, setSearch] = useState("")
   const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const [videoFailed, setVideoFailed] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || videoFailed) return
+    let cancelled = false
+    const attempt = video.play()
+    if (attempt) {
+      attempt.catch((err) => {
+        if (cancelled) return
+        if (err?.name === 'AbortError') return
+        setVideoFailed(true)
+      })
+    }
+    return () => {
+      cancelled = true
+      try {
+        video.pause()
+      } catch {}
+    }
+  }, [videoFailed])
 
   useEffect(() => {
     setSearch(searchParams.get("search") || "")
@@ -69,16 +91,26 @@ export function WebHero() {
 
   return (
     <section className="relative flex min-h-[88vh] items-center overflow-hidden bg-secondary">
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster="/properties/hero-bg.png"
-        className="absolute inset-0 h-full w-full object-cover"
-      >
-        <source src={HERO_VIDEO} type="video/mp4" />
-      </video>
+      {videoFailed ? (
+        <img
+          src="/properties/hero-bg.png"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          muted
+          loop
+          playsInline
+          poster="/properties/hero-bg.png"
+          onError={() => setVideoFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          <source src={HERO_VIDEO} type="video/mp4" />
+        </video>
+      )}
       <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/85 to-secondary/40" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-secondary to-transparent" />
 

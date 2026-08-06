@@ -1,7 +1,6 @@
 ﻿import { Router } from 'express'
-import { authMiddleware, agentMiddleware, requireActiveUser } from '../middleware/auth.js'
-import { propertySchema } from '../utils/validation.js'
-import { verifyAccessToken } from '../utils/jwt.js'
+import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } from '../middleware/auth.js'
+import { propertySchema, isValidUuid } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 
@@ -16,17 +15,6 @@ const ALLOWED_UPDATE_FIELDS = [
 ]
 
 const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
-
-function getRequestUserId(req: any): { userId: string; role: string } | null {
-  const header = req.headers.authorization
-  if (!header || !header.startsWith('Bearer ')) return null
-  try {
-    const decoded = verifyAccessToken(header.split(' ')[1])
-    return { userId: decoded.userId, role: decoded.role }
-  } catch {
-    return null
-  }
-}
 
 // Get all properties (public)
 router.get('/', async (req, res) => {
@@ -58,6 +46,9 @@ router.get('/', async (req, res) => {
 // Get property by ID
 router.get('/:id', async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Property not found' })
+    }
     const property = await withPrismaRetry(() =>
       prisma.property.findUnique({
         where: { id: req.params.id },
@@ -92,7 +83,6 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
-    const ADMIN_PHONES = ['+251962395282', '+251922477886']
     const contactName = parsed.data.name?.trim() || ''
     const contactPhone = parsed.data.phone?.trim() || ''
     const { name: _name, phone: _phone, ...propertyData } = parsed.data
@@ -102,7 +92,7 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
         agentId: req.user!.userId,
         agentName: contactName || req.user!.email,
         status: 'Pending',
-        displayPhone: contactPhone || ADMIN_PHONES[0],
+        displayPhone: contactPhone || null,
       },
     })
 
@@ -123,6 +113,9 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 // Update property
 router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Property not found' })
+    }
     const property = await prisma.property.findUnique({ where: { id: req.params.id } })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
@@ -159,6 +152,9 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
 // Delete property
 router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Property not found' })
+    }
     const property = await prisma.property.findUnique({ where: { id: req.params.id } })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })

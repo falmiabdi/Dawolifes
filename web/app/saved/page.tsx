@@ -44,7 +44,7 @@ function mapProperty(p: any) {
       name: p.agent?.username || p.agentName || "Agent",
       role: "Real Estate Agent",
       phone: p.displayPhone || p.agent?.phone || "+251 900 000 000",
-      avatar: p.agent?.profilePhoto || "/placeholder-user.jpg",
+      avatar: p.agent?.profilePhoto || "/placeholder-user.svg",
     },
   }
 }
@@ -81,7 +81,7 @@ function mapVehicle(v: any) {
       name: v.agent?.username || v.agentName || "Agent",
       role: "Vehicle Agent",
       phone: v.agent?.phone || "+251 900 000 000",
-      avatar: v.agent?.profilePhoto || "/placeholder-user.jpg",
+      avatar: v.agent?.profilePhoto || "/placeholder-user.svg",
     },
   }
 }

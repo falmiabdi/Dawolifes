@@ -1,45 +1,49 @@
 import 'dotenv/config'
 
-const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
-const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
-const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'noreply@dawolife.com';
-const FROM_NAME = process.env.BREVO_FROM_NAME || 'DawoLife';
-const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
+const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
+const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY || ''
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
+const BREVO_CAMPAIGN_URL = 'https://api.brevo.com/v3/emailCampaigns'
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'noreply@dawolife.com'
+const FROM_NAME = process.env.BREVO_FROM_NAME || 'DawoLife'
 
 interface SendEmailParams {
-  to: { email: string; name: string };
-  subject: string;
-  htmlContent: string;
+  to: { email: string; name: string }
+  subject: string
+  htmlContent: string
+  textContent?: string
 }
 
-async function sendEmail({ to, subject, htmlContent }: SendEmailParams) {
-  if (!BREVO_API_KEY) {
-    console.warn('BREVO_API_KEY not set â€” skipping email to', to.email);
-    return;
+async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailParams) {
+  const apiKey = BREVO_SMTP_KEY || BREVO_API_KEY
+  if (!apiKey) {
+    console.warn('BREVO_API_KEY not set — skipping email to', to.email)
+    return
   }
 
   const res = await fetch(BREVO_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': BREVO_API_KEY,
+      'api-key': apiKey,
     },
     body: JSON.stringify({
       sender: { email: FROM_EMAIL, name: FROM_NAME },
       to: [to],
       subject,
       htmlContent,
+      textContent: textContent || subject,
     }),
-  });
+  })
 
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Brevo email failed (${res.status}): ${body}`);
+    const body = await res.text()
+    throw new Error(`Brevo email failed (${res.status}): ${body}`)
   }
 }
 
 export async function sendVerificationEmail(email: string, name: string, token: string) {
-  const link = `${BASE_URL}/api/auth/verify-email?token=${token}`;
+  const link = `${process.env.BASE_URL || 'http://localhost:4000'}/api/auth/verify-email?token=${token}`
   await sendEmail({
     to: { email, name },
     subject: 'Verify your DawoLife email address',
@@ -55,7 +59,7 @@ export async function sendVerificationEmail(email: string, name: string, token: 
         <p style="color:#64748b;font-size:14px;">This link expires in 24 hours.</p>
       </div>
     `,
-  });
+  })
 }
 
 export async function sendOtpEmail(email: string, name: string, otp: string) {
@@ -74,7 +78,7 @@ export async function sendOtpEmail(email: string, name: string, otp: string) {
         <p style="color:#64748b;font-size:14px;">If you did not create a DawoLife account, you can ignore this email.</p>
       </div>
     `,
-  });
+  })
 }
 
 export async function sendApprovalEmail(email: string, name: string) {
@@ -91,7 +95,7 @@ export async function sendApprovalEmail(email: string, name: string) {
         </a>
       </div>
     `,
-  });
+  })
 }
 
 export async function sendRejectionEmail(email: string, name: string, reason: string) {
@@ -112,5 +116,58 @@ export async function sendRejectionEmail(email: string, name: string, reason: st
         </a>
       </div>
     `,
-  });
+  })
+}
+
+interface CreateCampaignParams {
+  name: string
+  subject: string
+  htmlContent: string
+  senderName?: string
+  senderEmail?: string
+  recipientEmails: string[]
+  scheduledAt?: string
+}
+
+export async function createEmailCampaign({
+  name,
+  subject,
+  htmlContent,
+  senderName = FROM_NAME,
+  senderEmail = FROM_EMAIL,
+  recipientEmails,
+  scheduledAt,
+}: CreateCampaignParams) {
+  if (!BREVO_API_KEY) {
+    throw new Error('BREVO_API_KEY not set — cannot create campaign')
+  }
+
+  const payload: any = {
+    name,
+    subject,
+    sender: { name: senderName, email: senderEmail },
+    type: 'classic',
+    htmlContent,
+    recipients: { listIds: [2, 7] },
+  }
+
+  if (scheduledAt) {
+    payload.scheduledAt = scheduledAt
+  }
+
+  const res = await fetch(BREVO_CAMPAIGN_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': BREVO_API_KEY,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Brevo campaign failed (${res.status}): ${body}`)
+  }
+
+  return res.json()
 }

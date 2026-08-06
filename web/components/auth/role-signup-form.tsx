@@ -77,8 +77,9 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
 
     try {
       let registeredEmail = ''
+      let devOtp = ''
       if (role === 'buyer') {
-        await registerBuyer({
+        const data = await registerBuyer({
           name: values.name,
           email: values.email,
           phone: values.phone,
@@ -86,6 +87,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           profilePhoto: photo || undefined,
         })
         registeredEmail = values.email
+        devOtp = data?.devOtp || ''
       } else {
         const response = await fetch(`${await getApiUrlAsync()}/api/auth/register`, {
           method: 'POST',
@@ -98,10 +100,11 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           return
         }
         registeredEmail = values.email
+        devOtp = payload.devOtp || ''
       }
 
       if (registeredEmail) {
-        router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}`)
+        router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}${devOtp ? `&code=${devOtp}` : ''}`)
       }
     } catch (err: any) {
       const msg = err?.message || ''

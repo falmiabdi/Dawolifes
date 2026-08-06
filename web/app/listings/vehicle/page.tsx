@@ -142,7 +142,7 @@ function VehicleListingPage() {
               woreda: db.woreda || "",
               description: db.description || "",
               features: db.features || [],
-              images: db.images && db.images.length > 0 ? db.images.map((img: string) => getImageUrl(img)) : ["/placeholder.jpg"],
+              images: db.images && db.images.length > 0 ? db.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
               videoUrl: db.videoUrl || "",
               featured: db.featured || false,
               dailyRate: db.dailyRate || 0,
@@ -162,7 +162,7 @@ function VehicleListingPage() {
                 name: db.agent?.username || db.agentName || "Unknown Agent",
                 role: "Vehicle Agent",
                 phone: db.displayPhone || db.agent?.phone || "+251 900 000 000",
-                avatar: db.agent?.profilePhoto || "/placeholder-user.jpg",
+                avatar: db.agent?.profilePhoto || "/placeholder-user.svg",
               },
             }
             setVehicle(mapped)
@@ -535,7 +535,7 @@ function VehicleListingPage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Advertised by</p>
                 <div className="mt-3 flex items-center gap-3">
                   <img
-                    src={vehicle.agent.avatar || "/placeholder-user.jpg"}
+                    src={vehicle.agent.avatar || "/placeholder-user.svg"}
                     alt={vehicle.agent.name}
                     className="h-12 w-12 rounded-full object-cover border border-slate-100"
                   />

@@ -2,6 +2,8 @@
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { createAndBroadcastNotification } from '../utils/notifications.js'
+import { hashPassword } from '../utils/password.js'
+import { ADMIN_PHONES } from '../config/constants.js'
 
 function flattenAgent(user: any) {
   const profile = user.profile || {}
@@ -150,8 +152,6 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-const ADMIN_PHONES = ['+251962395282', '+251922477886']
-
 // Delete a user along with all records that reference them (listings,
 // messages, saved items, notifications) to avoid foreign-key failures.
 async function deleteUserCascade(userId: string) {
@@ -183,6 +183,8 @@ async function deleteUserCascade(userId: string) {
   await prisma.user.delete({ where: { id: userId } })
 }
 
+// Toggle the contact phone shown on a listing. Cycles between the agent's
+// own phone and the configured fallback numbers.
 router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const property = await prisma.property.findUnique({
@@ -269,20 +271,6 @@ router.get('/properties', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Get pending properties
-router.get('/properties/pending', authMiddleware, adminMiddleware, async (_req, res) => {
-  try {
-    const properties = await prisma.property.findMany({
-      where: { status: 'Pending' },
-      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
-      orderBy: { createdAt: 'desc' },
-    })
-    res.json({ properties })
-  } catch (err: any) {
-    res.status(500).json({ message: err.message || 'Failed to fetch properties' })
-  }
-})
-
 // Approve property
 router.patch('/properties/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -361,19 +349,6 @@ router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
       }),
     ])
     res.json({ vehicles, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } })
-  } catch (err: any) {
-    res.status(500).json({ message: err.message || 'Failed to fetch vehicles' })
-  }
-})
-
-// Get pending vehicles
-router.get('/vehicles/pending', authMiddleware, adminMiddleware, async (_req, res) => {
-  try {
-    const vehicles = await prisma.vehicle.findMany({
-      where: { status: 'Pending' },
-      orderBy: { createdAt: 'desc' },
-    })
-    res.json({ vehicles })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch vehicles' })
   }
@@ -536,7 +511,6 @@ router.post('/create', authMiddleware, adminMiddleware, async (req, res) => {
     if (existing) {
       return res.status(409).json({ message: 'Email already in use' })
     }
-    const { hashPassword } = await import('../utils/password.js')
     const hashedPassword = await hashPassword(password)
     const admin = await prisma.user.create({
       data: {

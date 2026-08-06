@@ -71,7 +71,7 @@ export default function AgentVehiclesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((v: any) => {
-            const firstImage = v.images?.[0] || '/placeholder.jpg'
+            const firstImage = v.images?.[0] || '/placeholder.svg'
             return (
               <div key={v.id.toString()} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">

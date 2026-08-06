@@ -1,6 +1,7 @@
 ﻿import { Router } from 'express'
 import { authMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
@@ -74,6 +75,9 @@ router.get('/', authMiddleware, async (req, res) => {
 // Get payment by ID
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Payment not found' })
+    }
     const payment = await prisma.payment.findUnique({ where: { id: req.params.id } })
     if (!payment) {
       return res.status(404).json({ message: 'Payment not found' })
