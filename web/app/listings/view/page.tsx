@@ -18,7 +18,8 @@ import {
   MapPinned,
   Hash,
   AlertCircle,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react"
 import { formatPrice } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
@@ -67,7 +68,10 @@ export default function ListingPageWrapper() {
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
         <main className="flex-1 flex items-center justify-center bg-muted/30">
-          <p className="text-muted-foreground">Loading property...</p>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading property...</p>
+          </div>
         </main>
       </div>
     }>
@@ -156,7 +160,10 @@ function ListingPage() {
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
         <main className="flex-1 flex items-center justify-center bg-muted/30">
-          <p className="text-muted-foreground">Loading property...</p>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading property...</p>
+          </div>
         </main>
       </div>
     )

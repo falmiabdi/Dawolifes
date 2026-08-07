@@ -31,7 +31,8 @@ import {
   BadgeCheck,
   ClipboardList,
   CircleCheck,
-  CircleX
+  CircleX,
+  Loader2
 } from "lucide-react"
 import { formatPrice } from "@/lib/data"
 import type { Vehicle } from "@/lib/data"
@@ -80,7 +81,10 @@ export default function VehicleListingPageWrapper() {
         <div className="flex min-h-screen flex-col">
           <SiteHeader />
           <main className="flex-1 flex items-center justify-center bg-muted/30">
+            <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-muted-foreground">Loading vehicle...</p>
+          </div>
           </main>
         </div>
       }
@@ -185,7 +189,10 @@ function VehicleListingPage() {
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
         <main className="flex-1 flex items-center justify-center bg-muted/30">
-          <p className="text-muted-foreground">Loading vehicle...</p>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading vehicle...</p>
+          </div>
         </main>
       </div>
     )
