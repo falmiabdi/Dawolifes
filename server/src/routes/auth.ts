@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { registerSchema, buyerRegisterSchema, loginSchema } from '../utils/validation.js'
+import { registerSchema, buyerRegisterSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../utils/validation.js'
 import { hashPassword, comparePassword } from '../utils/password.js'
 import { signAccessToken, signRefreshToken, verifyAccessToken } from '../utils/jwt.js'
 import { generateOtp, otpExpiresAt } from '../utils/otp.js'
@@ -7,7 +7,7 @@ import { prisma } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { rateLimit } from '../middleware/rateLimit.js'
-import { sendOtpEmail } from '../services/email.js'
+import { sendOtpEmail, sendResetPasswordEmail } from '../services/email.js'
 
 const router = Router()
 
@@ -432,6 +432,76 @@ router.post('/change-password', authMiddleware, async (req, res) => {
     res.json({ message: 'Password changed successfully' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to change password' })
+  }
+})
+
+// Forgot password: send a reset OTP to the user's email
+router.post('/forgot-password', otpLimiter, async (req, res) => {
+  try {
+    const parsed = forgotPasswordSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'A valid email is required' })
+    }
+
+    const normalizedEmail = normalizeEmail(parsed.data.email)
+    const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
+
+    // Always respond the same way whether or not the account exists to avoid
+    // leaking which emails are registered.
+    if (!user) {
+      return res.json({ message: 'If an account exists for that email, a reset code has been sent.' })
+    }
+
+    const otp = generateOtp()
+    const expiresAt = otpExpiresAt()
+    await prisma.user.update({ where: { id: user.id }, data: { otp, otpExpiresAt: expiresAt } })
+
+    sendResetPasswordEmail(normalizedEmail, user.username, otp).catch((err) => {
+      console.error('Failed to send reset password email:', err)
+    })
+
+    res.json({
+      message: 'If an account exists for that email, a reset code has been sent.',
+      ...(process.env.NODE_ENV !== 'production' ? { devOtp: otp } : {}),
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to send reset code' })
+  }
+})
+
+// Reset password: verify OTP + set new password
+router.post('/reset-password', otpLimiter, async (req, res) => {
+  try {
+    const parsed = resetPasswordSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Email, reset code and a new password (min 8 characters) are required' })
+    }
+
+    const { email, otp, newPassword } = parsed.data
+    const normalizedEmail = normalizeEmail(email)
+    const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found. Please register first.' })
+    }
+
+    const bypass = !!OTP_BYPASS_CODE && String(otp).trim() === OTP_BYPASS_CODE
+    const storedOtp = user.otp
+    if (!bypass && (!storedOtp || String(storedOtp).trim() !== String(otp).trim())) {
+      return res.status(400).json({ message: 'Invalid reset code' })
+    }
+    if (!bypass && (!user.otpExpiresAt || new Date(user.otpExpiresAt).getTime() < Date.now())) {
+      return res.status(400).json({ message: 'Reset code has expired. Please request a new one.' })
+    }
+
+    const hashedPassword = await hashPassword(newPassword)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword, otp: null, otpExpiresAt: null },
+    })
+
+    res.json({ message: 'Password reset successfully. You can now sign in.' })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to reset password' })
   }
 })
 

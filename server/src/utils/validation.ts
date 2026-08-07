@@ -48,6 +48,16 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 })
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+})
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  otp: z.string().min(4).max(6),
+  newPassword: z.string().min(8).max(100),
+})
+
 export const propertySchema = z.object({
   title: requiredStr.max(200),
   type: requiredStr,
