@@ -20,6 +20,7 @@ export default function AdminDashboardPage() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [payments, setPayments] = useState<any[]>([])
   const [stats, setStats] = useState<any>({})
+  const [counts, setCounts] = useState<any>({})
 
   const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await getToken()
@@ -31,31 +32,27 @@ export default function AdminDashboardPage() {
     ;(async () => {
       const authHeaders = await getAuthHeaders()
       const headers = { ...authHeaders }
-      Promise.all([
-        fetch(`${getApiUrl()}/api/admin/agents?status=all`, { headers }).then(r => r.json()),
-        fetch(`${getApiUrl()}/api/admin/properties`, { headers }).then(r => r.json()),
-        fetch(`${getApiUrl()}/api/admin/vehicles`, { headers }).then(r => r.json()),
-        fetch(`${getApiUrl()}/api/admin/stats`, { headers }).then(r => r.json()),
-        fetch(`${getApiUrl()}/api/payments`, { headers }).then(r => r.json()),
-      ]).then(([agentsData, propertiesData, vehiclesData, statsData, paymentsData]) => {
-        setAgents(agentsData.agents || [])
-        setProperties(propertiesData.properties || [])
-        setVehicles(vehiclesData.vehicles || [])
-        setPayments(paymentsData.payments || [])
-        // statsData from /api/admin/stats has { paymentStats: { totalRevenue, completedCount, ... } }
-        setStats(statsData.paymentStats || paymentsData.stats || {})
-      }).catch(() => {})
-    })()
+      // Single lightweight request instead of 5 heavy list endpoints. The
+      // dashboard shell renders immediately; the stats cards populate when the
+      // response arrives.
+      const overview = await fetch(`${getApiUrl()}/api/admin/overview`, { headers }).then(r => r.json())
+      setCounts(overview.counts || {})
+      setStats(overview.paymentStats || {})
+      setAgents(overview.recentAgents || [])
+      setPayments(overview.recentPayments || [])
+      setProperties([])
+      setVehicles([])
+    })().catch(() => {})
   }, [user, getAuthHeaders])
 
   if (!user) return null
 
-  const totalAgents = agents.length
-  const pendingAgents = agents.filter((a: any) => a.status === 'Pending').length
-  const totalProperties = properties.length
-  const pendingProperties = properties.filter((p: any) => p.status === 'Pending').length
-  const totalVehicles = vehicles.length
-  const pendingVehicles = vehicles.filter((v: any) => v.status === 'Pending').length
+  const totalAgents = counts.agents ?? 0
+  const pendingAgents = counts.pendingAgents ?? 0
+  const totalProperties = counts.properties ?? 0
+  const pendingProperties = counts.pendingProperties ?? 0
+  const totalVehicles = counts.vehicles ?? 0
+  const pendingVehicles = counts.pendingVehicles ?? 0
 
   const ps = stats
   const recentAgents = agents.slice(0, 5)
@@ -193,7 +190,7 @@ export default function AdminDashboardPage() {
               {recentPayments.map((p: any) => (
                 <div key={p.id} className="py-3 flex items-center justify-between gap-3 text-xs">
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-slate-900 truncate">{p.title}</p>
+                    <p className="font-bold text-slate-900 truncate">{p.propertyTitle}</p>
                     <p className="text-slate-400 truncate mt-0.5">
                       {p.method} Â· {p.paymentType.replace('_', ' ')}
                     </p>

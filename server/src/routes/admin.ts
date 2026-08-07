@@ -528,6 +528,65 @@ router.post('/create', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
+// Lightweight single-request overview for the admin dashboard home page.
+// Returns counts, payment stats, and the 5 most recent agents + payments — all
+// in one round trip and with heavy fields (images, documents, profile JSON)
+// explicitly omitted so the payload stays small.
+router.get('/overview', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const [agentCount, pendingAgentCount, propertyCount, pendingPropertyCount, vehicleCount, pendingVehicleCount] =
+      await Promise.all([
+        prisma.user.count({ where: { role: 'agent' } }),
+        prisma.user.count({ where: { role: 'agent', status: 'Pending' } }),
+        prisma.property.count(),
+        prisma.property.count({ where: { status: 'Pending' } }),
+        prisma.vehicle.count(),
+        prisma.vehicle.count({ where: { status: 'Pending' } }),
+      ])
+
+    const rawStats = await prisma.$queryRaw<
+      { status: string; count: number; totalAmount: string }[]
+    >`SELECT status, COUNT(*)::int AS count, COALESCE(SUM(amount), 0) AS "totalAmount" FROM payments GROUP BY status`
+
+    const statsArr = rawStats as { status: string; count: number; totalAmount: string }[]
+    const paymentStats = { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0 }
+    for (const row of statsArr) {
+      const amount = Number(row.totalAmount) || 0
+      const count = Number(row.count) || 0
+      if (row.status === 'Completed') { paymentStats.completedCount = count; paymentStats.totalRevenue += amount }
+      else if (row.status === 'Pending') { paymentStats.pendingCount = count }
+      else if (row.status === 'Failed') { paymentStats.failedCount = count }
+    }
+
+    const [recentAgents, recentPayments] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: 'agent' },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, username: true, email: true, status: true, createdAt: true },
+      }),
+      prisma.payment.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, propertyTitle: true, method: true, paymentType: true, status: true, amount: true },
+      }),
+    ])
+
+    res.json({
+      counts: {
+        agents: agentCount, pendingAgents: pendingAgentCount,
+        properties: propertyCount, pendingProperties: pendingPropertyCount,
+        vehicles: vehicleCount, pendingVehicles: pendingVehicleCount,
+      },
+      paymentStats,
+      recentAgents,
+      recentPayments,
+    })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to fetch overview' })
+  }
+})
+
 // Get admin stats
 router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
   try {

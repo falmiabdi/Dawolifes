@@ -11,6 +11,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import toast from "react-hot-toast"
 
 
@@ -42,6 +49,7 @@ function EditVehiclePage() {
   const [manufacturingYear, setManufacturingYear] = useState("")
   const [price, setPrice] = useState("")
   const [mileage, setMileage] = useState("")
+  const [plateType, setPlateType] = useState("")
   const [description, setDescription] = useState("")
   const [images, setImages] = useState<string[]>([])
 
@@ -70,6 +78,7 @@ function EditVehiclePage() {
         setManufacturingYear(String(v.manufacturingYear || ""))
         setPrice(String(v.price || ""))
         setMileage(String(v.mileage || ""))
+        setPlateType(v.plateType || "")
         setDescription(v.description || "")
         setImages(v.images || [])
         setRejectionReason(v.rejectionReason || "")
@@ -98,6 +107,7 @@ function EditVehiclePage() {
           manufacturingYear: Number(manufacturingYear) || undefined,
           price: Number(price) || 0,
           mileage: mileage ? Number(mileage) : undefined,
+          plateType: plateType || undefined,
           description,
         }),
       })
@@ -179,6 +189,22 @@ function EditVehiclePage() {
           <div className="space-y-2">
             <Label>Mileage (km)</Label>
             <Input type="number" value={mileage} onChange={(e) => setMileage(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Plate Type</Label>
+            <Select value={plateType} onValueChange={(v) => setPlateType(v ?? "")}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select plate type" />
+              </SelectTrigger>
+              <SelectContent>
+                {["Code 1", "Code 2", "Code 3", "Code 4", "Code 5"].map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

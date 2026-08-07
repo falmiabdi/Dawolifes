@@ -65,6 +65,7 @@ export const propertySchema = z.object({
   area: optNum(z.number().positive()),
   bedrooms: optNum(z.number().int().min(0)),
   bathrooms: optNum(z.number().int().min(0)),
+  floorNumber: optStr,
   condition: optStr,
   legalizedYear: optNum(z.number().int().min(1900).max(2030)),
   description: optStr,

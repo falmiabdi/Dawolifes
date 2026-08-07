@@ -4,7 +4,7 @@ import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Car, PlusCircle, ExternalLink, MapPin, AlertCircle, Pencil } from 'lucide-react'
+import { Car, PlusCircle, ExternalLink, MapPin, AlertCircle, Pencil, Loader2, Clock } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import { formatPrice } from '@/lib/data'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -15,19 +15,29 @@ export default function AgentVehiclesPage() {
   const { user } = useAuth()
   const { t, tv } = useI18n()
   const [vehicles, setVehicles] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  const fetchVehicles = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
+      const res = await fetch(`${getApiUrl()}/api/agent/vehicles`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setVehicles(data.vehicles || [])
+    } catch {
+      setError(t('failed_to_load') || 'Failed to load vehicles.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!user?.id) return
-    const fetchVehicles = async () => {
-      try {
-        const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
-        const res = await fetch(`${getApiUrl()}/api/agent/vehicles`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-        const data = await res.json()
-        setVehicles(data.vehicles || [])
-      } catch {}
-    }
     fetchVehicles()
   }, [user?.id])
 
@@ -55,7 +65,20 @@ export default function AgentVehiclesPage() {
         </div>
       )}
 
-      {vehicles.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-white py-16 text-slate-400 shadow-sm">
+          <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+          <span className="text-sm">{t('loading')}</span>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-red-200 bg-red-50 py-12 text-red-700 shadow-sm">
+          <AlertCircle className="h-8 w-8" />
+          <p className="text-sm font-semibold px-4 text-center">{t('failed_to_load')}</p>
+          <button onClick={fetchVehicles} className="mt-1 rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100">
+            {t('retry')}
+          </button>
+        </div>
+      ) : vehicles.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-white py-16 text-slate-400 shadow-sm">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
             <Car className="h-8 w-8" />
@@ -98,6 +121,12 @@ export default function AgentVehiclesPage() {
                     {formatPrice(v.price)} ETB <span className="text-xs font-medium text-slate-400">{tv(v.priceType)}</span>
                   </p>
 
+                  {v.status === 'Pending' && (
+                    <div className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2 py-1.5 text-[11px] font-semibold text-amber-700">
+                      <Clock className="h-3 w-3" /> {t('vehicle_pending_review')}
+                    </div>
+                  )}
+
                   {v.status === 'Rejected' && v.rejectionReason && (
                     <div className="mt-3 rounded-xl bg-red-50 border border-red-200 p-3">
                       <div className="flex items-start gap-2">
@@ -121,20 +150,18 @@ export default function AgentVehiclesPage() {
                   </div>
 
                   <div className="mt-4 flex gap-2">
-                    <Link
-                      href={`/listings/vehicle?id=${v.id.toString()}`}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" /> {t('view')}
-                    </Link>
-                    {v.status === 'Rejected' && (
-                      <Link
-                        href={`/agent/vehicles/edit?id=${v.id.toString()}`}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
-                      >
-                        <Pencil className="h-3.5 w-3.5" /> {t('edit')}
-                      </Link>
-                    )}
+                     <Link
+                       href={`/listings/vehicle?id=${v.id.toString()}`}
+                       className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                     >
+                       <ExternalLink className="h-3.5 w-3.5" /> {t('view')}
+                     </Link>
+                     <Link
+                       href={`/agent/vehicles/edit?id=${v.id.toString()}`}
+                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
+                     >
+                       <Pencil className="h-3.5 w-3.5" /> {t('edit')}
+                     </Link>
                     <button
                       onClick={async () => {
                         if (!confirm(t('confirm_delete_vehicle'))) return

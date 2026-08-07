@@ -42,6 +42,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { MessageAgent } from "@/components/listing/message-agent"
 import { SaveButton } from "@/components/save-button"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
+import { useAuth } from "@/components/auth/auth-guard"
 
 function getYouTubeEmbedUrl(url: string) {
   if (!url) return ""
@@ -97,6 +98,7 @@ export default function VehicleListingPageWrapper() {
 function VehicleListingPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get("id")
+  const { getToken } = useAuth()
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -108,7 +110,10 @@ function VehicleListingPage() {
 
     const fetchVehicle = async () => {
       try {
-        const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`)
+        const token = await getToken()
+        const res = await fetch(`${getApiUrl()}/api/vehicles/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
         if (res.ok) {
           const data = await res.json()
           const db = data.vehicle
@@ -129,9 +134,15 @@ function VehicleListingPage() {
               horsepower: db.horsepower || 0,
               transmission: db.transmission || "",
               drivetrain: db.drivetrain || "",
+              cylinders: db.cylinders || 0,
               seatingCapacity: db.seatingCapacity || 0,
               doors: db.doors || 0,
               mileage: db.mileage || 0,
+              fuelConsumption: db.fuelConsumption || "",
+              fuelTankCapacity: db.fuelTankCapacity || 0,
+              groundClearance: db.groundClearance || 0,
+              weight: db.weight || 0,
+              tireSize: db.tireSize || "",
               condition: db.condition || "Used",
               accidentFree: db.accidentFree ?? false,
               imported: db.imported ?? false,
@@ -157,6 +168,7 @@ function VehicleListingPage() {
               negotiable: db.negotiable ?? false,
               financingAvailable: db.financingAvailable ?? false,
               plateNumber: db.plateNumber || "",
+              plateType: db.plateType || "",
               insuranceValid: db.insuranceValid ?? false,
               ownershipCertificate: db.ownershipCertificate ?? false,
               roadFundPaid: db.roadFundPaid ?? false,
@@ -182,7 +194,7 @@ function VehicleListingPage() {
     }
 
     fetchVehicle()
-  }, [id])
+  }, [id, getToken])
 
   if (loading) {
     return (
@@ -377,23 +389,29 @@ function VehicleListingPage() {
                 <div className="mt-3 overflow-hidden rounded-2xl border border-border">
                   <table className="w-full text-sm">
                     <tbody className="divide-y divide-border">
-                      {[
-                        ["Make", vehicle.make],
-                        ["Model", vehicle.model],
-                        ["Trim / Version", vehicle.trimVersion || "N/A"],
-                        ["Year", vehicle.manufacturingYear || "N/A"],
-                        ["Color", vehicle.color],
-                        ["Country of Origin", vehicle.countryOfOrigin],
-                        ["Category", vehicle.vehicleCategory],
-                        ["Engine Size", vehicle.engineSize ? `${vehicle.engineSize} cc` : "N/A"],
-                        ["Horsepower", vehicle.horsepower ? `${vehicle.horsepower} hp` : "N/A"],
-                        ["Transmission", vehicle.transmission || "N/A"],
-                        ["Drivetrain", vehicle.drivetrain || "N/A"],
-                        ["Fuel Type", vehicle.fuelType || "N/A"],
-                        ["Mileage", vehicle.mileage ? `${formatPrice(vehicle.mileage)} km` : "N/A"],
-                        ["Seating Capacity", vehicle.seatingCapacity || "N/A"],
-                        ["Doors", vehicle.doors || "N/A"],
-                      ]
+                       {[
+                         ["Make", vehicle.make],
+                         ["Model", vehicle.model],
+                         ["Trim / Version", vehicle.trimVersion || "N/A"],
+                         ["Year", vehicle.manufacturingYear || "N/A"],
+                         ["Color", vehicle.color],
+                         ["Country of Origin", vehicle.countryOfOrigin],
+                         ["Category", vehicle.vehicleCategory],
+                         ["Engine Size", vehicle.engineSize ? `${vehicle.engineSize} cc` : "N/A"],
+                         ["Horsepower", vehicle.horsepower ? `${vehicle.horsepower} hp` : "N/A"],
+                         ["Transmission", vehicle.transmission || "N/A"],
+                         ["Drivetrain", vehicle.drivetrain || "N/A"],
+                         ["Cylinders", vehicle.cylinders ? String(vehicle.cylinders) : "N/A"],
+                         ["Fuel Type", vehicle.fuelType || "N/A"],
+                         ["Mileage", vehicle.mileage ? `${formatPrice(vehicle.mileage)} km` : "N/A"],
+                         ["Fuel Consumption", vehicle.fuelConsumption ? `${vehicle.fuelConsumption} L/100km` : "N/A"],
+                         ["Fuel Tank Capacity", vehicle.fuelTankCapacity ? `${vehicle.fuelTankCapacity} L` : "N/A"],
+                         ["Seating Capacity", vehicle.seatingCapacity || "N/A"],
+                         ["Doors", vehicle.doors || "N/A"],
+                         ["Ground Clearance", vehicle.groundClearance ? `${vehicle.groundClearance} mm` : "N/A"],
+                         ["Weight", vehicle.weight ? `${vehicle.weight} kg` : "N/A"],
+                         ["Tire Size", vehicle.tireSize || "N/A"],
+                       ]
                         .filter(([, val]) => val !== "N/A")
                         .map(([label, value]) => (
                           <tr key={String(label)} className="bg-card">
@@ -483,13 +501,14 @@ function VehicleListingPage() {
                 <div className="mt-3 overflow-hidden rounded-2xl border border-border">
                   <table className="w-full text-sm">
                     <tbody className="divide-y divide-border">
-                      {([
-                        vehicle.plateNumber ? ["Plate Number", vehicle.plateNumber] : null,
-                        ["Insurance Valid", vehicle.insuranceValid ? "Yes" : "No"],
-                        ["Ownership Certificate", vehicle.ownershipCertificate ? "Yes" : "No"],
-                        ["Road Fund Paid", vehicle.roadFundPaid ? "Yes" : "No"],
-                        ["Inspection Certificate", vehicle.inspectionCertificate ? "Yes" : "No"],
-                      ] as [string, string][])
+                       {([
+                         vehicle.plateNumber ? ["Plate Number", vehicle.plateNumber] : null,
+                         vehicle.plateType ? ["Plate Type", vehicle.plateType] : null,
+                         ["Insurance Valid", vehicle.insuranceValid ? "Yes" : "No"],
+                         ["Ownership Certificate", vehicle.ownershipCertificate ? "Yes" : "No"],
+                         ["Road Fund Paid", vehicle.roadFundPaid ? "Yes" : "No"],
+                         ["Inspection Certificate", vehicle.inspectionCertificate ? "Yes" : "No"],
+                       ] as [string, string][])
                         .filter(Boolean)
                         .map(([label, value]) => (
                           <tr key={String(label)} className="bg-card">

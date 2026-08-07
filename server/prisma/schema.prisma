@@ -82,9 +82,10 @@ model User {
 
   properties Property[]
   vehicles   Vehicle[]
-  savedItems SavedItem[]
+   savedItems SavedItem[]
 
-  @@map("users")
+   @@index([role, status])
+   @@map("users")
 }
 
 model Property {
@@ -105,6 +106,7 @@ model Property {
   area            Float?
   bedrooms        Int?
   bathrooms       Int?
+  floorNumber     String?
   condition       String?
   legalizedYear   Int?
   description     String?

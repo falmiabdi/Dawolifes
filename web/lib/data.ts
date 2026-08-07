@@ -18,6 +18,7 @@ export type Property = {
   area: number
   bedrooms: number
   bathrooms: number
+  floorNumber?: string
   condition: string
   legalizedYear: number
   description: string
@@ -47,6 +48,12 @@ export type Vehicle = {
   seatingCapacity?: number
   doors?: number
   mileage?: number
+  cylinders?: number
+  fuelConsumption?: string
+  fuelTankCapacity?: number
+  groundClearance?: number
+  weight?: number
+  tireSize?: string
   condition: string
   accidentFree?: boolean
   imported?: boolean
@@ -76,6 +83,7 @@ export type Vehicle = {
   financingAvailable?: boolean
   // Legal
   plateNumber?: string
+  plateType?: string
   insuranceValid?: boolean
   ownershipCertificate?: boolean
   roadFundPaid?: boolean

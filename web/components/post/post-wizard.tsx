@@ -62,6 +62,7 @@ type FormState = {
   area: string
   bedrooms: string
   bathrooms: string
+  floorNumber: string
   condition: string
   legalizedYear: string
   description: string
@@ -93,6 +94,7 @@ const initialState: FormState = {
   area: "",
   bedrooms: "",
   bathrooms: "",
+  floorNumber: "",
   condition: "Finished",
   legalizedYear: "",
   description: "",
@@ -278,6 +280,7 @@ export function PostWizard() {
           area: form.area,
           bedrooms: form.bedrooms,
           bathrooms: form.bathrooms,
+          floorNumber: form.floorNumber,
           condition: form.condition,
           legalizedYear: form.legalizedYear,
           description: form.description,
@@ -452,6 +455,15 @@ export function PostWizard() {
                 </Field>
                 <Field label={t('bathrooms')}>
                   <Input value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} placeholder="2" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label={t('floor_number')}>
+                  <Input
+                    value={form.floorNumber}
+                    onChange={(e) => set("floorNumber", e.target.value)}
+                    placeholder={t('ph_floor_number')}
+                  />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -893,6 +905,7 @@ export function PostWizard() {
               highlight={!!form.price}
             />
             <SummaryRow label={t('location')} value={form.subCity || form.city || t('not_set')} />
+            <SummaryRow label={t('floor_number')} value={form.floorNumber || t('not_set')} />
             <SummaryRow label={t('photos')} value={form.images.length > 0 ? `${form.images.length} ${t('uploaded')}` : t('none')} />
             <SummaryRow label={t('features')} value={form.features.length ? `${form.features.length} ${t('selected')}` : t('none')} />
           </dl>

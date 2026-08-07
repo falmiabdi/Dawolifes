@@ -121,6 +121,7 @@ function ListingPage() {
               area: dbProp.area || 0,
               bedrooms: dbProp.bedrooms || 0,
               bathrooms: dbProp.bathrooms || 0,
+              floorNumber: dbProp.floorNumber || '',
               condition: dbProp.condition || 'Finished',
               legalizedYear: dbProp.legalizedYear || 2024,
               description: dbProp.description || '',
@@ -198,6 +199,7 @@ function ListingPage() {
     ["Parcel", property.parcel],
     ["Block", property.block],
     ["Home No", property.homeNo],
+    ["Floor Number", property.floorNumber || ''],
     ["Condition", property.condition],
     ["Legalized Year", String(property.legalizedYear)],
   ]

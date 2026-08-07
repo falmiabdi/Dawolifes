@@ -9,7 +9,7 @@ const router = Router()
 const ALLOWED_UPDATE_FIELDS = [
   'title', 'type', 'listingType', 'price', 'priceType', 'region', 'city',
   'subCity', 'woreda', 'kebele', 'parcel', 'block', 'homeNo', 'area',
-  'bedrooms', 'bathrooms', 'condition', 'legalizedYear', 'description',
+  'bedrooms', 'bathrooms', 'floorNumber', 'condition', 'legalizedYear', 'description',
   'features', 'images', 'videoUrl', 'latitude', 'longitude', 'locationDocument',
   'posterType', 'ownerType',
 ]

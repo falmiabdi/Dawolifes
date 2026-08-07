@@ -43,6 +43,7 @@ const allowedOrigins = [
   'http://10.0.2.2',
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   process.env.FRONTEND_URL || '',
+  'https://dawolifes.vercel.app',
 ].filter(Boolean)
 
 const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === 'true'
