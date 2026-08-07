@@ -10,24 +10,33 @@ import '../storage/token_storage.dart';
 
 /// Typed API error surfaced to the UI.
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode});
+  ApiException(this.message, {this.statusCode, this.cause});
 
   final String message;
   final int? statusCode;
+  final Object? cause;
 
   @override
   String toString() => message;
 }
 
-/// Thin HTTP client that attaches the bearer token to every request,
-/// retries against the local fallback base when the cloud backend is
-/// unreachable, and normalizes failures into [ApiException]s.
+/// Thin HTTP client that attaches the bearer token to every request.
+///
+/// Resilient to Render free-tier cold starts (which can take 30+ seconds on
+/// the first request after idle): connection/receive timeouts are generous
+/// (30s/60s), and transient failures (timeouts, socket errors) are retried
+/// with exponential backoff up to 3 attempts so a slow wakeup doesn't surface
+/// as a connection error to the user. Failures are normalized into
+/// [ApiException]s that preserve the underlying cause for diagnosis.
 class ApiClient {
   ApiClient({required this.storage, http.Client? httpClient})
       : _http = httpClient ?? http.Client();
 
   final TokenStorage storage;
   final http.Client _http;
+
+  /// Number of attempts for transient failures (timeouts, socket errors).
+  static const int _maxAttempts = 3;
 
   Future<void> saveToken(String token) => storage.saveToken(token);
 
@@ -63,22 +72,39 @@ class ApiClient {
     return headers;
   }
 
-  /// Runs [run] against the deployed cloud backend and normalizes
-  /// connection failures into [ApiException]s.
+  /// Runs [run] with retries against transient failures.
+  ///
+  /// Render's free tier can take 30+ seconds to wake from idle on the first
+  /// request. Rather than failing immediately on a timeout or socket error,
+  /// we retry up to [_maxAttempts] times with exponential backoff (1s, 2s, 4s),
+  /// so a transient cold-start wake becomes a brief delay instead of a
+  /// connection-error screen.
   Future<http.Response> _attempt(Future<http.Response> Function(String base) run) async {
-    return _run(run, AppConfig.apiBaseUrl);
-  }
+    var lastError = ApiException('Request failed');
+    for (var attempt = 1; attempt <= _maxAttempts; attempt++) {
+      try {
+        return await run(AppConfig.apiBaseUrl)
+            .timeout(AppConfig.receiveTimeout);
+      } on TimeoutException catch (_) {
+        lastError = ApiException('Request timed out. Check your connection.');
+      } on SocketException catch (e) {
+        lastError = ApiException('Cannot connect to the server. Check your connection.', cause: e);
+      } on http.ClientException catch (e) {
+        lastError = ApiException('Cannot connect to the server. Check your connection.', cause: e);
+      } catch (e) {
+        // Non-transient: don't retry (e.g. ApiException from _decode, or a
+        // clearly non-recoverable client setup error).
+        lastError = e is ApiException
+            ? e
+            : ApiException('$e');
+        rethrow;
+      }
 
-  Future<http.Response> _run(Future<http.Response> Function(String base) run, String base) async {
-    try {
-      return await run(base).timeout(AppConfig.receiveTimeout);
-    } on TimeoutException {
-      throw ApiException('Request timed out. Check your connection.');
-    } on SocketException {
-      throw ApiException('Cannot connect to the server. Check your connection.');
-    } on http.ClientException {
-      throw ApiException('Cannot connect to the server. Check your connection.');
+      if (attempt < _maxAttempts) {
+        await Future.delayed(Duration(seconds: 1 << (attempt - 1))); // 1s, 2s, 4s
+      }
     }
+    throw lastError;
   }
 
   Future<dynamic> get(String path) async {
