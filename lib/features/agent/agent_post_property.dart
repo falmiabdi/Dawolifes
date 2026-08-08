@@ -189,8 +189,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
         if (!(_locationFormKey.currentState?.validate() ?? false)) return;
         break;
       case 2:
-        if (_images.isEmpty) {
-          setState(() => _error = 'Please upload at least 1 photo to continue.');
+        if (_images.length < 3) {
+          setState(() => _error = 'Please upload at least 3 photos to continue.');
           return;
         }
         break;
@@ -217,8 +217,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   }
 
   Future<void> _submit() async {
-    if (_images.isEmpty) {
-      setState(() => _error = 'At least 1 photo is required to list a property.');
+    if (_images.length < 3) {
+      setState(() => _error = 'At least 3 photos are required to list a property.');
       return;
     }
     setState(() {
@@ -415,8 +415,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             ),
             Row(
               children: [
-                Expanded(child: Field(label: t('floor_number'), child: TextFormField(controller: _floorNumber, decoration: const InputDecoration(hintText: 'e.g. 3')))),
-                const SizedBox(width: 10),
                 Expanded(child: _dropdown(t('condition'), _condition, _conditions, (v) => setState(() => _condition = v))),
                 const SizedBox(width: 10),
                 Expanded(
@@ -494,6 +492,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                 Expanded(child: Field(label: t('block'), child: TextFormField(controller: _block, decoration: const InputDecoration(hintText: 'e.g. 05')))),
                 const SizedBox(width: 10),
                 Expanded(child: Field(label: t('home_no'), child: TextFormField(controller: _homeNo, decoration: const InputDecoration(hintText: 'e.g. 12')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('floor_number'), child: TextFormField(controller: _floorNumber, decoration: const InputDecoration(hintText: 'e.g. 3')))),
               ],
             ),
           ],
@@ -514,7 +514,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             onChanged: (list) => setState(() => _images = list),
             onPick: _pickImage,
             uploading: _uploading,
-            hint: 'Upload at least 1 clear photo',
+            hint: 'Upload at least 3 photos',
           ),
           const SizedBox(height: 12),
           Field(
@@ -796,7 +796,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                       const Spacer(),
                       if (!_isLastStep)
                         FilledButton.icon(
-                          onPressed: _next,
+                          onPressed: (_submitting || (_step == 2 && _images.length < 3)) ? null : _next,
                           icon: const Icon(Icons.arrow_forward, size: 18),
                           label: Text(t('next')),
                         )
