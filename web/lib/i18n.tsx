@@ -364,6 +364,7 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     vehicle_updated: 'Vehicle updated successfully! It will be re-reviewed.', cancel: 'Cancel',
     agent_portal: 'Agent Portal', messages: 'Messages', payments: 'Payments', dashboard: 'Dashboard',
     agent_management: 'Agent Management', properties: 'Properties', vehicles: 'Vehicles', users: 'Users',
+    announcements: 'Announcements',
     portal: 'Portal', sign_out: 'Sign Out',
   },
   am: {
@@ -543,6 +544,7 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     vehicle_updated: 'ተሽከርካሪ በተሳካ ሁኔታ ተዘምኗል! እንደገና ይገመገማል።', cancel: 'ሰርዝ',
     agent_portal: 'የወኪል ፖርታል', messages: 'መልእክቶች', payments: 'ክፍያዎች', dashboard: 'ዳሽቦርድ',
     agent_management: 'የወኪሎች አስተዳደር', properties: 'ንብረቶች', vehicles: 'ተሽከርካሪዎች', users: 'ተጠቃሚዎች',
+    announcements: 'ማስታወቂያዎች',
     portal: 'ፖርታል', sign_out: 'ውጣ',
   },
   om: {
@@ -722,6 +724,7 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     vehicle_updated: 'Makiinaan milkaa\'inaan haaromameera! Itti deebi\'ee sakatta\'ama.', cancel: 'Haqi',
     agent_portal: 'Bakka Eejentii', messages: 'Ergoota', payments: 'Kafaltii', dashboard: 'Dareehoo',
     agent_management: 'Bulchiinsa Eejentootaa', properties: 'Qabeenya', vehicles: 'Makiinaa', users: 'Fayyadamtoota',
+    announcements: 'Beeksisaalee',
     portal: 'Bakka', sign_out: 'Ba\'i',
   },
 }

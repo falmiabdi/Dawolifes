@@ -15,6 +15,8 @@ import agentRoutes from './routes/agent.js'
 import favoriteRoutes from './routes/favorites.js'
 import chapaRoutes from './routes/chapa.js'
 import telebirrRoutes from './routes/telebirr.js'
+import announcementRoutes from './routes/announcements.js'
+import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
 
@@ -74,6 +76,7 @@ app.use('/api/agent', agentRoutes)
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/chapa', chapaRoutes)
 app.use('/api/telebirr', telebirrRoutes)
+app.use('/api/announcements', announcementRoutes)
 
 // Root route
 app.get('/', (_req, res) => {
@@ -95,6 +98,7 @@ app.get('/', (_req, res) => {
       admin: '/api/admin/*',
       favorites: '/api/favorites',
       upload: '/api/upload',
+      announcements: '/api/announcements',
     },
   })
 })
@@ -130,6 +134,7 @@ async function start() {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
   })
   setupWebSocket(server)
+  startNotificationCleanup()
 }
 
 start().catch((err) => {
