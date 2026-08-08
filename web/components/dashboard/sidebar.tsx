@@ -21,6 +21,7 @@ import {
   Home,
   Car,
   X,
+  Megaphone,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -44,6 +45,7 @@ const adminNav = [
   { href: "/admin/vehicles", labelKey: "vehicles", icon: Car },
   { href: "/admin/users", labelKey: "users", icon: User },
   { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
+  { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
   { href: "/admin/payments", labelKey: "payments", icon: CreditCard },
   { href: "/admin/settings", labelKey: "settings", icon: Settings },
 ]
