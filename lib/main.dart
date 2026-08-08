@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'app.dart';
 import 'core/network/api_client.dart';
 import 'core/network/websocket_service.dart';
 import 'core/storage/token_storage.dart';
@@ -13,6 +12,7 @@ import 'data/repositories/announcement_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/message_repository.dart';
+import 'features/onboarding/onboarding_gate.dart';
 import 'providers/auth_provider.dart';
 import 'providers/home_provider.dart';
 import 'providers/language_provider.dart';
@@ -50,13 +50,15 @@ Future<void> main() async {
         Provider.value(value: ws),
         Provider.value(value: api),
       ],
-      child: const DawoLifeApp(),
+      child: DawoLifeApp(prefs: prefs),
     ),
   );
 }
 
 class DawoLifeApp extends StatelessWidget {
-  const DawoLifeApp({super.key});
+  const DawoLifeApp({super.key, required this.prefs});
+
+  final SharedPreferences prefs;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +66,7 @@ class DawoLifeApp extends StatelessWidget {
       title: 'DawoLife',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const AppShell(),
+      home: OnboardingGate(storage: prefs),
     );
   }
 }
