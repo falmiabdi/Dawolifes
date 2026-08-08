@@ -6,13 +6,14 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 import 'admin_agents.dart';
+import 'admin_announcements.dart';
 import 'admin_dashboard.dart';
+import 'admin_notifications.dart';
 import 'admin_payments.dart';
 import 'admin_properties.dart';
 import 'admin_settings.dart';
 import 'admin_users.dart';
 import 'admin_vehicles.dart';
-import '../notifications/notifications_screen.dart';
 
 /// Admin portal hub mirroring the admin sidebar in dashboard/sidebar.tsx.
 class AdminPortalScreen extends StatelessWidget {
@@ -73,7 +74,8 @@ class AdminPortalScreen extends StatelessWidget {
           _menuTile(context, Icons.house_outlined, 'Properties', () => _open(context, const AdminPropertiesScreen())),
           _menuTile(context, Icons.directions_car_outlined, 'Vehicles', () => _open(context, const AdminVehiclesScreen())),
           _menuTile(context, Icons.credit_card_outlined, 'Payments', () => _open(context, const AdminPaymentsScreen())),
-          _menuTile(context, Icons.notifications_outlined, 'Notifications', () => _open(context, const NotificationsScreen())),
+          _menuTile(context, Icons.campaign_outlined, 'Announcements', () => _open(context, const AdminAnnouncementsScreen())),
+          _menuTile(context, Icons.notifications_outlined, 'Broadcast', () => _open(context, const AdminNotificationsScreen())),
           _menuTile(context, Icons.settings_outlined, 'Settings', () => _open(context, const AdminSettingsScreen())),
           const SizedBox(height: 20),
           FilledButton.icon(

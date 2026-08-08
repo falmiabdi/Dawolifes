@@ -249,6 +249,7 @@ enum WSMessageType {
   markReadAck,
   markSingleReadAck,
   message,
+  announcement,
 }
 
 /// Parsed WebSocket message from the server.
@@ -257,6 +258,7 @@ class WSMessage {
     required this.type,
     this.notification,
     this.message,
+    this.announcement,
     this.count,
     this.notificationId,
     this.timestamp,
@@ -265,6 +267,7 @@ class WSMessage {
   final WSMessageType type;
   final Map<String, dynamic>? notification;
   final Map<String, dynamic>? message;
+  final Map<String, dynamic>? announcement;
   final int? count;
   final String? notificationId;
   final int? timestamp;
@@ -288,6 +291,9 @@ class WSMessage {
       case 'message':
         type = WSMessageType.message;
         break;
+      case 'announcement':
+        type = WSMessageType.announcement;
+        break;
       default:
         type = WSMessageType.notification;
     }
@@ -295,6 +301,7 @@ class WSMessage {
       type: type,
       notification: json['notification'] as Map<String, dynamic>?,
       message: json['message'] as Map<String, dynamic>?,
+      announcement: json['announcement'] as Map<String, dynamic>?,
       count: json['count'] as int?,
       notificationId: json['notificationId'] as String?,
       timestamp: json['timestamp'] as int?,

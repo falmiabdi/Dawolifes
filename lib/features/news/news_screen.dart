@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/network/api_client.dart';
+import '../../core/network/websocket_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/announcement.dart';
 import '../../data/repositories/announcement_repository.dart';
 import '../portal/widgets.dart';
 
 /// News / announcements feed mirroring the web app's `/news` page.
+/// Refreshes from the API and on real-time WebSocket `announcement` events.
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
 
@@ -19,6 +23,7 @@ class _NewsScreenState extends State<NewsScreen> {
   List<Announcement> _announcements = [];
   bool _loading = true;
   String? _error;
+  StreamSubscription<WSMessage>? _wsSub;
 
   AnnouncementRepository get _repo => AnnouncementRepository(context.read<ApiClient>());
 
@@ -26,24 +31,38 @@ class _NewsScreenState extends State<NewsScreen> {
   void initState() {
     super.initState();
     _load();
+    _wsSub = context.read<WebSocketService>().messages.listen((msg) {
+      if (msg.type == WSMessageType.announcement && mounted) {
+        _load(silent: true);
+      }
+    });
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final items = await _repo.fetchAnnouncements();
       if (!mounted) return;
       setState(() {
         _announcements = items;
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = '$e';
+        if (!silent) _error = '$e';
         _loading = false;
       });
     }
