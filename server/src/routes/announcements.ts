@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { isValidUuid } from '../utils/validation.js'
+import { broadcastToAll } from '../ws/server.js'
 
 const router = Router()
 
@@ -32,6 +33,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
         authorId: req.user!.userId,
       },
     })
+    broadcastToAll({ type: 'announcement', announcement })
     res.status(201).json({ message: 'Announcement created', announcement })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to create announcement' })
@@ -55,6 +57,7 @@ router.patch('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         ...(content ? { content: String(content).trim() } : {}),
       },
     })
+    broadcastToAll({ type: 'announcement', announcement })
     res.json({ message: 'Announcement updated', announcement })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update announcement' })
@@ -68,6 +71,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Announcement not found' })
     }
     await prisma.announcement.delete({ where: { id: req.params.id } })
+    broadcastToAll({ type: 'announcement', announcementId: req.params.id })
     res.json({ message: 'Announcement deleted' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to delete announcement' })

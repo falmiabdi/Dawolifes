@@ -1,5 +1,5 @@
 ﻿import { Router } from 'express'
-import { authMiddleware } from '../middleware/auth.js'
+import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
 import { isValidUuid } from '../utils/validation.js'
 
@@ -129,6 +129,60 @@ router.patch('/:id/read', authMiddleware, async (req, res) => {
     res.json({ message: 'Notification marked as read' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update notification' })
+  }
+})
+
+// Admin: list all notifications (any user)
+router.get('/admin', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    })
+    res.json({ notifications })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to fetch notifications' })
+  }
+})
+
+// Admin: send a notification to all users (optionally filtered by role)
+router.post('/admin', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { title, body, type = 'system', role } = req.body
+    if (!title || !body) {
+      return res.status(400).json({ message: 'Title and body are required' })
+    }
+    const users = await prisma.user.findMany({
+      where: role ? { role } : {},
+      select: { id: true },
+    })
+    if (users.length === 0) {
+      return res.json({ message: 'Notification sent', sent: 0 })
+    }
+    const created = await prisma.notification.createMany({
+      data: users.map((u) => ({
+        userId: u.id,
+        title,
+        body,
+        type,
+      })),
+    })
+    res.status(201).json({ message: 'Notification sent', sent: created.count })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to send notification' })
+  }
+})
+
+// Admin: delete any notification
+router.delete('/admin/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!isValidUuid(req.params.id)) {
+      return res.status(404).json({ message: 'Notification not found' })
+    }
+    await prisma.notification.delete({ where: { id: req.params.id } })
+    res.json({ message: 'Notification deleted' })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to delete notification' })
   }
 })
 

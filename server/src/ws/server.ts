@@ -118,3 +118,14 @@ export function broadcastToUser(userId: string, data: any) {
     }
   }
 }
+
+export function broadcastToAll(data: any) {
+  const message = JSON.stringify(data)
+  for (const userClients of clients.values()) {
+    for (const ws of userClients) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message)
+      }
+    }
+  }
+}
