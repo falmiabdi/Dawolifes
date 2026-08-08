@@ -143,7 +143,7 @@ export default function AgentVehiclesPage() {
                     <div className="flex flex-wrap gap-1">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{v.make} {v.vehicleModel || v.model}</span>
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{v.manufacturingYear}</span>
-                      {v.mileage !== undefined && (
+                      {v.mileage != null && v.mileage > 0 && (
                         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">{v.mileage.toLocaleString()} km</span>
                       )}
                     </div>
