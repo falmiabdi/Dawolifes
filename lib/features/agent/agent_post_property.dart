@@ -17,7 +17,10 @@ const _posterTypes = ['Agent', 'Owner'];
 const _ownerTypes = ['Farmer Owner', 'Saving Owner', 'Private Owner', 'Government', 'Company'];
 const _conditions = ['Finished', 'Semi-Finished', 'Under Construction', 'Unfinished', 'Shell'];
 
-/// Post/edit property mirroring app/agent/post/page.tsx.
+const _stepLabels = ['basic_info', 'location_details', 'media_upload', 'location_map2', 'review_submit'];
+
+/// Post/edit property mirroring app/agent/post/page.tsx (5-step wizard with
+/// a review & submit step).
 class AgentPostPropertyScreen extends StatefulWidget {
   const AgentPostPropertyScreen({super.key, this.edit});
 
@@ -28,24 +31,34 @@ class AgentPostPropertyScreen extends StatefulWidget {
 }
 
 class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _customFeature = TextEditingController();
+  final _basicFormKey = GlobalKey<FormState>();
+  final _locationFormKey = GlobalKey<FormState>();
 
   late final TextEditingController _title;
   late final TextEditingController _price;
   late final TextEditingController _area;
   late final TextEditingController _bedrooms;
   late final TextEditingController _bathrooms;
+  late final TextEditingController _floorNumber;
   late final TextEditingController _legalizedYear;
   late final TextEditingController _description;
   late final TextEditingController _city;
   late final TextEditingController _subCity;
   late final TextEditingController _woreda;
+  late final TextEditingController _kebele;
+  late final TextEditingController _parcel;
+  late final TextEditingController _block;
+  late final TextEditingController _homeNo;
   late final TextEditingController _latitude;
   late final TextEditingController _longitude;
   late final TextEditingController _videoUrl;
   late final TextEditingController _name;
   late final TextEditingController _phone;
+
+  late final TextEditingController _customFeature;
+  late final TextEditingController _customSafety;
+  late final TextEditingController _customInterior;
+  late final TextEditingController _customExterior;
 
   String _posterType = 'Agent';
   String _ownerType = 'Farmer Owner';
@@ -61,8 +74,10 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   bool _uploadingDoc = false;
   bool _submitting = false;
   String? _error;
+  int _step = 0;
 
   bool get _isEdit => widget.edit != null;
+  bool get _isLastStep => _step == _stepLabels.length - 1;
 
   @override
   void initState() {
@@ -73,16 +88,25 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     _area = TextEditingController(text: p?.area != null ? '${p!.area}' : '');
     _bedrooms = TextEditingController(text: p?.bedrooms != null ? '${p!.bedrooms}' : '');
     _bathrooms = TextEditingController(text: p?.bathrooms != null ? '${p!.bathrooms}' : '');
+    _floorNumber = TextEditingController(text: p?.floorNumber ?? '');
     _legalizedYear = TextEditingController(text: p?.legalizedYear != null ? '${p!.legalizedYear}' : '');
     _description = TextEditingController(text: p?.description ?? '');
     _city = TextEditingController(text: p?.city ?? '');
     _subCity = TextEditingController(text: p?.subCity ?? '');
     _woreda = TextEditingController(text: p?.woreda ?? '');
+    _kebele = TextEditingController(text: p?.kebele ?? '');
+    _parcel = TextEditingController(text: p?.parcel ?? '');
+    _block = TextEditingController(text: p?.block ?? '');
+    _homeNo = TextEditingController(text: p?.homeNo ?? '');
     _latitude = TextEditingController(text: p?.latitude != null ? '${p!.latitude}' : '');
     _longitude = TextEditingController(text: p?.longitude != null ? '${p!.longitude}' : '');
     _videoUrl = TextEditingController(text: p?.videoUrl ?? '');
     _name = TextEditingController();
     _phone = TextEditingController();
+    _customFeature = TextEditingController();
+    _customSafety = TextEditingController();
+    _customInterior = TextEditingController();
+    _customExterior = TextEditingController();
     if (p != null) {
       _posterType = p.posterType ?? _posterType;
       _ownerType = p.ownerType ?? _ownerType;
@@ -99,9 +123,9 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   @override
   void dispose() {
     for (final c in [
-      _title, _price, _area, _bedrooms, _bathrooms, _legalizedYear, _description,
-      _city, _subCity, _woreda, _latitude, _longitude, _videoUrl, _name, _phone,
-      _customFeature,
+      _title, _price, _area, _bedrooms, _bathrooms, _floorNumber, _legalizedYear, _description,
+      _city, _subCity, _woreda, _kebele, _parcel, _block, _homeNo, _latitude, _longitude,
+      _videoUrl, _name, _phone, _customFeature, _customSafety, _customInterior, _customExterior,
     ]) {
       c.dispose();
     }
@@ -146,19 +170,55 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     }
   }
 
-  void _addCustomFeature() {
-    final text = _customFeature.text.trim();
+  void _addCustomFeature(TextEditingController ctrl) {
+    final text = ctrl.text.trim();
     if (text.isEmpty) return;
     setState(() {
-      _features = [..._features, text];
-      _customFeature.clear();
+      if (!_features.contains(text)) _features = [..._features, text];
+      ctrl.clear();
+    });
+  }
+
+  void _next() {
+    final t = context.read<LanguageProvider>().t;
+    switch (_step) {
+      case 0:
+        if (!(_basicFormKey.currentState?.validate() ?? false)) return;
+        break;
+      case 1:
+        if (!(_locationFormKey.currentState?.validate() ?? false)) return;
+        break;
+      case 2:
+        if (_images.isEmpty) {
+          setState(() => _error = 'Please upload at least 1 photo to continue.');
+          return;
+        }
+        break;
+      case 3:
+        final lat = num.tryParse(_latitude.text.trim());
+        final lng = num.tryParse(_longitude.text.trim());
+        if (lat == null || lat == 0 || lng == null || lng == 0) {
+          setState(() => _error = t('select_location_map'));
+          return;
+        }
+        break;
+    }
+    setState(() {
+      _error = null;
+      _step = _step + 1;
+    });
+  }
+
+  void _back() {
+    setState(() {
+      _error = null;
+      _step = _step - 1;
     });
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_images.length < 3) {
-      setState(() => _error = 'At least 3 photos are required to list a property.');
+    if (_images.isEmpty) {
+      setState(() => _error = 'At least 1 photo is required to list a property.');
       return;
     }
     setState(() {
@@ -176,6 +236,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       'area': num.tryParse(_area.text.trim()),
       'bedrooms': int.tryParse(_bedrooms.text.trim()),
       'bathrooms': int.tryParse(_bathrooms.text.trim()),
+      'floorNumber': _floorNumber.text.trim().isEmpty ? null : _floorNumber.text.trim(),
       'condition': _condition,
       'legalizedYear': int.tryParse(_legalizedYear.text.trim()),
       'description': _description.text.trim(),
@@ -184,6 +245,10 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       'city': _city.text.trim(),
       'subCity': _subCity.text.trim(),
       'woreda': _woreda.text.trim(),
+      'kebele': _kebele.text.trim(),
+      'parcel': _parcel.text.trim(),
+      'block': _block.text.trim(),
+      'homeNo': _homeNo.text.trim(),
       'images': _images,
       'videoUrl': _videoUrl.text.trim().isEmpty ? null : _videoUrl.text.trim(),
       'locationDocument': _locationDocument,
@@ -261,35 +326,67 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.read<LanguageProvider>();
-    final t = l10n.t;
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Edit Property' : t('post_property'))),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+  Widget _featureSection(String title, List<String> options, TextEditingController customCtrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _featureChips(title, options),
+        const SizedBox(height: 8),
+        Row(
           children: [
-            FormSection(
-              title: t('property_details'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _dropdown(t('listing_by'), _posterType, _posterTypes, (v) => setState(() => _posterType = v)),
-                  _dropdown(t('owner_type'), _ownerType, _ownerTypes, (v) => setState(() => _ownerType = v)),
-                  Field(
-                    label: t('property_title'),
-                    child: TextFormField(
-                      controller: _title,
-                      decoration: const InputDecoration(hintText: 'e.g. Modern 3 Bedroom Villa'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                  ),
-                  _dropdown(t('property_type'), _propertyType, _propertyTypes, (v) => setState(() => _propertyType = v)),
-                  _dropdown(t('listing_type'), _listingType, _listingTypes, (v) => setState(() => _listingType = v)),
-                  Field(
+            Expanded(
+              child: TextFormField(
+                controller: customCtrl,
+                decoration: const InputDecoration(hintText: 'Add custom feature', isDense: true),
+                onFieldSubmitted: (_) => _addCustomFeature(customCtrl),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              onPressed: () => _addCustomFeature(customCtrl),
+              icon: const Icon(Icons.add, size: 20),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBasicInfo() {
+    final t = context.read<LanguageProvider>().t;
+    return Form(
+      key: _basicFormKey,
+      child: FormSection(
+        title: t('basic_info'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: _dropdown(t('listing_by'), _posterType, _posterTypes, (v) => setState(() => _posterType = v))),
+                const SizedBox(width: 10),
+                Expanded(child: _dropdown(t('owner_type'), _ownerType, _ownerTypes, (v) => setState(() => _ownerType = v))),
+              ],
+            ),
+            Field(
+              label: t('property_title'),
+              child: TextFormField(
+                controller: _title,
+                decoration: const InputDecoration(hintText: 'e.g. Modern 3 Bedroom Villa'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(child: _dropdown(t('property_type'), _propertyType, _propertyTypes, (v) => setState(() => _propertyType = v))),
+                const SizedBox(width: 10),
+                Expanded(child: _dropdown(t('listing_type'), _listingType, _listingTypes, (v) => setState(() => _listingType = v))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Field(
                     label: t('price_etb'),
                     child: TextFormField(
                       controller: _price,
@@ -302,18 +399,28 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                       },
                     ),
                   ),
-                  _dropdown(t('price_type'), _priceType, _priceTypes, (v) => setState(() => _priceType = v)),
-                  Row(
-                    children: [
-                      Expanded(child: Field(label: t('area'), child: TextFormField(controller: _area, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 250')))),
-                      const SizedBox(width: 10),
-                      Expanded(child: Field(label: t('bedrooms'), child: TextFormField(controller: _bedrooms, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 3')))),
-                      const SizedBox(width: 10),
-                      Expanded(child: Field(label: t('bathrooms'), child: TextFormField(controller: _bathrooms, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 2')))),
-                    ],
-                  ),
-                  _dropdown(t('condition'), _condition, _conditions, (v) => setState(() => _condition = v)),
-                  Field(
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: _dropdown(t('price_type'), _priceType, _priceTypes, (v) => setState(() => _priceType = v))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: Field(label: t('area'), child: TextFormField(controller: _area, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 250')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('bedrooms'), child: TextFormField(controller: _bedrooms, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 3')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('bathrooms'), child: TextFormField(controller: _bathrooms, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 2')))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: Field(label: t('floor_number'), child: TextFormField(controller: _floorNumber, decoration: const InputDecoration(hintText: 'e.g. 3')))),
+                const SizedBox(width: 10),
+                Expanded(child: _dropdown(t('condition'), _condition, _conditions, (v) => setState(() => _condition = v))),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Field(
                     label: t('legalized_year'),
                     child: TextFormField(
                       controller: _legalizedYear,
@@ -321,160 +428,392 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                       decoration: const InputDecoration(hintText: 'e.g. 2015'),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            FormSection(
-              title: t('property_location'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _dropdown(t('region'), _region, ethiopianRegions, (v) => setState(() => _region = v)),
-                  Field(
-                    label: t('city'),
-                    child: TextFormField(
-                      controller: _city,
-                      decoration: const InputDecoration(hintText: 'e.g. Addis Ababa'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(child: Field(label: t('sub_city'), child: TextFormField(controller: _subCity, decoration: const InputDecoration(hintText: 'e.g. Bole')))),
-                      const SizedBox(width: 10),
-                      Expanded(child: Field(label: t('woreda'), child: TextFormField(controller: _woreda, decoration: const InputDecoration(hintText: 'e.g. 03')))),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Location coordinates (optional)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.foreground)),
-                  const SizedBox(height: 6),
-                  MapPickerField(latController: _latitude, lngController: _longitude),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('features_amenities'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _featureChips('Amenities', propertyAmenities),
-                  const SizedBox(height: 12),
-                  _featureChips('Safety', houseSafetyFeatures),
-                  const SizedBox(height: 12),
-                  _featureChips('Interior', houseInteriorFeatures),
-                  const SizedBox(height: 12),
-                  _featureChips('Exterior', houseExteriorFeatures),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _customFeature,
-                          decoration: const InputDecoration(hintText: 'Add custom feature', isDense: true),
-                          onFieldSubmitted: (_) => _addCustomFeature(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filled(
-                        onPressed: _addCustomFeature,
-                        icon: const Icon(Icons.add, size: 20),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('photos_media_title'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ImageGridPicker(
-                    images: _images,
-                    onChanged: (list) => setState(() => _images = list),
-                    onPick: _pickImage,
-                    uploading: _uploading,
-                    hint: 'Upload at least 3 clear photos',
-                  ),
-                  const SizedBox(height: 12),
-                  Field(
-                    label: t('video_url'),
-                    child: TextFormField(
-                      controller: _videoUrl,
-                      decoration: const InputDecoration(hintText: 'https://youtube.com/watch?v=... (optional)'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Location document',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.foreground),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_locationDocument == null)
-                    OutlinedButton.icon(
-                      onPressed: _uploadingDoc ? null : _uploadDocument,
-                      icon: _uploadingDoc
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.upload_file_outlined, size: 18),
-                      label: Text(_uploadingDoc ? t('uploading_document') : t('click_upload_document')),
-                    )
-                  else
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      leading: const Icon(Icons.check_circle_outline, color: Colors.green),
-                      title: Text(t('upload_success'), style: const TextStyle(fontSize: 13)),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () => setState(() => _locationDocument = null),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('contact_info_title'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Field(
-                    label: t('your_name'),
-                    child: TextFormField(
-                      controller: _name,
-                      decoration: const InputDecoration(hintText: 'Your name'),
-                    ),
-                  ),
-                  Field(
-                    label: t('phone_number_label'),
-                    child: TextFormField(
-                      controller: _phone,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(hintText: '+251 911 000 000'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('description'),
+            Field(
+              label: t('description'),
               child: TextFormField(
                 controller: _description,
-                maxLines: 5,
+                maxLines: 4,
                 decoration: const InputDecoration(hintText: 'Describe the property...'),
               ),
             ),
-            if (_error != null) ...[
-              Text(_error!, style: const TextStyle(color: AppColors.destructive, fontSize: 13)),
-              const SizedBox(height: 12),
-            ],
-            FilledButton.icon(
-              onPressed: _submitting ? null : _submit,
-              icon: _submitting
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.send, size: 18),
-              label: Text(_submitting ? t('submitting') : (_isEdit ? 'Update Property' : t('submit_property'))),
+            _featureSection(t('features_amenities'), propertyAmenities, _customFeature),
+            const SizedBox(height: 12),
+            _featureSection(t('safety_features'), houseSafetyFeatures, _customSafety),
+            const SizedBox(height: 12),
+            _featureSection(t('interior_features'), houseInteriorFeatures, _customInterior),
+            const SizedBox(height: 12),
+            _featureSection(t('exterior_features'), houseExteriorFeatures, _customExterior),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocation() {
+    final t = context.read<LanguageProvider>().t;
+    return Form(
+      key: _locationFormKey,
+      child: FormSection(
+        title: t('location_details'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _dropdown(
+              t('region'),
+              _region,
+              ethiopianRegions,
+              (v) => setState(() => _region = v),
             ),
-            const SizedBox(height: 32),
+            Field(
+              label: t('city'),
+              child: TextFormField(
+                controller: _city,
+                decoration: const InputDecoration(hintText: 'e.g. Addis Ababa'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(child: Field(label: t('sub_city'), child: TextFormField(controller: _subCity, decoration: const InputDecoration(hintText: 'e.g. Bole')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('woreda'), child: TextFormField(controller: _woreda, decoration: const InputDecoration(hintText: 'e.g. 03')))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: Field(label: t('kebele'), child: TextFormField(controller: _kebele, decoration: const InputDecoration(hintText: 'e.g. 08')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('parcel'), child: TextFormField(controller: _parcel, decoration: const InputDecoration(hintText: 'e.g. 1234')))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: Field(label: t('block'), child: TextFormField(controller: _block, decoration: const InputDecoration(hintText: 'e.g. 05')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('home_no'), child: TextFormField(controller: _homeNo, decoration: const InputDecoration(hintText: 'e.g. 12')))),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMedia() {
+    final t = context.read<LanguageProvider>().t;
+    return FormSection(
+      title: t('media_upload'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ImageGridPicker(
+            images: _images,
+            onChanged: (list) => setState(() => _images = list),
+            onPick: _pickImage,
+            uploading: _uploading,
+            hint: 'Upload at least 1 clear photo',
+          ),
+          const SizedBox(height: 12),
+          Field(
+            label: t('video_url'),
+            child: TextFormField(
+              controller: _videoUrl,
+              decoration: const InputDecoration(hintText: 'https://youtube.com/watch?v=... (optional)'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMap() {
+    final t = context.read<LanguageProvider>().t;
+    return FormSection(
+      title: t('location_map2'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Click on the map to select the exact location, or enter the coordinates manually below.',
+            style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+          ),
+          const SizedBox(height: 12),
+          MapPickerField(latController: _latitude, lngController: _longitude),
+          const SizedBox(height: 16),
+          Text(
+            t('location_document'),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.foreground),
+          ),
+          const SizedBox(height: 4),
+          Text(t('location_document_note'), style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+          const SizedBox(height: 8),
+          if (_locationDocument == null)
+            OutlinedButton.icon(
+              onPressed: _uploadingDoc ? null : _uploadDocument,
+              icon: _uploadingDoc
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.upload_file_outlined, size: 18),
+              label: Text(_uploadingDoc ? t('uploading_document') : t('click_upload_document')),
+            )
+          else
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+              title: Text(t('upload_success'), style: const TextStyle(fontSize: 13)),
+              trailing: IconButton(
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: () => setState(() => _locationDocument = null),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value, {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: highlight ? AppColors.primary : AppColors.foreground,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReview() {
+    final t = context.read<LanguageProvider>().t;
+    final tv = context.read<LanguageProvider>().tv;
+    final addressParts = [
+      _subCity.text.trim(),
+      _woreda.text.trim(),
+      _kebele.text.trim(),
+      _parcel.text.trim(),
+      _block.text.trim(),
+      _homeNo.text.trim(),
+      _city.text.trim(),
+      _region,
+    ].where((e) => e.isNotEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FormSection(
+          title: t('review_listing_info'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _title.text.trim().isEmpty ? tv('not_specified') : _title.text.trim(),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.foreground),
+              ),
+              const SizedBox(height: 12),
+              _summaryRow(t('type'), '${tv(_propertyType)} (${tv(_listingType)})'),
+              _summaryRow(t('price'), _price.text.trim().isEmpty ? tv('not_set') : '${_price.text.trim()} ETB (${tv(_priceType)})', highlight: _price.text.trim().isNotEmpty),
+              _summaryRow(t('location'), addressParts.isEmpty ? tv('not_set') : addressParts.join(', ')),
+              _summaryRow('Beds / Baths', '${_bedrooms.text.trim().isEmpty ? '-' : _bedrooms.text.trim()} / ${_bathrooms.text.trim().isEmpty ? '-' : _bathrooms.text.trim()}'),
+              _summaryRow(t('area'), _area.text.trim().isEmpty ? tv('not_set') : '${_area.text.trim()} m²'),
+              _summaryRow(t('floor_number'), _floorNumber.text.trim().isEmpty ? tv('not_set') : _floorNumber.text.trim()),
+              _summaryRow(t('condition'), tv(_condition)),
+              _summaryRow(t('photos'), '${_images.length} ${tv('uploaded')}'),
+              _summaryRow(t('features'), _features.isEmpty ? tv('none') : '${_features.length} ${tv('selected')}'),
+            ],
+          ),
+        ),
+        FormSection(
+          title: t('contact_info_title'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Field(
+                label: t('your_name'),
+                child: TextFormField(
+                  controller: _name,
+                  decoration: const InputDecoration(hintText: 'Your name'),
+                ),
+              ),
+              Field(
+                label: t('phone_number_label'),
+                child: TextFormField(
+                  controller: _phone,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(hintText: '+251 911 000 000'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        FormSection(
+          title: t('description'),
+          child: Text(
+            _description.text.trim().isEmpty ? tv('not_set') : _description.text.trim(),
+            style: const TextStyle(fontSize: 13, color: AppColors.foreground),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepper() {
+    final t = context.read<LanguageProvider>().t;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: List.generate(_stepLabels.length, (i) {
+          final done = i < _step;
+          final active = i == _step;
+          return Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: active
+                              ? AppColors.primary
+                              : (done ? Colors.green : Colors.white),
+                          border: Border.all(
+                            color: active || done ? Colors.transparent : AppColors.border,
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: done
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : Text(
+                                  '${i + 1}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: active ? Colors.white : AppColors.mutedForeground,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        t(_stepLabels[i]),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                          color: active ? AppColors.primary : AppColors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (i < _stepLabels.length - 1)
+                  Container(
+                    height: 2,
+                    width: 14,
+                    color: done ? Colors.green : AppColors.border,
+                  ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.read<LanguageProvider>();
+    final t = l10n.t;
+    return Scaffold(
+      appBar: AppBar(title: Text(_isEdit ? 'Edit Property' : t('post_property'))),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _stepper(),
+            if (_error != null)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.destructive.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, size: 18, color: AppColors.destructive),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(fontSize: 12, color: AppColors.destructive),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  switch (_step) {
+                    0 => _buildBasicInfo(),
+                    1 => _buildLocation(),
+                    2 => _buildMedia(),
+                    3 => _buildMap(),
+                    _ => _buildReview(),
+                  },
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _step == 0 || _submitting ? null : _back,
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: Text(t('back')),
+                      ),
+                      const Spacer(),
+                      if (!_isLastStep)
+                        FilledButton.icon(
+                          onPressed: _next,
+                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          label: Text(t('next')),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: _submitting ? null : _submit,
+                          icon: _submitting
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.send, size: 18),
+                          label: Text(_submitting ? t('submitting') : (_isEdit ? 'Update Property' : t('submit_listing'))),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
           ],
         ),
       ),

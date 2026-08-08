@@ -37,7 +37,7 @@ void main() {
             },
           ],
         };
-        when(() => api.get('/api/properties?status=Approved'))
+        when(() => api.get('/api/properties?status=Approved&page=1&limit=8'))
             .thenAnswer((_) async => response);
 
         final result = await repository.fetchProperties();
@@ -71,7 +71,7 @@ void main() {
             },
           ],
         };
-        when(() => api.get('/api/properties?status=Approved'))
+        when(() => api.get('/api/properties?status=Approved&page=1&limit=8'))
             .thenAnswer((_) async => response);
 
         final result = await repository.fetchProperties();
@@ -91,7 +91,7 @@ void main() {
             'images': ['img.jpg'],
           }),
         };
-        when(() => api.get('/api/properties?status=Approved'))
+        when(() => api.get('/api/properties?status=Approved&page=1&limit=3'))
             .thenAnswer((_) async => response);
 
         final result = await repository.fetchProperties(limit: 3);
@@ -100,7 +100,7 @@ void main() {
       });
 
       test('returns empty list when no properties', () async {
-        when(() => api.get('/api/properties?status=Approved'))
+        when(() => api.get('/api/properties?status=Approved&page=1&limit=8'))
             .thenAnswer((_) async => const <String, dynamic>{});
 
         final result = await repository.fetchProperties();
@@ -120,7 +120,7 @@ void main() {
             'images': ['car.jpg'],
           },
         ];
-        when(() => api.get('/api/vehicles')).thenAnswer((_) async => response);
+        when(() => api.get('/api/vehicles?page=1&limit=8')).thenAnswer((_) async => response);
 
         final result = await repository.fetchVehicles();
 
@@ -141,7 +141,7 @@ void main() {
             },
           ],
         };
-        when(() => api.get('/api/vehicles')).thenAnswer((_) async => response);
+        when(() => api.get('/api/vehicles?page=1&limit=8')).thenAnswer((_) async => response);
 
         final result = await repository.fetchVehicles();
 
@@ -165,7 +165,7 @@ void main() {
             'images': ['car.jpg'],
           },
         ];
-        when(() => api.get('/api/vehicles')).thenAnswer((_) async => response);
+        when(() => api.get('/api/vehicles?page=1&limit=8')).thenAnswer((_) async => response);
 
         final result = await repository.fetchVehicles();
 

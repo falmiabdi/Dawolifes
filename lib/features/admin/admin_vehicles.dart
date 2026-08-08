@@ -237,7 +237,14 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
               ],
             ),
           ],
-          const SizedBox(height: 8),
+          if (v.status == 'Approved') ...[
+            OutlinedButton.icon(
+              onPressed: _busy ? null : _switchContact,
+              icon: const Icon(Icons.phone_outlined, size: 16),
+              label: const Text('Switch Contact Phone'),
+            ),
+            const SizedBox(height: 8),
+          ],
           OutlinedButton.icon(
             onPressed: _busy ? null : _delete,
             style: OutlinedButton.styleFrom(foregroundColor: AppColors.destructive),
@@ -298,6 +305,20 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vehicle deleted')));
       Navigator.of(context).pop(true);
+    } on Exception catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _switchContact() async {
+    setState(() => _busy = true);
+    try {
+      final phone = await context.read<AdminRepository>().switchVehicleContact(_v.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Contact phone updated: $phone')));
     } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

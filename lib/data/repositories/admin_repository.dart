@@ -86,6 +86,11 @@ class AdminRepository {
     await _api.delete('/api/vehicles/$id');
   }
 
+  Future<String> switchVehicleContact(String id) async {
+    final data = await _api.patch('/api/admin/vehicles/$id/contact') as Map<String, dynamic>;
+    return '${data['displayPhone'] ?? ''}';
+  }
+
   Future<List<Payment>> fetchPayments({
     String role = 'admin',
     String? status,

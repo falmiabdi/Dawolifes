@@ -9,6 +9,9 @@ import '../../providers/language_provider.dart';
 import '../../widgets/listing_card.dart';
 import '../../widgets/service_cards.dart';
 import '../listings/listing_detail_screen.dart';
+import 'about_screen.dart';
+import 'categories_screen.dart';
+import 'services_screen.dart';
 
 /// Main home screen mirroring mobile-home.tsx + mobile-header.tsx.
 class HomeScreen extends StatefulWidget {
@@ -52,6 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<HomeProvider>().setQuery(_searchController.text);
   }
 
+  Future<void> _openCategories() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+    );
+    if (result != null && mounted) {
+      setState(() => _category = result);
+      context.read<HomeProvider>().setCategory(result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<HomeProvider>().setCategory(value);
               },
               onSearch: _applySearch,
+              onOpenCategories: _openCategories,
             ),
             Expanded(child: _Body()),
           ],
@@ -83,12 +97,14 @@ class _Header extends StatelessWidget {
     required this.searchController,
     required this.onCategory,
     required this.onSearch,
+    required this.onOpenCategories,
   });
 
   final String category;
   final TextEditingController searchController;
   final ValueChanged<String> onCategory;
   final VoidCallback onSearch;
+  final VoidCallback onOpenCategories;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +131,15 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: onOpenCategories,
+              icon: const Icon(Icons.grid_view, color: Colors.white, size: 18),
+              label: const Text('Categories', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -267,12 +292,20 @@ class _Body extends StatelessWidget {
             title: t('buy_or_sell_house'),
             items: home.visibleHouseItems,
             empty: home.failed,
+            hasMore: home.hasMore,
+            loadingMore: home.loadingMore,
+            onLoadMore: home.loadMore,
           ),
           _ImageSection(
             title: t('buy_or_sell_vehicle'),
             items: home.visibleVehicleItems,
             empty: false,
+            hasMore: home.hasMore,
+            loadingMore: home.loadingMore,
+            onLoadMore: home.loadMore,
           ),
+          const SizedBox(height: 24),
+          const _Footer(),
           const SizedBox(height: 24),
         ],
       ),
@@ -281,11 +314,21 @@ class _Body extends StatelessWidget {
 }
 
 class _ImageSection extends StatelessWidget {
-  const _ImageSection({required this.title, required this.items, required this.empty});
+  const _ImageSection({
+    required this.title,
+    required this.items,
+    required this.empty,
+    required this.hasMore,
+    required this.loadingMore,
+    required this.onLoadMore,
+  });
 
   final String title;
   final List<ListingItem> items;
   final bool empty;
+  final bool hasMore;
+  final bool loadingMore;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -304,27 +347,49 @@ class _ImageSection extends StatelessWidget {
           else if (items.isEmpty)
             const _Hint(text: 'No listings yet.')
           else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                mainAxisExtent: 238,
-              ),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return ListingCard(
-                  item: item,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ListingDetailScreen(item: item),
-                    ),
+            Column(
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 238,
                   ),
-                );
-              },
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return ListingCard(
+                      item: item,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ListingDetailScreen(item: item),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                if (hasMore)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: loadingMore
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          )
+                        : TextButton.icon(
+                            onPressed: onLoadMore,
+                            icon: const Icon(Icons.expand_more, size: 20),
+                            label: const Text('Load More'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                            ),
+                          ),
+                  ),
+              ],
             ),
         ],
       ),
@@ -345,6 +410,83 @@ class _Hint extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: const TextStyle(color: AppColors.mutedForeground, fontSize: 13),
+      ),
+    );
+  }
+}
+
+class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 12,
+        runSpacing: 8,
+        children: [
+          _FooterLink(
+            label: 'Services',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ServicesScreen()),
+            ),
+          ),
+          _FooterLink(
+            label: 'About',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AboutScreen()),
+            ),
+          ),
+          _FooterLink(
+            label: 'Contact',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AboutScreen()),
+            ),
+          ),
+          _FooterLink(
+            label: 'Privacy Policy',
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Privacy Policy coming soon.')),
+              );
+            },
+          ),
+          _FooterLink(
+            label: 'Terms',
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Terms of Service coming soon.')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterLink extends StatelessWidget {
+  const _FooterLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: AppColors.primary,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }

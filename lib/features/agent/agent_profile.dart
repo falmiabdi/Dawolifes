@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
+import '../profile/edit_profile_screen.dart';
 
 /// Agent profile mirroring app/agent/profile/page.tsx. Shows all onboarding
 /// info; read-only when Approved, shows rejection reason + resubmit CTA when
@@ -55,12 +57,27 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
+    final t = context.read<LanguageProvider>().t;
     final name = _s('fullName').isNotEmpty ? _s('fullName') : _s('username');
     final email = _s('email').isNotEmpty ? _s('email') : (user?.email ?? '');
     final status = _s('status').isNotEmpty ? _s('status') : (user?.status ?? 'Pending');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(
+        title: const Text('My Profile'),
+        actions: [
+          TextButton.icon(
+            onPressed: () async {
+              await Navigator.of(context).push<bool>(
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              );
+              if (mounted) _load();
+            },
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: Text(t('edit_profile')),
+          ),
+        ],
+      ),
       body: _loading
           ? const LoadingState()
           : _error != null
