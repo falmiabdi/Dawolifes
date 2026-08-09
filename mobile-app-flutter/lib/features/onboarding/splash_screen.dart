@@ -3,8 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'onboarding_gate.dart';
 
-/// Launch splash shown on every app open. Displays the DawoLife brand icons
-/// (icon 1 on top, icon3 centered) before handing off to the onboarding gate,
+/// Launch splash shown on every app open. Displays the DawoLife brand icon
+/// (large icon1 on top and centered) before handing off to the onboarding gate,
 /// so the splash is always visible even when onboarding was already completed.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, required this.storage});
@@ -58,9 +58,9 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 48),
               Image.asset(
                 'assets/images/icon 1.png',
-                height: 80,
+                height: 120,
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const SizedBox(height: 80),
+                errorBuilder: (_, _, _) => const SizedBox(height: 120),
               ),
               Expanded(
                 child: ScaleTransition(
@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Image.asset(
-                      'assets/images/icon3.png',
+                      'assets/images/icon 1.png',
                       fit: BoxFit.contain,
                       errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
