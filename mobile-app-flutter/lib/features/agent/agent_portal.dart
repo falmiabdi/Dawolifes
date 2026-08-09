@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 import 'agent_dashboard.dart';
+import 'agent_onboarding_screen.dart';
 import 'agent_payments.dart';
 import 'agent_post_property.dart';
 import 'agent_post_vehicle.dart';
@@ -70,6 +71,7 @@ class AgentPortalScreen extends StatelessWidget {
           const SectionHeader(title: 'Menu'),
           _menuTile(context, Icons.dashboard_outlined, t('dashboard'), () => _open(context, const AgentDashboardScreen())),
           _menuTile(context, Icons.person_outline, 'My Profile', () => _open(context, const AgentProfileScreen())),
+          _menuTile(context, Icons.person_outline, t('complete_profile'), () => _open(context, const AgentOnboardingScreen())),
           _menuTile(context, Icons.house_outlined, 'My Properties', () => _open(context, const AgentPropertiesScreen())),
           _menuTile(context, Icons.add_home_outlined, t('post_property'), () => _open(context, const AgentPostPropertyScreen())),
           _menuTile(context, Icons.directions_car_outlined, 'My Vehicles', () => _open(context, const AgentVehiclesScreen())),
