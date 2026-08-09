@@ -339,6 +339,49 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     exp_less_1: 'Less than 1 year', exp_1_3: '1–3 years', exp_3_5: '3–5 years', exp_5_10: '5–10 years', exp_more_10: 'More than 10 years', exp_none: "I haven't experience",
     professional_optional_note: 'All fields in this step are optional.',
     terms_conditions: 'Terms & Conditions', privacy_policy: 'Privacy Policy',
+    terms_conditions_full: `Terms & Conditions for Property Owners and Agents
+An owner or real estate agent listing a property on this platform must fulfill the following criteria:
+
+1. Ownership & Authority Standard: The owner must provide valid proof of ownership. If the person listing is an agent, they must provide a valid full power of attorney, official identification, and all original documentation required on the day of the sale or rental agreement.
+
+2. Document Authenticity & Legal Liability: All submitted documents must be accurate and authentic. If any document is found to be false or fraudulent, the party who published or submitted it will face legal prosecution under country laws and will be fully responsible for all legal costs, damages, and administrative fees incurred.
+
+3. Listing & Commission Fees: The property owner must pay the required platform service fees. The platform charges a 2% commission fee for sales and a 10% fee for rentals. If an owner advertises a property on this website and subsequently sells or rents it through another channel, they are still obligated to pay the 2% fee.
+
+4. Media Standards & On-site Viewing: The owner or agent is required to capture and upload high-quality photographs and videos of the property. If a prospective customer requests a viewing, the owner/agent must be available in person two days a week to conduct property tours professionally and hospitably.
+
+5. Clear Title & Dispute Resolution: The property must be completely free of government liens, debts, or public claims. If any debt or legal dispute is discovered, the owner must fully refund the buyer or tenant's money, along with compensation for all expenses incurred. If the buyer/tenant chooses to settle the legal dispute directly, they may do so at their own expense in the appropriate venue.
+
+6. Prohibition of Misleading Advertising: Any owner or agent who engages in deceptive, false, or misleading property advertisements on the platform will be held strictly liable under applicable laws.
+
+7. Verification by DawoLife: DawoLife provides verified, accurate information to buyers. All data, ownership details, and documentation submitted by an owner or agent will be independently verified through the appropriate government and legal authorities.
+
+8. Legal Governing Clause: All terms, conditions, and agreements set forth herein are legally binding and fully recognized under national laws and regulatory statutes.`,
+    privacy_policy_full: `Agent & Owner Privacy Policy
+
+1. Ownership or authorization
+A property owner or agent who lists a property for sale must prove ownership. If the listing is posted by an agent, the agent must provide a complete, legally valid power of attorney and all original sale or purchase documents.
+
+2. Accuracy of documents
+All submitted documents must be accurate. If any document is found to be false, the person who prepared or submitted it will be held liable under the law of the country and must bear any costs or damages that arise.
+
+3. Listing fees
+To advertise a property on this website, the required fee must be paid. This fee is 2% of any sale price, and 10% of any rental price. Once a property owner lists a property here, they remain obligated to pay the 2% even if the property is later sold or rented through another channel.
+
+4. Photos, videos and showings
+The property owner must upload clear, high-quality photos and videos of the property. If a customer requests to view the property, the owner must make it available for in-person showings at least two days per week.
+
+5. Free of debt
+The property must be free of government or private debt. If debt is discovered, the property owner must repay the debt and compensate the buyer or tenant as appropriate. The buyer may pursue and close the matter at their own expense if they choose.
+
+6. Truthful listings
+A property owner or agent who lists or publishes a property in a false or misleading way will bear legal responsibility.
+
+7. Information verification
+DawoLife provides accurate information to buyers. Information supplied by an owner or agent will be verified with the relevant parties.
+
+8. Governing law
+All of these rules and agreements are valid and accepted under the laws and regulations of our country.`,
     application_summary: 'Application Summary', name_label: 'Name:', phone_label: 'Phone:', region_label: 'Region:', education_label: 'Education:', experience_label: 'Experience:',
     agree_terms: 'I agree to the', of_platform: 'of the DawoLife platform.',
     agree_privacy: 'and consent to data processing.',
@@ -347,7 +390,7 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     pending_approval: 'Pending Approval',
     after_submission_note2: 'status. You cannot publish properties until an administrator approves your account. If rejected, a reason will be provided and you may resubmit.',
     submit_application: 'Submit Application', application_submitted: 'Application submitted successfully!',
-    back: 'Back', save_continue: 'Save & Continue', full_name: 'Full Name', optional: 'Optional', not_specified: 'Not specified', yes: 'Yes', no: 'No',
+    back: 'Back', close: 'Close', save_continue: 'Save & Continue', full_name: 'Full Name', optional: 'Optional', not_specified: 'Not specified', yes: 'Yes', no: 'No',
     click_to_upload: 'Click to upload', confirm_password: 'Confirm Password',
     // admin settings
     admin_settings: 'Admin Settings', manage_profile: 'Manage your profile, credentials, and team.', profile: 'Profile', save_profile: 'Save Profile',
@@ -525,6 +568,49 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     exp_less_1: 'ከ1 ዓመት በታች', exp_1_3: '1-3 ዓመታት', exp_3_5: '3-5 ዓመታት', exp_5_10: '5-10 ዓመታት', exp_more_10: 'ከ10 ዓመት በላይ', exp_none: 'ልምድ የለኝም',
     professional_optional_note: 'በዚህ ደረጃ ሁሉም መስኮች አማራጭ ናቸው።',
     terms_conditions: 'ውሎች እና ሁኔታዎች', privacy_policy: 'የግላዊነት ፖሊሲ',
+    terms_conditions_full: `የንብረት ባለቤቶች እና ወኪሎች ውሎች እና ሁኔታዎች
+በዚህ መድረክ ላይ ንብረት የሚዘረዘረው የንብረት ባለቤት ወይም የንብረት ወኪል የሚከተሉትን መስፈርቶች መሙላት አለበት፦
+
+1. የባለቤትነት እና የስልጣን መስፈርት: ባለቤቱ ትክክለኛ የባለቤትነት ማረጋገጫ መስጠት አለበት። ንብረቱን የሚዘረዘረው ወኪል ከሆነ፣ ትክክለኛ የሙሉ ወኪልነት ወረቀት፣ የህጋዊ መታወቂያ፣ እና በሽያጭ ወይም በኪራይ ስምምነት ቀን የሚያስፈልጉ ኦሪጓል ሰነዶችን ሁሉ ማቅረብ አለበት።
+
+2. የሰነድ ትክክለኛነት እና የህግ ኃላፊነት: የቀረቡት ሰነዶች ሁሉ ትክክላቸው እና ተቀባይነት ያላቸው መሆን አለባቸው። ማንኛውም ሰነድ ውሸት ወይም ማጭበርበር ከሆነ፣ ያታተመው ወይም ያቀረበው ተባባሪ በሀገሪቱ ህጎች መሰረት የፍትህ ሂደት ይፈጸምበታል እና የተከሰተውን ማንኛውም የህግ ወጪ፣ ጉድለት እና አስተዳደራዊ ክፍያዎች በሙሉ መሸከም አለበት።
+
+3. የዝርዝር እና ኮሚሽን ክፍያዎች: የንብረት ባለቤቱ የሚያስፈልገውን የመድረክ አገልግሎት ክፍያ መክፈል አለበት። መድረኩ ለሽያጮች 2% ኮሚሽን እና ለኪራዮች 10% ክፍያ ያስከፍላል። የንብረት ባለቤት ንብረቱን በዚህ ድር ጣቢያ ላይ ካስተዋወቀ በኋላ በሌላ መንገድ ቢሸጥ ወይም ቢያከራይ፣ 2% ክፍያን መክፈል አለበት።
+
+4. የሚዲያ ደረጃ እና የቦታ ጉብኝት: ባለቤቱ ወይም ወኪሉ ከፍተኛ ጥራት ያላቸውን የንብረቱ ፎቶዎች እና ቪዲዮዎችን ማንሳት እና መጫን አለበት። ደንበኛ ጉብኝት ከጠየቀ፣ ባለቤቱ/ወኪሉ በሳምንቱ ሁለት ቀናት በአካል ተገኝቶ በሙያዊ እና በጥሩ አቀባበል ጉብኝት ማድረግ አለበት።
+
+5. ንጹህ ንብረት እና የውዝግብ መፍትሄ: ንብረቱ ከመንግሥት ቁሳቁስ መያዣ፣ ብድሮች ወይም የህዝብ የበለጠ ጥያቄዎች ሙሉ በሙሉ ነጻ መሆን አለበት። ማንኛውም ብድር ወይም የህግ ውዝግብ ከተገኘ፣ ባለቤቱ የገዥውን ወይም የኪራይተኛውን ገንዘብ ከወጪዎች ጋር መመለስ አለበት። ገዥው/ኪራይተኛው የህግ ውዝግቡን በቀጥታ ለመዝጋት ከመረጠ፣ በራሱ ወጪ በሚያስፈልገው ቦታ መከራከር ይችላል።
+
+6. የሚያሳስት ማስታወቂያ መከልከል: ማንኛውም ባለቤት ወይም ወኪል በማታመኛ፣ በሐሰት ወይም በሚያሳስት መንገድ በመድረኩ ላይ ንብረት ካስተዋወቀ በሚመለከተው ህግ መሰረት ከባድ ኃላፊነት ይወስዳል።
+
+7. የDawoLife ማረጋገጫ: DawoLife ለገዥዎች የተረጋገጠ እና ትክክለኛ መረጃ ያቀርባል። በንብረት ባለቤት ወይም በወኪል የቀረበው ማንኛውም መረጃ፣ የባለቤትነት ዝርዝር እና ሰነዶች በአግባቡ በመንግሥት እና በህግ አካላት በነፃነት ይረጋገጣሉ።
+
+8. የህግ መምሪያ ድንጋጌ: በዚህ ውስጥ የተዘረዘሩት ሁሉም ውሎች፣ ሁኔታዎች እና ስምምነቶች በሀገራችን ህጎች እና የመስተዳድር ህጎች በሙሉ የሚቀበሉ እና ተፈጻሚ የሆኑ ናቸው።`,
+    privacy_policy_full: `የኤጄንት እና የንብረት ባለቤት የግላዊነት ፖሊሲ
+
+1. ባለቤትነት ወይም ወኪልነት
+ንብረት ለመሸጥ የሚዘረዘረው የንብረት ባለቤት ወይም ወኪል ባለቤትነቱን መስተዋድድ አለበት። ንብረቱ በወኪል የቀረበ ከሆነ፣ ሙሉ ሕጋዊ የወኪልነት ወረቀት እና ከግዢውና ከሽያጩ ጋር የተያያዙ ኦሪጓል ሰነዶችን ሁሉ ማቅረብ አለበት።
+
+2. የሰነዶች ትክክለኛነት
+የቀረቡት ሰነዶች ሁሉ ትክክል መሆን አለባቸው። የቀረበው ሰነድ ውሸት ከሆነ፣ ሰነዱን ያዘጋጁ ወይም ያቀረቡ ሰው በሀገሪቱ ሕግ መሠረት ይቀጣል እና ከዚህ የሚደርስ ማንኛውም ወጪ ወይም ጉድለት መሸከም አለበት።
+
+3. የዝርዝር ክፍያ
+ንብረታቸውን በዚህ ድር ጣቢያ ላይ ለማስተዋወቅ አስፈላጊውን ክፍያ መክፈል አለባቸው። ይህ ክፍያ ከማንኛውም ሽያጭ ዋጋ 2%፣ ከኪራይ ዋጋ ደግሞ 10% ነው። የንብረት ባለቤት አንድ ጊዜ ከዚህ በኋላ በሌላ መንገድ ቢሸጥ ወይም ቢያከራይ፣ 2% መክፈል አለበት።
+
+4. ፎቶ፣ ቪዲዮ እና ጉብኝት
+የንብረት ባለቤቱ ከፍተኛ ጥራት ያላቸው ፎቶዎችን እና ቪዲዮዎችን ተከትቶ ወደ ድር ጣቢያው መጫን አለበት። ደንበኛ ንብረቱን መመልከት ከፈለገ፣ በሳምንቱ ሁለት ቀናት በአካል ተገኝቶ በሚገባ ማሳየት አለበት።
+
+5. ከብድር ነጻ
+ንብረቱ የመንግሥት ወይም የግል ብድር የሌለው መሆን አለበት። ብድር ካለው ተገኝ የንብረት ባለቤቱ ያን ብድር መክፈል እና ገዥውን ወይም ኪራይተኛውን መካስ አለበት። ገዥው ጉዳዩን ለመዝጋት ከፈለገ፣ በራሱ ወጪ መከራከር እና መዝጋት ይችላል።
+
+6. ትክክለኛ ዝርዝሮች
+የንብረት ባለቤት ወይም ወኪል ንብረትን በሐሰት ወይም በሚያሳስት መንገድ ሲያስተዋውቅ ወይም ሲያታምር የህግ ሀላፊነት ያለበት ይሆናል።
+
+7. የመረጃ ማረጋገጫ
+DawoLife ለገዥዎች ትክክለኛ መረጃ ያቀርባል። ከንብረት ባለቤት ወይም ከወኪል የተሰጠው መረጃ ትክክለኛነቱ በአግባቡ በሚመለከተው አካል ይረጋገጣል።
+
+8. የሚገዛው ህግ
+እነዚህ ሁሉ ደንቦች እና ስምምነቶች በሀገራችን ሕግ እና ደንብ በታች የሚቀበሉ እና ተፈጻሚ የሆኑ ናቸው።`,
     application_summary: 'የማመልከቻ ማጠቃለያ', name_label: 'ስም:', phone_label: 'ስልክ:', region_label: 'ክልል:', education_label: 'ትምህርት:', experience_label: 'ልምድ:',
     agree_terms: 'በሚከተለው እስማማለሁ', of_platform: 'የDawoLife መድረክ።',
     agree_privacy: 'እና ለመረጃ ሂደት ፈቃድ እሰጣለሁ።',
@@ -532,7 +618,7 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     after_submission_note: 'መለያዎ በ', pending_approval: 'በመጠባበቅ ላይ',
     after_submission_note2: 'ሁኔታ ላይ ይሆናል። አስተዳዳሪ መለያዎን እስኪያጸድቅ ድረስ ንብረት ማተም አይችሉም። ከተቀበለ፣ ምክንያት ይሰጣል እና እንደገና ማስገባት ይችላሉ።',
     submit_application: 'ማመልከቻ አስገባ', application_submitted: 'ማመልከቻ በተሳካ ሁኔታ ቀርቧል!',
-    back: 'ተመለስ', save_continue: 'አስቀምጥ እና ቀጥል', full_name: 'ሙሉ ስም', optional: 'አማራጭ', not_specified: 'አልተገለጸም', yes: 'አዎ', no: 'አይ',
+    back: 'ተመለስ', close: 'ዝጋ', save_continue: 'አስቀምጥ እና ቀጥል', full_name: 'ሙሉ ስም', optional: 'አማራጭ', not_specified: 'አልተገለጸም', yes: 'አዎ', no: 'አይ',
     click_to_upload: 'ለመጫን ጠቅ ያድርጉ', confirm_password: 'የይለፍ ቃል ያረጋግጡ',
     admin_settings: 'የአስተዳዳሪ ቅንብሮች', manage_profile: 'መገለጫዎን፣ ምስክርነቶችዎን እና ቡድንዎን ያስተዳድሩ።', profile: 'መገለጫ', save_profile: 'መገለጫ አስቀምጥ',
     only_root_admin: 'አዲስ አስተዳዳሪ መለያ መፍጠር የሚችሉት ዋና አስተዳዳሪዎች ብቻ ናቸው።', create_new_admin: 'አዲስ አስተዳዳሪ ፍጠር', create_admin: 'አስተዳዳሪ ፍጠር',
@@ -705,6 +791,49 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     exp_less_1: 'Waggaa 1 gadi', exp_1_3: 'Waggaa 1-3 gidduu', exp_3_5: 'Waggaa 3-5 gidduu', exp_5_10: 'Waggaa 5-10 gidduu', exp_more_10: 'Waggaa 10 oli', exp_none: 'Muuxannoo hin qabu',
     professional_optional_note: 'Bakki hundi tarkaanfii kanaa filannoodha.',
     terms_conditions: 'Waligaltee jiran', privacy_policy: 'Seerota hojiira oolan',
+    terms_conditions_full: `Waligaltee jiru fi Haala Hojii Abbootii Qabeenyaa fi Eejantiiwwan
+Abbaan qabeenyaa ykn eejantii qabeenya tartiibaa kana irratti maxxansu qabeenyummaa isaa mirkaneessuuf yaada kana guutuu qaba:
+
+1. Mirkaneessa Abbaa Qabeenyummaa fi Itti Gaafatamummaa: Abbaan qabeenyaa ragaa abbaa qabeenyummaa sirrii dhiyeessuu qaba. Yoo nama tartiibaa kana maxxansu eejantii ta'e, waraaqaa bakka bu'ummaa guutuu seera qabeessa, waraaqaa eenyummaa hojiiraa, fi waraqoota orijinaala guyyaa gurgurtaa ykn waligaltee kireeffannaa barbaachisan hunda qabaachuu qaba.
+
+2. Dhugummaa Waraqaa fi Itti Gaafatamummaa Seeraa: Waraqaleen dhiyaatan hundi sirrii fi dhugaa ta'uu qabu. Waraqaa soba ykn faalsummaa qabu yoo argame, qaamni waraaqaa san maxxanse ykn dhiyeesse seera biyyaa jalatti murtii seeraa fudhata fi baasiilee seeraa, dadhabbii, fi kaffaltiiwwan bulchiinsaa dhufan hunda kaffaluuf itti gaafatama.
+
+3. Kaffaltiiwwan Tartiibaa fi Koomishinii: Abbaan qabeenyaa kaffaltiiwwan tajaajlaa platformicha barbaachisan kaffaluuf dirqama qaba. Platformichi gurgurtaaf dhibbantaa 2% fi kireeffannaaaf dhibbantaa 10% kaffala. Abbaan qabeenyaa tokko qabeenya isaa weebsaayitii kana irratti beeksifatee booda karaa biraatiin yoo gurgure ykn kireesse, dhibbantaa 2% kaffaluuf itti fuufiidha.
+
+4. Safartuu Miidiyaa fi Ilaaluu Idoo: Abbaan qabeenyaa ykn eejantiin suuraalee fi viidiyoolee qulqullina qaban qabeenyaa waraabuufii fi weebsaayiticha irratti fe'uu qaba. Maamilli dhaabbataan qabeenyicha ilaaluu yoo barbaade, abbaan qabeenyaa/eejantiin torbanitti guyyaa lama qaamaan argamee haala gaariin agarsiisuu qaba.
+
+5. Qabeenyummaa Bilisaa fi Cufsiisuu Morkii: Qabeenyichi iddaa mootummaa, baankii, ykn himata ummataa kamiyyuu hin qabuu ture. Yoo iddaa ykn morkii seeraa kamiyyuu argame, abbaan qabeenyaa maallaqa bittootaa ykn kiriimtootaa guutummaa guututti deebisuufii fi baasii dhufan hunda kaffaluuf dirqama qaba. Yoo bittoonni/kiriimtoonni morkii seeraa san cufsiisuuf filatan, baasii mataa isaaniitiin bakka barbaachisutti dhihaatanii cufsiisuu danda'u.
+
+6. Dhoorkaa Beeksisuu Soasaanii: Abbaan qabeenyaa ykn eejantiin kamiyyuu qabeenya sobaan, dogoggoraan, ykn isa sobaan maxxansu seera biyyaa jalatti itti gaafatamummaa cimaa qabaata.
+
+7. Mirkaneessa DawoLife: DawoLife odeeffannoo sirrii fi mirkanaa'ee bittootaf dhiyeessa. Odeeffannoo, ibsa abbaa qabeenyummaa, fi waraqaleen abbaa qabeenyaa ykn eejantiin dhiyaatan qaamota mootummaa fi seeraa biratti fudhatama qabanitin mirkanaa'uu qabu.
+
+8. Dambii Seeraa: Waligaltee fi haala hojii kana keessatti kan ibsamani hundi seeraa fi dambii biyya keenyaa jalatti fudhatama qabanii fi hojiiraa oolanii dha.`,
+    privacy_policy_full: `Ajajaa Daataa fi Waligaltee Eejantii / Abbaa Qabeenyaa
+
+1. Abbaa qabeenyummaa ykn bakka bu'ummaa
+Abbaan qabeenyaa ykn eejantii qabeenya gurguru tokko ulaagaa maalii guutuu qaba. Qabeenyichi kan isaa ta'uu ragaa abbaa qabeenyummaa dhiyeessuu qaba. Bakka bu'aa (Agent) yoo ta'e immoo, ragaa bakka bu'iinsaa guutuu seera qabeessa ta'ee fi guyyaa bittaa fi gurgurtaatti ragaalee orijinaala ta'an hunda qabatee dhihaachuu qaba.
+
+2. Sirrii ta'uu ragaalee
+Ragaaleen dhiyaatan sirrii ta'uu qabu. Ragaan dhiyaate soba yoo ta'e, qaamni ragaa sobaa kana maxxansees ta'e dhiyeesse akka seera biyyattiitti kan adabamuu fi baasii ykn dadhabbii kanaan walqabatee dhufu kamiyyuu kan kaffalu ta'a.
+
+3. Kaffaltii beeksifannaa
+Qabeenya isaa weebsaayitii kana irratti beeksifachuuf kaffaltii barbaachisu kaffaluu qaba. Kunis, gurgurtaa kamiyyuu irraa dhibbantaa lama (2%), kiraa yoo ta'e immoo dhibbantaa kudhan (10%) kan kaffalu ta'a. Abbaan qabeenyaa tokko erga as irratti beeksifatee booda karaa biraatiin yoo gurgure ykn kireesse illee, dhibbantaa lama kaffaluuf dirqama qaba.
+
+4. Suuraa, viidiyoo fi agarsiisaa
+Abbaan qabeenyichaa suuraalee fi viidiyoowwan qulqullina qaban waraabee weebsaayiticha irratti fe'uuf dirqama qaba. Maamilli (customer) qabeenyicha ilaaluu barbaadu yoo jiraate, torbanitti guyyaa lama qaamaan argamee haala gaariin agarsiisuu qaba.
+
+5. Baankii/iddaa hin qabu
+Qabeenyichi idaa mootummaa ykn idaa dhuunfaa kan hin qabne ta'uu qaba. Idaa kan qabu ta'ee yoo argame garuu, abbaan qabeenyaa akka fedhii qaama bitatee ykn kireeffataatitti maallaqa isaa fi baasii dadhabbii isaa deebisuufii qaba. Qaamni bitate sun falmicha (himannicha) irraa cufsiisuu yoo barbaade, baasii mataa isaatiin bakka barbaachisutti dhihaatee kan falmatu fi irraa cufsiisu ta'a.
+
+6. Beeksisuu dhugaa
+Abbaan qabeenyaa ykn eejantiin qabeenya tokko bifa dogoggoraatiin/sobaan kan beeksisu ykn maxxansu yoo ta'e, itti gaafatama seeraa ni qabaata.
+
+7. Mirkaneessuu odeeffannoo
+Dhaabbanni "DawoLife" bittootaaf odeeffannoo qulqulluu ni dhiyeessa. Odeeffannoo abbaa qabeenyaa ykn eejantii irraa dhihaate, qaama dhimmi ilaallatu irraa dhugummaa isaa ni mirkaneessa.
+
+8. Seerota hojii
+Seeronni fi waliigalteen kun hundi dambii fi seera biyya keenyaa biratti fudhatama kan qaban ni ta'u.`,
     application_summary: 'Ibsa Iyyata', name_label: 'Maqaa:', phone_label: 'Bilbila:', region_label: 'Naannoo:', education_label: 'Barnoota:', experience_label: 'Muuxannoo:',
     agree_terms: 'Waliin waligala', of_platform: 'daawolife platform.',
     agree_privacy: 'fi hayyama deetaa keessatti fayyadamuuf kenneera.',
@@ -712,7 +841,7 @@ const FORM_STRINGS: Record<Language, Record<string, string>> = {
     after_submission_note: 'Akaawuntii kee', pending_approval: 'Eerga mirkanaa\'uu',
     after_submission_note2: 'haala keessa jiraata. Hanga admin akkaawuntii kee mirkaneessutti qabeenya maxxansuu hin dandeessu. Yoo ittifame, sababni kennama itti deebi\'itii galchuu dandeessa.',
     submit_application: 'Iyyata galchi', application_submitted: 'Iyyatni kee haala milkaa\'aan galmeeffameera!',
-    back: 'Deebi\'i', save_continue: 'Qusiitii itti fufi', full_name: 'Maqaa guutuu', optional: 'Filannoo', not_specified: 'Hin ibsamne', yes: 'Eeyyee', no: 'Lakki',
+    back: 'Deebi\'i', close: 'Cufi', save_continue: 'Qusiitii itti fufi', full_name: 'Maqaa guutuu', optional: 'Filannoo', not_specified: 'Hin ibsamne', yes: 'Eeyyee', no: 'Lakki',
     click_to_upload: 'Fe\'uuf tuqi', confirm_password: 'Jecha iccitii mirkaneessi',
     admin_settings: 'Sagalee Admin', manage_profile: 'Ibsa, ragaa fi garee kee bulchi.', profile: 'Ibsa', save_profile: 'Ibsa qusachiisi',
     only_root_admin: 'Adminoota bu\'uuraa qofatu akkaawuntii admin haaraa uumuu danda\'u.', create_new_admin: 'Admin haaraa uumi', create_admin: 'Admin uumi',
