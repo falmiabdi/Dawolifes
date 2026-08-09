@@ -12,7 +12,7 @@ import 'data/repositories/announcement_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/message_repository.dart';
-import 'features/onboarding/onboarding_gate.dart';
+import 'features/onboarding/splash_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/home_provider.dart';
 import 'providers/language_provider.dart';
@@ -66,7 +66,7 @@ class DawoLifeApp extends StatelessWidget {
       title: 'DawoLife',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: OnboardingGate(storage: prefs),
+      home: SplashScreen(storage: prefs),
     );
   }
 }
