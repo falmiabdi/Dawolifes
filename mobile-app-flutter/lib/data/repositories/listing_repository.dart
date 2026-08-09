@@ -9,8 +9,8 @@ class ListingRepository {
 
   final ApiClient _api;
 
-  Future<List<ListingItem>> fetchProperties({int limit = 8}) async {
-    final data = await _api.get('/api/properties?status=Approved');
+  Future<List<ListingItem>> fetchProperties({int page = 1, int limit = 8}) async {
+    final data = await _api.get('/api/properties?status=Approved&page=$page&limit=$limit');
     final docs = (data as Map<String, dynamic>?)?['properties'] as List? ?? [];
     final items = docs
         .whereType<Map<String, dynamic>>()
@@ -22,8 +22,8 @@ class ListingRepository {
     return items;
   }
 
-  Future<List<ListingItem>> fetchVehicles({int limit = 8}) async {
-    final data = await _api.get('/api/vehicles');
+  Future<List<ListingItem>> fetchVehicles({int page = 1, int limit = 8}) async {
+    final data = await _api.get('/api/vehicles?page=$page&limit=$limit');
     final docs = data is List ? data : (data as Map<String, dynamic>?)?['vehicles'] as List? ?? [];
     final items = docs
         .whereType<Map<String, dynamic>>()
@@ -37,12 +37,14 @@ class ListingRepository {
 
   Future<Property?> fetchPropertyDetail(String id) async {
     final data = await _api.get('/api/properties/$id');
-    return Property.fromJson(data as Map<String, dynamic>);
+    final wrapped = data as Map<String, dynamic>;
+    return Property.fromJson(wrapped['property'] ?? wrapped);
   }
 
   Future<Vehicle?> fetchVehicleDetail(String id) async {
     final data = await _api.get('/api/vehicles/$id');
-    return Vehicle.fromJson(data as Map<String, dynamic>);
+    final wrapped = data as Map<String, dynamic>;
+    return Vehicle.fromJson(wrapped['vehicle'] ?? wrapped);
   }
 
   Future<List<ListingItem>> fetchSaved() async {

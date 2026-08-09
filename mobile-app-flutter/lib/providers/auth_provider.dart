@@ -110,6 +110,33 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
+  Future<RegistrationResult> forgotPassword({required String email}) {
+    return repository.forgotPassword(email: email);
+  }
+
+  Future<String> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) {
+    return repository.resetPassword(email: email, otp: otp, newPassword: newPassword);
+  }
+
+  /// Updates the profile (name/phone/photo) and refreshes the cached session.
+  Future<SessionUser> updateProfile({
+    String? name,
+    String? phone,
+    String? profilePhoto,
+  }) async {
+    final user = await repository.updateProfile(
+      name: name,
+      phone: phone,
+      profilePhoto: profilePhoto,
+    );
+    _setUser(user);
+    return user;
+  }
+
   void _setUser(SessionUser? user) async {
     _user = user;
     await storage.saveUser(user?.toJson());

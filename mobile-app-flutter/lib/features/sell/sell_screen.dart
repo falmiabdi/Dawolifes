@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../agent/agent_post_property.dart';
+import '../agent/agent_post_vehicle.dart';
 import '../auth/login_screen.dart';
+import '../auth/signup_screen.dart';
 
 /// Sell tab gate, mirroring the bottom-nav Sell action + app/sell/page.tsx.
 class SellScreen extends StatelessWidget {
@@ -35,8 +38,8 @@ class SellScreen extends StatelessWidget {
             'Your buyer account can browse, save and message. Register as a seller to post properties and vehicles.',
         actionLabel: 'Register as Agent',
         onAction: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Agent registration is available on the web app.')),
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const SignupScreen(initialRole: SignupRole.agent)),
           );
         },
       );
@@ -56,23 +59,21 @@ class SellScreen extends StatelessWidget {
             icon: Icons.home_work_outlined,
             title: 'Post Property',
             subtitle: 'House, apartment, villa, land or commercial space',
-            onTap: () => _comingSoon(context, 'Property posting'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AgentPostPropertyScreen()),
+            ),
           ),
           const SizedBox(height: 12),
           _SellCard(
             icon: Icons.directions_car_outlined,
             title: 'Post Vehicle',
             subtitle: 'Car, SUV, truck or motorcycle',
-            onTap: () => _comingSoon(context, 'Vehicle posting'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AgentPostVehicleScreen()),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature coming soon in the Flutter app. Use the web app to post.')),
     );
   }
 }

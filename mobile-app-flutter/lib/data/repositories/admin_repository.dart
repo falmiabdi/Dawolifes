@@ -1,5 +1,6 @@
 import '../../core/network/api_client.dart';
 import '../models/admin.dart';
+import '../models/notification.dart';
 import '../models/payment.dart';
 import '../models/property.dart';
 import '../models/vehicle.dart';
@@ -86,6 +87,11 @@ class AdminRepository {
     await _api.delete('/api/vehicles/$id');
   }
 
+  Future<String> switchVehicleContact(String id) async {
+    final data = await _api.patch('/api/admin/vehicles/$id/contact') as Map<String, dynamic>;
+    return '${data['displayPhone'] ?? ''}';
+  }
+
   Future<List<Payment>> fetchPayments({
     String role = 'admin',
     String? status,
@@ -136,5 +142,35 @@ class AdminRepository {
       'email': email,
       'profilePhoto': ?profilePhoto,
     });
+  }
+
+  /// Admin: list notifications for every user (management view).
+  Future<List<AppNotification>> fetchAdminNotifications() async {
+    final data = await _api.get('/api/notifications/admin') as Map<String, dynamic>;
+    return (data['notifications'] as List?)
+            ?.map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [];
+  }
+
+  /// Admin: send a notification to all users (optionally filtered by role).
+  Future<int> sendNotificationToAll({
+    required String title,
+    required String body,
+    String type = 'system',
+    String? role,
+  }) async {
+    final data = await _api.post('/api/notifications/admin', {
+      'title': title,
+      'body': body,
+      'type': type,
+      'role': ?role,
+    }) as Map<String, dynamic>;
+    return (data['sent'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Admin: delete any notification.
+  Future<void> deleteAdminNotification(String id) async {
+    await _api.delete('/api/notifications/admin/$id');
   }
 }

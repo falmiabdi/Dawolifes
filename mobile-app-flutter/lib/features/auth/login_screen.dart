@@ -8,6 +8,7 @@ import '../../providers/language_provider.dart';
 import '../admin/admin_portal.dart';
 import '../agent/agent_portal.dart';
 import 'auth_shell.dart';
+import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
 /// Login screen mirroring app/auth/login/page.tsx.
@@ -135,6 +136,18 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               validator: (v) => (v == null || v.isEmpty) ? 'Password is required' : null,
               onSubmitted: (_) => _submit(),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                ),
+                child: Text(
+                  t('forgot_password'),
+                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
             ),
             if (_error != null) ...[
               const SizedBox(height: 16),

@@ -21,6 +21,8 @@ void main() {
       when(() => homeProvider.houseItems).thenReturn([]);
       when(() => homeProvider.vehicleItems).thenReturn([]);
       when(() => homeProvider.failed).thenReturn(false);
+      when(() => homeProvider.hasMore).thenReturn(false);
+      when(() => homeProvider.loadingMore).thenReturn(false);
       when(() => homeProvider.visibleHouseItems).thenReturn([]);
       when(() => homeProvider.visibleVehicleItems).thenReturn([]);
       when(() => langProvider.t(any())).thenReturn('translated');
@@ -72,6 +74,8 @@ void main() {
       when(() => homeProvider.houseItems).thenReturn([]);
       when(() => homeProvider.vehicleItems).thenReturn([]);
       when(() => homeProvider.failed).thenReturn(true);
+      when(() => homeProvider.hasMore).thenReturn(false);
+      when(() => homeProvider.loadingMore).thenReturn(false);
       when(() => homeProvider.visibleHouseItems).thenReturn([]);
       when(() => homeProvider.visibleVehicleItems).thenReturn([]);
       when(() => langProvider.t(any())).thenReturn('translated');
@@ -98,6 +102,8 @@ void main() {
       when(() => homeProvider.houseItems).thenReturn([]);
       when(() => homeProvider.vehicleItems).thenReturn([]);
       when(() => homeProvider.failed).thenReturn(false);
+      when(() => homeProvider.hasMore).thenReturn(false);
+      when(() => homeProvider.loadingMore).thenReturn(false);
       when(() => homeProvider.visibleHouseItems).thenReturn([]);
       when(() => homeProvider.visibleVehicleItems).thenReturn([]);
       when(() => langProvider.t(any())).thenReturn('translated');
@@ -124,6 +130,8 @@ void main() {
       when(() => homeProvider.houseItems).thenReturn([]);
       when(() => homeProvider.vehicleItems).thenReturn([]);
       when(() => homeProvider.failed).thenReturn(false);
+      when(() => homeProvider.hasMore).thenReturn(false);
+      when(() => homeProvider.loadingMore).thenReturn(false);
       when(() => homeProvider.visibleHouseItems).thenReturn([
         ListingItem(
           id: 'p1',
