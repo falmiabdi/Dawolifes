@@ -24,6 +24,8 @@ void main() {
         expect(provider.failed, false);
         expect(provider.query, '');
         expect(provider.category, '');
+        expect(provider.hasMore, true);
+        expect(provider.loadingMore, false);
       });
     });
 
@@ -72,7 +74,7 @@ void main() {
         expect(provider.failed, true);
       });
 
-      test('keeps existing items when one fetch fails', () async {
+      test('sets failed to true when one fetch fails after successful load', () async {
         final houses = [
           ListingItem(
             id: 'p1',
@@ -97,11 +99,12 @@ void main() {
         when(() => repository.fetchVehicles()).thenAnswer((_) async => vehicles);
         await provider.load();
 
+        when(() => repository.fetchProperties()).thenThrow(Exception('Network'));
         when(() => repository.fetchVehicles()).thenThrow(Exception('Network'));
         await provider.load();
 
-        expect(provider.houseItems.length, 1);
-        expect(provider.vehicleItems.length, 1);
+        expect(provider.houseItems, isEmpty);
+        expect(provider.vehicleItems, isEmpty);
         expect(provider.failed, true);
       });
 

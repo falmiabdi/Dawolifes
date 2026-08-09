@@ -41,4 +41,9 @@ class MessageRepository {
       'content': content,
     });
   }
+
+  /// Marks a single message as read.
+  Future<void> markRead(String messageId) async {
+    await _api.patch('/api/messages/$messageId/read');
+  }
 }

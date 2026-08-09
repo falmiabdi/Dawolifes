@@ -15,8 +15,13 @@ import 'verify_email_screen.dart';
 /// 2. Buyer: full name, email, phone, password, confirm password (immediate
 ///    verification, returns to the app shell).
 /// 3. Agent: username, email, password (submitted for review, then sign in).
+///
+/// Pass [initialRole] to skip the role picker (e.g. "Register as Agent" from
+/// the Sell tab).
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({super.key, this.initialRole});
+
+  final SignupRole? initialRole;
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -36,6 +41,12 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _showPassword = false;
   bool _submitting = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _role = widget.initialRole;
+  }
 
   @override
   void dispose() {

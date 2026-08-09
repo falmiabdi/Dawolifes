@@ -13,10 +13,16 @@ class Property {
     this.city,
     this.subCity,
     this.woreda,
+    this.kebele,
+    this.parcel,
+    this.block,
+    this.homeNo,
     this.area,
     this.bedrooms,
     this.bathrooms,
+    this.floorNumber,
     this.condition,
+    this.legalizedYear,
     this.description,
     this.features = const [],
     this.images = const [],
@@ -28,11 +34,12 @@ class Property {
     this.displayPhone,
     this.posterType,
     this.ownerType,
-    this.legalizedYear,
     this.latitude,
     this.longitude,
+    this.locationDocument,
     this.rejectionReason,
     this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -45,10 +52,16 @@ class Property {
   final String? city;
   final String? subCity;
   final String? woreda;
+  final String? kebele;
+  final String? parcel;
+  final String? block;
+  final String? homeNo;
   final num? area;
   final int? bedrooms;
   final int? bathrooms;
+  final String? floorNumber;
   final String? condition;
+  final int? legalizedYear;
   final String? description;
   final List<String> features;
   final List<String> images;
@@ -60,11 +73,12 @@ class Property {
   final String? displayPhone;
   final String? posterType;
   final String? ownerType;
-  final int? legalizedYear;
   final double? latitude;
   final double? longitude;
+  final String? locationDocument;
   final String? rejectionReason;
   final String? createdAt;
+  final String? updatedAt;
 
   bool get isRent {
     final t = listingType.toLowerCase();
@@ -85,10 +99,16 @@ class Property {
       city: json['city'] as String?,
       subCity: json['subCity'] as String?,
       woreda: json['woreda'] as String?,
+      kebele: json['kebele'] as String?,
+      parcel: json['parcel'] as String?,
+      block: json['block'] as String?,
+      homeNo: json['homeNo'] as String?,
       area: (json['area'] as num?)?.toDouble(),
       bedrooms: json['bedrooms'] as int?,
       bathrooms: json['bathrooms'] as int?,
+      floorNumber: json['floorNumber'] as String?,
       condition: json['condition'] as String?,
+      legalizedYear: json['legalizedYear'] as int?,
       description: json['description'] as String?,
       features: (json['features'] as List?)?.map((e) => '$e').toList() ?? const [],
       images: (json['images'] as List?)?.map((e) => '$e').toList() ?? const [],
@@ -99,11 +119,12 @@ class Property {
       displayPhone: json['displayPhone'] as String?,
       posterType: json['posterType'] as String?,
       ownerType: json['ownerType'] as String?,
-      legalizedYear: json['legalizedYear'] as int?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
+      locationDocument: json['locationDocument'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
       createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
       agent: ListingAgent.fromJson(
         json['agent'] is Map<String, dynamic> ? json['agent'] as Map<String, dynamic> : null,
       ),

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/network/api_client.dart';
+import '../../core/network/websocket_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/message.dart';
 import '../../data/repositories/message_repository.dart';
@@ -10,7 +13,8 @@ import '../../providers/language_provider.dart';
 import '../auth/login_screen.dart';
 import 'chat_screen.dart';
 
-/// Inbox screen, mirroring GET /api/messages/inbox.
+/// Inbox screen, mirroring GET /api/messages/inbox. Refreshes from the API
+/// and also on real-time WebSocket `message` events for parity with the web.
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
@@ -22,17 +26,40 @@ class _MessagesScreenState extends State<MessagesScreen> {
   List<Conversation> _conversations = [];
   bool _loading = true;
   String? _error;
+  Timer? _pollTimer;
+  StreamSubscription<WSMessage>? _wsSub;
+  static const Duration _pollInterval = Duration(seconds: 5);
 
   @override
   void initState() {
     super.initState();
     _load();
+    _startPolling();
+    _wsSub = context.read<WebSocketService>().messages.listen((msg) {
+      if (msg.type == WSMessageType.message && mounted) {
+        _load(silent: true);
+      }
+    });
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      if (mounted) _load(silent: true);
+    });
+  }
+
+  Future<void> _load({bool silent = false}) async {
     final auth = context.read<AuthProvider>();
     if (!auth.isLoggedIn) {
-      setState(() => _loading = false);
+      if (!silent) setState(() => _loading = false);
       return;
     }
     try {
@@ -41,10 +68,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
         setState(() {
           _conversations = items;
           _loading = false;
+          _error = null;
         });
       }
     } on ApiException catch (e) {
-      if (mounted) {
+      if (mounted && !silent) {
         setState(() {
           _error = e.message;
           _loading = false;

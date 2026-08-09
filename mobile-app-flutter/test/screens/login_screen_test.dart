@@ -96,6 +96,7 @@ void main() {
       final AuthProvider authProvider = MockAuthProvider();
       final LanguageProvider langProvider = MockLanguageProvider();
       when(() => langProvider.t(any())).thenReturn('translated');
+      when(() => langProvider.t('create_account_link')).thenReturn('Create account');
       when(() => langProvider.lang).thenReturn(AppLanguage.english);
       when(() => authProvider.isLoggedIn).thenReturn(false);
 
@@ -109,7 +110,7 @@ void main() {
         ),
       );
 
-      final createAccount = find.widgetWithText(TextButton, 'translated');
+      final createAccount = find.widgetWithText(TextButton, 'Create account');
       await tester.ensureVisible(createAccount);
       await tester.tap(createAccount);
       await tester.pumpAndSettle();

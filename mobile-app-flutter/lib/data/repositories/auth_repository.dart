@@ -121,6 +121,51 @@ class AuthRepository {
     });
   }
 
+  /// Requests a password reset code for [email]. Returns the server message
+  /// (identical whether or not the account exists) plus any dev OTP.
+  Future<RegistrationResult> forgotPassword({required String email}) async {
+    final data = await _api.post('/api/auth/forgot-password', {
+      'email': email,
+    }) as Map<String, dynamic>;
+    return _registration(data);
+  }
+
+  /// Resets the password with the emailed [otp] and the new password.
+  Future<String> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final data = await _api.post('/api/auth/reset-password', {
+      'email': email,
+      'otp': otp,
+      'newPassword': newPassword,
+    }) as Map<String, dynamic>;
+    return '${data['message'] ?? ''}';
+  }
+
+  /// Updates the authenticated user's profile (name, phone, profile photo)
+  /// via `PATCH /api/auth/profile`, returning the updated [SessionUser].
+  Future<SessionUser> updateProfile({
+    String? name,
+    String? phone,
+    String? profilePhoto,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null && name.trim().isNotEmpty) body['name'] = name.trim();
+    if (phone != null) body['phone'] = phone;
+    if (profilePhoto != null && profilePhoto.isNotEmpty) body['profilePhoto'] = profilePhoto;
+    if (body.isEmpty) {
+      throw ApiException('Nothing to update');
+    }
+    final data = await _api.patch('/api/auth/profile', body) as Map<String, dynamic>;
+    final userJson = data['user'] as Map<String, dynamic>?;
+    if (userJson == null) {
+      throw ApiException('Failed to update profile');
+    }
+    return SessionUser.fromJson(userJson);
+  }
+
   RegistrationResult _registration(Map<String, dynamic> data) {
     final devOtp = data['devOtp'] as String?;
     return RegistrationResult(

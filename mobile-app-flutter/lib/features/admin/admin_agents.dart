@@ -277,12 +277,22 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
             ('TIN', a.tinNumber),
           ]),
           const SectionHeader(title: 'Verification Documents'),
-          _docLink(t('doc_fayda_front'), a.faydaFront),
-          _docLink(t('doc_fayda_back'), a.faydaBack),
-          _docLink('Selfie', a.selfieFayda),
-          _docLink(t('doc_passport'), a.passportPhoto),
-          _docLink(t('doc_education'), a.educationCertificate),
-          _docLink(t('doc_license'), a.businessLicenseFile),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.2,
+            children: [
+              _docTile(t('doc_fayda_front'), a.faydaFront),
+              _docTile(t('doc_fayda_back'), a.faydaBack),
+              _docTile('Selfie', a.selfieFayda),
+              _docTile(t('doc_passport'), a.passportPhoto),
+              _docTile(t('doc_education'), a.educationCertificate),
+              _docTile(t('doc_license'), a.businessLicenseFile),
+            ],
+          ),
           const SizedBox(height: 20),
           if (a.status == 'Pending') ...[
             TextField(
@@ -341,28 +351,75 @@ class _AgentDetailScreenState extends State<AgentDetailScreen> {
     );
   }
 
-  Widget _docLink(String label, String? url) {
-    if (url == null || url.isEmpty) {
-      return const InfoRow(label: '   ', value: 'Not provided');
-    }
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      leading: const Icon(Icons.description_outlined, color: AppColors.primary),
-      title: Text(label, style: const TextStyle(fontSize: 13)),
-      trailing: const Icon(Icons.open_in_new, size: 16, color: AppColors.mutedForeground),
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (_) => Dialog(
-          child: InteractiveViewer(
-            child: CachedNetworkImage(
-              imageUrl: url,
-              fit: BoxFit.contain,
-              errorWidget: (_, _, _) =>
-                  const Padding(padding: EdgeInsets.all(24), child: Icon(Icons.broken_image_outlined)),
+  Widget _docTile(String label, String? url) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          const SizedBox(height: 6),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: url == null || url.isEmpty
+                  ? Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0), style: BorderStyle.solid),
+                      ),
+                      child: const Center(
+                        child: Text('Not Provided', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                      ),
+                    )
+                  : GestureDetector(
+                      onTap: () => showDialog<void>(
+                        context: context,
+                        builder: (_) => Dialog(
+                          child: InteractiveViewer(
+                            child: CachedNetworkImage(
+                              imageUrl: url,
+                              fit: BoxFit.contain,
+                              errorWidget: (_, _, _) =>
+                                  const Padding(padding: EdgeInsets.all(24), child: Icon(Icons.broken_image_outlined)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: url,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorWidget: (_, _, _) => Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.broken_image_outlined, color: Color(0xFF94A3B8)),
+                        ),
+                      ),
+                    ),
             ),
           ),
-        ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  url == null || url.isEmpty ? 'Not Provided' : 'Open full size',
+                  style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w700),
+                ),
+              ),
+              const Icon(Icons.open_in_new, size: 12, color: Color(0xFF94A3B8)),
+            ],
+          ),
+        ],
       ),
     );
   }

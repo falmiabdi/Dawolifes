@@ -62,14 +62,32 @@ class _SavedScreenState extends State<SavedScreen> {
                 crossAxisSpacing: 12,
                 mainAxisExtent: 238,
               ),
-              itemCount: saved.items.length,
+              itemCount: saved.items.length + 1,
               itemBuilder: (context, index) {
-                final item = saved.items[index];
-                return ListingCard(
-                  item: item,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
-                  ),
+                if (index < saved.items.length) {
+                  final item = saved.items[index];
+                  return ListingCard(
+                    item: item,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
+                    ),
+                  );
+                }
+                return Center(
+                  child: saved.loading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        )
+                      : TextButton.icon(
+                          onPressed: saved.load,
+                          icon: const Icon(Icons.refresh, size: 20),
+                          label: const Text('Load More'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                          ),
+                        ),
                 );
               },
             ),

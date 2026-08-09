@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as ws_status;
 
 import '../config/app_config.dart';
 import '../storage/token_storage.dart';
@@ -238,4 +240,229 @@ class ApiClient {
       statusCode: response.statusCode,
     );
   }
+}
+
+/// WebSocket message types matching the backend.
+enum WSMessageType {
+  notification,
+  unreadCount,
+  markReadAck,
+  markSingleReadAck,
+  message,
+  announcement,
+}
+
+/// Parsed WebSocket message from the server.
+class WSMessage {
+  const WSMessage({
+    required this.type,
+    this.notification,
+    this.message,
+    this.announcement,
+    this.count,
+    this.notificationId,
+    this.timestamp,
+  });
+
+  final WSMessageType type;
+  final Map<String, dynamic>? notification;
+  final Map<String, dynamic>? message;
+  final Map<String, dynamic>? announcement;
+  final int? count;
+  final String? notificationId;
+  final int? timestamp;
+
+  factory WSMessage.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'] as String?;
+    WSMessageType type;
+    switch (typeStr) {
+      case 'notification':
+        type = WSMessageType.notification;
+        break;
+      case 'unread_count':
+        type = WSMessageType.unreadCount;
+        break;
+      case 'mark_read_ack':
+        type = WSMessageType.markReadAck;
+        break;
+      case 'mark_single_read_ack':
+        type = WSMessageType.markSingleReadAck;
+        break;
+      case 'message':
+        type = WSMessageType.message;
+        break;
+      case 'announcement':
+        type = WSMessageType.announcement;
+        break;
+      default:
+        type = WSMessageType.notification;
+    }
+    return WSMessage(
+      type: type,
+      notification: json['notification'] as Map<String, dynamic>?,
+      message: json['message'] as Map<String, dynamic>?,
+      announcement: json['announcement'] as Map<String, dynamic>?,
+      count: json['count'] as int?,
+      notificationId: json['notificationId'] as String?,
+      timestamp: json['timestamp'] as int?,
+    );
+  }
+}
+
+/// WebSocket client for real-time notifications and updates.
+class WSClient {
+  WSClient(this._api);
+
+  final ApiClient _api;
+  WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
+  Timer? _reconnectTimer;
+  Timer? _pingTimer;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 10;
+  static const Duration _baseReconnectDelay = Duration(seconds: 1);
+  static const Duration _maxReconnectDelay = Duration(seconds: 30);
+  static const Duration _pingInterval = Duration(seconds: 25);
+
+  final StreamController<WSMessage> _messageController = StreamController<WSMessage>.broadcast();
+  final StreamController<WSConnectionState> _stateController = StreamController<WSConnectionState>.broadcast();
+
+  Stream<WSMessage> get messages => _messageController.stream;
+  Stream<WSConnectionState> get connectionState => _stateController.stream;
+
+  /// Connects to the WebSocket server with the current auth token.
+  Future<void> connect() async {
+    if (_channel != null) return;
+    
+    final token = await _api.storage.getToken();
+    if (token == null || token.isEmpty) {
+      _stateController.add(WSConnectionState.disconnected);
+      return;
+    }
+
+    _stateController.add(WSConnectionState.connecting);
+    
+    try {
+      final wsUrl = AppConfig.wsBaseUrl.replaceFirst('http', 'ws');
+      final uri = Uri.parse('$wsUrl/ws?token=${Uri.encodeComponent(token)}');
+      _channel = WebSocketChannel.connect(uri);
+      
+      _subscription = _channel!.stream.listen(
+        _onMessage,
+        onError: _onError,
+        onDone: _onDone,
+      );
+      
+      _reconnectAttempts = 0;
+      _startPingTimer();
+      _stateController.add(WSConnectionState.connected);
+    } catch (e) {
+      _stateController.add(WSConnectionState.disconnected);
+      _scheduleReconnect();
+    }
+  }
+
+  void _onMessage(dynamic data) {
+    try {
+      final json = jsonDecode(data.toString());
+      final message = WSMessage.fromJson(json as Map<String, dynamic>);
+      _messageController.add(message);
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+
+  void _onError(dynamic error) {
+    _stateController.add(WSConnectionState.disconnected);
+    _scheduleReconnect();
+  }
+
+  void _onDone() {
+    _stopPingTimer();
+    _stateController.add(WSConnectionState.disconnected);
+    _scheduleReconnect();
+  }
+
+  void _startPingTimer() {
+    _pingTimer?.cancel();
+    _pingTimer = Timer.periodic(_pingInterval, (_) {
+      _sendPing();
+    });
+  }
+
+  void _stopPingTimer() {
+    _pingTimer?.cancel();
+    _pingTimer = null;
+  }
+
+  void _sendPing() {
+    if (_channel != null) {
+      try {
+        _channel!.sink.add(jsonEncode({'type': 'ping'}));
+      } catch (_) {}
+    }
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      return;
+    }
+    
+    final delay = Duration(
+      seconds: (_baseReconnectDelay.inSeconds * (1 << _reconnectAttempts))
+          .clamp(_baseReconnectDelay.inSeconds, _maxReconnectDelay.inSeconds),
+    );
+    
+    _reconnectAttempts++;
+    _reconnectTimer = Timer(delay, () {
+      connect();
+    });
+  }
+
+  /// Sends a message to mark all notifications as read.
+  void markAllRead() {
+    _send({'type': 'mark_read'});
+  }
+
+  /// Sends a message to mark a single notification as read.
+  void markSingleRead(String notificationId) {
+    _send({'type': 'mark_single_read', 'notificationId': notificationId});
+  }
+
+  /// Requests the current unread count.
+  void requestUnreadCount() {
+    _send({'type': 'unread_count'});
+  }
+
+  void _send(Map<String, dynamic> message) {
+    if (_channel != null) {
+      try {
+        _channel!.sink.add(jsonEncode(message));
+      } catch (_) {}
+    }
+  }
+
+  /// Disconnects the WebSocket and cleans up resources.
+  Future<void> disconnect() async {
+    _reconnectTimer?.cancel();
+    _stopPingTimer();
+    await _subscription?.cancel();
+    await _channel?.sink.close(ws_status.normalClosure);
+    _channel = null;
+    _stateController.add(WSConnectionState.disconnected);
+  }
+
+  void dispose() {
+    disconnect();
+    _messageController.close();
+    _stateController.close();
+  }
+}
+
+/// WebSocket connection state.
+enum WSConnectionState {
+  disconnected,
+  connecting,
+  connected,
 }
