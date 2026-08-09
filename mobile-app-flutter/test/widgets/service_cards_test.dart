@@ -21,12 +21,12 @@ void main() {
         ),
       );
 
-      expect(find.text('our Service'), findsOneWidget);
+      expect(find.text('Our Services'), findsOneWidget);
       expect(find.text('How to Buy'), findsOneWidget);
       expect(find.text('How to Sell'), findsOneWidget);
     });
 
-    testWidgets('renders check icon in each card', (tester) async {
+    testWidgets('renders section icons in each card', (tester) async {
       final prefs = FakeSharedPreferences();
       await tester.pumpWidget(
         ChangeNotifierProvider(
@@ -37,8 +37,9 @@ void main() {
         ),
       );
 
-      final checkIcons = find.byIcon(Icons.check);
-      expect(checkIcons, findsNWidgets(3));
+      expect(find.byIcon(Icons.work_outline), findsOneWidget);
+      expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.local_offer_outlined), findsOneWidget);
     });
 
     testWidgets('translates labels based on language', (tester) async {
@@ -59,6 +60,37 @@ void main() {
       expect(find.text('አገልግሎታችን'), findsOneWidget);
       expect(find.text('እንዴት መግዛት'), findsOneWidget);
       expect(find.text('እንዴት መሸጥ'), findsOneWidget);
+    });
+
+    testWidgets('calls callbacks when tapped', (tester) async {
+      final prefs = FakeSharedPreferences();
+      var servicesTapped = false;
+      var buyTapped = false;
+      var sellTapped = false;
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => LanguageProvider(prefs),
+          child: MaterialApp(
+            home: Scaffold(
+              body: ServiceCards(
+                onServices: () => servicesTapped = true,
+                onBuy: () => buyTapped = true,
+                onSell: () => sellTapped = true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Our Services'));
+      await tester.tap(find.text('How to Buy'));
+      await tester.tap(find.text('How to Sell'));
+      await tester.pump();
+
+      expect(servicesTapped, isTrue);
+      expect(buyTapped, isTrue);
+      expect(sellTapped, isTrue);
     });
   });
 }

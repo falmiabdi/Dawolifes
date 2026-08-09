@@ -3,6 +3,8 @@
 import { SiteHeader } from "@/components/site-header"
 import { WebHero } from "@/components/site/web-hero"
 import { Services } from "@/components/home/services"
+import { HowToSell } from "@/components/home/how-to-sell"
+import { HowToBuy } from "@/components/home/how-to-buy"
 import { LatestProperties } from "@/components/home/latest-properties"
 import { LatestVehicles } from "@/components/home/latest-vehicles"
 import { Categories } from "@/components/home/categories"
@@ -18,6 +20,8 @@ export function WebHome() {
         <LatestProperties />
         <LatestVehicles />
         <Services />
+        <HowToSell />
+        <HowToBuy />
         <Categories />
         <MapBanner />
       </main>

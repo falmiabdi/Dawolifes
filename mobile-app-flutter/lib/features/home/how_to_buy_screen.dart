@@ -4,16 +4,18 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/language_provider.dart';
 
-class ServicesScreen extends StatelessWidget {
-  const ServicesScreen({super.key});
+class HowToBuyScreen extends StatelessWidget {
+  const HowToBuyScreen({super.key});
 
-  static const _serviceKeys = [
-    ('service_house_sales', 'service_house_sales_desc'),
-    ('service_house_rentals', 'service_house_rentals_desc'),
-    ('service_vehicle_sales', 'service_vehicle_sales_desc'),
-    ('service_vehicle_rentals', 'service_vehicle_rentals_desc'),
-    ('service_buyer_seller', 'service_buyer_seller_desc'),
-    ('service_tenant_landlord', 'service_tenant_landlord_desc'),
+  static const _stepKeys = [
+    ('buy_step1', 'buy_step1_desc'),
+    ('buy_step2', 'buy_step2_desc'),
+    ('buy_step3', 'buy_step3_desc'),
+    ('buy_step4', 'buy_step4_desc'),
+    ('buy_step5', 'buy_step5_desc'),
+    ('buy_step6', 'buy_step6_desc'),
+    ('buy_step7', 'buy_step7_desc'),
+    ('buy_step8', 'buy_step8_desc'),
   ];
 
   @override
@@ -21,19 +23,19 @@ class ServicesScreen extends StatelessWidget {
     final t = context.read<LanguageProvider>().t;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('our_service'))),
+      appBar: AppBar(title: Text(t('how_to_buy'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             const Icon(
-              Icons.work_outline,
+              Icons.shopping_bag_outlined,
               size: 48,
               color: Color(0xFFF97316),
             ),
             const SizedBox(height: 12),
             Text(
-              t('our_service'),
+              t('how_to_buy'),
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -43,7 +45,7 @@ class ServicesScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              t('services_subtitle'),
+              t('how_to_buy_subtitle'),
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.mutedForeground,
@@ -51,9 +53,11 @@ class ServicesScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            ..._serviceKeys.map((entry) {
-              final (titleKey, descKey) = entry;
-              return _ServiceItem(
+            ..._stepKeys.asMap().entries.map((entry) {
+              final index = entry.key;
+              final (titleKey, descKey) = entry.value;
+              return _StepItem(
+                number: index + 1,
                 title: t(titleKey),
                 description: t(descKey),
               );
@@ -65,9 +69,14 @@ class ServicesScreen extends StatelessWidget {
   }
 }
 
-class _ServiceItem extends StatelessWidget {
-  const _ServiceItem({required this.title, required this.description});
+class _StepItem extends StatelessWidget {
+  const _StepItem({
+    required this.number,
+    required this.title,
+    required this.description,
+  });
 
+  final int number;
   final String title;
   final String description;
 
@@ -86,13 +95,21 @@ class _ServiceItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 24,
-              height: 24,
+              width: 28,
+              height: 28,
               decoration: const BoxDecoration(
                 color: Color(0xFFF97316),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check, color: Colors.white, size: 14),
+              alignment: Alignment.center,
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

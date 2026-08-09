@@ -11,6 +11,8 @@ import '../../widgets/service_cards.dart';
 import '../listings/listing_detail_screen.dart';
 import 'about_screen.dart';
 import 'categories_screen.dart';
+import 'how_to_buy_screen.dart';
+import 'how_to_sell_screen.dart';
 import 'services_screen.dart';
 
 /// Main home screen mirroring mobile-home.tsx + mobile-header.tsx.
@@ -287,7 +289,17 @@ class _Body extends StatelessWidget {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          const ServiceCards(),
+          ServiceCards(
+            onServices: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ServicesScreen()),
+            ),
+            onBuy: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HowToBuyScreen()),
+            ),
+            onSell: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HowToSellScreen()),
+            ),
+          ),
           _ImageSection(
             title: t('buy_or_sell_house'),
             items: home.visibleHouseItems,
