@@ -95,6 +95,7 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                       const SizedBox(height: 16),
                       _section('Personal & Identity', [
                         ('Full Name', _s('fullName')),
+                        ('User Type', _s('userType')),
                         ('Gender', _s('gender')),
                         ('Date of Birth', _s('dateOfBirth')),
                         ('Nationality', _s('nationality')),
@@ -249,7 +250,7 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: title),
-        ...rows.where((r) => r.$2.isNotEmpty).map((r) => InfoRow(label: r.$1, value: r.$2)),
+        ...rows.map((r) => InfoRow(label: r.$1, value: r.$2.isNotEmpty ? r.$2 : 'Not provided')),
       ],
     );
   }

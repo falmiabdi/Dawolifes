@@ -32,6 +32,7 @@ function flattenAgent(user: any) {
     onboardingComplete: user.onboardingComplete,
     createdAt: user.createdAt,
     fullName: user.username,
+    userType: profile.userType || '',
     gender: profile.gender || '',
     dateOfBirth: profile.dateOfBirth || '',
     nationality: profile.nationality || '',

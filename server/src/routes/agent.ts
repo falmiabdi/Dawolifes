@@ -57,6 +57,7 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
     const profile: Record<string, any> = { ...currentProfile }
 
     if (req.body.fullName) updates.username = req.body.fullName
+    if (req.body.userType) profile.userType = req.body.userType
     if (req.body.gender) profile.gender = req.body.gender
     if (req.body.dateOfBirth) profile.dateOfBirth = req.body.dateOfBirth
     if (req.body.nationality) profile.nationality = req.body.nationality

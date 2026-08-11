@@ -5,6 +5,7 @@ import '../../core/constants/listing_options.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import 'post_form_widgets.dart';
 
@@ -287,13 +288,17 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           setState(() => _error = 'You must accept both the Terms & Conditions and Privacy Policy.');
           return;
         }
-        if (!await _saveStep(repo, {'onboardingComplete': true})) {
-          return;
-        }
-        if (!mounted) return;
-        _snack(t('application_submitted'));
-        Navigator.of(context).pop();
+if (!await _saveStep(repo, {'onboardingComplete': true})) {
         return;
+      }
+      if (!mounted) return;
+      // Refresh the cached session so the portal reflects the new
+      // onboardingComplete / Pending status without a manual reload.
+      await context.read<AuthProvider>().refreshUser();
+      if (!mounted) return;
+      _snack(t('application_submitted'));
+      Navigator.of(context).pop();
+      return;
     }
 
     if (!mounted) return;
