@@ -132,6 +132,13 @@ async function start() {
 
   const server = app.listen(PORT, () => {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
+
+    // Prevent Render free-tier from spinning down the web server after 15 min
+    // of inactivity. A self-ping every 5 min keeps the instance warm.
+    const selfUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`
+    setInterval(() => {
+      fetch(`${selfUrl}/api/health`).catch(() => {})
+    }, 5 * 60 * 1000).unref()
   })
   setupWebSocket(server)
   startNotificationCleanup()
