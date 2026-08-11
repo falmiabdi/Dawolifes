@@ -4,7 +4,7 @@ abstract final class AppConfig {
   /// website (fullstack/web) talks to — see web/.env.local's
   /// NEXT_PUBLIC_API_URL. Both clients must share the same backend + database
   /// to stay feature-parity.
-  static String apiBaseUrl = 'https://dawolifes-fe2l.onrender.com';
+  static String apiBaseUrl = 'https://dawolifes-90qh.onrender.com';
 
   /// WebSocket base URL derived from the API base URL.
   static String get wsBaseUrl => apiBaseUrl.replaceFirst('http', 'ws');
