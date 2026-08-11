@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/firebase/firebase_auth_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -73,6 +74,16 @@ class _SignupScreenState extends State<SignupScreen> {
           password: _password.text,
         );
       }
+
+      // Best-effort Firebase setup: create the account + send the email
+      // verification link. Fails are non-fatal (OTP path still works).
+      final firebase = FirebaseAuthService();
+      try {
+        await firebase.register(email: email, password: _password.text);
+      } catch (_) {
+        // Ignore — the backend OTP flow is the fallback.
+      }
+
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(

@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { Camera, Eye, EyeOff, Loader2, ShoppingBag, Store, User as UserIcon, X, CheckCircle2 } from 'lucide-react'
 
 import { useAuth } from '@/components/auth/auth-guard'
+import { createFirebaseUser } from '@/lib/firebase-auth'
 import { getApiUrlAsync } from '@/lib/get-api-url'
 import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
@@ -104,6 +105,13 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
       }
 
       if (registeredEmail) {
+        // Best-effort Firebase account creation + verification email.
+        // Failures are non-fatal; the backend OTP flow still works.
+        try {
+          await createFirebaseUser(values.email, values.password)
+        } catch {
+          // Ignored — OTP verification is the fallback.
+        }
         router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}${devOtp ? `&code=${devOtp}` : ''}`)
       }
     } catch (err: any) {

@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { AlertTriangle, Eye, EyeOff, Loader2, RotateCcw } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useAuth } from '@/components/auth/auth-guard'
+import { isFirebaseEmailVerified, resendFirebaseVerification, signInFirebaseUser } from '@/lib/firebase-auth'
 import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +32,8 @@ export default function AuthLoginPage() {
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
+  const [unverifiedWarning, setUnverifiedWarning] = useState('')
+  const [resendingVerify, setResendingVerify] = useState(false)
   const {
     register,
     handleSubmit,
@@ -53,8 +56,22 @@ export default function AuthLoginPage() {
 
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
+    setUnverifiedWarning('')
     try {
       await login(values.email, values.password)
+      // Non-blocking: if a Firebase account exists for this email and it has
+      // not been verified, surface a reminder without blocking the session.
+      try {
+        await signInFirebaseUser(values.email, values.password)
+        const verified = await isFirebaseEmailVerified()
+        if (!verified) {
+          setUnverifiedWarning(
+            'Your account email is not verified yet. Check your inbox for the verification link, or resend it below.'
+          )
+        }
+      } catch {
+        // No Firebase account for this email — ignore.
+      }
     } catch (err: any) {
       const msg = err?.message || ''
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
@@ -64,6 +81,18 @@ export default function AuthLoginPage() {
       } else {
         setMessage(msg || 'Invalid email or password. Please try again.')
       }
+    }
+  }
+
+  const handleResendVerification = async () => {
+    setResendingVerify(true)
+    try {
+      await resendFirebaseVerification()
+      setUnverifiedWarning('Verification email sent. Check your inbox (and spam).')
+    } catch {
+      setUnverifiedWarning('Could not resend the verification email. Try again later.')
+    } finally {
+      setResendingVerify(false)
     }
   }
 
@@ -112,6 +141,24 @@ export default function AuthLoginPage() {
         </div>
 
         {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
+
+        {unverifiedWarning ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+            <p className="flex items-start gap-2 text-sm text-amber-800">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              {unverifiedWarning}
+            </p>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resendingVerify}
+              className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-800 disabled:text-amber-300"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {resendingVerify ? 'Sending…' : 'Resend verification link'}
+            </button>
+          </div>
+        ) : null}
 
         <Button type="submit" className="w-full rounded-full" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

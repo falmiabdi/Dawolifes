@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/firebase/firebase_auth_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
@@ -41,6 +42,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late final List<FocusNode> _focusNodes;
   bool _submitting = false;
   bool _resending = false;
+  bool _checkingFirebase = false;
   String? _error;
   Timer? _cooldownTimer;
   int _cooldown = 0;
@@ -161,6 +163,63 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       setState(() => _error = context.read<LanguageProvider>().t('resend_failed'));
     } finally {
       if (mounted) setState(() => _resending = false);
+    }
+  }
+
+  /// Checks whether the Firebase verification link was clicked. When verified
+  /// and a dev OTP is available, the backend account is activated
+  /// automatically; otherwise the user is routed to the OTP entry (dev) or
+  /// sign-in.
+  Future<void> _checkFirebaseVerification() async {
+    setState(() {
+      _checkingFirebase = true;
+      _error = null;
+    });
+    try {
+      final verified = await FirebaseAuthService().isEmailVerified();
+      if (!mounted) return;
+      if (!verified) {
+        setState(() => _error = 'Your email is not verified yet. Click the link in the verification email we sent, then try again.');
+        return;
+      }
+      final devOtp = widget.devOtp;
+      if (devOtp != null && devOtp.length == _codeLength) {
+        for (var i = 0; i < _codeLength; i++) {
+          _controllers[i].text = devOtp[i];
+        }
+        await _verify();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email verified! You can now sign in.')),
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'Could not check verification status. Is this email used in this app?');
+    } finally {
+      if (mounted) setState(() => _checkingFirebase = false);
+    }
+  }
+
+  Future<void> _resendFirebaseVerification() async {
+    setState(() {
+      _checkingFirebase = true;
+      _error = null;
+    });
+    try {
+      await FirebaseAuthService().resendVerification();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification email sent. Check your inbox.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'Could not resend the verification email.');
+    } finally {
+      if (mounted) setState(() => _checkingFirebase = false);
     }
   }
 
@@ -301,6 +360,61 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
                         ),
                       ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 18),
+            child: Row(
+              children: [
+                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('OR', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Verify with an email link (Firebase)',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'We also emailed you a verification link. Click it, then confirm below.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF166534)),
+                ),
+                const SizedBox(height: 10),
+                FilledButton(
+                  onPressed: _checkingFirebase ? null : _checkFirebaseVerification,
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                  child: _checkingFirebase
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('I clicked the link — continue'),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _checkingFirebase ? null : _resendFirebaseVerification,
+                  child: const Text(
+                    'Resend verification link',
+                    style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
