@@ -377,14 +377,15 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
       child: DropdownButtonFormField<String>(
         key: ValueKey('${label}_$value'),
         initialValue: value.isEmpty ? null : value,
+        isExpanded: true,
         decoration: const InputDecoration(
           isDense: true,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
-        hint: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.mutedForeground)),
+        hint: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
         items: options.map((o) => DropdownMenuItem(
           value: o.$1,
-          child: Text(o.$2, style: const TextStyle(fontSize: 14, color: AppColors.foreground)),
+          child: Text(o.$2, style: const TextStyle(fontSize: 14, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
         )).toList(),
         onChanged: (v) => onChanged(v ?? value),
       ),
@@ -634,14 +635,15 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
             child: DropdownButtonFormField<String>(
               key: ValueKey('edu_$_education'),
               initialValue: _education.isEmpty ? null : _education,
+              isExpanded: true,
               decoration: const InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
-              hint: Text(t('select_education'), style: const TextStyle(fontSize: 14, color: AppColors.mutedForeground)),
+              hint: Text(t('select_education'), style: const TextStyle(fontSize: 14, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
               items: _educationOptions.map((e) => DropdownMenuItem(
                 value: e,
-                child: Text(_eduLabel(e, t), style: const TextStyle(fontSize: 14, color: AppColors.foreground)),
+                child: Text(_eduLabel(e, t), style: const TextStyle(fontSize: 14, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
               )).toList(),
               onChanged: (v) => setState(() => _education = v ?? ''),
             ),
@@ -877,14 +879,17 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
                       _ => _buildReview(),
                     },
                     const SizedBox(height: 16),
-                    Row(
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
                         OutlinedButton.icon(
                           onPressed: _step == 0 || _saving ? null : _back,
                           icon: const Icon(Icons.arrow_back, size: 18),
                           label: Text(t('back')),
                         ),
-                        const Spacer(),
                         if (!isLast)
                           FilledButton.icon(
                             onPressed: _saving ? null : _next,
