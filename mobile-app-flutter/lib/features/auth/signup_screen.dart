@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/firebase/firebase_auth_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../admin/admin_portal.dart';
+import '../agent/agent_portal.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
-import 'verify_email_screen.dart';
 
-/// Signup flow mirroring app/auth/signup/page.tsx + role-signup-form.tsx:
-/// 1. Choose account type (Buyer/User or Seller/Agent).
-/// 2. Buyer: full name, email, phone, password, confirm password (immediate
-///    verification, returns to the app shell).
-/// 3. Agent: username, email, password (submitted for review, then sign in).
-///
+/// Signup flow: register on the backend then auto-login (the backend
+/// auto-verifies the email on signin, so no OTP screen is needed).
 /// Pass [initialRole] to skip the role picker (e.g. "Register as Agent" from
 /// the Sell tab).
 class SignupScreen extends StatefulWidget {
@@ -70,46 +65,74 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       final auth = context.read<AuthProvider>();
       final email = _email.text.trim();
-      RegistrationResult result;
+      final password = _password.text;
+
+      // 1. Register on the backend (creates the DB record immediately).
       if (_role == SignupRole.buyer) {
-        result = await auth.registerBuyer(
+        await auth.registerBuyer(
           name: _name.text.trim(),
           email: email,
           phone: _phone.text.trim(),
-          password: _password.text,
+          password: password,
         );
       } else {
-        result = await auth.registerAgent(
+        await auth.registerAgent(
           username: _username.text.trim(),
           email: email,
-          password: _password.text,
+          password: password,
         );
       }
 
-      // Best-effort Firebase setup: create the account + send the email
-      // verification link. Fails are non-fatal (OTP path still works).
-      final firebase = FirebaseAuthService();
+      // 2. Auto-login — the backend auto-verifies the email on signin so
+      //    no OTP step is needed. The user goes straight to the app.
       try {
-        await firebase.register(email: email, password: _password.text);
+        await auth.login(email: email, password: password);
+        if (!mounted) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        if (auth.user != null && auth.user!.isAdmin) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
+        } else if (auth.user != null && auth.user!.isAgent) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
+        }
+        return;
       } catch (_) {
-        // Ignore — the backend OTP flow is the fallback.
+        // Auto-login failed (e.g. server hiccup) — send to login screen
+        // so the user can try manually.
       }
 
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => VerifyEmailScreen(email: email, devOtp: result.devOtp),
-        ),
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),
+        (route) => route.isFirst,
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.message.toLowerCase().contains('already registered') ||
           e.message.toLowerCase().contains('already')) {
-        setState(() => _error = 'This email is already registered. Try signing in instead.');
+        // Account already exists — try to log in directly.
+        try {
+          await context.read<AuthProvider>().login(
+                email: _email.text.trim(),
+                password: _password.text,
+              );
+          if (!mounted) return;
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          final auth = context.read<AuthProvider>();
+          if (auth.user != null && auth.user!.isAdmin) {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
+          } else if (auth.user != null && auth.user!.isAgent) {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
+          }
+          return;
+        } on ApiException catch (e2) {
+          setState(() => _error = 'This email is already registered. ${e2.message}');
+        } catch (_) {
+          setState(() => _error = 'This email is already registered. Try signing in instead.');
+        }
       } else {
         setState(() => _error = e.message);
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _error = 'Registration failed. Please try again.');
     } finally {

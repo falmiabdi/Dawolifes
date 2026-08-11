@@ -3,12 +3,10 @@ import '../models/user.dart';
 
 /// Outcome of a registration request.
 ///
-/// Mirrors the web flow: both `/api/auth/register-buyer` and `/api/auth/register`
-/// only persist a pending registration + send an OTP. The actual account is
-/// created when the OTP is verified via [verifyOtp].
-///
-/// `devOtp` is only present in non-production responses and is auto-filled by
-/// the web app's verify-email page; the Flutter app does the same.
+/// The backend creates the DB record immediately at registration with
+/// emailVerified=false. On the next signin the backend auto-verifies the
+/// email, so the OTP step is no longer required. `devOtp` is kept for
+/// backward compatibility (non-production only).
 class RegistrationResult {
   const RegistrationResult({required this.message, this.devOtp});
 
