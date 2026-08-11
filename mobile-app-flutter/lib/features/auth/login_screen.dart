@@ -10,6 +10,7 @@ import '../agent/agent_portal.dart';
 import 'auth_shell.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
+import 'verify_email_screen.dart';
 
 /// Login screen mirroring app/auth/login/page.tsx.
 ///
@@ -31,6 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showPassword = false;
   bool _submitting = false;
   String? _error;
+  bool _needsVerification = false;
 
   @override
   void dispose() {
@@ -44,6 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _submitting = true;
       _error = null;
+      _needsVerification = false;
     });
 
     try {
@@ -58,7 +61,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.message);
+      setState(() {
+        _error = e.message;
+        _needsVerification = e.statusCode == 403 && e.message.toLowerCase().contains('verif');
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = 'Invalid email or password. Please try again.');
@@ -160,6 +166,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Text(_error!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 14)),
               ),
+              if (_needsVerification) ...[
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => VerifyEmailScreen(email: _email.text.trim()),
+                      ),
+                    ),
+                    child: const Text(
+                      'Resend verification code',
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: 20),
             FilledButton(

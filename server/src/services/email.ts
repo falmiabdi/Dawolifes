@@ -1,5 +1,7 @@
 import 'dotenv/config'
 
+import { isSmtpConfigured, sendMailViaSmtp } from './mail.js'
+
 const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
 const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY || ''
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
@@ -15,9 +17,23 @@ interface SendEmailParams {
 }
 
 async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailParams) {
+  // Prefer SMTP (Brevo relay) when the SMTP_* variables are configured. This
+  // routes every existing caller (OTP, reset password, approval, rejection …)
+  // through Brevo SMTP without duplicating the higher-level message builders.
+  if (isSmtpConfigured()) {
+    return sendMailViaSmtp({
+      to: to.email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+    })
+  }
+
+  // Fallback: Brevo REST transactional API (used in local dev when only
+  // BREVO_API_KEY / BREVO_SMTP_KEY is set).
   const apiKey = BREVO_SMTP_KEY || BREVO_API_KEY
   if (!apiKey) {
-    console.warn('BREVO_API_KEY not set � skipping email to', to.email)
+    console.warn('Email transport not configured. Skipping email to', to.email)
     return
   }
 
@@ -74,7 +90,7 @@ export async function sendOtpEmail(email: string, name: string, otp: string) {
         <p style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#0f172a;background:#f1f5f9;border-radius:12px;padding:16px;text-align:center;">
           ${otp}
         </p>
-        <p style="color:#64748b;font-size:14px;">This code expires in 10 minutes.</p>
+        <p style="color:#64748b;font-size:14px;">This code expires in 1 hour.</p>
         <p style="color:#64748b;font-size:14px;">If you did not create a DawoLife account, you can ignore this email.</p>
       </div>
     `,
@@ -93,7 +109,7 @@ export async function sendResetPasswordEmail(email: string, name: string, otp: s
         <p style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#0f172a;background:#f1f5f9;border-radius:12px;padding:16px;text-align:center;">
           ${otp}
         </p>
-        <p style="color:#64748b;font-size:14px;">This code expires in 10 minutes. If you did not request a password reset, you can safely ignore this email.</p>
+        <p style="color:#64748b;font-size:14px;">This code expires in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
       </div>
     `,
   })

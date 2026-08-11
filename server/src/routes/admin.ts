@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import { createAndBroadcastNotification } from '../utils/notifications.js'
 import { hashPassword } from '../utils/password.js'
 import { ADMIN_PHONES } from '../config/constants.js'
+import { readSmtpConfig, sendMailViaSmtp, verifySmtpConnection, isSmtpConfigured } from '../services/mail.js'
 
 function flattenAgent(user: any) {
   const profile = user.profile || {}
@@ -631,5 +632,56 @@ router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
     res.status(500).json({ message: err.message || 'Failed to fetch stats' })
   }
 })
+
+// ─── SMTP (Brevo) test & verify ──────────────────────────────────────────────
+// Admin-only. The test endpoint always sends to the configured SMTP_FROM_EMAIL
+// (self-send) so the API can never be used as an open relay — any `to` value
+// supplied by the client is ignored. No SMTP credentials are ever returned.
+
+// GET /api/admin/smtp/verify
+// Verifies the SMTP connection without sending a message. Returns a sanitized
+// human-readable error (never the SMTP key/password/auth details).
+router.get('/smtp/verify', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    const result = await verifySmtpConnection()
+    res.status(result.ok ? 200 : 503).json(result)
+  } catch (err: any) {
+    res.status(500).json({ ok: false, message: 'SMTP verify failed.' })
+  }
+})
+
+// POST /api/admin/smtp-test
+// Sends a fixed-content test email to the configured sender address through
+// Brevo SMTP. Returns the masked recipient so an admin can confirm delivery.
+router.post('/smtp-test', authMiddleware, adminMiddleware, async (_req, res) => {
+  try {
+    if (!isSmtpConfigured()) {
+      return res.status(400).json({ ok: false, message: 'SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/SMTP_FROM_EMAIL).' })
+    }
+    const cfg = readSmtpConfig()!
+    const to = cfg.fromEmail
+    const subject = 'DawoLife SMTP Test'
+    const html = `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+        <h2 style="color:#f97316;">DawoLife SMTP Test</h2>
+        <p>DawoLife SMTP is working successfully.</p>
+        <p>This is a test email from the DawoLife production backend.</p>
+        <p style="color:#64748b;font-size:14px;">Sent via ${cfg.host}:${cfg.port} to the configured sender address.</p>
+      </div>
+    `
+    await sendMailViaSmtp({ to, subject, html, text: 'DawoLife SMTP is working successfully. This is a test email from the DawoLife production backend.' })
+
+    res.json({ ok: true, message: 'Test email sent.', sentTo: maskEmail(to) })
+  } catch (err: any) {
+    res.status(502).json({ ok: false, message: err?.message || 'Failed to send SMTP test email.' })
+  }
+})
+
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@')
+  if (!domain) return '***'
+  const visible = local.slice(0, Math.min(2, local.length))
+  return `${visible}${'*'.repeat(Math.max(1, local.length - 2))}@${domain}`
+}
 
 export default router

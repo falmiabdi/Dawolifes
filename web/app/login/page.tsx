@@ -41,9 +41,11 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [messageIsSuccess, setMessageIsSuccess] = useState(false)
+  const [needsVerification, setNeedsVerification] = useState(false)
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     defaultValues: {
@@ -51,6 +53,7 @@ function LoginForm() {
       password: '',
     },
   })
+  const watchEmail = watch('email')
 
   useEffect(() => {
     if (!user) return
@@ -74,14 +77,16 @@ function LoginForm() {
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
     setMessageIsSuccess(false)
+    setNeedsVerification(false)
     try {
       await login(values.email, values.password)
     } catch (err: any) {
       const msg = err?.message || ''
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
         setMessage('Cannot connect to the server. Check your network connection.')
-      } else if (msg.includes('verify')) {
+      } else if (msg.toLowerCase().includes('verif')) {
         setMessage(msg)
+        setNeedsVerification(true)
       } else if (msg.includes('403') || msg.includes('rejected') || msg.includes('suspended')) {
         setMessage('Your account has been rejected or suspended.')
       } else {
@@ -135,9 +140,21 @@ function LoginForm() {
         </div>
 
         {message ? (
-          <p className={`rounded-lg border px-3 py-2 text-sm ${messageIsSuccess ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
-            {message}
-          </p>
+          <div>
+            <p className={`rounded-lg border px-3 py-2 text-sm ${messageIsSuccess ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-600'}`}>
+              {message}
+            </p>
+            {needsVerification ? (
+              <p className="mt-2 text-center text-sm">
+                <Link
+                  href={`/verify-email?email=${encodeURIComponent(watchEmail)}`}
+                  className="font-semibold text-orange-600 hover:text-orange-700"
+                >
+                  Resend verification code
+                </Link>
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         <Button type="submit" className="w-full rounded-full" disabled={isSubmitting}>
