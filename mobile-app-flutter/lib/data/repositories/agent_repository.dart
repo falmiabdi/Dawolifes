@@ -65,4 +65,10 @@ class AgentRepository {
     final data = await _api.get('/api/agent/profile') as Map<String, dynamic>;
     return (data['user'] as Map<String, dynamic>?) ?? {};
   }
+
+  /// Saves one step of the agent/owner onboarding form (POST /api/agent/onboarding),
+  /// mirroring the web app's app/agent/onboarding page.
+  Future<void> saveOnboarding(Map<String, dynamic> payload) async {
+    await _api.post('/api/agent/onboarding', payload);
+  }
 }

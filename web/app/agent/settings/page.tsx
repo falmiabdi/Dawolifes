@@ -4,7 +4,8 @@ import { getApiUrl } from '@/lib/get-api-url'
 import { useI18n } from '@/lib/i18n'
 
 import { useState } from 'react'
-import { Bell, Lock, CheckCircle2 } from 'lucide-react'
+import { Bell, Lock, CheckCircle2, FileText, Scale, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -142,6 +143,31 @@ export default function AgentSettingsPage() {
               </div>
             </label>
           ))}
+        </div>
+      </div>
+
+      {/* Legal */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-orange-600 font-bold">
+          <FileText className="h-5 w-5" />
+          <h2>{t('terms_conditions')} & {t('privacy_policy')}</h2>
+        </div>
+        <p className="text-sm text-slate-600">{t('of_platform')}</p>
+        <div className="space-y-3">
+          <Link
+            href="/agent/terms-conditions"
+            className="group flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-medium text-slate-700 hover:border-orange-200 hover:bg-orange-50"
+          >
+            <span className="flex items-center gap-2"><Scale className="h-4 w-4 text-slate-400 group-hover:text-orange-500" /> {t('view')} {t('terms_conditions')}</span>
+            <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:text-orange-500" />
+          </Link>
+          <Link
+            href="/agent/privacy-policy"
+            className="group flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm font-medium text-slate-700 hover:border-orange-200 hover:bg-orange-50"
+          >
+            <span className="flex items-center gap-2"><FileText className="h-4 w-4 text-slate-400 group-hover:text-orange-500" /> {t('view')} {t('privacy_policy')}</span>
+            <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:text-orange-500" />
+          </Link>
         </div>
       </div>
     </div>

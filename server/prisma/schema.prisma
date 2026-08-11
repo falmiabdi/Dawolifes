@@ -83,6 +83,7 @@ model User {
   properties Property[]
   vehicles   Vehicle[]
    savedItems SavedItem[]
+  announcements Announcement[]
 
    @@index([role, status])
    @@map("users")
@@ -277,12 +278,14 @@ model Notification {
   body      String
   type      String
   read      Boolean  @default(false)
+  readAt    DateTime? @db.Timestamptz(3)
   data      Json?
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@index([userId])
   @@index([createdAt])
+  @@index([readAt])
   @@map("notifications")
 }
 
@@ -304,6 +307,21 @@ model Message {
   @@index([recipientId])
   @@index([createdAt])
   @@map("messages")
+}
+
+model Announcement {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String   @db.VarChar(200)
+  content   String   @db.Text
+  authorId  String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("announcements")
 }
 
 model SavedItem {

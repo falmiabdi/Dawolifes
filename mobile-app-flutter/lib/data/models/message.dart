@@ -73,4 +73,28 @@ class ChatMessage {
         read: json['read'] == true,
         createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}')?.toLocal() ?? DateTime.now(),
       );
+
+  ChatMessage copyWith({
+    String? id,
+    String? propertyId,
+    String? senderId,
+    String? senderName,
+    String? recipientId,
+    String? recipientName,
+    String? content,
+    bool? read,
+    DateTime? createdAt,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      propertyId: propertyId ?? this.propertyId,
+      senderId: senderId ?? this.senderId,
+      senderName: senderName ?? this.senderName,
+      recipientId: recipientId ?? this.recipientId,
+      recipientName: recipientName ?? this.recipientName,
+      content: content ?? this.content,
+      read: read ?? this.read,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

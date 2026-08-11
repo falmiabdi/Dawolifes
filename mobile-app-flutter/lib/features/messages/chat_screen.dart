@@ -31,6 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessage> _messages = [];
   bool _loading = true;
   bool _sending = false;
+  bool _markedRead = false;
 
   @override
   void initState() {
@@ -53,9 +54,43 @@ class _ChatScreenState extends State<ChatScreen> {
           _messages = messages;
           _loading = false;
         });
+        // Mark unread messages as read after loading
+        if (!_markedRead) {
+          _markUnreadAsRead();
+        }
       }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _markUnreadAsRead() async {
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    if (user == null) return;
+
+    final unreadMessages = _messages.where((m) => m.recipientId == user.id && !m.read).toList();
+    if (unreadMessages.isEmpty) return;
+
+    _markedRead = true;
+    final repo = context.read<MessageRepository>();
+    for (final msg in unreadMessages) {
+      try {
+        await repo.markRead(msg.id);
+      } catch (_) {
+        // Ignore individual failures
+      }
+    }
+    // Update local state to show messages as read
+    if (mounted) {
+      setState(() {
+        _messages = _messages.map((m) {
+          if (m.recipientId == user.id && !m.read) {
+            return m.copyWith(read: true);
+          }
+          return m;
+        }).toList();
+      });
     }
   }
 

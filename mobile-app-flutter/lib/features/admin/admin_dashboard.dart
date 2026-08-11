@@ -6,6 +6,7 @@ import '../../data/models/payment.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
+import 'overview_chart.dart';
 
 /// Admin dashboard mirroring app/admin/page.tsx.
 class AdminDashboardScreen extends StatefulWidget {
@@ -129,6 +130,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Growth & Revenue Analytics',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Monthly trend of listings posted vs platform billing revenue',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      ),
+                      const SizedBox(height: 12),
+                      const OverviewChart(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const SectionHeader(title: 'Recent Registrations'),
                 if (agents.isEmpty)
                   const EmptyState(message: 'No agents registered yet.')

@@ -46,6 +46,53 @@ abstract final class AppStrings {
       'home': 'Home',
       'how_to_buy': 'How to Buy',
       'how_to_sell': 'How to Sell',
+      'services_subtitle': 'Everything DawoLife can help you with',
+      'how_to_sell_subtitle': 'List your property or vehicle and sell or rent it out',
+      'how_to_buy_subtitle': 'Find and buy or rent your next property or vehicle',
+      'service_house_sales': 'House Sales',
+      'service_house_sales_desc': 'We help property owners sell their houses through a modern, secure, and fast process.',
+      'service_house_rentals': 'House Rentals',
+      'service_house_rentals_desc': 'We help property owners rent out their houses through a modern, convenient, and trusted platform.',
+      'service_vehicle_sales': 'Vehicle Sales',
+      'service_vehicle_sales_desc': 'We help vehicle owners sell their vehicles through a modern, secure, and fast process.',
+      'service_vehicle_rentals': 'Vehicle Rentals',
+      'service_vehicle_rentals_desc': 'We help vehicle owners rent out their vehicles through a modern, convenient, and trusted platform.',
+      'service_buyer_seller': 'Property Buyer–Seller Connection',
+      'service_buyer_seller_desc': 'We connect buyers with trusted sellers, making the buying and selling process easier and more transparent.',
+      'service_tenant_landlord': 'Tenant–Landlord Connection',
+      'service_tenant_landlord_desc': 'We connect tenants with landlords, making it easier to find and rent suitable properties.',
+      'sell_step1': 'Create Your Profile',
+      'sell_step1_desc': 'Provide accurate and complete personal information to create your account.',
+      'sell_step2': 'List Your Property or Vehicle',
+      'sell_step2_desc': 'Add your house or vehicle with complete and accurate information.',
+      'sell_step3': 'Verification',
+      'sell_step3_desc': 'Your profile and listed properties or vehicles are verified according to DawoLife requirements.',
+      'sell_step4': 'Provide Required Information',
+      'sell_step4_desc': 'Complete all the information and documents required by DawoLife.',
+      'sell_step5': 'Accept Our Policies',
+      'sell_step5_desc': 'Read and agree to our Privacy Policy, Terms and Conditions, and other applicable policies.',
+      'sell_step6': 'Manage Your Listings',
+      'sell_step6_desc': 'Manage, update, and monitor your properties or vehicles directly through your account.',
+      'sell_step7': 'Connect With Buyers or Tenants',
+      'sell_step7_desc': 'Communicate with potential buyers or tenants through DawoLife based on the information provided in your listing.',
+      'sell_step8': 'Complete the Deal',
+      'sell_step8_desc': 'Once you find the right buyer or tenant, communicate and proceed with the transaction according to the agreed terms.',
+      'buy_step1': 'Browse Properties & Vehicles',
+      'buy_step1_desc': 'Explore available houses and vehicles and review their photos, prices, locations, specifications, and other listing information.',
+      'buy_step2': 'Create an Account',
+      'buy_step2_desc': 'Register for a DawoLife account to contact us and request more information about a property or vehicle.',
+      'buy_step3': 'Contact DawoLife',
+      'buy_step3_desc': 'Call or chat with our admin team about the property or vehicle you are interested in.',
+      'buy_step4': 'Get Connected',
+      'buy_step4_desc': 'Based on your request, our admin will connect you with the appropriate agent or owner for further communication and details.',
+      'buy_step5': 'Inspect & Confirm',
+      'buy_step5_desc': 'Review the available information, ask questions, and inspect the property or vehicle before making your final decision.',
+      'buy_step6': 'Proceed With the Purchase',
+      'buy_step6_desc': 'After you are satisfied and agree with the terms, proceed with the purchase directly with the owner or authorized party.',
+      'buy_step7': 'Sign the Agreement',
+      'buy_step7_desc': 'The final agreement and transaction documents are completed and signed by the relevant parties in person, according to the applicable requirements.',
+      'buy_step8': 'Service Charge',
+      'buy_step8_desc': 'The property buyers or renters must pay the required service fees. The service charge is a 2% fee of the total sold property price and a 10% fee of the total monthly agreement for rentals (with a minimum 3-month payment).',
       'i_am_looking': 'I am looking for ........',
       'login': 'Login',
       'logout': 'Sign out',
@@ -54,7 +101,7 @@ abstract final class AppStrings {
       'no': 'No',
       'not_specified': 'Not Specified',
       'optional': 'Optional',
-      'our_service': 'our Service',
+      'our_service': 'Our Services',
       'password': 'Password',
       'pending': 'Pending',
       'phone': 'Phone',
@@ -90,6 +137,20 @@ abstract final class AppStrings {
       'code_resent': 'A new code has been sent to your email.',
       'email_verified': 'Email verified! Please sign in to continue.',
       'use_different_email': 'Wrong email?',
+      'forgot_password': 'Forgot password?',
+      'forgot_password_title': 'Reset your password',
+      'forgot_password_subtitle': 'Enter your email and we\'ll send you a reset code.',
+      'send_reset_code': 'Send Reset Code',
+      'sending': 'Sending...',
+      'reset_code_sent': 'If an account exists for that email, a reset code has been sent.',
+      'reset_password_title': 'Enter reset code',
+      'reset_password_subtitle': 'Enter the 6-digit code from your email and choose a new password.',
+      'reset_code': 'Reset code',
+      'new_password_label': 'New Password',
+      'confirm_new_password': 'Confirm New Password',
+      'reset_password_button': 'Reset Password',
+      'password_mismatch': 'Passwords do not match',
+      'password_reset_success': 'Password reset successfully! You can now sign in.',
   },
   AppLanguage.amharic: {
       'already_have_account': 'መለያ አለዎት?',
@@ -113,6 +174,53 @@ abstract final class AppStrings {
       'home': 'መነሻ',
       'how_to_buy': 'እንዴት መግዛት',
       'how_to_sell': 'እንዴት መሸጥ',
+      'services_subtitle': 'DawoLife የሚረዳዎት ነገሮች ሁሉ',
+      'how_to_sell_subtitle': 'ንብረትዎን ወይም ተሽከርካሪዎን ይዘርዝሩ እና ይሽጡ ወይም ያከራዩ',
+      'how_to_buy_subtitle': 'ቀጣይ ንብረትዎን ወይም ተሽከርካሪዎን ይፈልጉ እና ይግዙ ወይም ይከራዩ',
+      'service_house_sales': 'የቤት ሽያጭ',
+      'service_house_sales_desc': 'የንብረት ባለቤቶች ቤቶቻቸውን በዘመናዊ፣ አስተማማኝ እና ፈጣን በሆነ መንገድ እንዲሸጡ እንረዳለን።',
+      'service_house_rentals': 'የቤት ኪራይ',
+      'service_house_rentals_desc': 'የንብረት ባለቤቶች ቤቶቻቸውን በዘመናዊ፣ ምቹ እና ታማኝ በሆነ መድረክ እንዲያከራዩ እንረዳለን።',
+      'service_vehicle_sales': 'የተሽከርካሪ ሽያጭ',
+      'service_vehicle_sales_desc': 'የተሽከርካሪ ባለቤቶች መኪኖቻቸውን በዘመናዊ፣ አስተማማኝ እና ፈጣን በሆነ መንገድ እንዲሸጡ እንረዳለን።',
+      'service_vehicle_rentals': 'የተሽከርካሪ ኪራይ',
+      'service_vehicle_rentals_desc': 'የተሽከርካሪ ባለቤቶች መኪኖቻቸውን በዘመናዊ፣ ምቹ እና ታማኝ በሆነ መድረክ እንዲያከራዩ እንረዳለን።',
+      'service_buyer_seller': 'የንብረት ገዢና ሻጭ ማገናኘት',
+      'service_buyer_seller_desc': 'ገዢዎችን ከተማመኑ ሻጮች ጋር በማገናኘት የመግዛት ሂደቱን ቀላል እና ግልጽ እናደርጋለን።',
+      'service_tenant_landlord': 'ተከራይና አከራይን ማገናኘት',
+      'service_tenant_landlord_desc': 'ተከራዮችን ከአከራዮች ጋር በማገናኘት ተስማሚ ንብረቶችን የማግኘት እና የማከራየት ሂደቱን እናቃልላለን።',
+      'sell_step1': 'መገለጫዎን (Profile) ይፍጠሩ',
+      'sell_step1_desc': 'መለያዎን (Account) ለመፍጠር ትክክለኛ እና ሙሉ ግላዊ መረጃዎን ያቅርቡ።',
+      'sell_step2': 'ንብረትዎን ወይም ተሽከርካሪዎን ይመዝግቡ',
+      'sell_step2_desc': 'ቤትዎን ወይም መኪናዎን ሙሉ እና ትክክለኛ መረጃ በማስገባት ያክሉ።',
+      'sell_step3': 'ማረጋገጥ (Verification)',
+      'sell_step3_desc': 'የእርሶ መገለጫ እና የተመዘገቡት ንብረቶች ወይም ተሽከርካሪዎች በ "DawoLife" መስፈርቶች መሠረት ይረጋገጣሉ።',
+      'sell_step4': 'አስፈላጊ መረጃዎችን ያቅርቡ',
+      'sell_step4_desc': 'በ "DawoLife" የሚጠየቁትን መረጃዎች እና ሰነዶች በሙሉ ያሟሉ።',
+      'sell_step5': 'ፖሊሲዎቻችንን ይቀበሉ',
+      'sell_step5_desc': 'የግላዊነት ፖሊሲያችንን፣ የውል ሁኔታዎችን እና ሌሎች የሚመለከታቸውን ደንቦች አንብበው መስማማትዎን ያረጋግጡ።',
+      'sell_step6': 'ምዝገባዎን ያስተዳድሩ',
+      'sell_step6_desc': 'ንብረቶችዎን ወይም ተሽከርካሪዎችዎን በቀጥታ በመለያዎ በኩል ያስተዳድሩ፣ ያሻሽሉ (Update) እና ይከታተሉ።',
+      'sell_step7': 'ከገዢዎች ወይም ተከራዮች ጋር ይገናኙ',
+      'sell_step7_desc': 'ባቀረቡት መረጃ መሠረት ሊገዙ ወይም ሊከራዩ ከሚፈልጉ ደንበኞች ጋር በ "DawoLife" በኩል ይገናኙ።',
+      'sell_step8': 'ስምምነቱን ያጠናቅቁ',
+      'sell_step8_desc': 'ትክክለኛውን ገዢ ወይም ተከራይ ካገኙ በኋላ፣ በተስማማችሁበት ውል መሠረት ስምምነቱን ፈጽሙ።',
+      'buy_step1': 'ንብረቶችን እና ተሽከርካሪዎችን ይቃኙ',
+      'buy_step1_desc': 'ያሉትን ቤቶች እና መኪኖች ፎቶዎች፣ ዋጋዎች፣ ያሉበትን ቦታ፣ መግለጫዎች እና ሌሎች የተለጠፉ መረጃዎችን በመመርመር ይፈልጉ።',
+      'buy_step2': 'መለያ (Account) ይፍጠሩ',
+      'buy_step2_desc': 'እኛን ለማነጋገር እና ስለ ንብረቱ ወይም ተሽከርካሪው ተጨማሪ መረጃ ለመጠየቅ የ "DawoLife" መለያ ይመዝግቡ።',
+      'buy_step3': 'DawoLifeን ያነጋግሩ',
+      'buy_step3_desc': 'ስለፈለጉት ንብረት ወይም ተሽከርካሪ ለአስተዳዳሪ ቡድናችን (Admin team) ይደውሉ ወይም በውይይት (Chat) ያነጋግሩ።',
+      'buy_step4': 'ግንኙነት ያድርጉ',
+      'buy_step4_desc': 'በጠየቁት መሠረት፣ አስተዳዳሪው ለተጨማሪ መረጃ እና ውይይት ከትክክለኛው ወኪል ወይም ባለቤት ጋር ያገናኝዎታል።',
+      'buy_step5': 'ይመርምሩ እና ያረጋግጡ',
+      'buy_step5_desc': 'የመጨረሻ ውሳኔ ከማድረግዎ በፊት ያሉትን መረጃዎች ይገምግሙ፣ ጥያቄዎችን ይጠይቁ፣ እና ንብረቱን ወይም ተሽከርካሪውን በአካል ያዩ።',
+      'buy_step6': 'ወደ መግዛት ይለፉ',
+      'buy_step6_desc': 'ካረጋገጡ እና በውሉ ከተስማሙ፣ በቀጥታ ከባለቤቱ ወይም ሕጋዊ ውክልና ካለው አካል ጋር ግዢውን ያከናውኑ።',
+      'buy_step7': 'ውሉን ይፈርሙ',
+      'buy_step7_desc': 'የመጨረሻው ስምምነት እና የግብይት ሰነዶች በሚመለከታቸው ወገኖች በአካል ተገኝተው በሚጠየቁት መስፈርቶች መሠረት ተጠናቅቀው ይፈረማሉ።',
+      'buy_step8': 'የአገልግሎት ክፍያ',
+      'buy_step8_desc': 'ቤት ወይም ንብረት መግዛት ከፈለጉ ከጠቅላላው የተሸጠው ዋጋ 2% (ሁለት በመቶ) የአገልግሎት ክፍያ ይከፍላሉ፤ ቤት መከራየት ከፈለጉ ደግሞ ከጠቅላላው የወርሃዊ ኪራይ ዋጋ 10% (አሥር በመቶ) የአገልግሎት ክፍያ (ቢያንስ የ3 ወር ክፍያ) ይከፍላሉ።',
       'i_am_looking': 'እየፈለግኩ ያለሁት ........',
       'login': 'ግባ',
       'logout': 'ውጣ',
@@ -157,6 +265,20 @@ abstract final class AppStrings {
       'code_resent': 'አዲስ ኮድ ወደ ኢሜልዎ ተልኳል.',
       'email_verified': 'ኢሜል ተረጋግጧል! ለመቀጠል እባክዎ ይግቡ.',
       'use_different_email': 'የተሳሳተ ኢሜል?',
+      'forgot_password': 'የይለፍ ቃል ረሱት?',
+      'forgot_password_title': 'የይለፍ ቃልዎን ዳግም ያስጀምሩ',
+      'forgot_password_subtitle': 'ኢሜልዎን ያስገቡ እና የማስጀመሪያ ኮድ እንልክልዎታለን።',
+      'send_reset_code': 'የማስጀመሪያ ኮድ ላክ',
+      'sending': 'በመላክ ላይ...',
+      'reset_code_sent': 'ለዚያ ኢሜል መለያ ካለ፣ የማስጀመሪያ ኮድ ተልኳል።',
+      'reset_password_title': 'የማስጀመሪያ ኮድ ያስገቡ',
+      'reset_password_subtitle': 'ከኢሜልዎ የተላከውን የ6 አሃዝ ኮድ ያስገቡ እና አዲስ የይለፍ ቃል ይምረጡ።',
+      'reset_code': 'የማስጀመሪያ ኮድ',
+      'new_password_label': 'አዲስ የይለፍ ቃል',
+      'confirm_new_password': 'አዲስ የይለፍ ቃል አረጋግጥ',
+      'reset_password_button': 'የይለፍ ቃል ዳግም አስጀምር',
+      'password_mismatch': 'የይለፍ ቃሎቹ አይመሳሰሉም',
+      'password_reset_success': 'የይለፍ ቃል በተሳካ ሁኔታ ተቀይሯል! አሁን መግባት ይችላሉ።',
   },
   AppLanguage.oromo: {
       'already_have_account': 'Akaawuntii qabdaa?',
@@ -178,8 +300,55 @@ abstract final class AppStrings {
       'email': 'Imeelii',
       'full_name': 'Maqaa guutuu',
       'home': 'Mana',
-      'how_to_buy': 'Akkamitti bituu',
-      'how_to_sell': 'Akkamitti gurguruu',
+      'how_to_buy': 'Akkaata Bittaa',
+      'how_to_sell': 'Akkamiin Gurguranna',
+      'services_subtitle': 'Waan DawoLife si gargaaru hunda',
+      'how_to_sell_subtitle': 'Qabeenya ykn konkolaataa kee tarreessi fi gurguri ykn kireessi',
+      'how_to_buy_subtitle': 'Qabeenya ykn konkolaataa kee itti aanu barbaadi fi bituu ykn kireeffadhu',
+      'service_house_sales': 'Gurgurtaa Manaa',
+      'service_house_sales_desc': 'Abbootii qabeenyaa adeemsa ammayyaa, amansiisaa fi si\'aawaa ta\'een manneen isaanii akka gurguratan gargaarra.',
+      'service_house_rentals': 'Kiraa Manaa',
+      'service_house_rentals_desc': 'Abbootii qabeenyaa tarree (platform) ammayyaa, mijataa fi amansiisaa ta\'een manneen isaanii akka kireessan gargaarra.',
+      'service_vehicle_sales': 'Gurgurtaa Konkolaataa',
+      'service_vehicle_sales_desc': 'Abbootii konkolaataa adeemsa ammayyaa, amansiisaa fi si\'aawaa ta\'een konkolaattota isaanii akka gurguratan ni gargaarra.',
+      'service_vehicle_rentals': 'Kiraa Konkolaataa',
+      'service_vehicle_rentals_desc': 'Abbootii konkolaataa tarree ammayyaa, mijataa fi amansiisaa ta\'een konkolaattota isaanii akka kireessan ni gargaarra.',
+      'service_buyer_seller': 'Walqunnamsiisa Bitattaa fi Gurguraa Qabeenyaa',
+      'service_buyer_seller_desc': 'Bitattoota fi gurgurtoota amansiisaa ta\'an walitti fiduun adeemsa bittaa fi gurgurtaa caalaatti salphaa fi iftoomina kan qabu ni goona.',
+      'service_tenant_landlord': 'Walqunnamsiisa Kireeffataa fi Kireessaa',
+      'service_tenant_landlord_desc': 'Kireeffattoota fi kireessitoota walitti fiduun, qabeenya mijataa ta\'e barbaaduu fi kireeffachuu caalaatti ni salphisna.',
+      'sell_step1': 'Profile Kee Uumadhu',
+      'sell_step1_desc': 'Account kee uumaachuuf odeeffannoo dhuunfaa kee isa sirrii fi guutuu ta\'e galchi.',
+      'sell_step2': 'Gurgurtaa Manaa ykn Konkolaataa Kee Tarreessi (List)',
+      'sell_step2_desc': 'Mana ykn konkolaataa kee odeeffannoo guutuu fi sirrii ta\'een galmeessi.',
+      'sell_step3': 'Mirkaneessa (Verification)',
+      'sell_step3_desc': 'Profile kee fi qabeenyi ykn konkolaataan tarreessite ulaagaa DawoLife keessatti barbaadamuun ni mirkanaa\'a.',
+      'sell_step4': 'Odeeffannoo Barbaachisu galchi',
+      'sell_step4_desc': 'Odeeffannoo fi ragaalee (documents) DawoLife\'n barbaadu hunda guutuu ni dhiyeessita.',
+      'sell_step5': 'Dambii Wali-galtee',
+      'sell_step5_desc': 'Imaammata Dhuunfaa (Privacy Policy), Haala fi Dambiiwwan (Terms and Conditions), fi imaammatoota biroo kan dhimmi ilaallatu dubbisiiti waliigaltee kee ibsi.',
+      'sell_step6': 'Bulchiinsa qabeenyaa Tarreefamanii',
+      'sell_step6_desc': 'Qabeenya ykn konkolaataa tarreefaman karaa akkaawuntii kee to\'annaa kana gootu.',
+      'sell_step7': 'Bitattoota ykn Kireeffattoota Waliin Walqunnami',
+      'sell_step7_desc': 'Odeeffannoo tarreessite irratti hundaa\'uun bitattoota ykn kireeffattoota xiyyeeffannoo qaban waliin karaa DawoLife qunnamtii godhi.',
+      'sell_step8': 'Daldala Xumuri',
+      'sell_step8_desc': 'Erga bitataa ykn kireeffataa sirrii ta\'e argattee booda, haala waliigaltee irratti geggeessuun daldala kee xumuri.',
+      'buy_step1': 'Manneen fi Konkolaattota Barbaadi',
+      'buy_step1_desc': 'Manneen fi konkolaattota jiran sakatta\'uun suuraa, gatii, bakka jiran, dandeettii (specifications), fi odeeffannoo maxxanfaman ilaali.',
+      'buy_step2': 'Account Uumadhu',
+      'buy_step2_desc': 'Nu waliin qunnamtii gochuu fi waan qabeenya ykn konkolaataa sana irratti odeeffannoo dabalataa gaafachuuf account DawoLife banadhu.',
+      'buy_step3': 'DawoLife Qunnami',
+      'buy_step3_desc': 'Qabeenya ykn konkolaataa xiyyeeffannoo kee harkise irratti garee Dhaabbataa (admin team) bilbilaan ykn karaa barreefamaa (chat) qunnami.',
+      'buy_step4': 'Walqunnamsiisa Argadhu',
+      'buy_step4_desc': 'Barbaachisaa ta\'ee yoo argame abbaa qabeenyaa yookaan agent kallattiin dubbisuu.',
+      'buy_step5': 'ilaaluu fi mirkaneessuu',
+      'buy_step5_desc': 'Murtoo xumuraa taasisuuf qabeenya filatte sana ilaaluun murteessuu!',
+      'buy_step6': 'Bittaa xumuraa taasisuu',
+      'buy_step6_desc': 'Qabeenya ilaaltee mirkaneessite sana haala waligaltee abbaa qabeenyaa ykn agentiin taasisuun bittaa xumuraa raawwatta.',
+      'buy_step7': 'Waligaltee Mallatteessi',
+      'buy_step7_desc': 'Waligaltee xumuraa fi waraqaa daldalaa dhimma irratti hirkatan hunduu dhuunfaa fi seerota hojiirra oolan mataa isaanii mallatteessuun xumurama.',
+      'buy_step8': 'Gatii Tajaajilaa',
+      'buy_step8_desc': 'Bittoonni ykn kireeffattoonni kaffaltii tajaajilaa barbaachisaa kaffaluuf dirqama qabu. Kaffaltiin tajaajilaa gatii waliigalaa qabeenya gurgurame irraa dhibbantaa lama (2%) yoo ta\'u, kiraa yoo ta\'e immoo waliigaltee ji\'aa irraa dhibbantaa kudhan (10%) (xiqqaattis kanfaltii ji\'a sadiitii) kan kaffalamu ta\'a.',
       'i_am_looking': 'Waan barbaaduu ture ........',
       'login': 'Seeni',
       'logout': 'Ba\'i',
@@ -188,7 +357,7 @@ abstract final class AppStrings {
       'no': 'Miti',
       'not_specified': 'Hin ibsamne',
       'optional': 'Filannoo',
-      'our_service': 'Tajaajila keenya',
+      'our_service': 'Tajaajila Keenya',
       'password': 'Jecha iccitii',
       'pending': 'Eega',
       'phone': 'Bilbila',
@@ -224,6 +393,20 @@ abstract final class AppStrings {
       'code_resent': 'Koodii haarraa imeeliitti kee ergameera.',
       'email_verified': 'Imeelii mirkanaa\'e! Itti fufuuf seeni.',
       'use_different_email': 'Imeelii dogoggoraa?',
+      'forgot_password': 'Jecha iccitii irraanfattee?',
+      'forgot_password_title': 'Jecha iccitii kee haaromsi',
+      'forgot_password_subtitle': 'Imeelii kee galchi; koodii haaromsaa siif ergina.',
+      'send_reset_code': 'Koodii haaromsaa ergi',
+      'sending': 'Ergiiraa...',
+      'reset_code_sent': 'Yoo akkaawuntii imeelii sanaaf jiraate, koodiin haaromsaa ergameera.',
+      'reset_password_title': 'Koodii haaromsaa galchi',
+      'reset_password_subtitle': 'Koodii 6 lakkoofsaa imeelii kee irraa galchi fi jecha iccitii haaraa filadhu.',
+      'reset_code': 'Koodii haaromsaa',
+      'new_password_label': 'Jecha iccitii haaraa',
+      'confirm_new_password': 'Jecha iccitii haaraa mirkanneessi',
+      'reset_password_button': 'Jecha iccitii haaromsi',
+      'password_mismatch': 'Jechoonni iccitii wal hin fakkaatanu',
+      'password_reset_success': 'Jechi iccitii milkaa\'inaan haaromeera! Amma seenuu dandeessa.',
   },
 };// GENERATED from web/lib/i18n.tsx (FORM_STRINGS + VALUE_STRINGS)
 static const Map<AppLanguage, Map<String, String>> _formStrings = {
@@ -296,6 +479,7 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'edu_others': 'Others',
       'upload_certificate': 'Upload Certificate',
       'select_experience': 'Select experience',
+      'select_education': 'Select education level',
       'exp_less_1': 'Less than 1 year',
       'exp_1_3': '1–3 years',
       'exp_3_5': '3–5 years',
@@ -314,6 +498,72 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'agree_terms': 'I agree to the',
       'of_platform': 'of the DawoLife platform.',
       'agree_privacy': 'and consent to data processing.',
+      'user_type': 'I am registering as',
+      'select_user_type': 'Select your registration type',
+      'agent_option': 'Agent',
+      'owner_option': 'Owner',
+      'owner_terms_title': 'Terms & Conditions for Property Owners and Agents',
+      'agent_terms_title': 'Terms & Conditions for Agents',
+      'agree_owner_terms': 'I agree to the Terms & Conditions for Property Owners and Agents.',
+      'agree_agent_terms': 'I agree to the Terms & Conditions for Agents.',
+      'terms_conditions_full': '''Terms & Conditions for Property Owners and Agents
+An owner or real estate agent listing a property on this platform must fulfill the following criteria:
+
+1. Ownership & Authority Standard: The owner must provide valid proof of ownership. If the person listing is an agent, they must provide a valid full power of attorney, official identification, and all original documentation required on the day of the sale or rental agreement.
+
+2. Document Authenticity & Legal Liability: All submitted documents must be accurate and authentic. If any document is found to be false or fraudulent, the party who published or submitted it will face legal prosecution under country laws and will be fully responsible for all legal costs, damages, and administrative fees incurred.
+
+3. Listing & Commission Fees: The property owner must pay the required platform service fees. The platform charges a 2% commission fee of the total sold property amount for sales and a 10% fee of the monthly rental agreement amount for rentals, with a minimum payment of 3 months. If an owner advertises a property on this website and subsequently sells or rents it through another channel, they are still obligated to pay the 2% commission fee.
+
+4. Media Standards & On-site Viewing: The owner or agent is required to capture and upload high-quality photographs and videos of the property. If a prospective customer requests a viewing, the owner/agent must be available in person two days a week to conduct property tours professionally and hospitably.
+
+5. Clear Title & Dispute Resolution: The property must be completely free of government liens, debts, or public claims. If any debt or legal dispute is discovered, the owner must fully refund the buyer's or tenant's money, along with compensation for all expenses incurred. If the buyer/tenant chooses to settle the legal dispute directly, they may do so at their own expense in the appropriate venue.
+
+6. Prohibition of Misleading Advertising: Any owner or agent who engages in deceptive, false, or misleading property advertisements on the platform will be held strictly liable under applicable laws.
+
+7. Verification by DawoLife: DawoLife provides verified, accurate information to buyers. All data, ownership details, and documentation submitted by an owner or agent will be independently verified through the appropriate government and legal authorities.
+
+8. Legal Governing Clause: All terms, conditions, and agreements set forth herein are legally binding and fully recognized under national laws and regulatory statutes.''',
+      'terms_conditions_agent_full': '''Terms & Responsibilities for Agents / Brokers
+
+1. Legal Liability & Compliance: Anyone performing tasks and submitting documents shall be legally held liable under the laws and regulations of the country. They are obligated to fulfill all necessary criteria and requirements.
+
+2. Performance-Based Bonuses: Based on job performance, agents/brokers will receive additional performance bonuses.
+
+3. Licensed Brokers: A legally licensed broker who becomes a member of this company and completes a transaction through the company shall receive 50% of the service fee.
+
+4. Unlicensed Brokers: An unlicensed broker who becomes a member of this company and completes a transaction through the company shall receive 50% of the service fee. From this earning, the applicable government tax will be deducted and paid to the government through the company.
+
+5. Single Broker Rule: The company shall recognize only one broker per specific listing/task.
+
+6. Prohibition of Duplicate Listings: Re-posting or re-submitting a previously published listing is strictly prohibited and will result in penalties and termination from the platform.
+
+7. Property Owner Verification: When a broker uploads a property for sale onto the platform, they must submit the property owner's profile/details to the company to verify.''',
+      'privacy_policy_full': '''Agent & Owner Privacy Policy
+
+1. Ownership or authorization
+A property owner or agent who lists a property for sale must prove ownership. If the listing is posted by an agent, the agent must provide a complete, legally valid power of attorney and all original sale or purchase documents.
+
+2. Accuracy of documents
+All submitted documents must be accurate. If any document is found to be false, the person who prepared or submitted it will be held liable under the law of the country and must bear any costs or damages that arise.
+
+3. Listing fees
+To advertise a property on this website, the required fee must be paid. This fee is 2% of any sale price, and 10% of any rental price. Once a property owner lists a property here, they remain obligated to pay the 2% even if the property is later sold or rented through another channel.
+
+4. Photos, videos and showings
+The property owner must upload clear, high-quality photos and videos of the property. If a customer requests to view the property, the owner must make it available for in-person showings at least two days per week.
+
+5. Free of debt
+The property must be free of government or private debt. If debt is discovered, the property owner must repay the debt and compensate the buyer or tenant as appropriate. The buyer may pursue and close the matter at their own expense if they choose.
+
+6. Truthful listings
+A property owner or agent who lists or publishes a property in a false or misleading way will bear legal responsibility.
+
+7. Information verification
+DawoLife provides accurate information to buyers. Information supplied by an owner or agent will be verified with the relevant parties.
+
+8. Governing law
+All of these rules and agreements are valid and accepted under the laws and regulations of our country.''',
       'after_submission': 'After Submission',
       'after_submission_note': 'Your account will be in',
       'pending_approval': 'Pending Approval',
@@ -324,6 +574,10 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'manage_profile': 'Manage your profile, credentials, and team.',
       'profile': 'Profile',
       'save_profile': 'Save Profile',
+      'edit_profile': 'Edit Profile',
+      'change_photo': 'Change photo',
+      'uploading_photo': 'Uploading photo...',
+      'profile_updated': 'Profile updated successfully',
       'only_root_admin': 'Only root administrators can create new admin accounts.',
       'create_new_admin': 'Create New Admin',
       'create_admin': 'Create Admin',
@@ -411,6 +665,15 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'property_submitted_note': 'Your listing has been received and is pending review. Our team will verify the details and publish it shortly.',
       'post_another_property': 'Post Another Property',
       'submit_property': 'Submit Property',
+      'submit_listing': 'Submit Listing',
+      'review_listing_info': 'Review Listing Info',
+      'location_details': 'Location Details',
+      'media_upload': 'Media Upload',
+      'floor_number': 'Floor Number',
+      'parcel': 'Parcel',
+      'block': 'Block',
+      'home_no': 'House No',
+      'select_location_map': 'Please select the property location on the map to continue.',
       'post_vehicle': 'Post a Vehicle',
       'list_vehicle_note': 'List your vehicle for millions of buyers across Ethiopia',
       'technical': 'Technical',
@@ -572,6 +835,7 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'edu_others': 'ሌሎች',
       'upload_certificate': 'ሰርተፊኬት አስገባ',
       'select_experience': 'ልምድ ይምረጡ',
+      'select_education': 'የትምህርት ደረጃ ይምረጡ',
       'exp_less_1': 'ከ1 ዓመት በታች',
       'exp_1_3': '1-3 ዓመታት',
       'exp_3_5': '3-5 ዓመታት',
@@ -590,6 +854,72 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'agree_terms': 'በሚከተለው እስማማለሁ',
       'of_platform': 'የDawoLife መድረክ።',
       'agree_privacy': 'እና ለመረጃ ሂደት ፈቃድ እሰጣለሁ።',
+      'user_type': 'በየትኛው አቅም ነው የምመዘገበው',
+      'select_user_type': 'የምዝገባዎን አይነት ይምረጡ',
+      'agent_option': 'ወኪል (ኤጀንት)',
+      'owner_option': 'ባለቤት',
+      'owner_terms_title': 'የንብረት ባለቤቶችና ወኪሎች ውሎች እና ሁኔታዎች',
+      'agent_terms_title': 'የወኪሎች ውሎች እና ሁኔታዎች',
+      'agree_owner_terms': 'በንብረት ባለቤቶችና ወኪሎች ውሎች እና ሁኔታዎች እስማማለሁ።',
+      'agree_agent_terms': 'በወኪሎች ውሎች እና ሁኔታዎች እስማማለሁ።',
+      'terms_conditions_full': '''የንብረት ባለቤቶችና ወኪሎች (ኤጀንቶች) ማሟላት የሚገባቸው መስፈርቶችና ውሎች
+ማንኛውም የንብረት ባለቤት ወይም ወኪል በድረ-ገጹ ላይ ንብረት ሲያስተዋውቅ የሚከተሉትን መስፈርቶች ሙሉ በሙሉ ማሟላት አለበት፦
+
+1. የባለቤትነት ማረጋገጫና ሕጋዊ ውክልና፦ ባለቤቱ የንብረቱ ትክክለኛ ባለቤት መሆኑን የሚያረጋግጥ ሕጋዊ ሰነድ ማቅረብ አለበት። ወኪል ከሆነ ደግሞ ሙሉ ሕጋዊ ውክልና ያለው ሰነድ፣ የማንነት መታወቂያ እና በሽያጭ ወይም በኪራይ ቀን የሚያስፈልጉትን ዋና (ኦሪጅናል) ሰነዶች በሙሉ ማቅረብ ይኖርበታል።
+
+2. የሰነዶች እውነተኛነትና ሕጋዊ ተጠያቂነት፦ የሚቀርቡት ሰነዶች ሁሉ ትክክለኛና እውነተኛ መሆን አለባቸው። ማንኛውም ሰነድ ሐሰተኛ ሆኖ ከተገኘ፣ ሰነዱን ያተመ ወይም ያቀረበ አካል በሀገሪቱ ሕግ መሠረት ይከሰሳል እና ለተፈጠሩ ሕጋዊ ወጪዎች፣ ጉዳቶች እና የአስተዳደር ክፍያዎች ሙሉ በሙሉ ተጠያቂ ይሆናል።
+
+3. የአገልግሎትና የኮሚሽን ክፍያ፦ ባለቤቱ የፕላትፎርሙን አስፈላጊ የአገልግሎት ክፍያ መክፈል አለበት። ፕላትፎርሙ ለሽያጭ ከተሸጠው አጠቃላይ የንብረት ዋጋ 2% የኮሚሽን ክፍያ፣ ለኪራይ ደግሞ ከወርሃዊው የኪራይ ውል ዋጋ 10% (ቢያንስ ለ3 ወር ክፍያ) ያስከፍላል። ባለቤቱ ንብረቱን በዚህ ድረ-ገጽ ካስተዋወቀ በኋላ በሌላ መንገድ ቢሸጥ ወይም ቢያከራይ፣ አሁንም የ2% ኮሚሽን ክፍያ የመክፈል ግዴታ አለበት።
+
+4. የፎቶና ቪዲዮ ጥራት እንዲሁም ንብረቱን የማሳየት ግዴታ፦ ባለቤቱ ወይም ወኪሉ የንብረቱን ጥራት ያላቸው ፎቶዎችና ቪዲዮዎች አዘጋጅቶ መጫን አለበት። ደንበኛ ንብረቱን ማየት ሲፈልግ፣ ባለቤቱ/ወኪሉ በሳምንት ሁለት ቀናት በአካል ተገኝቶ የንብረት ጉብኝትን በሙያዊ እና በአቀባበል ሥነ-ምግባር ማከናወን አለበት።
+
+5. ከዕዳ ነፃ መሆንና የክርክር አፈታት፦ ንብረቱ ከመንግሥት ብድር፣ ዕዳ ወይም የሕዝብ ይገባኛል ጥያቄ ሙሉ በሙሉ ነፃ መሆን አለበት። ማንኛውም ዕዳ ወይም ሕጋዊ ክርክር ከተገኘ፣ ባለቤቱ የገዢውን/የተከራዩን ገንዘብ እና የተከሰቱ ወጪዎችን ሁሉ ሙሉ በሙሉ መመለስ አለበት። ገዢው/ተከራዩ ክርክሩን በቀጥታ ለመፍታት ከመረጠ፣ በራሱ ወጪ በተገቢው ቦታ ማድረግ ይችላል።
+
+6. አሳሳች ማስታወቂያዎችን ስለመከልከል፦ በፕላትፎርሙ ላይ አሳሳች፣ የተሳሳተ ወይም ሐሰተኛ የንብረት ማስታወቂያ የሚያደርግ ማንኛውም ባለቤት ወይም ወኪል በሚመለከታቸው ሕጎች መሠረት ጥብቅ ተጠያቂነት ይኖረዋል።
+
+7. በ "Dawolife" የሚደረግ ማረጋገጫ፦ "Dawolife" ለገዢዎች የተረጋገጠና ትክክለኛ መረጃ ያቀርባል። በባለቤት ወይም ወኪል የቀረቡ ሁሉም መረጃዎች፣ የባለቤትነት ዝርዝሮች እና ሰነዶች በሚመለከታቸው የመንግሥት እና ሕጋዊ ባለሥልጣናት በኩል ራሳቸውን ችለው ይረጋገጣሉ።
+
+8. የውሉ ሕጋዊነት፦ እዚህ የተቀመጡት ሁሉም ውሎች፣ ሁኔታዎች እና ስምምነቶች በብሔራዊ ሕጎችና ደንቦች መሠረት ሕጋዊ ተፈጻሚነት ያላቸው እና ሙሉ በሙሉ እውቅና የሚሰጣቸው ናቸው።''',
+      'terms_conditions_agent_full': '''የደላሎች/ኤጀንቶች ኃላፊነት እና መመሪያዎች
+
+1. ሕጋዊ ተጠያቂነትና ደንብን ማከበር፦ ለማንኛውም ሥራ የሚያከናውን እና ሰነዶችን የሚያቀርብ አካል በሀገሪቱ ሕግና ደንብ መሠረት በሕግ ተጠያቂ ይሆናል። አስፈላጊ የሆኑትን መስፈርቶች በሙሉ የማሟላት ግዴታ አለበት።
+
+2. በሥራ አፈጻጸም ላይ የተመሠረተ ተጨማሪ ጥቅም፦ በሥራ አፈጻጸሙ ላይ በመሥረት ተጨማሪ ጥቅማጥቅሞችን ያገኛል።
+
+3. ሕጋዊ ፈቃድ ያላቸው ደላሎች፦ ሕጋዊ ፈቃድ ያለው ደላላ የዚህ ድርጅት አባል በመሆን በድርጅቱ በኩል ለሠራው ሥራ ከአገልግሎት ክፍያው አምሳ በመቶ (50%) ያገኛል።
+
+4. ሕጋዊ ፈቃድ የሌላቸው ደላሎች፦ ሕጋዊ ፈቃድ የሌለው ደላላ የዚህ ድርጅት አባል በመሆን በድርጅቱ በኩል ለሠራው ሥራ ከአገልግሎት ክፍያው አምሳ በመቶ (50%) ያገኛል። ከሚያገኘው ክፍያ ላይ የመንግሥት ግብር በድርጅቱ በኩል ተቆርጦ ለመንግሥት ገቢ ይደረጋል።
+
+5. የአንድ ደላላ ሕግ፦ ድርጅቱ ለአንድ ሥራ (ንብረት) የሚያውቀው አንድ ደላላ ብቻ ይሆናል።
+
+6. ድጋሚ ማስታወቂያ ስለመከልከሉ፦ ቀደም ሲል የተለጠፈን ማስታወቂያ ድጋሚ መለጥፈስ ያስቀጣል፤ ከሥራም የሚያባርር ይሆናል።
+
+7. የባለቤቱን ማንነት ማረጋገጥ፦ ደላላው ለሽያጭ የሚሆንን ንብረት በስርዓቱ (መተግበሪያው) ላይ ሲጭን፣ እውነተኛነቱን ለማረጋገጥ የንብረት ባለቤቱን መረጃ (Profile) ለድርጅቱ አሳልፎ መስጠት አለበት።''',
+      'privacy_policy_full': '''የኤጄንት እና የንብረት ባለቤት የግላዊነት ፖሊሲ
+
+1. ባለቤትነት ወይም ወኪልነት
+ንብረት ለመሸጥ የሚዘረዘረው የንብረት ባለቤት ወይም ወኪል ባለቤትነቱን መስተዋድድ አለበት። ንብረቱ በወኪል የቀረበ ከሆነ፣ ሙሉ ሕጋዊ የወኪልነት ወረቀት እና ከግዢውና ከሽያጩ ጋር የተያያዙ ኦሪጓል ሰነዶችን ሁሉ ማቅረብ አለበት።
+
+2. የሰነዶች ትክክለኛነት
+የቀረቡት ሰነዶች ሁሉ ትክክል መሆን አለባቸው። የቀረበው ሰነድ ውሸት ከሆነ፣ ሰነዱን ያዘጋጁ ወይም ያቀረቡ ሰው በሀገሪቱ ሕግ መሠረት ይቀጣል እና ከዚህ የሚደርስ ማንኛውም ወጪ ወይም ጉድለት መሸከም አለበት።
+
+3. የዝርዝር ክፍያ
+ንብረታቸውን በዚህ ድር ጣቢያ ላይ ለማስተዋወቅ አስፈላጊውን ክፍያ መክፈል አለባቸው። ይህ ክፍያ ከማንኛውም ሽያጭ ዋጋ 2%፣ ከኪራይ ዋጋ ደግሞ 10% ነው። የንብረት ባለቤት አንድ ጊዜ ከዚህ በኋላ በሌላ መንገድ ቢሸጥ ወይም ቢያከራይ፣ 2% መክፈል አለበት።
+
+4. ፎቶ፣ ቪዲዮ እና ጉብኝት
+የንብረት ባለቤቱ ከፍተኛ ጥራት ያላቸው ፎቶዎችን እና ቪዲዮዎችን ተከትቶ ወደ ድር ጣቢያው መጫን አለበት። ደንበኛ ንብረቱን መመልከት ከፈለገ፣ በሳምንቱ ሁለት ቀናት በአካል ተገኝቶ በሚገባ ማሳየት አለበት።
+
+5. ከብድር ነጻ
+ንብረቱ የመንግሥት ወይም የግል ብድር የሌለው መሆን አለበት። ብድር ካለው ተገኝ የንብረት ባለቤቱ ያን ብድር መክፈል እና ገዥውን ወይም ኪራይተኛውን መካስ አለበት። ገዥው ጉዳዩን ለመዝጋት ከፈለገ፣ በራሱ ወጪ መከራከር እና መዝጋት ይችላል።
+
+6. ትክክለኛ ዝርዝሮች
+የንብረት ባለቤት ወይም ወኪል ንብረትን በሐሰት ወይም በሚያሳስት መንገድ ሲያስተዋውቅ ወይም ሲያታምር የህግ ሀላፊነት ያለበት ይሆናል።
+
+7. የመረጃ ማረጋገጫ
+DawoLife ለገዥዎች ትክክለኛ መረጃ ያቀርባል። ከንብረት ባለቤት ወይም ከወኪል የተሰጠው መረጃ ትክክለኛነቱ በአግባቡ በሚመለከተው አካል ይረጋገጣል።
+
+8. የሚገዛው ህግ
+እነዚህ ሁሉ ደንቦች እና ስምምነቶች በሀገራችን ሕግ እና ደንብ በታች የሚቀበሉ እና ተፈጻሚ የሆኑ ናቸው።''',
       'after_submission': 'ከማስገባት በኋላ',
       'after_submission_note': 'መለያዎ በ',
       'pending_approval': 'በመጠባበቅ ላይ',
@@ -600,6 +930,10 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'manage_profile': 'መገለጫዎን፣ ምስክርነቶችዎን እና ቡድንዎን ያስተዳድሩ።',
       'profile': 'መገለጫ',
       'save_profile': 'መገለጫ አስቀምጥ',
+      'edit_profile': 'መገለጫ አርትዕ',
+      'change_photo': 'ፎቶ ቀይር',
+      'uploading_photo': 'ፎቶ በመጫን ላይ...',
+      'profile_updated': 'መገለጫ በተሳካ ሁኔታ ተዘምኗል',
       'only_root_admin': 'አዲስ አስተዳዳሪ መለያ መፍጠር የሚችሉት ዋና አስተዳዳሪዎች ብቻ ናቸው።',
       'create_new_admin': 'አዲስ አስተዳዳሪ ፍጠር',
       'create_admin': 'አስተዳዳሪ ፍጠር',
@@ -687,6 +1021,15 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'property_submitted_note': 'ዝርዝርዎ ደርሷል እና በግምገማ ላይ ነው። ቡድናችን ዝርዝሮቹን አረጋግጦ ያትማል።',
       'post_another_property': 'ሌላ ንብረት ለጥፍ',
       'submit_property': 'ንብረት አስገባ',
+      'submit_listing': 'ዝርዝር አስገባ',
+      'review_listing_info': 'የዝርዝር መረጃ ገምግም',
+      'location_details': 'የአካባቢ ዝርዝሮች',
+      'media_upload': 'ሚዲያ ስቀል',
+      'floor_number': 'የወለል ቁጥር',
+      'parcel': 'ፓርሰል',
+      'block': 'ብሎክ',
+      'home_no': 'የቤት ቁጥር',
+      'select_location_map': 'ለመቀጠል የንብረቱን አካባቢ በካርታው ላይ ይምረጡ።',
       'post_vehicle': 'ተሽከርካሪ ለጥፍ',
       'list_vehicle_note': 'ተሽከርካሪዎን በመላ ኢትዮጵያ ለሚገኙ በሚሊዮን ለሚቆጠሩ ገዢዎች ይዘርዝሩ',
       'technical': 'ቴክኒካል',
@@ -848,6 +1191,7 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'edu_others': 'Kan Biroo',
       'upload_certificate': 'Sertifikeetii galchi',
       'select_experience': 'Muuxannoo filadhu',
+      'select_education': 'Kiwirreessa barisuufii filadhu',
       'exp_less_1': 'Waggaa 1 gadi',
       'exp_1_3': 'Waggaa 1-3 gidduu',
       'exp_3_5': 'Waggaa 3-5 gidduu',
@@ -866,6 +1210,72 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'agree_terms': 'Waliin waligala',
       'of_platform': 'daawolife platform.',
       'agree_privacy': 'fi hayyama deetaa keessatti fayyadamuuf kenneera.',
+      'user_type': 'Akka maalitti galmeessaa jira',
+      'select_user_type': 'Gosa galmeessaa kee filadhu',
+      'agent_option': 'Eejantii (Agent)',
+      'owner_option': 'Abbaa Qabeenyaa (Owner)',
+      'owner_terms_title': 'Waligaltee Abbootii Qabeenyaa fi Eejantiiwwan',
+      'agent_terms_title': 'Waligaltee Eejantiiwwan',
+      'agree_owner_terms': 'Waligaltee abbootii qabeenyaa fi eejantiiwwan waliin waligala.',
+      'agree_agent_terms': 'Waligaltee eejantiiwwan waliin waligala.',
+      'terms_conditions_full': '''Waligaltee jiru fi Haala Hojii Abbootii Qabeenyaa fi Eejantiiwwan
+Abbaan qabeenyaa ykn eejantii qabeenya tartiibaa kana irratti maxxansu, yaada kana hunda guutuu qaba:
+
+1. Ragaa Qabeenyummaa: Abbaan qabeenyaa seeraan mirkanneessee qabeenya isaa tarreessuu qaba. Yoo dhiyeessaan (lister) ejantii ta'e, abbaa qabeenyaa irraa waraqaa seeraa kan sirrii fi guutuu ta'e, waraqaa qeenxee (ID), fi ragaalee aslii isaanii hunda guyyaa gurgurtaa ykn kiraatti barbaachisan dhiyeessuu qaba.
+
+2. Sirrummaa Ragaalee fi Itti Gaafatamummaa Seeraa: Ragaaleen dhiyeessaman hunda sirrii fi dhugaa ta'uu qabu. Yoo ragaan kamiyyuu soba ykn uffata ta'uun argame, namni dhiyeesse ykn maxxanse seera biyyaatiin itti gaafatamuuf kan dhihaatu yoo ta'u, gatii seeraa, miidhaa, fi kaffaltii bulchiinsaaf baasii kanaan walqabate hunda itti gaafatamaa ta'a.
+
+3. Kaffaltii Beeksisaa fi Komishinii: Abbaan qabeenyaa kaffaltii tajaajilaa qabeenya maxxansuu keetiif barbaachisu kaffaluu qaba. Paataalli (platform) qabeenya gurgurame irratti dhibbantaa lamaa (2%) fi kiraa keessatti immoo waliigaltee ji'aa irratti dhibbantaa kudhaniiti (10%) xiqqaattis kaffaltii ji'a sadiitii. Yoo abbaan qabeenyaa qabeenya isaa maxxansee booda karaa biraatiin gurgure ykn kiraase, dhibbantaa lamaan (2%) kaffaluuf dirqama qaba.
+
+4. Qulqullina Suuraa/Viidiyoo fi Agarsiisa Qabeenyaa: Abbaan qabeenyaa ykn ejantiin suuraa fi viidiyoo qulqullina olaanaa qabu qabachuufi kaa'uu (upload) qaba. Yoo maamilaan qabeenya ilaaluu gaafate, abbaan qabeenyaa/ejantiin torban keessa guyyaa lama namaan argamuu fi agarsiisa olaanaa fi aartii ta'een kennuu qaba.
+
+5. Idaa irraa Bilisa Ta'uu fi Furmaata Falmii: Qabeenyi idaa mootummaa, liqaa, ykn gaafiilee hawaasaa irraa guutuummaan bilisa ta'uu qaba. Yoo idaan ykn falmii kamiyyuu argame, abbaan qabeenyaa maallaqa bitattaa/kiraastuu fi baasii hunda kaffalame guutuu deebisuu qaba. Yoo bitataan/kiraastuu furmaata falmii kana dhuunfaa isaatiin barbaade, bakka seeraan eeyyamame keessatti baasii isaa dhaan hojjechuu danda'a.
+
+6. Beeksisa Dogoggoraa Dhoowwuu: Abbaan qabeenyaa ykn ejantiin beeksisa dogoggoraa, sobaa, ykn nama dogoggoruun qabeenya maxxansu seeraaf itti gaafatamummaa qaba.
+
+7. Mirkaneessa DawoLife: DawoLife odeeffannoo sirrii fi mirkanneessaa bitattootaaf dhiyeessa. Daataan, ragaan qabeenyummaa, fi ragaaleen abbaa qabeenyaa ykn ejantii dhiyeesse, qormaata (verification) of danda'ee baala mootummaa fi seeraatiin akka hojjetu taasisa.
+
+8. Fudhatama Seeraa: Wanti seerotaa fi waliigalteen kun hundi waliigalteen seeraa qabatamaa fi miseensota naannoo seeraatiin fudhatama qaba.''',
+      'terms_conditions_agent_full': '''Dirqama fi Itti Gaafatama Faddaaltotaa (Brokers/Agents)
+
+1. Itti Gaafatama Seeraa fi Seera Kabajuu: Hojii hojjetuu fi ragaalee dhiyeessuu kamiifuu, qaamni sun akka seera fi dambii biyyaatti kan itti gaafatamu ta'a. Ulaagaa barbaachisu hundumaa guutuuf dirqama qaba.
+
+2. Bu'aa Dabalataa Performance Irraati Hundaa'e: Haala hojii (performance) irratti hundaa'uun bu'aa dabalataa kan argatu ta'a.
+
+3. Faddaala Eeyyama Seeraa Qabu: Faddaalli seera qabeessi miseensa dhaabbata kanaa ta'uun karaa dhaabbataatiin kan dalage, gatii tajaajilaa irraa dhibbeentaa walakkaa (50%) ni argata.
+
+4. Faddaala Eeyyama Seeraa Hin Qabne: Faddaalli eeyyama seeraa hin qabne miseensa dhaabbata kanaa ta'uun karaa dhaabbataatiin kan dalage, gatii tajaajilaa irraa dhibbeentaa walakkaa (50%) ni argata. Kanuma argatee keessaa gibira mootummaa karaa dhaabbataatiin mootummaaf ni kaffalama.
+
+5. Seera Faddaala Tokkoo: Hojii ykn qabeenya tokkoof faddaala tokko qofa dhaabbanni kun kan beeku ta'a.
+
+6. Gurgurtaa Deddeebi'anii Maxxansuu Dhorkuu: Hojii kanaan dura maxxanfame irra deebiin maxxansuun nama adabsiisa, akkasumas hojii irraa kan nama ariisiisu ta'a.
+
+7. Mirkaneessa Abbaa Qabeenyaa: Faddaalli ykn broker-n gaafa qabeenya gurgurtaaf moosajii (app/platform) irratti fe'u, dhugummaa isaa mirkaneessuuf profile abbaa qabeenyaa sana dhaabbataaf dabarsee ni kennas.''',
+      'privacy_policy_full': '''Ajajaa Daataa fi Waligaltee Eejantii / Abbaa Qabeenyaa
+
+1. Abbaa qabeenyummaa ykn bakka bu'ummaa
+Abbaan qabeenyaa ykn eejantii qabeenya gurguru tokko ulaagaa maalii guutuu qaba. Qabeenyichi kan isaa ta'uu ragaa abbaa qabeenyummaa dhiyeessuu qaba. Bakka bu'aa (Agent) yoo ta'e immoo, ragaa bakka bu'iinsaa guutuu seera qabeessa ta'ee fi guyyaa bittaa fi gurgurtaatti ragaalee orijinaala ta'an hunda qabatee dhihaachuu qaba.
+
+2. Sirrii ta'uu ragaalee
+Ragaaleen dhiyaatan sirrii ta'uu qabu. Ragaan dhiyaate soba yoo ta'e, qaamni ragaa sobaa kana maxxansees ta'e dhiyeesse akka seera biyyattiitti kan adabamuu fi baasii ykn dadhabbii kanaan walqabatee dhufu kamiyyuu kan kaffalu ta'a.
+
+3. Kaffaltii beeksifannaa
+Qabeenya isaa weebsaayitii kana irratti beeksifachuuf kaffaltii barbaachisu kaffaluu qaba. Kunis, gurgurtaa kamiyyuu irraa dhibbantaa lama (2%), kiraa yoo ta'e immoo dhibbantaa kudhan (10%) kan kaffalu ta'a. Abbaan qabeenyaa tokko erga as irratti beeksifatee booda karaa biraatiin yoo gurgure ykn kireesse illee, dhibbantaa lama kaffaluuf dirqama qaba.
+
+4. Suuraa, viidiyoo fi agarsiisaa
+Abbaan qabeenyichaa suuraalee fi viidiyoowwan qulqullina qaban waraabee weebsaayiticha irratti fe'uuf dirqama qaba. Maamilli (customer) qabeenyicha ilaaluu barbaadu yoo jiraate, torbanitti guyyaa lama qaamaan argamee haala gaariin agarsiisuu qaba.
+
+5. Baankii/iddaa hin qabu
+Qabeenyichi idaa mootummaa ykn idaa dhuunfaa kan hin qabne ta'uu qaba. Idaa kan qabu ta'ee yoo argame garuu, abbaan qabeenyaa akka fedhii qaama bitatee ykn kireeffataatitti maallaqa isaa fi baasii dadhabbii isaa deebisuufii qaba. Qaamni bitate sun falmicha (himannicha) irraa cufsiisuu yoo barbaade, baasii mataa isaatiin bakka barbaachisutti dhihaatee kan falmatu fi irraa cufsiisu ta'a.
+
+6. Beeksisuu dhugaa
+Abbaan qabeenyaa ykn eejantiin qabeenya tokko bifa dogoggoraatiin/sobaan kan beeksisu ykn maxxansu yoo ta'e, itti gaafatama seeraa ni qabaata.
+
+7. Mirkaneessuu odeeffannoo
+Dhaabbanni "DawoLife" bittootaaf odeeffannoo qulqulluu ni dhiyeessa. Odeeffannoo abbaa qabeenyaa ykn eejantii irraa dhihaate, qaama dhimmi ilaallatu irraa dhugummaa isaa ni mirkaneessa.
+
+8. Seerota hojii
+Seeronni fi waliigalteen kun hundi dambii fi seera biyya keenyaa biratti fudhatama kan qaban ni ta'u.''',
       'after_submission': 'Erga galchitee booda',
       'after_submission_note': 'Akaawuntii kee',
       'pending_approval': 'Eerga mirkanaa\'uu',
@@ -876,6 +1286,10 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'manage_profile': 'Ibsa, ragaa fi garee kee bulchi.',
       'profile': 'Ibsa',
       'save_profile': 'Ibsa qusachiisi',
+      'edit_profile': 'Ibsa sirreessi',
+      'change_photo': 'Suuraa jijjiiri',
+      'uploading_photo': 'Suuraa fe\'iiraa...',
+      'profile_updated': 'Ibsi kee milkaa\'inaan haaromameera',
       'only_root_admin': 'Adminoota bu\'uuraa qofatu akkaawuntii admin haaraa uumuu danda\'u.',
       'create_new_admin': 'Admin haaraa uumi',
       'create_admin': 'Admin uumi',
@@ -963,6 +1377,15 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'property_submitted_note': 'Tartiibni kee ga\'eera, sakatta\'aa jira. Gareen keenya ragaa mirkaneessee maxxansa.',
       'post_another_property': 'Qabeenya biraa maxxansi',
       'submit_property': 'Qabeenya galchi',
+      'submit_listing': 'Tartiiba galchi',
+      'review_listing_info': 'Odeeffannoo Tartiibaa sakatta\'i',
+      'location_details': 'Ibsa Naannoo',
+      'media_upload': 'Miidiyaa fe\'i',
+      'floor_number': 'Lakkoofsa fooyaa',
+      'parcel': 'Parcel',
+      'block': 'Bilookii',
+      'home_no': 'Lakk. Manna',
+      'select_location_map': 'Itti fufuuf iddoo qabeenyaa maapii irratti filadhu.',
       'post_vehicle': 'Makiinaa maxxansi',
       'list_vehicle_note': 'Makiinaa kee miliyoona bituu fi gurguruuf maxxansi',
       'technical': 'Teekinikaala',
@@ -1056,7 +1479,6 @@ static const Map<AppLanguage, Map<String, String>> _formStrings = {
       'fill_demo_data': 'Deetaa agarsiisaa guuti',
   },
 };
-
 static const Map<AppLanguage, Map<String, String>> _valueStrings = {
   AppLanguage.english: {
 
@@ -1274,11 +1696,9 @@ static const Map<AppLanguage, Map<String, String>> _valueStrings = {
       'Included': 'Included',
   },
 };
-
   static String t(AppLanguage lang, String key) {
     return _strings[lang]?[key] ?? _formStrings[lang]?[key] ?? _strings[AppLanguage.english]?[key] ?? _formStrings[AppLanguage.english]?[key] ?? key;
   }
-
   /// Translates a stored English option value (e.g. "For Sale") for display.
   static String tv(AppLanguage lang, String value) {
     if (value.isEmpty) return value;

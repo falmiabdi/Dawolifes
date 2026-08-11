@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/network/api_client.dart';
+import '../core/network/websocket_service.dart';
 import '../core/theme/app_colors.dart';
 import '../data/repositories/message_repository.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/messages/messages_screen.dart';
+import '../features/more/more_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/saved/saved_screen.dart';
 import '../features/sell/sell_screen.dart';
@@ -26,6 +29,8 @@ class _AppShellState extends State<AppShell> {
   int _index = 0;
   int _unread = 0;
   Timer? _unreadTimer;
+  StreamSubscription<WSMessage>? _wsSub;
+  bool _wsConnected = false;
 
   @override
   void initState() {
@@ -33,11 +38,26 @@ class _AppShellState extends State<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadUnread());
     // Mirror the web bottom nav: poll the unread message count every 30s.
     _unreadTimer = Timer.periodic(const Duration(seconds: 30), (_) => _loadUnread());
+    // Real-time: reconnect on login, and refresh the badge on socket events.
+    _wsSub = context.read<WebSocketService>().messages.listen((msg) {
+      if (!mounted) return;
+      switch (msg.type) {
+        case WSMessageType.message:
+        case WSMessageType.notification:
+        case WSMessageType.unreadCount:
+          _loadUnread();
+          break;
+        default:
+          break;
+      }
+    });
   }
 
   @override
   void dispose() {
     _unreadTimer?.cancel();
+    _wsSub?.cancel();
+    context.read<WebSocketService>().disconnect();
     super.dispose();
   }
 
@@ -55,9 +75,21 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
+  Future<void> _syncConnection(AuthProvider auth) async {
+    final ws = context.read<WebSocketService>();
+    if (auth.isLoggedIn && !_wsConnected) {
+      _wsConnected = true;
+      await ws.connect();
+    } else if (!auth.isLoggedIn && _wsConnected) {
+      _wsConnected = false;
+      await ws.disconnect();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    _syncConnection(auth);
 
     return Scaffold(
       body: IndexedStack(
@@ -68,6 +100,7 @@ class _AppShellState extends State<AppShell> {
           const SellScreen(),
           const MessagesScreen(),
           const ProfileScreen(),
+          const MoreScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -91,6 +124,10 @@ class _AppShellState extends State<AppShell> {
             label: 'Messages',
           ),
           const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.more_horiz),
+            label: 'More',
+          ),
         ],
       ),
     );

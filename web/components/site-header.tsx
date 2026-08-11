@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, Plus, X, User } from "lucide-react"
+import { Menu, Plus, X, User, ChevronDown, Newspaper } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { buttonVariants } from "@/components/ui/button"
 import Image from "next/image"
@@ -19,8 +19,16 @@ const navLinks = [
   { label: "Agents", href: "/#agents" },
 ]
 
+const moreLinks = [
+  { label: "News", href: "/news", icon: Newspaper },
+  { label: "Sell", href: "/sell", icon: Plus },
+  { label: "Login", href: "/login", icon: User },
+  { label: "Register", href: "/register", icon: User },
+]
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const { t } = useI18n()
   const { user } = useAuth()
   const isAuth = !!user
@@ -69,7 +77,45 @@ export function SiteHeader() {
                 {link.label}
               </Link>
             ))}
-            <span className="text-sm font-medium text-foreground/70">More</span>
+            <div className="relative">
+              <button
+                className="flex items-center gap-1 text-sm font-medium text-foreground/70 transition-colors hover:text-primary"
+                onClick={() => setMoreOpen((o) => !o)}
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
+              >
+                More
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
+              </button>
+              {moreOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setMoreOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    role="menu"
+                    className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-xl"
+                  >
+                    {moreLinks.map((link) => {
+                      const Icon = link.icon
+                      return (
+                        <Link
+                          key={link.label}
+                          href={link.href}
+                          onClick={() => setMoreOpen(false)}
+                          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground/80 transition hover:bg-muted"
+                        >
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          {link.label}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -101,6 +147,16 @@ export function SiteHeader() {
           <nav className="border-t border-border bg-card px-4 py-3 lg:hidden">
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {moreLinks.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}

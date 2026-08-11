@@ -1,12 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/network/api_client.dart';
+import '../../core/network/websocket_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/models/announcement.dart';
 import '../../data/models/property.dart';
 import '../../data/models/vehicle.dart';
 import '../../data/repositories/agent_repository.dart';
+import '../../data/repositories/announcement_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../news/news_screen.dart';
 import '../portal/widgets.dart';
 import 'agent_payments.dart';
 import 'agent_post_property.dart';
@@ -27,11 +34,38 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   String? _error;
   List<Property> _properties = [];
   List<Vehicle> _vehicles = [];
+  List<Announcement> _announcements = [];
+  StreamSubscription<WSMessage>? _wsSub;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _wsSub = context.read<WebSocketService>().messages.listen((msg) {
+      if (msg.type == WSMessageType.announcement && mounted) {
+        _loadAnnouncements();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadAnnouncements() async {
+    try {
+      final items = await AnnouncementRepository(context.read<ApiClient>())
+          .fetchAnnouncements();
+      if (!mounted) return;
+      setState(() {
+        _announcements = items.take(3).toList();
+        _error = null;
+      });
+    } catch (_) {
+      // Announcements are secondary; keep the dashboard usable if they fail.
+    }
   }
 
   Future<void> _load() async {
@@ -41,11 +75,16 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     });
     try {
       final repo = context.read<AgentRepository>();
-      final results = await Future.wait([repo.fetchMyProperties(), repo.fetchMyVehicles()]);
+      final results = await Future.wait([
+        repo.fetchMyProperties(),
+        repo.fetchMyVehicles(),
+        AnnouncementRepository(context.read<ApiClient>()).fetchAnnouncements(),
+      ]);
       if (!mounted) return;
       setState(() {
         _properties = results[0] as List<Property>;
         _vehicles = results[1] as List<Vehicle>;
+        _announcements = (results[2] as List<Announcement>).take(3).toList();
         _loading = false;
       });
     } catch (e) {
@@ -165,12 +204,78 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                         enabled: true,
                         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPaymentsScreen())),
                       ),
+                      if (_announcements.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        SectionHeader(
+                          title: 'Announcements',
+                          action: TextButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const NewsScreen()),
+                            ),
+                            child: const Text('View all'),
+                          ),
+                        ),
+                        _announcementsSection(),
+                      ],
                       const SizedBox(height: 20),
                       const SectionHeader(title: 'Recent Activity'),
                       _recentActivity(),
                     ],
                   ),
                 ),
+    );
+  }
+
+  Widget _announcementsSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFFFF7ED), Color(0xFFFFFBF5)]),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        children: [
+          for (final item in _announcements) ...[
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NewsScreen()),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    const Icon(Icons.campaign_outlined, color: Colors.orange, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.foreground),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            item.content,
+                            style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 18, color: AppColors.mutedForeground),
+                  ],
+                ),
+              ),
+            ),
+            if (item != _announcements.last) const Divider(height: 1, color: Colors.orange),
+          ],
+        ],
+      ),
     );
   }
 

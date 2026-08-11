@@ -117,35 +117,51 @@ export const categories = [
 
 export const services = [
   {
-    title: "User Friendly",
-    icon: "LayoutGrid",
-    description: "Clean, modern design with both classic and modern look options.",
+    titleKey: "service_house_sales",
+    descriptionKey: "service_house_sales_desc",
   },
   {
-    title: "Free Support",
-    icon: "Headphones",
-    description: "24/7 free support for all your real estate needs.",
+    titleKey: "service_house_rentals",
+    descriptionKey: "service_house_rentals_desc",
   },
   {
-    title: "Advanced Search",
-    icon: "Search",
-    description: "Powerful property search with customizable filters and fields.",
+    titleKey: "service_vehicle_sales",
+    descriptionKey: "service_vehicle_sales_desc",
   },
   {
-    title: "Google & OpenStreet Maps",
-    icon: "MapPin",
-    description: "Google Maps API integration with property markers and location picking.",
+    titleKey: "service_vehicle_rentals",
+    descriptionKey: "service_vehicle_rentals_desc",
   },
   {
-    title: "Member Support",
-    icon: "Users",
-    description: "User registration, login, and social media sign-in support.",
+    titleKey: "service_buyer_seller",
+    descriptionKey: "service_buyer_seller_desc",
   },
   {
-    title: "Property Submit",
-    icon: "Building2",
-    description: "Front-end property submission for owners and registered agents.",
+    titleKey: "service_tenant_landlord",
+    descriptionKey: "service_tenant_landlord_desc",
   },
+] as const
+
+export const sellSteps = [
+  { titleKey: "sell_step1", descriptionKey: "sell_step1_desc" },
+  { titleKey: "sell_step2", descriptionKey: "sell_step2_desc" },
+  { titleKey: "sell_step3", descriptionKey: "sell_step3_desc" },
+  { titleKey: "sell_step4", descriptionKey: "sell_step4_desc" },
+  { titleKey: "sell_step5", descriptionKey: "sell_step5_desc" },
+  { titleKey: "sell_step6", descriptionKey: "sell_step6_desc" },
+  { titleKey: "sell_step7", descriptionKey: "sell_step7_desc" },
+  { titleKey: "sell_step8", descriptionKey: "sell_step8_desc" },
+] as const
+
+export const buySteps = [
+  { titleKey: "buy_step1", descriptionKey: "buy_step1_desc" },
+  { titleKey: "buy_step2", descriptionKey: "buy_step2_desc" },
+  { titleKey: "buy_step3", descriptionKey: "buy_step3_desc" },
+  { titleKey: "buy_step4", descriptionKey: "buy_step4_desc" },
+  { titleKey: "buy_step5", descriptionKey: "buy_step5_desc" },
+  { titleKey: "buy_step6", descriptionKey: "buy_step6_desc" },
+  { titleKey: "buy_step7", descriptionKey: "buy_step7_desc" },
+  { titleKey: "buy_step8", descriptionKey: "buy_step8_desc" },
 ] as const
 
 export const amenityOptions = [

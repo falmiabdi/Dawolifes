@@ -53,7 +53,7 @@ export function setupWebSocket(server: HTTPServer) {
           case 'mark_read':
             await prisma.notification.updateMany({
               where: { userId, read: false },
-              data: { read: true },
+              data: { read: true, readAt: new Date() },
             })
             broadcastToUser(userId, { type: 'mark_read_ack', timestamp: Date.now() })
             break
@@ -62,7 +62,7 @@ export function setupWebSocket(server: HTTPServer) {
             if (message.notificationId) {
               await prisma.notification.updateMany({
                 where: { id: message.notificationId, userId },
-                data: { read: true },
+                data: { read: true, readAt: new Date() },
               })
               broadcastToUser(userId, { type: 'mark_single_read_ack', notificationId: message.notificationId })
             }
@@ -115,6 +115,17 @@ export function broadcastToUser(userId: string, data: any) {
   for (const ws of userClients) {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(message)
+    }
+  }
+}
+
+export function broadcastToAll(data: any) {
+  const message = JSON.stringify(data)
+  for (const userClients of clients.values()) {
+    for (const ws of userClients) {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(message)
+      }
     }
   }
 }

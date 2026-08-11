@@ -120,9 +120,12 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [agreed, setAgreed] = useState({ terms: false, privacy: false })
+  const [termsModal, setTermsModal] = useState<'owner' | 'agent' | null>(null)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   // Step 1
   const [fullName, setFullName] = useState('')
+  const [userType, setUserType] = useState('')
   const [gender, setGender] = useState('')
   const [dob, setDob] = useState('')
   const [nationality, setNationality] = useState('Ethiopian')
@@ -197,7 +200,8 @@ export default function OnboardingPage() {
     try {
       if (step === 1) {
         if (!fullName.trim()) { setError('Full name is required.'); setSaving(false); return }
-        await saveStep({ fullName, gender, dateOfBirth: dob, nationality, preferredLanguage: language })
+        if (!userType) { setError('Please select whether you are registering as an Agent or an Owner.'); setSaving(false); return }
+        await saveStep({ fullName, gender, userType: userType === 'owner' ? 'Owner' : 'Agent', dateOfBirth: dob, nationality, preferredLanguage: language })
       } else if (step === 2) {
         if (!ethPhone.trim()) { setError('Ethiopian Telecom phone is required.'); setSaving(false); return }
         await saveStep({ ethPhone, safaricomPhone, region, city, woreda, kebele, fullAddress })
@@ -273,14 +277,24 @@ export default function OnboardingPage() {
                   <Label>{t('full_name')} <span className="text-red-500">*</span></Label>
                   <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Abebe Girma" />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t('gender')}</Label>
-                  <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    <option value="">{t('select_gender')}</option>
-                    <option>{t('male')}</option>
-                    <option>{t('female')}</option>
-                    <option>{t('other')}</option>
-                  </select>
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label>{t('gender')}</Label>
+                    <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                      <option value="">{t('select_gender')}</option>
+                      <option>{t('male')}</option>
+                      <option>{t('female')}</option>
+                      <option>{t('other')}</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('user_type')} <span className="text-red-500">*</span></Label>
+                    <select value={userType} onChange={(e) => setUserType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                      <option value="">{t('select_user_type')}</option>
+                      <option value="owner">{t('owner_option')}</option>
+                      <option value="agent">{t('agent_option')}</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>{t('date_of_birth')}</Label>
@@ -427,11 +441,11 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.terms} onChange={(e) => setAgreed((a) => ({ ...a, terms: e.target.checked }))} />
-                  <span className="text-sm text-slate-600">{t('agree_terms')} <span className="font-semibold text-orange-600 underline cursor-pointer">{t('terms_conditions')}</span> {t('of_platform')}</span>
+                  <span className="text-sm text-slate-600">{t('agree_terms')} <button type="button" onClick={(e) => { e.preventDefault(); setTermsModal(userType === 'owner' ? 'owner' : 'agent') }} className="font-semibold text-orange-600 underline">{userType === 'owner' ? t('owner_terms_title') : t('agent_terms_title')}</button> {t('of_platform')}</span>
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.privacy} onChange={(e) => setAgreed((a) => ({ ...a, privacy: e.target.checked }))} />
-                  <span className="text-sm text-slate-600">{t('agree_terms')} <span className="font-semibold text-orange-600 underline cursor-pointer">{t('privacy_policy')}</span> {t('agree_privacy')}</span>
+                  <span className="text-sm text-slate-600">{t('agree_terms')} <button type="button" onClick={(e) => { e.preventDefault(); setShowPrivacy(true) }} className="font-semibold text-orange-600 underline">{t('privacy_policy')}</button> {t('agree_privacy')}</span>
                 </label>
               </div>
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
@@ -460,6 +474,60 @@ export default function OnboardingPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      {termsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900">{termsModal === 'owner' ? t('owner_terms_title') : t('agent_terms_title')}</h3>
+              <button
+                type="button"
+                onClick={() => setTermsModal(null)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+              {termsModal === 'owner' ? t('terms_conditions_full') : t('terms_conditions_agent_full')}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <Button type="button" onClick={() => setTermsModal(null)} className="rounded-full bg-orange-500 text-white hover:bg-orange-600">
+                {t('close')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Policy Modal */}
+      {showPrivacy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900">{t('privacy_policy')}</h3>
+              <button
+                type="button"
+                onClick={() => setShowPrivacy(false)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+              {t('privacy_policy_full')}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <Button type="button" onClick={() => setShowPrivacy(false)} className="rounded-full bg-orange-500 text-white hover:bg-orange-600">
+                {t('close')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
