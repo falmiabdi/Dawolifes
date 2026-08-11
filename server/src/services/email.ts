@@ -1,5 +1,7 @@
 import 'dotenv/config'
 
+import { isSmtpConfigured, sendMailViaSmtp } from './mail.js'
+
 const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
 const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY || ''
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
@@ -15,9 +17,23 @@ interface SendEmailParams {
 }
 
 async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailParams) {
+  // Prefer SMTP (Brevo relay) when the SMTP_* variables are configured. This
+  // routes every existing caller (OTP, reset password, approval, rejection …)
+  // through Brevo SMTP without duplicating the higher-level message builders.
+  if (isSmtpConfigured()) {
+    return sendMailViaSmtp({
+      to: to.email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+    })
+  }
+
+  // Fallback: Brevo REST transactional API (used in local dev when only
+  // BREVO_API_KEY / BREVO_SMTP_KEY is set).
   const apiKey = BREVO_SMTP_KEY || BREVO_API_KEY
   if (!apiKey) {
-    console.warn('BREVO_API_KEY not set � skipping email to', to.email)
+    console.warn('Email transport not configured. Skipping email to', to.email)
     return
   }
 
