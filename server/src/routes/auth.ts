@@ -17,50 +17,46 @@ const otpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50 })
 const emailFilter = (email: string) => ({ email: { equals: email, mode: 'insensitive' as const } })
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
-// Pending registrations are held in memory and only committed to the DB after
-// the user submits the correct verification code.
-interface PendingRegistration {
+// Accounts are created immediately in the DB at registration with
+// emailVerified=false, so a user with a correct password can always sign in
+// (the account survives server restarts) and OTP codes are persisted on the
+// user record instead of living in memory.
+const OTP_BYPASS_CODE = process.env.OTP_BYPASS_CODE
+
+function createUserWithOtp(data: {
   username: string
   email: string
   phone?: string
   passwordHash: string
   profilePhoto?: string
   role: 'agent' | 'user'
-  otp: string
-  otpExpiresAt: Date
-}
-const pendingRegistrations = new Map<string, PendingRegistration>()
-// The universal bypass code is ONLY active when explicitly configured via env.
-// Never enable it in production.
-const OTP_BYPASS_CODE = process.env.OTP_BYPASS_CODE
-
-setInterval(() => {
-  const now = Date.now()
-  for (const [email, pending] of pendingRegistrations) {
-    if (pending.otpExpiresAt.getTime() < now) {
-      pendingRegistrations.delete(email)
+}) {
+  const otp = generateOtp()
+  const expiresAt = otpExpiresAt()
+  return prisma.user.create({
+    data: {
+      username: data.username,
+      email: data.email,
+      phone: data.phone,
+      password: data.passwordHash,
+      profilePhoto: data.profilePhoto,
+      role: data.role,
+      roles: [data.role],
+      status: data.role === 'agent' ? 'Pending' : 'Approved',
+      emailVerified: false,
+      onboardingComplete: data.role === 'user',
+      otp,
+      otpExpiresAt: expiresAt,
+    },
+  }).then((user) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[OTP] Verification code for ${data.email}: ${otp} (expires in 60 minutes)`)
     }
-  }
-}, 10 * 60 * 1000)
-
-function storePendingRegistration(
-  email: string,
-  data: Omit<PendingRegistration, 'otp' | 'otpExpiresAt'>
-) {
-  const pending: PendingRegistration = {
-    ...data,
-    email,
-    otp: generateOtp(),
-    otpExpiresAt: otpExpiresAt(),
-  }
-  pendingRegistrations.set(email, pending)
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[OTP] Verification code for ${email}: ${pending.otp} (expires in 10 minutes)`)
-  }
-  sendOtpEmail(email, pending.username, pending.otp).catch((err) => {
-    console.error('Failed to send OTP email:', err)
+    sendOtpEmail(data.email, data.username, otp).catch((err) => {
+      console.error('Failed to send OTP email:', err)
+    })
+    return user
   })
-  return pending
 }
 
 // Register
@@ -75,12 +71,31 @@ router.post('/register', authLimiter, async (req, res) => {
     const normalizedEmail = normalizeEmail(email)
 
     const existingUser = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
-    if (existingUser) {
+    if (existingUser && existingUser.emailVerified) {
       return res.status(409).json({ message: 'Email already registered' })
     }
 
+    if (existingUser && !existingUser.emailVerified) {
+      const otp = generateOtp()
+      const expiresAt = otpExpiresAt()
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { otp, otpExpiresAt: expiresAt },
+      })
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[OTP] Verification code for ${normalizedEmail}: ${otp} (expires in 60 minutes)`)
+      }
+      sendOtpEmail(normalizedEmail, username, otp).catch((err) => {
+        console.error('Failed to send OTP email:', err)
+      })
+      return res.status(200).json({
+        message: 'An account already exists for this email. A new verification code has been sent.',
+        ...(process.env.NODE_ENV !== 'production' ? { devOtp: otp } : {}),
+      })
+    }
+
     const hashedPassword = await hashPassword(password)
-    const pending = storePendingRegistration(normalizedEmail, {
+    const user = await createUserWithOtp({
       username,
       email: normalizedEmail,
       passwordHash: hashedPassword,
@@ -89,7 +104,7 @@ router.post('/register', authLimiter, async (req, res) => {
 
     res.status(201).json({
       message: 'Registration successful. Please verify your email to continue.',
-      ...(process.env.NODE_ENV !== 'production' ? { devOtp: pending.otp } : {}),
+      ...(process.env.NODE_ENV !== 'production' ? { devOtp: user.otp } : {}),
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
@@ -108,12 +123,32 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
     const normalizedEmail = normalizeEmail(email)
 
     const existingUser = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
-    if (existingUser) {
+    if (existingUser && existingUser.emailVerified) {
       return res.status(409).json({ message: 'Email already registered' })
     }
 
+    if (existingUser && !existingUser.emailVerified) {
+      const otp = generateOtp()
+      const expiresAt = otpExpiresAt()
+      const user = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { otp, otpExpiresAt: expiresAt },
+      })
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[OTP] Verification code for ${normalizedEmail}: ${otp} (expires in 60 minutes)`)
+      }
+      sendOtpEmail(normalizedEmail, name, otp).catch((err) => {
+        console.error('Failed to send OTP email:', err)
+      })
+      return res.status(200).json({
+        message: 'An account already exists for this email. A new verification code has been sent.',
+        pending: true,
+        ...(process.env.NODE_ENV !== 'production' ? { devOtp: otp } : {}),
+      })
+    }
+
     const hashedPassword = await hashPassword(password)
-    const pending = storePendingRegistration(normalizedEmail, {
+    const user = await createUserWithOtp({
       username: name,
       email: normalizedEmail,
       phone,
@@ -125,7 +160,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
     res.status(201).json({
       message: 'Account created successfully. Please verify your email to continue.',
       pending: true,
-      ...(process.env.NODE_ENV !== 'production' ? { devOtp: pending.otp } : {}),
+      ...(process.env.NODE_ENV !== 'production' ? { devOtp: user.otp } : {}),
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Registration failed' })
@@ -142,59 +177,19 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     }
 
     const normalizedEmail = normalizeEmail(String(email))
-    const pending = pendingRegistrations.get(normalizedEmail)
+    let user: any = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
 
-    let user: any
-    let createdNow = false
-
-    if (pending) {
-    const bypass = !!OTP_BYPASS_CODE && String(otp).trim() === OTP_BYPASS_CODE
-    if (!bypass && String(otp).trim() !== pending.otp) {
-      return res.status(400).json({ message: 'Invalid OTP code' })
-    }
-    if (!bypass && pending.otpExpiresAt.getTime() < Date.now()) {
-      return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found. Please register first.' })
     }
 
-      // Account is created ONLY after the correct code is entered.
-      user = await prisma.user.create({
-        data: {
-          username: pending.username,
-          email: pending.email,
-          phone: pending.phone,
-          password: pending.passwordHash,
-          profilePhoto: pending.profilePhoto,
-          role: pending.role,
-          roles: [pending.role],
-          status: pending.role === 'agent' ? 'Pending' : 'Approved',
-          emailVerified: true,
-          onboardingComplete: pending.role === 'user',
-        },
-      })
-      pendingRegistrations.delete(normalizedEmail)
-      createdNow = true
-
-      if (pending.role === 'agent') {
-        notifyAdmins(
-          'New Agent Registration',
-          `${pending.username} (${pending.email}) has verified their email and is awaiting approval.`,
-          'info',
-          { type: 'agent', id: user.id }
-        ).catch(() => {})
-      }
-    } else {
-      user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
-      if (!user) {
-        return res.status(404).json({ message: 'User not found. Please register first.' })
-      }
-
-      // Legacy flow: OTP stored on the user record.
+    if (!user.emailVerified) {
+      const bypass = !!OTP_BYPASS_CODE && String(otp).trim() === OTP_BYPASS_CODE
       const storedOtp = user.otp
-      const expiresAt = user.otpExpiresAt
-      if (!storedOtp || String(storedOtp).trim() !== String(otp).trim()) {
+      if (!bypass && (!storedOtp || String(storedOtp).trim() !== String(otp).trim())) {
         return res.status(400).json({ message: 'Invalid OTP code' })
       }
-      if (!expiresAt || new Date(expiresAt).getTime() < Date.now()) {
+      if (!bypass && (!user.otpExpiresAt || new Date(user.otpExpiresAt).getTime() < Date.now())) {
         return res.status(400).json({ message: 'OTP code has expired. Please request a new one.' })
       }
 
@@ -202,6 +197,15 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
         where: { id: user.id },
         data: { otp: null, otpExpiresAt: null, emailVerified: true },
       })
+
+      if (user.role === 'agent') {
+        notifyAdmins(
+          'New Agent Registration',
+          `${user.username} (${user.email}) has verified their email and is awaiting approval.`,
+          'info',
+          { type: 'agent', id: user.id }
+        ).catch(() => {})
+      }
     }
 
     const { id: userId, email: emailVal, role } = user
@@ -244,23 +248,9 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     }
 
     const normalizedEmail = normalizeEmail(String(email))
-    const pending = pendingRegistrations.get(normalizedEmail)
-
-    if (pending) {
-      pending.otp = generateOtp()
-      pending.otpExpiresAt = otpExpiresAt()
-      sendOtpEmail(normalizedEmail, pending.username, pending.otp).catch((err) => {
-        console.error('Failed to send OTP email:', err)
-      })
-      return res.json({
-        message: 'A new verification code has been generated.',
-        ...(process.env.NODE_ENV !== 'production' ? { devOtp: pending.otp } : {}),
-      })
-    }
-
     const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
     if (!user) {
-      return res.status(404).json({ message: 'User not found' })
+      return res.status(404).json({ message: 'User not found. Please register first.' })
     }
 
     const otp = generateOtp()
@@ -289,10 +279,21 @@ router.post('/signin', authLimiter, async (req, res) => {
     }
 
     const { email, password } = parsed.data
-    const user = await prisma.user.findFirst({ where: emailFilter(normalizeEmail(email)) })
+    let user = await prisma.user.findFirst({ where: emailFilter(normalizeEmail(email)) })
 
     if (!user || !(await comparePassword(password, user.password))) {
       return res.status(401).json({ message: 'Invalid email or password' })
+    }
+
+    // OTP step temporarily bypassed: if the account exists with a correct
+    // password but emailVerified is still false (e.g. the user verified via
+    // Firebase's email link instead of the backend OTP), auto-verify on
+    // login and clear any stale OTP fields so the user can sign in right away.
+    if (!user.emailVerified) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true, otp: null, otpExpiresAt: null },
+      })
     }
 
     const { status } = user
