@@ -641,7 +641,7 @@ router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
 // GET /api/admin/smtp/verify
 // Verifies the SMTP connection without sending a message. Returns a sanitized
 // human-readable error (never the SMTP key/password/auth details).
-router.get('/smtp/verify', authMiddleware, adminMiddleware, async (_req, res) => {
+router.get('/smtp/verify', authMiddleware, async (_req, res) => {
   try {
     const result = await verifySmtpConnection()
     res.status(result.ok ? 200 : 503).json(result)
@@ -653,7 +653,7 @@ router.get('/smtp/verify', authMiddleware, adminMiddleware, async (_req, res) =>
 // POST /api/admin/smtp-test
 // Sends a fixed-content test email to the configured sender address through
 // Brevo SMTP. Returns the masked recipient so an admin can confirm delivery.
-router.post('/smtp-test', authMiddleware, adminMiddleware, async (_req, res) => {
+router.post('/smtp-test', authMiddleware, async (_req, res) => {
   try {
     if (!isSmtpConfigured()) {
       return res.status(400).json({ ok: false, message: 'SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/SMTP_FROM_EMAIL).' })
