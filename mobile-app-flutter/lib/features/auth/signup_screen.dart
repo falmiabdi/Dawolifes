@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/firebase/firebase_auth_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import '../admin/admin_portal.dart';
-import '../agent/agent_portal.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
+import 'verify_email_screen.dart';
 
-/// Signup flow: register on the backend then auto-login (the backend
-/// auto-verifies the email on signin, so no OTP screen is needed).
-/// Pass [initialRole] to skip the role picker (e.g. "Register as Agent" from
-/// the Sell tab).
+/// Signup flow:
+/// 1. Choose account type (Buyer or Seller/Agent).
+/// 2. Register on the backend (creates the DB record immediately).
+/// 3. Firebase creates the account + sends a verification email link.
+/// 4. User goes to VerifyEmailScreen — clicks the Firebase link, confirms,
+///    then is routed to the appropriate next screen.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key, this.initialRole});
 
@@ -83,52 +85,30 @@ class _SignupScreenState extends State<SignupScreen> {
         );
       }
 
-      // 2. Auto-login — the backend auto-verifies the email on signin so
-      //    no OTP step is needed. The user goes straight to the app.
+      // 2. Create a Firebase account + send the verification email link.
+      //    Best-effort — the backend auto-verifies on login as a fallback.
+      String? devOtp;
       try {
-        await auth.login(email: email, password: password);
-        if (!mounted) return;
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        if (auth.user != null && auth.user!.isAdmin) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
-        } else if (auth.user != null && auth.user!.isAgent) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
-        }
-        return;
+        final firebase = FirebaseAuthService();
+        await firebase.register(email: email, password: password);
       } catch (_) {
-        // Auto-login failed (e.g. server hiccup) — send to login screen
-        // so the user can try manually.
+        // Firebase account might already exist — non-fatal.
       }
 
       if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),
-        (route) => route.isFirst,
+
+      // 3. Go to the verification screen. The user clicks the Firebase link
+      //    in their email, then presses "I clicked the link — continue".
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => VerifyEmailScreen(email: email, devOtp: devOtp, password: password),
+        ),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.message.toLowerCase().contains('already registered') ||
           e.message.toLowerCase().contains('already')) {
-        // Account already exists — try to log in directly.
-        try {
-          await context.read<AuthProvider>().login(
-                email: _email.text.trim(),
-                password: _password.text,
-              );
-          if (!mounted) return;
-          Navigator.of(context).popUntil((route) => route.isFirst);
-          final auth = context.read<AuthProvider>();
-          if (auth.user != null && auth.user!.isAdmin) {
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
-          } else if (auth.user != null && auth.user!.isAgent) {
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
-          }
-          return;
-        } on ApiException catch (e2) {
-          setState(() => _error = 'This email is already registered. ${e2.message}');
-        } catch (_) {
-          setState(() => _error = 'This email is already registered. Try signing in instead.');
-        }
+        setState(() => _error = 'This email is already registered. Try signing in instead.');
       } else {
         setState(() => _error = e.message);
       }
@@ -264,8 +244,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _role == SignupRole.buyer
-                          ? 'We will email you a code to verify your account.'
-                          : 'Your application will be reviewed by our team after verification.',
+                          ? 'We will send you an email link to verify your account.'
+                          : 'We will send you an email link to verify your account, then you can complete your agent profile.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                     ),

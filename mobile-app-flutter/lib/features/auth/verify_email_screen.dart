@@ -9,6 +9,8 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../admin/admin_portal.dart';
+import '../agent/agent_portal.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 
@@ -25,10 +27,12 @@ class VerifyEmailScreen extends StatefulWidget {
     super.key,
     required this.email,
     this.devOtp,
+    this.password,
   });
 
   final String email;
   final String? devOtp;
+  final String? password;
 
   @override
   State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -46,6 +50,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   String? _error;
   Timer? _cooldownTimer;
   int _cooldown = 0;
+  String get _firebasePassword => widget.password ?? '';
 
   @override
   void initState() {
@@ -166,43 +171,56 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// Checks whether the Firebase verification link was clicked. When verified
-  /// and a dev OTP is available, the backend account is activated
-  /// automatically; otherwise the user is routed to the OTP entry (dev) or
-  /// sign-in.
-  Future<void> _checkFirebaseVerification() async {
-    setState(() {
-      _checkingFirebase = true;
-      _error = null;
-    });
-    try {
-      final verified = await FirebaseAuthService().isEmailVerified();
-      if (!mounted) return;
-      if (!verified) {
-        setState(() => _error = 'Your email is not verified yet. Click the link in the verification email we sent, then try again.');
-        return;
-      }
-      final devOtp = widget.devOtp;
-      if (devOtp != null && devOtp.length == _codeLength) {
-        for (var i = 0; i < _codeLength; i++) {
-          _controllers[i].text = devOtp[i];
-        }
-        await _verify();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email verified! You can now sign in.')),
-        );
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _error = 'Could not check verification status. Is this email used in this app?');
-    } finally {
-      if (mounted) setState(() => _checkingFirebase = false);
+  /// Checks whether the Firebase verification link was clicked. When verified,
+/// auto-logs in to the backend (which auto-verifies the email) and routes
+/// the user to the appropriate screen:
+/// - Agent → AgentPortalScreen (which gates on status: pending shows
+///   onboarding, rejected shows rejection reason + edit, approved shows full menu)
+/// - Admin → AdminPortalScreen
+/// - Buyer → home
+Future<void> _checkFirebaseVerification() async {
+  setState(() {
+    _checkingFirebase = true;
+    _error = null;
+  });
+  try {
+    final verified = await FirebaseAuthService().isEmailVerified();
+    if (!mounted) return;
+    if (!verified) {
+      setState(() => _error = 'Your email is not verified yet. Click the link in the verification email we sent, then try again.');
+      return;
     }
+
+    // Firebase confirmed the email — now log in to the backend.
+    // The backend auto-verifies the email on signin.
+    final auth = context.read<AuthProvider>();
+    try {
+      await auth.login(email: widget.email, password: _firebasePassword);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Email verified, but login failed: ${e.message}');
+      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Email verified, but login failed. Please sign in manually.');
+      return;
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    final user = auth.user;
+    if (user != null && user.isAdmin) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
+    } else if (user != null && user.isAgent) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
+    }
+  } catch (_) {
+    if (!mounted) return;
+    setState(() => _error = 'Could not check verification status. Is this email used in this app?');
+  } finally {
+    if (mounted) setState(() => _checkingFirebase = false);
   }
+}
 
   Future<void> _resendFirebaseVerification() async {
     setState(() {
