@@ -19,22 +19,26 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
   const onboardingDone = !!user?.onboardingComplete
   const approved = user?.status === 'Approved'
 
+  // Normalize pathname — trailingSlash:true means usePathname() returns
+  // "/agent/onboarding/" so strip the trailing slash for comparisons.
+  const path = pathname.replace(/\/+$/, '') || '/'
+
   useEffect(() => {
     if (!user) return
 
     // Every agent must complete their profile first.
-    if (!onboardingDone && pathname !== '/agent/onboarding') {
+    if (!onboardingDone && path !== '/agent/onboarding') {
       setRedirecting(true)
       router.replace('/agent/onboarding')
       return
     }
 
     // Fully onboarded + approved agents should not sit on the onboarding form.
-    if (onboardingDone && approved && pathname === '/agent/onboarding') {
+    if (onboardingDone && approved && path === '/agent/onboarding') {
       setRedirecting(true)
       router.replace('/agent')
     }
-  }, [user, onboardingDone, approved, pathname, router])
+  }, [user, onboardingDone, approved, path, router])
 
   if (redirecting) {
     return (
@@ -52,11 +56,11 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
   // Not yet approved: nothing may be used except resubmitting a rejected profile.
   if (!approved) {
     const canResubmit =
-      user?.status === 'Rejected' && (pathname === '/agent/onboarding' || pathname === '/agent/profile')
+      user?.status === 'Rejected' && (path === '/agent/onboarding' || path === '/agent/profile')
     if (!canResubmit) {
       return <PendingApprovalScreen />
     }
-    if (pathname === '/agent/onboarding') {
+    if (path === '/agent/onboarding') {
       return <>{children}</>
     }
   }
