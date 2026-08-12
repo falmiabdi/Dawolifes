@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
@@ -41,6 +42,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late final List<FocusNode> _focusNodes;
   bool _submitting = false;
   bool _resending = false;
+  bool _checking = false;
   String? _error;
   Timer? _cooldownTimer;
   int _cooldown = 0;
@@ -93,6 +95,46 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   String get _enteredCode => _controllers.map((c) => c.text.trim()).join();
+
+  Future<void> _openEmail() async {
+    final uri = Uri(scheme: 'mailto', path: widget.email);
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      // Email apps may not be installed; ignore.
+    }
+  }
+
+  /// The user clicked the "Verify Email" button in their inbox. Ask the server
+  /// whether the account is now verified, then route like OTP verification:
+  /// buyer -> app shell (dashboard), agent -> login screen.
+  Future<void> _checkViaLink() async {
+    setState(() {
+      _checking = true;
+      _error = null;
+    });
+
+    try {
+      final result = await context.read<AuthProvider>().checkVerification(email: widget.email);
+      if (!mounted) return;
+      if (result.user != null) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),
+          (route) => route.isFirst,
+        );
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = context.read<LanguageProvider>().t('verification_failed'));
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
 
   Future<void> _verify() async {
     final code = _enteredCode;
@@ -223,6 +265,71 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           Text(
             '${t('verify_email_subtitle')} ${widget.email}',
             style: const TextStyle(color: Color(0xFF475569), fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFED7AA)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.mail_outline, size: 18, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        t('verify_email_link_hint'),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF9A3412)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _openEmail,
+                        icon: const Icon(Icons.open_in_new, size: 16),
+                        label: Text(t('open_email')),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: _checking ? null : _checkViaLink,
+                        icon: _checking
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.check_circle_outline, size: 16),
+                        label: Text(t('check_verification')),
+                        style: FilledButton.styleFrom(
+                          foregroundColor: const Color(0xFF9A3412),
+                          backgroundColor: const Color(0xFFFFEDD5),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Row(

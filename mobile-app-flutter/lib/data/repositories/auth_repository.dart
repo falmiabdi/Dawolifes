@@ -111,6 +111,26 @@ class AuthRepository {
     return _registration(data);
   }
 
+  /// Checks whether [email] was verified via the emailed link (or OTP). For
+  /// buyers the server returns an access token + session, mirroring [verifyOtp],
+  /// so the user can go straight to the dashboard after clicking the link.
+  Future<VerifyOtpResult> checkVerification({required String email}) async {
+    final data = await _api.post('/api/auth/check-verification', {
+      'email': email,
+    }) as Map<String, dynamic>;
+
+    final token = data['accessToken'] as String?;
+    final userJson = data['user'] as Map<String, dynamic>?;
+    SessionUser? user;
+    if (token != null && token.isNotEmpty) {
+      await _api.saveToken(token);
+    }
+    if (userJson != null) {
+      user = SessionUser.fromJson(userJson);
+    }
+    return VerifyOtpResult(message: '${data['message'] ?? ''}', user: user);
+  }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
