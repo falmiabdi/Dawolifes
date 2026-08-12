@@ -20,21 +20,20 @@ interface SmtpConfig {
 let cachedTransporter: Transporter | null = null
 
 export function readSmtpConfig(): SmtpConfig | null {
-  const host = process.env.SMTP_HOST || process.env.SMTP_NAME
+  const host = process.env.SMTP_HOST || process.env.SMTP_NAME || process.env.BREVO_SMTP_NAME
   const user = process.env.SMTP_USER || process.env.BREVO_SMTP_USER
   // Fall back to BREVO_SMTP_KEY when SMTP_PASSWORD is not set.
   const pass = process.env.SMTP_PASSWORD || process.env.BREVO_SMTP_KEY
-  // Accept SMTP_FROM_EMAIL or the shorter SMTP_EMAIL alias.
-  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL
+  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || process.env.BREVO_FROM_EMAIL
   if (!host || !user || !pass || !fromEmail) return null
   return {
     host,
-    port: Number(process.env.SMTP_PORT) || 587,
+    port: Number(process.env.SMTP_PORT || process.env.BREVO_PORT) || 587,
     secure: false,
     user,
     pass,
     fromEmail,
-    fromName: process.env.SMTP_FROM_NAME || 'DawoLife',
+    fromName: process.env.SMTP_FROM_NAME || process.env.BREVO_FROM_NAME || 'DawoLife',
   }
 }
 

@@ -138,9 +138,9 @@ async function start() {
     if (smtp) {
       console.log(`Email transport: SMTP via ${smtp.host}:${smtp.port} from ${smtp.fromEmail}`)
     } else if (process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY) {
-      console.log('Email transport: Brevo REST API (SMTP not configured — set SMTP_NAME/SMTP_USER/SMTP_PASSWORD/SMTP_EMAIL)')
+      console.log('Email transport: Brevo REST API (SMTP not configured — set BREVO_SMTP_NAME/BREVO_SMTP_USER/BREVO_SMTP_KEY/BREVO_FROM_EMAIL)')
     } else {
-      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set SMTP vars or BREVO_API_KEY)')
+      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set BREVO_SMTP_* vars or BREVO_API_KEY)')
     }
 
     // Prevent Render free-tier from spinning down the web server after 15 min
