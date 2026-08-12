@@ -21,7 +21,7 @@ let cachedTransporter: Transporter | null = null
 
 export function readSmtpConfig(): SmtpConfig | null {
   const host = process.env.SMTP_HOST || process.env.SMTP_NAME
-  const user = process.env.SMTP_USER
+  const user = process.env.SMTP_USER || process.env.BREVO_SMTP_USER
   // Fall back to BREVO_SMTP_KEY when SMTP_PASSWORD is not set.
   const pass = process.env.SMTP_PASSWORD || process.env.BREVO_SMTP_KEY
   // Accept SMTP_FROM_EMAIL or the shorter SMTP_EMAIL alias.
