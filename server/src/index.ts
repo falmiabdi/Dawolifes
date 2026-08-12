@@ -127,10 +127,6 @@ async function start() {
     startKeepAlive()
   }
 
-  // 404 + error handlers must be LAST after all routes
-  app.use(notFoundHandler)
-  app.use(errorHandler)
-
   // Public helper: returns this server's public egress IP (used to configure
   // Brevo's IP allowlist). No secrets are exposed.
   app.get('/api/egress-ip', async (_req, res) => {
@@ -142,6 +138,10 @@ async function start() {
       res.status(500).json({ error: e?.message || 'failed' })
     }
   })
+
+  // 404 + error handlers must be LAST after all routes
+  app.use(notFoundHandler)
+  app.use(errorHandler)
 
   const server = app.listen(PORT, () => {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
