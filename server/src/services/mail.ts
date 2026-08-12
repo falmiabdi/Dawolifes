@@ -23,7 +23,8 @@ export function readSmtpConfig(): SmtpConfig | null {
   const host = process.env.SMTP_HOST
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASSWORD
-  const fromEmail = process.env.SMTP_FROM_EMAIL
+  // Accept SMTP_FROM_EMAIL or the shorter SMTP_EMAIL alias.
+  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL
   if (!host || !user || !pass || !fromEmail) return null
   return {
     host,
@@ -89,7 +90,7 @@ export async function verifySmtpConnection(): Promise<SmtpVerifyResult> {
   if (!cfg) {
     return {
       ok: false,
-      message: 'SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD and SMTP_FROM_EMAIL.',
+      message: 'SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD and SMTP_FROM_EMAIL (or SMTP_EMAIL).',
     }
   }
 
