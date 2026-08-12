@@ -19,6 +19,13 @@ interface SmtpConfig {
 
 let cachedTransporter: Transporter | null = null
 
+// Mask a secret so we can log which key is in use without exposing it fully.
+function maskSecret(value: string): string {
+  if (!value) return '(empty)'
+  if (value.length <= 8) return '*'.repeat(value.length)
+  return `${value.slice(0, 4)}…${value.slice(-4)} (len ${value.length})`
+}
+
 export function readSmtpConfig(): SmtpConfig | null {
   const host = process.env.SMTP_HOST || process.env.SMTP_NAME || process.env.BREVO_SMTP_NAME
   const user = process.env.SMTP_USER || process.env.BREVO_SMTP_USER
@@ -51,6 +58,10 @@ export function getSmtpTransporter(): Transporter | null {
       secure: cfg.secure,
       auth: { user: cfg.user, pass: cfg.pass },
     })
+    console.log(
+      `[SMTP] transporter created → host=${cfg.host}:${cfg.port} user=${cfg.user} from=${cfg.fromEmail} ` +
+        `pass=${maskSecret(cfg.pass)} (env keys: SMTP_PASSWORD=${process.env.SMTP_PASSWORD ? 'set' : 'unset'} BREVO_SMTP_KEY=${process.env.BREVO_SMTP_KEY ? 'set' : 'unset'})`
+    )
   }
   return cachedTransporter
 }
@@ -68,13 +79,22 @@ export async function sendMailViaSmtp({ to, subject, html, text }: SmtpMailParam
     throw new Error('SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/SMTP_FROM_EMAIL required)')
   }
   const transporter = getSmtpTransporter()!
-  await transporter.sendMail({
-    from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
-    to,
-    subject,
-    html,
-    text: text || subject,
-  })
+  try {
+    await transporter.sendMail({
+      from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
+      to,
+      subject,
+      html,
+      text: text || subject,
+    })
+    console.log(`[SMTP] sent "${subject}" to ${to}`)
+  } catch (err: any) {
+    console.error(
+      `[SMTP] send FAILED to=${to} host=${cfg.host}:${cfg.port} user=${cfg.user} pass=${maskSecret(cfg.pass)} ` +
+        `code=${err?.code || ''} responseCode=${err?.responseCode || ''} response=${JSON.stringify(err?.response || '')}`
+    )
+    throw err
+  }
 }
 
 export interface SmtpVerifyResult {
