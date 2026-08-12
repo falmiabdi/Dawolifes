@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Mail, OpenInNewWindow, CheckCircle } from 'lucide-react'
+import { Loader2, Mail, ExternalLink, CheckCircle } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useI18n } from '@/lib/i18n'
@@ -84,7 +84,7 @@ function VerifyEmailForm() {
 
         <div className="mt-4 grid gap-3">
           <Button type="button" variant="outline" onClick={openEmail} className="w-full rounded-full">
-            <OpenInNewWindow className="mr-2 h-4 w-4" />
+            <ExternalLink className="mr-2 h-4 w-4" />
             Open Email App
           </Button>
           <Link href="/login?verified=1" className="block">
