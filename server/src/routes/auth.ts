@@ -303,13 +303,20 @@ router.get('/verify-email', async (req, res) => {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { emailVerified: true, otp: null, otpExpiresAt: null },
+      data: {
+        emailVerified: true,
+        otp: null,
+        otpExpiresAt: null,
+        // Auto-approve agents after they prove email ownership so they can
+        // log in immediately. Admins can still suspend/reject later.
+        ...(user.role === 'agent' && user.status === 'Pending' ? { status: 'Approved' } : {}),
+      },
     })
 
     if (user.role === 'agent') {
       notifyAdmins(
         'New Agent Registration',
-        `${user.username} (${user.email}) has verified their email and is awaiting approval.`,
+        `${user.username} (${user.email}) has verified their email and is now approved.`,
         'info',
         { type: 'agent', id: user.id }
       ).catch(() => {})
