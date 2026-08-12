@@ -19,6 +19,7 @@ import announcementRoutes from './routes/announcements.js'
 import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
+import { readSmtpConfig } from './services/mail.js'
 
 dotenv.config()
 
@@ -132,6 +133,15 @@ async function start() {
 
   const server = app.listen(PORT, () => {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
+
+    const smtp = readSmtpConfig()
+    if (smtp) {
+      console.log(`Email transport: SMTP via ${smtp.host}:${smtp.port} from ${smtp.fromEmail}`)
+    } else if (process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY) {
+      console.log('Email transport: Brevo REST API (SMTP not configured — set SMTP_NAME/SMTP_USER/SMTP_PASSWORD/SMTP_EMAIL)')
+    } else {
+      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set SMTP vars or BREVO_API_KEY)')
+    }
 
     // Prevent Render free-tier from spinning down the web server after 15 min
     // of inactivity. A self-ping every 5 min keeps the instance warm.
