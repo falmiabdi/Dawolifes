@@ -147,12 +147,14 @@ async function start() {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
 
     const smtp = readSmtpConfig()
-    if (smtp) {
+    if (process.env.RESEND_API_KEY) {
+      console.log(`Email transport: Resend (from ${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'})`)
+    } else if (smtp) {
       console.log(`Email transport: SMTP via ${smtp.host}:${smtp.port} from ${smtp.fromEmail}`)
     } else if (process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY) {
       console.log('Email transport: Brevo REST API (SMTP not configured — set BREVO_SMTP_NAME/BREVO_SMTP_USER/BREVO_SMTP_KEY/BREVO_FROM_EMAIL)')
     } else {
-      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set BREVO_SMTP_* vars or BREVO_API_KEY)')
+      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set RESEND_API_KEY, BREVO_SMTP_* vars or BREVO_API_KEY)')
     }
 
     // Discover this server's public egress IP (needed for Brevo's IP allowlist).
