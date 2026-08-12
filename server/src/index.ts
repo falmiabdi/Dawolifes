@@ -131,6 +131,18 @@ async function start() {
   app.use(notFoundHandler)
   app.use(errorHandler)
 
+  // Public helper: returns this server's public egress IP (used to configure
+  // Brevo's IP allowlist). No secrets are exposed.
+  app.get('/api/egress-ip', async (_req, res) => {
+    try {
+      const r = await fetch('https://api.ipify.org?format=json')
+      const d = (await r.json()) as { ip: string }
+      res.json({ ip: d.ip, note: 'Add this IP (or its /24) to Brevo → Settings → API Keys → IP allowlist' })
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'failed' })
+    }
+  })
+
   const server = app.listen(PORT, () => {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
 
