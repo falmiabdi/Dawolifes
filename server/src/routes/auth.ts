@@ -386,18 +386,30 @@ router.post('/signin', authLimiter, async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
-    // OTP step temporarily bypassed: if the account exists with a correct
-    // password but emailVerified is still false (e.g. the user verified via
-    // Firebase's email link instead of the backend OTP), auto-verify on
-    // login and clear any stale OTP fields so the user can sign in right away.
+    // Accounts are only usable once their email is verified. No auto-verify
+    // bypass: an unverified user must confirm the OTP or click the email link
+    // before they can sign in.
     if (!user.emailVerified) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerified: true, otp: null, otpExpiresAt: null },
+      return res.status(403).json({
+        message: 'Please verify your email first. Use the 6-digit code or the verification link we emailed you.',
+        requiresVerification: true,
       })
     }
 
     const { status } = user
+    // Agents may only sign in after their application has been approved.
+    if (user.role === 'agent' && status !== 'Approved') {
+      return res.status(403).json({
+        message:
+          status === 'Rejected'
+            ? 'Your account has been rejected'
+            : status === 'Suspended'
+              ? 'Your account has been suspended'
+              : 'Your application is under review. You can sign in once your account is approved.',
+      })
+    }
+
+    // Backwards-compatible guards for non-agent accounts.
     if (status === 'Rejected') {
       return res.status(403).json({ message: 'Your account has been rejected', rejectionReason: user.rejectionReason })
     }
