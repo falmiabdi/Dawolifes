@@ -20,7 +20,7 @@ interface SmtpConfig {
 let cachedTransporter: Transporter | null = null
 
 export function readSmtpConfig(): SmtpConfig | null {
-  const host = process.env.SMTP_HOST
+  const host = process.env.SMTP_HOST || process.env.SMTP_NAME
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASSWORD
   // Accept SMTP_FROM_EMAIL or the shorter SMTP_EMAIL alias.
