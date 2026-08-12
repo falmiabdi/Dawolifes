@@ -30,8 +30,9 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
   }
 
   // Fallback: Brevo REST transactional API (used in local dev when only
-  // BREVO_API_KEY / BREVO_SMTP_KEY is set).
-  const apiKey = BREVO_SMTP_KEY || BREVO_API_KEY
+  // BREVO_API_KEY is set). BREVO_SMTP_KEY is an SMTP key (xsmtpsib-...) that
+  // the REST API rejects with 401, so it must never be used as an API key.
+  const apiKey = BREVO_API_KEY
   if (!apiKey) {
     console.warn('Email transport not configured. Skipping email to', to.email)
     return
