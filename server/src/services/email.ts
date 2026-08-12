@@ -1,13 +1,10 @@
 import 'dotenv/config'
 
+import { resend } from '../lib/resend.js'
 import { isSmtpConfigured, sendMailViaSmtp } from './mail.js'
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const RESEND_API_URL = 'https://api.resend.com/emails'
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'DawoLife <onboarding@resend.dev>'
-
 const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
-const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY || ''
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
 const BREVO_CAMPAIGN_URL = 'https://api.brevo.com/v3/emailCampaigns'
 const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'noreply@dawolife.com'
@@ -21,25 +18,17 @@ interface SendEmailParams {
 }
 
 async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailParams) {
-  // 1) Prefer Resend when an API key is configured (simple, reliable HTTPS API).
-  if (RESEND_API_KEY) {
-    const res = await fetch(RESEND_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: RESEND_FROM_EMAIL,
-        to: [to.email],
-        subject,
-        html: htmlContent,
-        text: textContent || subject,
-      }),
+  // 1) Prefer Resend SDK when RESEND_API_KEY is set.
+  if (process.env.RESEND_API_KEY) {
+    const { error } = await resend.emails.send({
+      from: RESEND_FROM_EMAIL,
+      to: [to.email],
+      subject,
+      html: htmlContent,
+      text: textContent || subject,
     })
-    if (!res.ok) {
-      const body = await res.text()
-      throw new Error(`Resend email failed (${res.status}): ${body}`)
+    if (error) {
+      throw new Error(`Resend email failed: ${error.message}`)
     }
     return
   }
@@ -54,10 +43,8 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
     })
   }
 
-  // 3) Fallback: Brevo REST transactional API (BREVO_API_KEY only — never use
-  // the SMTP key here).
-  const apiKey = BREVO_API_KEY
-  if (!apiKey) {
+  // 3) Fallback: Brevo REST transactional API (BREVO_API_KEY only).
+  if (!BREVO_API_KEY) {
     console.warn('Email transport not configured. Skipping email to', to.email)
     return
   }
@@ -66,7 +53,7 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': apiKey,
+      'api-key': BREVO_API_KEY,
     },
     body: JSON.stringify({
       sender: { email: FROM_EMAIL, name: FROM_NAME },
