@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { registerSchema, buyerRegisterSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../utils/validation.js'
 import { hashPassword, comparePassword } from '../utils/password.js'
-import { signAccessToken, signRefreshToken, verifyAccessToken } from '../utils/jwt.js'
+import { signAccessToken, signRefreshToken, verifyAccessToken, signEmailVerifyToken, verifyEmailToken } from '../utils/jwt.js'
 import { generateOtp, otpExpiresAt } from '../utils/otp.js'
 import { prisma } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
@@ -33,6 +33,7 @@ function createUserWithOtp(data: {
 }) {
   const otp = generateOtp()
   const expiresAt = otpExpiresAt()
+  const verifyToken = signEmailVerifyToken(data.email)
   return prisma.user.create({
     data: {
       username: data.username,
@@ -52,7 +53,7 @@ function createUserWithOtp(data: {
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[OTP] Verification code for ${data.email}: ${otp} (expires in 60 minutes)`)
     }
-    sendOtpEmail(data.email, data.username, otp).catch((err) => {
+    sendOtpEmail(data.email, data.username, otp, verifyToken).catch((err) => {
       console.error('Failed to send OTP email:', err)
     })
     return user
@@ -78,6 +79,7 @@ router.post('/register', authLimiter, async (req, res) => {
     if (existingUser && !existingUser.emailVerified) {
       const otp = generateOtp()
       const expiresAt = otpExpiresAt()
+      const verifyToken = signEmailVerifyToken(normalizedEmail)
       await prisma.user.update({
         where: { id: existingUser.id },
         data: { otp, otpExpiresAt: expiresAt },
@@ -85,7 +87,7 @@ router.post('/register', authLimiter, async (req, res) => {
       if (process.env.NODE_ENV !== 'production') {
         console.log(`[OTP] Verification code for ${normalizedEmail}: ${otp} (expires in 60 minutes)`)
       }
-      sendOtpEmail(normalizedEmail, username, otp).catch((err) => {
+      sendOtpEmail(normalizedEmail, username, otp, verifyToken).catch((err) => {
         console.error('Failed to send OTP email:', err)
       })
       return res.status(200).json({
@@ -130,6 +132,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
     if (existingUser && !existingUser.emailVerified) {
       const otp = generateOtp()
       const expiresAt = otpExpiresAt()
+      const verifyToken = signEmailVerifyToken(normalizedEmail)
       const user = await prisma.user.update({
         where: { id: existingUser.id },
         data: { otp, otpExpiresAt: expiresAt },
@@ -137,7 +140,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
       if (process.env.NODE_ENV !== 'production') {
         console.log(`[OTP] Verification code for ${normalizedEmail}: ${otp} (expires in 60 minutes)`)
       }
-      sendOtpEmail(normalizedEmail, name, otp).catch((err) => {
+      sendOtpEmail(normalizedEmail, name, otp, verifyToken).catch((err) => {
         console.error('Failed to send OTP email:', err)
       })
       return res.status(200).json({
@@ -255,9 +258,10 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
 
     const otp = generateOtp()
     const expiresAt = otpExpiresAt()
+    const verifyToken = signEmailVerifyToken(String(email))
     await prisma.user.update({ where: { id: user.id }, data: { otp, otpExpiresAt: expiresAt } })
 
-    sendOtpEmail(normalizeEmail(String(email)), user.username, otp).catch((err) => {
+    sendOtpEmail(normalizeEmail(String(email)), user.username, otp, verifyToken).catch((err) => {
       console.error('Failed to send OTP email:', err)
     })
 
@@ -267,6 +271,103 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to resend OTP' })
+  }
+})
+
+// Email-link verification: clicking the "Verify Email" button in the email
+// hits this endpoint with a signed token. The account is marked verified and
+// the browser is redirected to the web login page (or the app returns to the
+// verify screen and taps "check" to continue).
+router.get('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send('Missing verification token')
+    }
+
+    let email: string
+    try {
+      email = verifyEmailToken(token).email
+    } catch {
+      return res.status(400).send('This verification link is invalid or has expired. Please request a new code.')
+    }
+
+    const normalizedEmail = normalizeEmail(email)
+    const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
+    if (!user) {
+      return res.status(404).send('User not found. Please register first.')
+    }
+    if (user.emailVerified) {
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verified=1`)
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerified: true, otp: null, otpExpiresAt: null },
+    })
+
+    if (user.role === 'agent') {
+      notifyAdmins(
+        'New Agent Registration',
+        `${user.username} (${user.email}) has verified their email and is awaiting approval.`,
+        'info',
+        { type: 'agent', id: user.id }
+      ).catch(() => {})
+    }
+
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verified=1`)
+  } catch (err: any) {
+    res.status(500).send(err.message || 'Verification failed')
+  }
+})
+
+// Used by the mobile app after the user clicks the email link in their inbox:
+// the app asks the server whether the account is now verified. For buyers a
+// session is issued (email ownership was proven by the link), so they land
+// straight on the dashboard; agents remain pending and go to the login screen.
+router.post('/check-verification', otpLimiter, async (req, res) => {
+  try {
+    const { email } = req.body
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' })
+    }
+
+    const normalizedEmail = normalizeEmail(String(email))
+    const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
+    if (!user) {
+      return res.status(404).json({ message: 'User not found. Please register first.' })
+    }
+    if (!user.emailVerified) {
+      return res.json({ verified: false, message: 'Email not verified yet. Check your inbox and click the link, or enter the code below.' })
+    }
+
+    const { id: userId, email: emailVal, role } = user
+    const response: any = { verified: true, message: 'Email verified successfully' }
+
+    if (role === 'user') {
+      const payload = { userId, email: emailVal, role }
+      const accessToken = signAccessToken(payload)
+      const refreshToken = signRefreshToken(payload)
+      response.accessToken = accessToken
+      response.refreshToken = refreshToken
+      response.user = {
+        id: userId,
+        name: user.username,
+        email: emailVal,
+        role,
+        roles: user.roles,
+        status: user.status,
+        emailVerified: true,
+        isRootAdmin: user.isRootAdmin,
+        profilePhoto: user.profilePhoto,
+        phone: user.phone,
+        onboardingComplete: user.onboardingComplete,
+      }
+    }
+
+    res.json(response)
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to check verification' })
   }
 })
 

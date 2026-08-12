@@ -3,10 +3,12 @@ import '../models/user.dart';
 
 /// Outcome of a registration request.
 ///
-/// The backend creates the DB record immediately at registration with
-/// emailVerified=false. On the next signin the backend auto-verifies the
-/// email, so the OTP step is no longer required. `devOtp` is kept for
-/// backward compatibility (non-production only).
+/// Mirrors the web flow: both `/api/auth/register-buyer` and `/api/auth/register`
+/// only persist a pending registration + send an OTP. The actual account is
+/// created when the OTP is verified via [verifyOtp].
+///
+/// `devOtp` is only present in non-production responses and is auto-filled by
+/// the web app's verify-email page; the Flutter app does the same.
 class RegistrationResult {
   const RegistrationResult({required this.message, this.devOtp});
 
@@ -107,6 +109,26 @@ class AuthRepository {
   Future<RegistrationResult> resendOtp({required String email}) async {
     final data = await _api.post('/api/auth/resend-otp', {'email': email}) as Map<String, dynamic>;
     return _registration(data);
+  }
+
+  /// Checks whether [email] was verified via the emailed link (or OTP). For
+  /// buyers the server returns an access token + session, mirroring [verifyOtp],
+  /// so the user can go straight to the dashboard after clicking the link.
+  Future<VerifyOtpResult> checkVerification({required String email}) async {
+    final data = await _api.post('/api/auth/check-verification', {
+      'email': email,
+    }) as Map<String, dynamic>;
+
+    final token = data['accessToken'] as String?;
+    final userJson = data['user'] as Map<String, dynamic>?;
+    SessionUser? user;
+    if (token != null && token.isNotEmpty) {
+      await _api.saveToken(token);
+    }
+    if (userJson != null) {
+      user = SessionUser.fromJson(userJson);
+    }
+    return VerifyOtpResult(message: '${data['message'] ?? ''}', user: user);
   }
 
   Future<void> changePassword({

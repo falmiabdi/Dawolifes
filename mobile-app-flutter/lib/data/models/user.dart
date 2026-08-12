@@ -11,7 +11,6 @@ class SessionUser {
     this.isRootAdmin,
     this.profilePhoto,
     this.phone,
-    this.onboardingComplete,
   });
 
   final String id;
@@ -24,7 +23,6 @@ class SessionUser {
   final bool? isRootAdmin;
   final String? profilePhoto;
   final String? phone;
-  final bool? onboardingComplete;
 
   bool get isAdmin => role == 'admin' || (roles?.contains('admin') ?? false);
 
@@ -49,7 +47,6 @@ class SessionUser {
       isRootAdmin: json['isRootAdmin'] as bool?,
       profilePhoto: json['profilePhoto'] as String?,
       phone: json['phone'] as String?,
-      onboardingComplete: json['onboardingComplete'] as bool?,
     );
   }
 
@@ -64,6 +61,5 @@ class SessionUser {
         'isRootAdmin': isRootAdmin,
         'profilePhoto': profilePhoto,
         'phone': phone,
-        'onboardingComplete': onboardingComplete,
       };
 }

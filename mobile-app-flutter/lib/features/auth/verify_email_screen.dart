@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/firebase/firebase_auth_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import '../admin/admin_portal.dart';
-import '../agent/agent_portal.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 
@@ -27,12 +25,10 @@ class VerifyEmailScreen extends StatefulWidget {
     super.key,
     required this.email,
     this.devOtp,
-    this.password,
   });
 
   final String email;
   final String? devOtp;
-  final String? password;
 
   @override
   State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -46,11 +42,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late final List<FocusNode> _focusNodes;
   bool _submitting = false;
   bool _resending = false;
-  bool _checkingFirebase = false;
+  bool _checking = false;
   String? _error;
   Timer? _cooldownTimer;
   int _cooldown = 0;
-  String get _firebasePassword => widget.password ?? '';
 
   @override
   void initState() {
@@ -100,6 +95,46 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   String get _enteredCode => _controllers.map((c) => c.text.trim()).join();
+
+  Future<void> _openEmail() async {
+    final uri = Uri(scheme: 'mailto', path: widget.email);
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      // Email apps may not be installed; ignore.
+    }
+  }
+
+  /// The user clicked the "Verify Email" button in their inbox. Ask the server
+  /// whether the account is now verified, then route like OTP verification:
+  /// buyer -> app shell (dashboard), agent -> login screen.
+  Future<void> _checkViaLink() async {
+    setState(() {
+      _checking = true;
+      _error = null;
+    });
+
+    try {
+      final result = await context.read<AuthProvider>().checkVerification(email: widget.email);
+      if (!mounted) return;
+      if (result.user != null) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),
+          (route) => route.isFirst,
+        );
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = context.read<LanguageProvider>().t('verification_failed'));
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
 
   Future<void> _verify() async {
     final code = _enteredCode;
@@ -171,76 +206,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// Checks whether the Firebase verification link was clicked. When verified,
-/// auto-logs in to the backend (which auto-verifies the email) and routes
-/// the user to the appropriate screen:
-/// - Agent → AgentPortalScreen (which gates on status: pending shows
-///   onboarding, rejected shows rejection reason + edit, approved shows full menu)
-/// - Admin → AdminPortalScreen
-/// - Buyer → home
-Future<void> _checkFirebaseVerification() async {
-  setState(() {
-    _checkingFirebase = true;
-    _error = null;
-  });
-  try {
-    final verified = await FirebaseAuthService().isEmailVerified();
-    if (!mounted) return;
-    if (!verified) {
-      setState(() => _error = 'Your email is not verified yet. Click the link in the verification email we sent, then try again.');
-      return;
-    }
-
-    // Firebase confirmed the email — now log in to the backend.
-    // The backend auto-verifies the email on signin.
-    final auth = context.read<AuthProvider>();
-    try {
-      await auth.login(email: widget.email, password: _firebasePassword);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _error = 'Email verified, but login failed: ${e.message}');
-      return;
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = 'Email verified, but login failed. Please sign in manually.');
-      return;
-    }
-
-    if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    final user = auth.user;
-    if (user != null && user.isAdmin) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
-    } else if (user != null && user.isAgent) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
-    }
-  } catch (_) {
-    if (!mounted) return;
-    setState(() => _error = 'Could not check verification status. Is this email used in this app?');
-  } finally {
-    if (mounted) setState(() => _checkingFirebase = false);
-  }
-}
-
-  Future<void> _resendFirebaseVerification() async {
-    setState(() {
-      _checkingFirebase = true;
-      _error = null;
-    });
-    try {
-      await FirebaseAuthService().resendVerification();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification email sent. Check your inbox.')),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _error = 'Could not resend the verification email.');
-    } finally {
-      if (mounted) setState(() => _checkingFirebase = false);
-    }
-  }
-
   void _onDigitChanged(int index, String value) {
     setState(() => _error = null);
     final raw = value.trim();
@@ -300,6 +265,71 @@ Future<void> _checkFirebaseVerification() async {
           Text(
             '${t('verify_email_subtitle')} ${widget.email}',
             style: const TextStyle(color: Color(0xFF475569), fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFED7AA)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.mail_outline, size: 18, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        t('verify_email_link_hint'),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF9A3412)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _openEmail,
+                        icon: const Icon(Icons.open_in_new, size: 16),
+                        label: Text(t('open_email')),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: _checking ? null : _checkViaLink,
+                        icon: _checking
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.check_circle_outline, size: 16),
+                        label: Text(t('check_verification')),
+                        style: FilledButton.styleFrom(
+                          foregroundColor: const Color(0xFF9A3412),
+                          backgroundColor: const Color(0xFFFFEDD5),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -378,61 +408,6 @@ Future<void> _checkFirebaseVerification() async {
                           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
                         ),
                       ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 18),
-            child: Row(
-              children: [
-                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('OR', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600)),
-                ),
-                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Verify with an email link (Firebase)',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'We also emailed you a verification link. Click it, then confirm below.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF166534)),
-                ),
-                const SizedBox(height: 10),
-                FilledButton(
-                  onPressed: _checkingFirebase ? null : _checkFirebaseVerification,
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-                  child: _checkingFirebase
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('I clicked the link — continue'),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _checkingFirebase ? null : _resendFirebaseVerification,
-                  child: const Text(
-                    'Resend verification link',
-                    style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

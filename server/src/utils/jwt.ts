@@ -36,3 +36,23 @@ export function signRefreshToken(payload: JwtPayload): string {
 export function verifyAccessToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET) as JwtPayload
 }
+
+export interface EmailVerifyTokenPayload {
+  email: string
+  purpose: 'verify-email'
+  iat?: number
+  exp?: number
+}
+
+// Stateless email-link verification token (signed JWT, no DB column needed).
+export function signEmailVerifyToken(email: string): string {
+  return jwt.sign({ email, purpose: 'verify-email' }, JWT_SECRET, { expiresIn: '24h' })
+}
+
+export function verifyEmailToken(token: string): EmailVerifyTokenPayload {
+  const payload = jwt.verify(token, JWT_SECRET) as EmailVerifyTokenPayload
+  if (payload.purpose !== 'verify-email' || !payload.email) {
+    throw new Error('Invalid email verification token')
+  }
+  return payload
+}

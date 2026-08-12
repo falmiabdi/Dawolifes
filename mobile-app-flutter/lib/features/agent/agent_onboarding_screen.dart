@@ -5,7 +5,6 @@ import '../../core/constants/listing_options.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import 'post_form_widgets.dart';
 
@@ -288,17 +287,13 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           setState(() => _error = 'You must accept both the Terms & Conditions and Privacy Policy.');
           return;
         }
-if (!await _saveStep(repo, {'onboardingComplete': true})) {
+        if (!await _saveStep(repo, {'onboardingComplete': true})) {
+          return;
+        }
+        if (!mounted) return;
+        _snack(t('application_submitted'));
+        Navigator.of(context).pop();
         return;
-      }
-      if (!mounted) return;
-      // Refresh the cached session so the portal reflects the new
-      // onboardingComplete / Pending status without a manual reload.
-      await context.read<AuthProvider>().refreshUser();
-      if (!mounted) return;
-      _snack(t('application_submitted'));
-      Navigator.of(context).pop();
-      return;
     }
 
     if (!mounted) return;
@@ -375,17 +370,15 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     return Field(
       label: label,
       child: DropdownButtonFormField<String>(
-        key: ValueKey('${label}_$value'),
         initialValue: value.isEmpty ? null : value,
-        isExpanded: true,
         decoration: const InputDecoration(
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         ),
-        hint: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
+        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
         items: options.map((o) => DropdownMenuItem(
           value: o.$1,
-          child: Text(o.$2, style: const TextStyle(fontSize: 14, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
+          child: Text(o.$2, style: const TextStyle(fontSize: 13, color: AppColors.foreground)),
         )).toList(),
         onChanged: (v) => onChanged(v ?? value),
       ),
@@ -397,11 +390,7 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
       label: required ? '$label *' : label,
       child: TextFormField(
         controller: controller,
-        style: const TextStyle(fontSize: 14, color: AppColors.foreground),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 14, color: AppColors.mutedForeground),
-        ),
+        decoration: InputDecoration(hintText: hint),
       ),
     );
   }
@@ -423,8 +412,8 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
           : ListTile(
               contentPadding: EdgeInsets.zero,
               dense: true,
-              leading: const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
-              title: Text(t('upload_success'), style: const TextStyle(fontSize: 14, color: AppColors.foreground)),
+              leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+              title: Text(t('upload_success'), style: const TextStyle(fontSize: 13)),
               trailing: IconButton(
                 icon: const Icon(Icons.close, size: 18),
                 onPressed: () => _clearFile(field),
@@ -495,11 +484,10 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     return FormSection(
       title: t('personal_info'),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _textField(_fullName, t('full_name'), hint: 'e.g. Abebe Girma', required: true),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: _labelledDropdown(
@@ -526,16 +514,13 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
               controller: _dob,
               readOnly: true,
               onTap: _pickDob,
-              style: const TextStyle(fontSize: 14, color: AppColors.foreground),
               decoration: InputDecoration(
                 hintText: 'YYYY-MM-DD',
-                hintStyle: const TextStyle(fontSize: 14, color: AppColors.mutedForeground),
                 suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
               ),
             ),
           ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textField(_nationality, t('nationality'))),
               const SizedBox(width: 10),
@@ -560,10 +545,9 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     return FormSection(
       title: t('contact_info'),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textField(_ethPhone, t('ethio_telecom_phone'), hint: '+251 9XX XXX XXX', required: true)),
               const SizedBox(width: 10),
@@ -577,7 +561,6 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
             (v) => setState(() => _region = v),
           ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textField(_city, t('city'), hint: 'City')),
               const SizedBox(width: 10),
@@ -585,11 +568,10 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
             ],
           ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textField(_kebele, t('kebele'), hint: 'Kebele number')),
               const SizedBox(width: 10),
-              Expanded(child: Container()),
+              const Spacer(),
             ],
           ),
           _textField(_fullAddress, t('full_address'), hint: 'Full mailing address'),
@@ -603,16 +585,9 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     return FormSection(
       title: t('identity_verification'),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(t('identity_upload_note'), style: const TextStyle(fontSize: 12, color: Color(0xFF166534))),
-          ),
+          Text(t('identity_upload_note'), style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
           const SizedBox(height: 12),
           _uploadTile(t('fayda_front'), 'faydaFront', required: true),
           _uploadTile(t('fayda_back'), 'faydaBack', required: true),
@@ -628,22 +603,20 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     return FormSection(
       title: t('education'),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Field(
             label: '${t('highest_education')} *',
             child: DropdownButtonFormField<String>(
-              key: ValueKey('edu_$_education'),
               initialValue: _education.isEmpty ? null : _education,
-              isExpanded: true,
               decoration: const InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
-              hint: Text(t('select_education'), style: const TextStyle(fontSize: 14, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
+              hint: Text(t('select_education'), style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
               items: _educationOptions.map((e) => DropdownMenuItem(
                 value: e,
-                child: Text(_eduLabel(e, t), style: const TextStyle(fontSize: 14, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
+                child: Text(_eduLabel(e, t), style: const TextStyle(fontSize: 13, color: AppColors.foreground)),
               )).toList(),
               onChanged: (v) => setState(() => _education = v ?? ''),
             ),
@@ -659,16 +632,9 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     return FormSection(
       title: t('professional_info'),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7ED),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(t('professional_optional_note'), style: const TextStyle(fontSize: 12, color: Color(0xFF9A3412))),
-          ),
+          Text(t('professional_optional_note'), style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
           const SizedBox(height: 12),
           _labelledDropdown(
             t('agent_experience'),
@@ -677,7 +643,6 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
             (v) => setState(() => _experience.text = v),
           ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textField(_company, '${t('company_name')} (${t('optional')})')),
               const SizedBox(width: 10),
@@ -686,11 +651,10 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
           ),
           _textField(_officeAddr, '${t('office_address')} (${t('optional')})'),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _textField(_licenseNum, '${t('business_license_number')} (${t('optional')})')),
               const SizedBox(width: 10),
-              Expanded(child: Container()),
+              const Spacer(),
             ],
           ),
           _uploadTile('${t('business_license_upload')} (${t('optional')})', 'license'),
@@ -704,7 +668,7 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     final tv = context.read<LanguageProvider>().tv;
     final isOwner = _userType == 'owner';
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         FormSection(
           title: t('review_submit'),
@@ -770,7 +734,7 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
   Widget _stepper() {
     final t = context.read<LanguageProvider>().t;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: List.generate(_stepLabels.length, (i) {
           final done = i < _step;
@@ -783,8 +747,8 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 28,
-                        height: 28,
+                        width: 30,
+                        height: 30,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: active ? AppColors.primary : (done ? Colors.green : Colors.white),
@@ -799,7 +763,7 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
                               : Text(
                                   '${i + 1}',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                     color: active ? Colors.white : AppColors.mutedForeground,
                                   ),
@@ -807,25 +771,22 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      SizedBox(
-                        height: 24,
-                        child: Text(
-                          t(_stepLabels[i]),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: active ? FontWeight.bold : FontWeight.normal,
-                            color: active ? AppColors.primary : AppColors.mutedForeground,
-                          ),
+                      Text(
+                        t(_stepLabels[i]),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                          color: active ? AppColors.primary : AppColors.mutedForeground,
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (i < _stepLabels.length - 1)
-                  Container(height: 2, width: 8, color: done ? Colors.green : AppColors.border),
+                  Container(height: 2, width: 14, color: done ? Colors.green : AppColors.border),
               ],
             ),
           );
@@ -840,14 +801,13 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
     final isLast = _step == _stepLabels.length - 1;
     return Scaffold(
       appBar: AppBar(title: Text(t('complete_profile'))),
-      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
             _stepper(),
             if (_error != null)
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: AppColors.destructive.withValues(alpha: 0.08),
@@ -864,51 +824,44 @@ if (!await _saveStep(repo, {'onboardingComplete': true})) {
                 ),
               ),
             Expanded(
-              child: SingleChildScrollView(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    switch (_step) {
-                      0 => _buildPersonal(),
-                      1 => _buildContact(),
-                      2 => _buildIdentity(),
-                      3 => _buildEducation(),
-                      4 => _buildProfessional(),
-                      _ => _buildReview(),
-                    },
-                    const SizedBox(height: 16),
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _step == 0 || _saving ? null : _back,
-                          icon: const Icon(Icons.arrow_back, size: 18),
-                          label: Text(t('back')),
+                children: [
+                  switch (_step) {
+                    0 => _buildPersonal(),
+                    1 => _buildContact(),
+                    2 => _buildIdentity(),
+                    3 => _buildEducation(),
+                    4 => _buildProfessional(),
+                    _ => _buildReview(),
+                  },
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _step == 0 || _saving ? null : _back,
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: Text(t('back')),
+                      ),
+                      const Spacer(),
+                      if (!isLast)
+                        FilledButton.icon(
+                          onPressed: _saving ? null : _next,
+                          icon: const Icon(Icons.arrow_forward, size: 18),
+                          label: Text(t('save_continue')),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: _saving ? null : _next,
+                          icon: _saving
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.send, size: 18),
+                          label: Text(_saving ? t('saving') : t('submit_application')),
                         ),
-                        if (!isLast)
-                          FilledButton.icon(
-                            onPressed: _saving ? null : _next,
-                            icon: const Icon(Icons.arrow_forward, size: 18),
-                            label: Text(t('save_continue')),
-                          )
-                        else
-                          FilledButton.icon(
-                            onPressed: _saving ? null : _next,
-                            icon: _saving
-                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : const Icon(Icons.send, size: 18),
-                            label: Text(_saving ? t('saving') : t('submit_application')),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ],

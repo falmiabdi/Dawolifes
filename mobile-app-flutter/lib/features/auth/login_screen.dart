@@ -65,16 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _error = e.message;
         _needsVerification = e.statusCode == 403 && e.message.toLowerCase().contains('verif');
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      final msg = e.toString();
-      if (msg.contains('timeout') || msg.contains('Timeout') ||
-          msg.contains('connection') || msg.contains('Connection') ||
-          msg.contains('socket') || msg.contains('Socket')) {
-        setState(() => _error = 'Cannot connect to the server. Check your network connection.');
-      } else {
-        setState(() => _error = 'Invalid email or password. Please try again.');
-      }
+      setState(() => _error = 'Invalid email or password. Please try again.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

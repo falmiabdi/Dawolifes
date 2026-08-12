@@ -82,6 +82,15 @@ class AuthProvider extends ChangeNotifier {
     return repository.resendOtp(email: email);
   }
 
+  /// Checks whether the account for [email] was verified by clicking the email
+  /// link. For buyers the server issues a session, which is applied immediately;
+  /// agents get no session and are routed to the login screen by the caller.
+  Future<VerifyOtpResult> checkVerification({required String email}) async {
+    final result = await repository.checkVerification(email: email);
+    if (result.user != null) _setUser(result.user);
+    return result;
+  }
+
   Future<void> refreshUser() async {
     final token = await storage.getToken();
     if (token == null || token.isEmpty) return;

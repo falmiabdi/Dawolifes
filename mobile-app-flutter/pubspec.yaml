@@ -45,8 +45,6 @@ dependencies:
   share_plus: ^10.0.2
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
-  firebase_core: ^4.13.0
-  firebase_auth: ^6.5.7
   fl_chart: ^1.2.0
   web_socket_channel: ^3.0.3
   integration_test:

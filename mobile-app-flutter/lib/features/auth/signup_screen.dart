@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/firebase/firebase_auth_service.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 import 'verify_email_screen.dart';
 
-/// Signup flow:
-/// 1. Choose account type (Buyer or Seller/Agent).
-/// 2. Register on the backend (creates the DB record immediately).
-/// 3. Firebase creates the account + sends a verification email link.
-/// 4. User goes to VerifyEmailScreen — clicks the Firebase link, confirms,
-///    then is routed to the appropriate next screen.
+/// Signup flow mirroring app/auth/signup/page.tsx + role-signup-form.tsx:
+/// 1. Choose account type (Buyer/User or Seller/Agent).
+/// 2. Buyer: full name, email, phone, password, confirm password (immediate
+///    verification, returns to the app shell).
+/// 3. Agent: username, email, password (submitted for review, then sign in).
+///
+/// Pass [initialRole] to skip the role picker (e.g. "Register as Agent" from
+/// the Sell tab).
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key, this.initialRole});
 
@@ -67,41 +69,25 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       final auth = context.read<AuthProvider>();
       final email = _email.text.trim();
-      final password = _password.text;
-
-      // 1. Register on the backend (creates the DB record immediately).
+      RegistrationResult result;
       if (_role == SignupRole.buyer) {
-        await auth.registerBuyer(
+        result = await auth.registerBuyer(
           name: _name.text.trim(),
           email: email,
           phone: _phone.text.trim(),
-          password: password,
+          password: _password.text,
         );
       } else {
-        await auth.registerAgent(
+        result = await auth.registerAgent(
           username: _username.text.trim(),
           email: email,
-          password: password,
+          password: _password.text,
         );
       }
-
-      // 2. Create a Firebase account + send the verification email link.
-      //    Best-effort — the backend auto-verifies on login as a fallback.
-      String? devOtp;
-      try {
-        final firebase = FirebaseAuthService();
-        await firebase.register(email: email, password: password);
-      } catch (_) {
-        // Firebase account might already exist — non-fatal.
-      }
-
       if (!mounted) return;
-
-      // 3. Go to the verification screen. The user clicks the Firebase link
-      //    in their email, then presses "I clicked the link — continue".
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => VerifyEmailScreen(email: email, devOtp: devOtp, password: password),
+          builder: (_) => VerifyEmailScreen(email: email, devOtp: result.devOtp),
         ),
       );
     } on ApiException catch (e) {
@@ -112,7 +98,7 @@ class _SignupScreenState extends State<SignupScreen> {
       } else {
         setState(() => _error = e.message);
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() => _error = 'Registration failed. Please try again.');
     } finally {
@@ -244,8 +230,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _role == SignupRole.buyer
-                          ? 'We will send you an email link to verify your account.'
-                          : 'We will send you an email link to verify your account, then you can complete your agent profile.',
+                          ? 'We will email you a code to verify your account.'
+                          : 'Your application will be reviewed by our team after verification.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                     ),
