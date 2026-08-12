@@ -139,6 +139,35 @@ async function start() {
     }
   })
 
+  // DEBUG: reveals which email transport will be used + what BASE_URL is set.
+  // No secrets exposed — only boolean flags + the masked key prefix.
+  app.get('/api/debug/email', (_req, res) => {
+    const mask = (v: string | undefined) => (v ? `${v.slice(0, 6)}…${v.slice(-4)} (len ${v.length})` : '(unset)')
+    const transport = process.env.RESEND_API_KEY
+      ? 'RESEND'
+      : readSmtpConfig()
+        ? 'BREVO_SMTP'
+        : process.env.BREVO_API_KEY
+          ? 'BREVO_REST'
+          : 'NONE (emails skipped)'
+    res.json({
+      transport,
+      resend: {
+        apiKeySet: !!process.env.RESEND_API_KEY,
+        apiKeyMasked: mask(process.env.RESEND_API_KEY),
+        fromEmail: process.env.RESEND_FROM_EMAIL || '(default: onboarding@resend.dev)',
+      },
+      brevoSmtp: {
+        configured: !!readSmtpConfig(),
+        host: process.env.SMTP_HOST || process.env.SMTP_NAME || process.env.BREVO_SMTP_NAME || '(unset)',
+        user: process.env.SMTP_USER || process.env.BREVO_SMTP_USER || '(unset)',
+        port: process.env.SMTP_PORT || process.env.BREVO_PORT || '(unset, default 587)',
+      },
+      baseUrl: process.env.BASE_URL || '(unset → http://localhost:4000)',
+      frontendUrl: process.env.FRONTEND_URL || '(unset)',
+    })
+  })
+
   // 404 + error handlers must be LAST after all routes
   app.use(notFoundHandler)
   app.use(errorHandler)
