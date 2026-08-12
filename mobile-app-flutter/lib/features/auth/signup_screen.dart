@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import 'auth_shell.dart';
@@ -69,16 +68,15 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       final auth = context.read<AuthProvider>();
       final email = _email.text.trim();
-      RegistrationResult result;
       if (_role == SignupRole.buyer) {
-        result = await auth.registerBuyer(
+        await auth.registerBuyer(
           name: _name.text.trim(),
           email: email,
           phone: _phone.text.trim(),
           password: _password.text,
         );
       } else {
-        result = await auth.registerAgent(
+        await auth.registerAgent(
           username: _username.text.trim(),
           email: email,
           password: _password.text,
@@ -87,7 +85,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => VerifyEmailScreen(email: email, devOtp: result.devOtp),
+          builder: (_) => VerifyEmailScreen(email: email),
         ),
       );
     } on ApiException catch (e) {
@@ -230,7 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _role == SignupRole.buyer
-                          ? 'We will email you a code to verify your account.'
+                          ? 'We will email you a verification link to verify your account.'
                           : 'Your application will be reviewed by our team after verification.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
