@@ -143,6 +143,12 @@ async function start() {
       console.log('Email transport: NOT CONFIGURED — emails will be skipped (set BREVO_SMTP_* vars or BREVO_API_KEY)')
     }
 
+    // Discover this server's public egress IP (needed for Brevo's IP allowlist).
+    fetch('https://api.ipify.org?format=json')
+      .then((r) => r.json())
+      .then((d: any) => console.log(`[SMTP] This server's public egress IP: ${d.ip}  ← add THIS to Brevo's IP allowlist (or its /24)`))
+      .catch(() => console.log('[SMTP] Could not determine public egress IP'))
+
     // Prevent Render free-tier from spinning down the web server after 15 min
     // of inactivity. A self-ping every 5 min keeps the instance warm.
     const selfUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`
