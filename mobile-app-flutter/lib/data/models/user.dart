@@ -7,6 +7,7 @@ class SessionUser {
     required this.role,
     this.roles,
     this.status,
+    this.emailVerified = false,
     this.rejectionReason,
     this.isRootAdmin,
     this.profilePhoto,
@@ -19,6 +20,7 @@ class SessionUser {
   final String role;
   final List<String>? roles;
   final String? status;
+  final bool emailVerified;
   final String? rejectionReason;
   final bool? isRootAdmin;
   final String? profilePhoto;
@@ -43,6 +45,7 @@ class SessionUser {
       role: '${json['role'] ?? 'buyer'}',
       roles: (json['roles'] as List?)?.map((e) => '$e').toList(),
       status: json['status'] as String?,
+      emailVerified: json['emailVerified'] as bool? ?? false,
       rejectionReason: json['rejectionReason'] as String?,
       isRootAdmin: json['isRootAdmin'] as bool?,
       profilePhoto: json['profilePhoto'] as String?,
@@ -57,6 +60,7 @@ class SessionUser {
         'role': role,
         'roles': roles,
         'status': status,
+        'emailVerified': emailVerified,
         'rejectionReason': rejectionReason,
         'isRootAdmin': isRootAdmin,
         'profilePhoto': profilePhoto,

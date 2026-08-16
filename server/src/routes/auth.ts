@@ -8,6 +8,7 @@ import { notifyAdmins } from '../utils/notifications.js'
 import { authMiddleware } from '../middleware/auth.js'
 import { rateLimit } from '../middleware/rateLimit.js'
 import { sendOtpEmail, sendResetPasswordEmail } from '../services/email.js'
+import { verifyFirebaseIdToken } from '../utils/firebase.js'
 
 const router = Router()
 
@@ -60,7 +61,7 @@ function createUserWithOtp(data: {
   })
 }
 
-// Register
+// Register (Agent)
 router.post('/register', authLimiter, async (req, res) => {
   try {
     const parsed = registerSchema.safeParse(req.body)
@@ -133,7 +134,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
       const otp = generateOtp()
       const expiresAt = otpExpiresAt()
       const verifyToken = signEmailVerifyToken(normalizedEmail)
-      const user = await prisma.user.update({
+      await prisma.user.update({
         where: { id: existingUser.id },
         data: { otp, otpExpiresAt: expiresAt },
       })
@@ -198,7 +199,7 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
 
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { otp: null, otpExpiresAt: null, emailVerified: true },
+        data: { otp: null, otpExpiresAt: null, emailVerified: true, emailVerifiedAt: new Date() },
       })
 
       if (user.role === 'agent') {
@@ -274,10 +275,7 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
   }
 })
 
-// Email-link verification: clicking the "Verify Email" button in the email
-// hits this endpoint with a signed token. The account is marked verified and
-// the browser is redirected to the web login page (or the app returns to the
-// verify screen and taps "check" to continue).
+// Email-link verification
 router.get('/verify-email', async (req, res) => {
   try {
     const { token } = req.query
@@ -303,7 +301,7 @@ router.get('/verify-email', async (req, res) => {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { emailVerified: true, otp: null, otpExpiresAt: null },
+      data: { emailVerified: true, emailVerifiedAt: new Date(), otp: null, otpExpiresAt: null },
     })
 
     if (user.role === 'agent') {
@@ -321,10 +319,7 @@ router.get('/verify-email', async (req, res) => {
   }
 })
 
-// Used by the mobile app after the user clicks the email link in their inbox:
-// the app asks the server whether the account is now verified. For buyers a
-// session is issued (email ownership was proven by the link), so they land
-// straight on the dashboard; agents remain pending and go to the login screen.
+// Check verification status
 router.post('/check-verification', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body
@@ -357,7 +352,7 @@ router.post('/check-verification', otpLimiter, async (req, res) => {
         role,
         roles: user.roles,
         status: user.status,
-        emailVerified: true,
+        emailVerified: user.emailVerified,
         isRootAdmin: user.isRootAdmin,
         profilePhoto: user.profilePhoto,
         phone: user.phone,
@@ -382,18 +377,15 @@ router.post('/signin', authLimiter, async (req, res) => {
     const { email, password } = parsed.data
     let user = await prisma.user.findFirst({ where: emailFilter(normalizeEmail(email)) })
 
-    if (!user || !(await comparePassword(password, user.password))) {
+    if (!user || !user.password || !(await comparePassword(password, user.password))) {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
-    // OTP step temporarily bypassed: if the account exists with a correct
-    // password but emailVerified is still false (e.g. the user verified via
-    // Firebase's email link instead of the backend OTP), auto-verify on
-    // login and clear any stale OTP fields so the user can sign in right away.
+    // Auto-verify if user logs in with valid password
     if (!user.emailVerified) {
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { emailVerified: true, otp: null, otpExpiresAt: null },
+        data: { emailVerified: true, emailVerifiedAt: user.emailVerifiedAt || new Date(), otp: null, otpExpiresAt: null },
       })
     }
 
@@ -422,6 +414,7 @@ router.post('/signin', authLimiter, async (req, res) => {
         role,
         roles: user.roles,
         status,
+        emailVerified: user.emailVerified,
         rejectionReason: user.rejectionReason,
         isRootAdmin: user.isRootAdmin,
         profilePhoto: user.profilePhoto,
@@ -433,6 +426,157 @@ router.post('/signin', authLimiter, async (req, res) => {
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Login failed' })
+  }
+})
+
+// Firebase Authentication (Google OAuth & Firebase Email/Password)
+router.post('/firebase', authLimiter, async (req, res) => {
+  try {
+    const { idToken, role: requestedRole, name: providedName, phone: providedPhone } = req.body
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({ message: 'idToken is required' })
+    }
+
+    // 1. Verify token signature, audience, issuer, expiration via Firebase Admin SDK
+    let verifiedFirebaseUser
+    try {
+      verifiedFirebaseUser = await verifyFirebaseIdToken(idToken)
+    } catch (tokenErr: any) {
+      console.error('Firebase token verification error:', tokenErr.message)
+      return res.status(401).json({ message: 'Invalid or expired Firebase token', error: tokenErr.message })
+    }
+
+    const { uid, email, emailVerified, name, picture, phoneNumber } = verifiedFirebaseUser
+
+    // 2. Look up existing user by firebaseUid or normalized email
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { firebaseUid: uid },
+          emailFilter(email),
+        ],
+      },
+    })
+
+    const targetRole = requestedRole === 'agent' ? 'agent' : 'user'
+    const finalName = providedName || name || email.split('@')[0]
+    const finalPhone = providedPhone || phoneNumber || null
+
+    if (!user) {
+      // 3. Create new user with verification strictly synced from Firebase token
+      user = await prisma.user.create({
+        data: {
+          firebaseUid: uid,
+          username: finalName,
+          email,
+          phone: finalPhone,
+          profilePhoto: picture || null,
+          role: targetRole,
+          roles: [targetRole],
+          status: targetRole === 'agent' ? 'Pending' : 'Approved',
+          emailVerified,
+          emailVerifiedAt: emailVerified ? new Date() : null,
+          onboardingComplete: targetRole === 'user',
+        },
+      })
+    } else {
+      // 4. Update existing user details & synchronize verification status from Firebase
+      const updates: any = {}
+      if (!user.firebaseUid) {
+        updates.firebaseUid = uid
+      }
+      if (emailVerified && !user.emailVerified) {
+        updates.emailVerified = true
+        updates.emailVerifiedAt = user.emailVerifiedAt || new Date()
+        updates.otp = null
+        updates.otpExpiresAt = null
+      }
+      if (!user.profilePhoto && picture) {
+        updates.profilePhoto = picture
+      }
+      if (!user.phone && finalPhone) {
+        updates.phone = finalPhone
+      }
+
+      if (Object.keys(updates).length > 0) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: updates,
+        })
+      }
+    }
+
+    // 5. Check account approval status
+    if (user.status === 'Rejected') {
+      return res.status(403).json({
+        message: 'Your account has been rejected',
+        rejectionReason: user.rejectionReason,
+      })
+    }
+
+    if (user.status === 'Suspended') {
+      return res.status(403).json({ message: 'Your account has been suspended' })
+    }
+
+    // 6. If email is not yet verified in Firebase, return notice without issuing JWT session
+    if (!user.emailVerified) {
+      return res.status(200).json({
+        message: 'Email verification required. Please verify your email before continuing.',
+        requiresEmailVerification: true,
+        emailVerified: false,
+        user: {
+          id: user.id,
+          name: user.username,
+          email: user.email,
+          role: user.role,
+          roles: user.roles,
+          status: user.status,
+          emailVerified: false,
+          rejectionReason: user.rejectionReason,
+          isRootAdmin: user.isRootAdmin,
+          profilePhoto: user.profilePhoto,
+          phone: user.phone,
+          onboardingComplete: user.onboardingComplete,
+        },
+      })
+    }
+
+    // 7. Issue DawoLife JWT session tokens for verified users
+    const accessToken = signAccessToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    })
+    const refreshToken = signRefreshToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    })
+
+    return res.json({
+      message: 'Authentication successful',
+      requiresEmailVerification: false,
+      emailVerified: true,
+      user: {
+        id: user.id,
+        name: user.username,
+        email: user.email,
+        role: user.role,
+        roles: user.roles,
+        status: user.status,
+        emailVerified: true,
+        rejectionReason: user.rejectionReason,
+        isRootAdmin: user.isRootAdmin,
+        profilePhoto: user.profilePhoto,
+        phone: user.phone,
+        onboardingComplete: user.onboardingComplete,
+      },
+      accessToken,
+      refreshToken,
+    })
+  } catch (err: any) {
+    console.error('POST /api/auth/firebase error:', err)
+    return res.status(500).json({ message: err.message || 'Firebase authentication failed' })
   }
 })
 
@@ -460,6 +604,7 @@ router.get('/session', async (req, res) => {
           role: user.role,
           roles: user.roles,
           status: user.status,
+          emailVerified: user.emailVerified,
           rejectionReason: user.rejectionReason,
           isRootAdmin: user.isRootAdmin,
           profilePhoto: user.profilePhoto,
@@ -500,6 +645,7 @@ router.patch('/profile', authMiddleware, async (req, res) => {
         role: updatedUser.role,
         roles: updatedUser.roles,
         status: updatedUser.status,
+        emailVerified: updatedUser.emailVerified,
         rejectionReason: updatedUser.rejectionReason,
         isRootAdmin: updatedUser.isRootAdmin,
         profilePhoto: updatedUser.profilePhoto,
@@ -525,7 +671,7 @@ router.post('/change-password', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
-    const valid = await comparePassword(currentPassword, user.password)
+    const valid = user.password ? await comparePassword(currentPassword, user.password) : false
     if (!valid) {
       return res.status(401).json({ message: 'Current password is incorrect' })
     }

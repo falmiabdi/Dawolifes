@@ -104,6 +104,39 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  Future<void> _submitGoogle() async {
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+
+    try {
+      final auth = context.read<AuthProvider>();
+      final roleStr = _role == SignupRole.agent ? 'agent' : 'user';
+      final result = await auth.loginWithGoogle(role: roleStr);
+      if (!mounted) return;
+
+      if (result.user != null && !result.user!.emailVerified) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => VerifyEmailScreen(email: result.user!.email),
+          ),
+        );
+        return;
+      }
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'Google sign up failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.read<LanguageProvider>().t;
@@ -125,73 +158,138 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ],
       ),
-      child: SingleChildScrollView(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
         child: Column(
+          key: ValueKey(_role),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_role == null)
+            if (_role == null) ...[
               _RolePicker(
                 t: t,
-                onSelect: (role) => setState(() => _role = role),
-              )
-            else ...[
-              _RoleBanner(role: _role!, t: t, onBack: () => setState(() => _role = null)),
+                onSelect: (role) => setState(() {
+                  _role = role;
+                  _error = null;
+                }),
+              ),
               const SizedBox(height: 20),
+              Row(
+                children: const [
+                  Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('OR', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500)),
+                  ),
+                  Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _submitting ? null : _submitGoogle,
+                icon: Image.network(
+                  'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                  height: 18,
+                  width: 18,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 20),
+                ),
+                label: const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ] else ...[
               Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _RoleBanner(
+                      role: _role!,
+                      t: t,
+                      onBack: () => setState(() {
+                        _role = null;
+                        _error = null;
+                      }),
+                    ),
+                    const SizedBox(height: 20),
                     if (_role == SignupRole.buyer) ...[
                       _Field(
                         label: t('full_name'),
-                        hint: 'e.g. Sara Tadesse',
+                        hint: 'e.g. Abebe Bikila',
                         controller: _name,
-                        validator: (v) => (v == null || v.trim().length < 2) ? 'Name is too short' : null,
+                        validator: (v) =>
+                            (v == null || v.trim().length < 2) ? 'Name must be at least 2 characters' : null,
                       ),
                       const SizedBox(height: 16),
-                    ] else ...[
                       _Field(
-                        label: t('username'),
-                        hint: 'e.g. abel_koech',
-                        controller: _username,
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Username is required' : null,
+                        label: t('email'),
+                        hint: 'you@example.com',
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                       ),
                       const SizedBox(height: 16),
-                    ],
-                    _Field(
-                      label: t('email'),
-                      hint: 'you@example.com',
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
-                    ),
-                    if (_role == SignupRole.buyer) ...[
-                      const SizedBox(height: 16),
                       _Field(
-                        label: t('phone'),
+                        label: '${t('phone_number')} (Optional)',
                         hint: '+251 91 234 5678',
                         controller: _phone,
                         keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: t('password'),
+                        hint: 'At least 8 characters',
+                        controller: _password,
+                        obscure: !_showPassword,
+                        suffix: IconButton(
+                          icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility,
+                              color: const Color(0xFF64748B)),
+                          onPressed: () => setState(() => _showPassword = !_showPassword),
+                        ),
                         validator: (v) =>
-                            (v == null || v.trim().length < 6) ? 'Enter a valid phone number' : null,
+                            (v == null || v.length < 8) ? 'Password must be at least 8 characters' : null,
                       ),
-                    ],
-                    const SizedBox(height: 16),
-                    _Field(
-                      label: t('password'),
-                      hint: 'Create a strong password',
-                      controller: _password,
-                      obscure: !_showPassword,
-                      suffix: IconButton(
-                        icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility,
-                            color: const Color(0xFF64748B)),
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: t('confirm_password'),
+                        hint: 'Re-enter your password',
+                        controller: _confirm,
+                        obscure: !_showPassword,
+                        validator: (v) =>
+                            (v != _password.text) ? 'Passwords do not match' : null,
                       ),
-                      validator: (v) =>
-                          (v == null || v.length < 8) ? 'Min 8 characters' : null,
-                    ),
-                    if (_role == SignupRole.buyer) ...[
+                    ] else ...[
+                      _Field(
+                        label: t('username'),
+                        hint: 'e.g. abebe_realestate',
+                        controller: _username,
+                        validator: (v) =>
+                            (v == null || v.trim().length < 2) ? 'Username must be at least 2 characters' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: t('email'),
+                        hint: 'agent@example.com',
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: t('password'),
+                        hint: 'At least 8 characters',
+                        controller: _password,
+                        obscure: !_showPassword,
+                        suffix: IconButton(
+                          icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility,
+                              color: const Color(0xFF64748B)),
+                          onPressed: () => setState(() => _showPassword = !_showPassword),
+                        ),
+                        validator: (v) =>
+                            (v == null || v.length < 8) ? 'Password must be at least 8 characters' : null,
+                      ),
                       const SizedBox(height: 16),
                       _Field(
                         label: t('confirm_password'),
@@ -232,6 +330,22 @@ class _SignupScreenState extends State<SignupScreen> {
                           : 'Your application will be reviewed by our team after verification.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: _submitting ? null : _submitGoogle,
+                      icon: Image.network(
+                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                        height: 18,
+                        width: 18,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 20),
+                      ),
+                      label: const Text('Sign up with Google', style: TextStyle(fontWeight: FontWeight.w600)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ],
                 ),

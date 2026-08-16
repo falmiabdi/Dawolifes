@@ -52,6 +52,39 @@ class AuthRepository {
     return SessionUser.fromJson((data['user'] as Map<String, dynamic>?) ?? {});
   }
 
+  /// Authenticates using a Firebase ID token (Google or Email/Password).
+  ///
+  /// The server verifies the token signature, audience, and expiration.
+  /// If the token has `email_verified: true`, session tokens are returned and saved.
+  /// If `email_verified: false`, the user is returned without session tokens.
+  Future<VerifyOtpResult> signInWithFirebase({
+    required String idToken,
+    String role = 'user',
+    String? name,
+    String? phone,
+  }) async {
+    final data = await _api.post('/api/auth/firebase', {
+      'idToken': idToken,
+      'role': role,
+      if (name != null && name.isNotEmpty) 'name': name,
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+    }) as Map<String, dynamic>;
+
+    final token = data['accessToken'] as String?;
+    final userJson = data['user'] as Map<String, dynamic>?;
+    SessionUser? user;
+    if (token != null && token.isNotEmpty) {
+      await _api.saveToken(token);
+    }
+    if (userJson != null) {
+      user = SessionUser.fromJson(userJson);
+    }
+    return VerifyOtpResult(
+      message: '${data['message'] ?? ''}',
+      user: user,
+    );
+  }
+
   /// Buyer / user registration. Pending until [verifyOtp] is confirmed.
   Future<RegistrationResult> registerBuyer({
     required String name,

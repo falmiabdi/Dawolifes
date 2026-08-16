@@ -76,10 +76,14 @@ export async function requireActiveUser(req: AuthenticatedRequest, res: Response
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { id: true, role: true, status: true, rejectionReason: true, onboardingComplete: true },
+      select: { id: true, role: true, status: true, rejectionReason: true, onboardingComplete: true, emailVerified: true },
     })
     if (!user) {
       return res.status(401).json({ message: 'User not found' })
+    }
+
+    if (!user.emailVerified) {
+      return res.status(403).json({ message: 'Please verify your email address before continuing.' })
     }
 
     const { status } = user
@@ -102,5 +106,32 @@ export async function requireActiveUser(req: AuthenticatedRequest, res: Response
     next()
   } catch (err) {
     res.status(500).json({ message: 'Failed to verify account status' })
+  }
+}
+
+export async function requireVerifiedEmail(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'No token provided' })
+    }
+    if (req.user.role === 'admin') {
+      return next()
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, emailVerified: true },
+    })
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' })
+    }
+
+    if (!user.emailVerified) {
+      return res.status(403).json({ message: 'Please verify your email address first.' })
+    }
+
+    next()
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to verify email status' })
   }
 }

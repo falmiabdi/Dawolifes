@@ -73,6 +73,43 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _submitGoogle() async {
+    setState(() {
+      _submitting = true;
+      _error = null;
+      _needsVerification = false;
+    });
+
+    try {
+      final auth = context.read<AuthProvider>();
+      final result = await auth.loginWithGoogle();
+      if (!mounted) return;
+
+      if (result.user != null && !result.user!.emailVerified) {
+        setState(() {
+          _error = 'Please verify your email address to continue.';
+          _needsVerification = true;
+        });
+        return;
+      }
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      if (auth.user != null && auth.user!.isAdmin) {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
+      } else if (auth.user != null && auth.user!.isAgent) {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Google sign in failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.read<LanguageProvider>().t;
@@ -194,6 +231,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : Text(t('sign_in')),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: const [
+                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('OR', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500)),
+                ),
+                Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+              ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _submitting ? null : _submitGoogle,
+              icon: Image.network(
+                'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                height: 18,
+                width: 18,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 20),
+              ),
+              label: const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w600)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
           ],
         ),

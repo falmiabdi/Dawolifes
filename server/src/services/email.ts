@@ -6,7 +6,7 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
 const BREVO_SMTP_KEY = process.env.BREVO_SMTP_KEY || ''
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
 const BREVO_CAMPAIGN_URL = 'https://api.brevo.com/v3/emailCampaigns'
-const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'noreply@dawolife.com'
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'jebugeneraltradingplc@gmail.com'
 const FROM_NAME = process.env.BREVO_FROM_NAME || 'DawoLife'
 
 interface SendEmailParams {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "937308603015",
+    "project_id": "dawolife-797b5",
+    "storage_bucket": "dawolife-797b5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937308603015:android:41c0298d7b95099d9a6e22",
+        "android_client_info": {
+          "package_name": "com.dawolife.dawolife_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBk10Jj3G7sycgt7JrCsS1OZ-plMC53068"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

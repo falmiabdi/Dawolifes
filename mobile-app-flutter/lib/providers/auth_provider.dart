@@ -1,10 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../data/models/user.dart';
 import '../data/repositories/auth_repository.dart';
 
-/// Auth state mirroring AuthProvider from auth-guard.tsx.
+/// Auth state mirroring AuthProvider from auth-guard.tsx with Firebase support.
 class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required this.repository,
@@ -21,7 +24,7 @@ class AuthProvider extends ChangeNotifier {
   SessionUser? get user => _user;
   bool get loading => _loading;
   bool get isLoggedIn => _user != null;
-  bool get isVerified => _user != null;
+  bool get isVerified => _user?.emailVerified ?? false;
 
   /// Restores the cached user immediately, then refreshes from the server.
   Future<void> init() async {
@@ -42,6 +45,121 @@ class AuthProvider extends ChangeNotifier {
   Future<void> login({required String email, required String password}) async {
     final user = await repository.signIn(email: email, password: password);
     _setUser(user);
+  }
+
+  /// Signs in or registers via Google using Firebase Auth + backend sync.
+  Future<VerifyOtpResult> loginWithGoogle({String role = 'user'}) async {
+    final googleSignIn = GoogleSignIn();
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) {
+      throw ApiException('Google sign in was cancelled');
+    }
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+    final idToken = await userCredential.user?.getIdToken(true);
+    if (idToken == null) {
+      throw ApiException('Failed to retrieve Firebase ID token');
+    }
+
+    final result = await repository.signInWithFirebase(
+      idToken: idToken,
+      role: role,
+      name: userCredential.user?.displayName ?? googleUser.displayName,
+      phone: userCredential.user?.phoneNumber,
+    );
+
+    if (result.user != null && result.user!.emailVerified) {
+      _setUser(result.user);
+    }
+    return result;
+  }
+
+  /// Signs up with email/password via Firebase, sends verification email,
+  /// and registers user on backend.
+  Future<VerifyOtpResult> signUpWithFirebase({
+    required String email,
+    required String password,
+    required String name,
+    String? phone,
+    String role = 'user',
+  }) async {
+    final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    await userCredential.user?.updateDisplayName(name);
+    await userCredential.user?.sendEmailVerification();
+
+    final idToken = await userCredential.user?.getIdToken(true);
+    if (idToken == null) {
+      throw ApiException('Failed to retrieve Firebase ID token');
+    }
+
+    final result = await repository.signInWithFirebase(
+      idToken: idToken,
+      role: role,
+      name: name,
+      phone: phone,
+    );
+
+    return result;
+  }
+
+  /// Signs in with Firebase email & password and exchanges token with backend.
+  Future<VerifyOtpResult> signInWithFirebase({
+    required String email,
+    required String password,
+  }) async {
+    final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    // Refresh user state to verify if email link was clicked
+    await userCredential.user?.reload();
+    final freshUser = FirebaseAuth.instance.currentUser;
+    final idToken = await freshUser?.getIdToken(true);
+
+    if (idToken == null) {
+      throw ApiException('Failed to retrieve Firebase ID token');
+    }
+
+    final result = await repository.signInWithFirebase(
+      idToken: idToken,
+      name: freshUser?.displayName,
+      phone: freshUser?.phoneNumber,
+    );
+
+    if (result.user != null && result.user!.emailVerified) {
+      _setUser(result.user);
+    }
+    return result;
+  }
+
+  /// Checks if current Firebase user has verified their email, and syncs with backend.
+  Future<VerifyOtpResult?> checkFirebaseEmailVerified() async {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) return null;
+
+    await firebaseUser.reload();
+    final refreshed = FirebaseAuth.instance.currentUser;
+    if (refreshed == null) return null;
+
+    final idToken = await refreshed.getIdToken(true);
+    if (idToken == null) return null;
+
+    final result = await repository.signInWithFirebase(idToken: idToken);
+    if (result.user != null && result.user!.emailVerified) {
+      _setUser(result.user);
+    }
+    return result;
   }
 
   /// Buyer registration. Account is pending until the OTP is verified; no session
