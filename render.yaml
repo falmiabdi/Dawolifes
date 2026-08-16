@@ -5,7 +5,7 @@ services:
     runtime: node
     rootDir: server
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run build && npx prisma db push
+    buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -33,6 +33,18 @@ services:
       - key: BREVO_FROM_EMAIL
         sync: false
       - key: BREVO_FROM_NAME
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_FROM_NAME
         sync: false
       - key: FRONTEND_URL
         sync: false

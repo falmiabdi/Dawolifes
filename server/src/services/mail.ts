@@ -19,20 +19,28 @@ interface SmtpConfig {
 
 let cachedTransporter: Transporter | null = null
 
+// Mask a secret so we can log which key is in use without exposing it fully.
+function maskSecret(value: string): string {
+  if (!value) return '(empty)'
+  if (value.length <= 8) return '*'.repeat(value.length)
+  return `${value.slice(0, 4)}…${value.slice(-4)} (len ${value.length})`
+}
+
 export function readSmtpConfig(): SmtpConfig | null {
-  const host = process.env.SMTP_HOST
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASSWORD
-  const fromEmail = process.env.SMTP_FROM_EMAIL
+  const host = process.env.SMTP_HOST || process.env.SMTP_NAME || process.env.BREVO_SMTP_NAME
+  const user = process.env.SMTP_USER || process.env.BREVO_SMTP_USER
+  // Fall back to BREVO_SMTP_KEY when SMTP_PASSWORD is not set.
+  const pass = process.env.SMTP_PASSWORD || process.env.BREVO_SMTP_KEY
+  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || process.env.BREVO_FROM_EMAIL
   if (!host || !user || !pass || !fromEmail) return null
   return {
     host,
-    port: Number(process.env.SMTP_PORT) || 587,
+    port: Number(process.env.SMTP_PORT || process.env.BREVO_PORT) || 587,
     secure: false,
     user,
     pass,
     fromEmail,
-    fromName: process.env.SMTP_FROM_NAME || 'DawoLife',
+    fromName: process.env.SMTP_FROM_NAME || process.env.BREVO_FROM_NAME || 'DawoLife',
   }
 }
 
@@ -50,6 +58,10 @@ export function getSmtpTransporter(): Transporter | null {
       secure: cfg.secure,
       auth: { user: cfg.user, pass: cfg.pass },
     })
+    console.log(
+      `[SMTP] transporter created → host=${cfg.host}:${cfg.port} user=${cfg.user} from=${cfg.fromEmail} ` +
+        `pass=${maskSecret(cfg.pass)} (env keys: SMTP_PASSWORD=${process.env.SMTP_PASSWORD ? 'set' : 'unset'} BREVO_SMTP_KEY=${process.env.BREVO_SMTP_KEY ? 'set' : 'unset'})`
+    )
   }
   return cachedTransporter
 }
@@ -67,13 +79,22 @@ export async function sendMailViaSmtp({ to, subject, html, text }: SmtpMailParam
     throw new Error('SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/SMTP_FROM_EMAIL required)')
   }
   const transporter = getSmtpTransporter()!
-  await transporter.sendMail({
-    from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
-    to,
-    subject,
-    html,
-    text: text || subject,
-  })
+  try {
+    await transporter.sendMail({
+      from: `"${cfg.fromName}" <${cfg.fromEmail}>`,
+      to,
+      subject,
+      html,
+      text: text || subject,
+    })
+    console.log(`[SMTP] sent "${subject}" to ${to}`)
+  } catch (err: any) {
+    console.error(
+      `[SMTP] send FAILED to=${to} host=${cfg.host}:${cfg.port} user=${cfg.user} pass=${maskSecret(cfg.pass)} ` +
+        `code=${err?.code || ''} responseCode=${err?.responseCode || ''} response=${JSON.stringify(err?.response || '')}`
+    )
+    throw err
+  }
 }
 
 export interface SmtpVerifyResult {
@@ -89,7 +110,7 @@ export async function verifySmtpConnection(): Promise<SmtpVerifyResult> {
   if (!cfg) {
     return {
       ok: false,
-      message: 'SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD and SMTP_FROM_EMAIL.',
+      message: 'SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD and SMTP_FROM_EMAIL (or SMTP_EMAIL).',
     }
   }
 

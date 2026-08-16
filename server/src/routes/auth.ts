@@ -307,7 +307,7 @@ router.get('/verify-email', async (req, res) => {
     if (user.role === 'agent') {
       notifyAdmins(
         'New Agent Registration',
-        `${user.username} (${user.email}) has verified their email and is awaiting approval.`,
+        `${user.username} (${user.email}) has verified their email and is now approved.`,
         'info',
         { type: 'agent', id: user.id }
       ).catch(() => {})
@@ -390,6 +390,19 @@ router.post('/signin', authLimiter, async (req, res) => {
     }
 
     const { status } = user
+    // Agents may only sign in after their application has been approved.
+    if (user.role === 'agent' && status !== 'Approved') {
+      return res.status(403).json({
+        message:
+          status === 'Rejected'
+            ? 'Your account has been rejected'
+            : status === 'Suspended'
+              ? 'Your account has been suspended'
+              : 'Your application is under review. You can sign in once your account is approved.',
+      })
+    }
+
+    // Backwards-compatible guards for non-agent accounts.
     if (status === 'Rejected') {
       return res.status(403).json({ message: 'Your account has been rejected', rejectionReason: user.rejectionReason })
     }

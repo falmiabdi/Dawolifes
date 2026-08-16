@@ -63,7 +63,9 @@ function LoginForm() {
       return
     }
     if (user.role === 'admin') router.replace('/admin')
-    else if (user.role === 'agent') router.replace('/agent')
+    else if (user.role === 'agent') {
+      router.replace(user.onboardingComplete ? '/agent' : '/agent/onboarding')
+    }
     else router.replace('/')
   }, [user, router])
 
