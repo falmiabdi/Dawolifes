@@ -77,57 +77,77 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 const SectionHeader(title: 'Overview'),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 1.5,
-                  children: [
-                    StatCard(
-                      label: 'Total Agents',
-                      value: '${agents.length}',
-                      icon: Icons.people_outline,
-                      color: const Color(0xFF3B82F6),
-                      subtitle: '$pendingAgents pending verification',
-                    ),
-                    StatCard(
-                      label: 'Verification Queue',
-                      value: '$pendingAgents',
-                      icon: Icons.verified_outlined,
-                      color: AppColors.warning,
-                      subtitle: 'Requires identity approval',
-                    ),
-                    StatCard(
-                      label: 'Total Properties',
-                      value: '${properties.length}',
-                      icon: Icons.house_outlined,
-                      color: AppColors.success,
-                      subtitle: '$pendingProperties awaiting review',
-                    ),
-                    StatCard(
-                      label: 'Total Vehicles',
-                      value: '${vehicles.length}',
-                      icon: Icons.directions_car_outlined,
-                      color: const Color(0xFF3B82F6),
-                      subtitle: '$pendingVehicles awaiting review',
-                    ),
-                    StatCard(
-                      label: 'Total Revenue',
-                      value: 'ETB ${_fmt(stats.totalRevenue)}',
-                      icon: Icons.attach_money,
-                      color: AppColors.success,
-                      subtitle: '${stats.completedCount} completed',
-                    ),
-                    StatCard(
-                      label: 'Pending Payments',
-                      value: '${stats.pendingCount}',
-                      icon: Icons.hourglass_empty,
-                      color: AppColors.warning,
-                      subtitle: '${stats.failedCount} failed',
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 10.0;
+                    final cardWidth = (constraints.maxWidth - spacing) / 2;
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        SizedBox(
+                          width: cardWidth,
+                          child: StatCard(
+                            label: 'Total Agents',
+                            value: '${agents.length}',
+                            icon: Icons.people_outline,
+                            color: const Color(0xFF3B82F6),
+                            subtitle: '$pendingAgents pending verification',
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: StatCard(
+                            label: 'Verification Queue',
+                            value: '$pendingAgents',
+                            icon: Icons.verified_outlined,
+                            color: AppColors.warning,
+                            subtitle: 'Requires identity approval',
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: StatCard(
+                            label: 'Total Properties',
+                            value: '${properties.length}',
+                            icon: Icons.house_outlined,
+                            color: AppColors.success,
+                            subtitle: '$pendingProperties awaiting review',
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: StatCard(
+                            label: 'Total Vehicles',
+                            value: '${vehicles.length}',
+                            icon: Icons.directions_car_outlined,
+                            color: const Color(0xFF3B82F6),
+                            subtitle: '$pendingVehicles awaiting review',
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: StatCard(
+                            label: 'Total Revenue',
+                            value: 'ETB ${_fmt(stats.totalRevenue)}',
+                            icon: Icons.attach_money,
+                            color: AppColors.success,
+                            subtitle: '${stats.completedCount} completed',
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: StatCard(
+                            label: 'Pending Payments',
+                            value: '${stats.pendingCount}',
+                            icon: Icons.hourglass_empty,
+                            color: AppColors.warning,
+                            subtitle: '${stats.failedCount} failed',
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Container(

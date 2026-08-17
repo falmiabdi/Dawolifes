@@ -33,6 +33,14 @@ class AgentPostPropertyScreen extends StatefulWidget {
 class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   final _basicFormKey = GlobalKey<FormState>();
   final _locationFormKey = GlobalKey<FormState>();
+  final _reviewFormKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
+
+  final _titleKey = GlobalKey<FormFieldState<String>>();
+  final _priceKey = GlobalKey<FormFieldState<String>>();
+  final _cityKey = GlobalKey<FormFieldState<String>>();
+  final _nameKey = GlobalKey<FormFieldState<String>>();
+  final _phoneKey = GlobalKey<FormFieldState<String>>();
 
   late final TextEditingController _title;
   late final TextEditingController _price;
@@ -122,6 +130,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     for (final c in [
       _title, _price, _area, _bedrooms, _bathrooms, _floorNumber, _legalizedYear, _description,
       _city, _subCity, _woreda, _kebele, _parcel, _block, _homeNo, _latitude, _longitude,
@@ -154,7 +163,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   Future<void> _uploadDocument() async {
     setState(() => _uploadingDoc = true);
     try {
-      final url = await pickAndUploadDocument(context.read<ApiClient>());
+      final url = await pickAndUploadDocument(context, context.read<ApiClient>());
       if (!mounted) return;
       setState(() => _locationDocument = url);
     } on ImagePickCancelled {
@@ -179,14 +188,37 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     });
   }
 
+  void _scrollToFirstError() {
+    final keys = [_titleKey, _priceKey, _cityKey, _nameKey, _phoneKey];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final k in keys) {
+        if (k.currentState?.hasError == true && k.currentContext != null) {
+          Scrollable.ensureVisible(
+            k.currentContext!,
+            alignment: 0.1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+          return;
+        }
+      }
+    });
+  }
+
   void _next() {
     final t = context.read<LanguageProvider>().t;
     switch (_step) {
       case 0:
-        if (!(_basicFormKey.currentState?.validate() ?? false)) return;
+        if (!(_basicFormKey.currentState?.validate() ?? false)) {
+          _scrollToFirstError();
+          return;
+        }
         break;
       case 1:
-        if (!(_locationFormKey.currentState?.validate() ?? false)) return;
+        if (!(_locationFormKey.currentState?.validate() ?? false)) {
+          _scrollToFirstError();
+          return;
+        }
         break;
       case 2:
         if (_images.length < 3) {
@@ -219,6 +251,10 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   Future<void> _submit() async {
     if (_images.length < 3) {
       setState(() => _error = 'At least 3 photos are required to list a property.');
+      return;
+    }
+    if (!(_reviewFormKey.currentState?.validate() ?? false)) {
+      _scrollToFirstError();
       return;
     }
     setState(() {
@@ -284,12 +320,14 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
 
   Widget _dropdown(String label, String value, List<String> options, ValueChanged<String> onChanged) {
     final tv = context.read<LanguageProvider>().tv;
+    final hasMatch = options.contains(value);
     return Field(
       label: label,
       child: DropdownButtonFormField<String>(
-        initialValue: value.isEmpty ? null : value,
+        initialValue: hasMatch ? value : null,
+        isExpanded: true,
         decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
-        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
         items: options.map((o) => DropdownMenuItem(
           value: o,
           child: Text(tv(o), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
@@ -371,6 +409,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             Field(
               label: t('property_title'),
               child: TextFormField(
+                key: _titleKey,
                 controller: _title,
                 decoration: const InputDecoration(hintText: 'e.g. Modern 3 Bedroom Villa'),
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -389,6 +428,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                   child: Field(
                     label: t('price_etb'),
                     child: TextFormField(
+                      key: _priceKey,
                       controller: _price,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(hintText: 'e.g. 12000000'),
@@ -412,6 +452,14 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                 const SizedBox(width: 10),
                 Expanded(child: Field(label: t('bathrooms'), child: TextFormField(controller: _bathrooms, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 2')))),
               ],
+            ),
+            Field(
+              label: t('floor_number'),
+              child: TextFormField(
+                controller: _floorNumber,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(hintText: 'e.g. 3'),
+              ),
             ),
             Row(
               children: [
@@ -468,6 +516,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             Field(
               label: t('city'),
               child: TextFormField(
+                key: _cityKey,
                 controller: _city,
                 decoration: const InputDecoration(hintText: 'e.g. Addis Ababa'),
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -492,8 +541,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                 Expanded(child: Field(label: t('block'), child: TextFormField(controller: _block, decoration: const InputDecoration(hintText: 'e.g. 05')))),
                 const SizedBox(width: 10),
                 Expanded(child: Field(label: t('home_no'), child: TextFormField(controller: _homeNo, decoration: const InputDecoration(hintText: 'e.g. 12')))),
-                const SizedBox(width: 10),
-                Expanded(child: Field(label: t('floor_number'), child: TextFormField(controller: _floorNumber, decoration: const InputDecoration(hintText: 'e.g. 3')))),
               ],
             ),
           ],
@@ -614,62 +661,73 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       _city.text.trim(),
       _region,
     ].where((e) => e.isNotEmpty);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FormSection(
-          title: t('review_listing_info'),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _title.text.trim().isEmpty ? tv('not_specified') : _title.text.trim(),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.foreground),
-              ),
-              const SizedBox(height: 12),
-              _summaryRow(t('type'), '${tv(_propertyType)} (${tv(_listingType)})'),
-              _summaryRow(t('price'), _price.text.trim().isEmpty ? tv('not_set') : '${_price.text.trim()} ETB (${tv(_priceType)})', highlight: _price.text.trim().isNotEmpty),
-              _summaryRow(t('location'), addressParts.isEmpty ? tv('not_set') : addressParts.join(', ')),
-              _summaryRow('Beds / Baths', '${_bedrooms.text.trim().isEmpty ? '-' : _bedrooms.text.trim()} / ${_bathrooms.text.trim().isEmpty ? '-' : _bathrooms.text.trim()}'),
-              _summaryRow(t('area'), _area.text.trim().isEmpty ? tv('not_set') : '${_area.text.trim()} m²'),
-              _summaryRow(t('floor_number'), _floorNumber.text.trim().isEmpty ? tv('not_set') : _floorNumber.text.trim()),
-              _summaryRow(t('condition'), tv(_condition)),
-              _summaryRow(t('photos'), '${_images.length} ${tv('uploaded')}'),
-              _summaryRow(t('features'), _features.isEmpty ? tv('none') : '${_features.length} ${tv('selected')}'),
-            ],
-          ),
-        ),
-        FormSection(
-          title: t('contact_info_title'),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Field(
-                label: t('your_name'),
-                child: TextFormField(
-                  controller: _name,
-                  decoration: const InputDecoration(hintText: 'Your name'),
+    return Form(
+      key: _reviewFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FormSection(
+            title: t('review_listing_info'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _title.text.trim().isEmpty ? tv('not_specified') : _title.text.trim(),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.foreground),
                 ),
-              ),
-              Field(
-                label: t('phone_number_label'),
-                child: TextFormField(
-                  controller: _phone,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(hintText: '+251 911 000 000'),
+                const SizedBox(height: 12),
+                _summaryRow(t('type'), '${tv(_propertyType)} (${tv(_listingType)})'),
+                _summaryRow(t('price'), _price.text.trim().isEmpty ? tv('not_set') : '${_price.text.trim()} ETB (${tv(_priceType)})', highlight: _price.text.trim().isNotEmpty),
+                _summaryRow(t('location'), addressParts.isEmpty ? tv('not_set') : addressParts.join(', ')),
+                _summaryRow('Beds / Baths', '${_bedrooms.text.trim().isEmpty ? '-' : _bedrooms.text.trim()} / ${_bathrooms.text.trim().isEmpty ? '-' : _bathrooms.text.trim()}'),
+                _summaryRow(t('area'), _area.text.trim().isEmpty ? tv('not_set') : '${_area.text.trim()} m²'),
+                _summaryRow(t('floor_number'), _floorNumber.text.trim().isEmpty ? tv('not_set') : _floorNumber.text.trim()),
+                _summaryRow(t('condition'), tv(_condition)),
+                _summaryRow(t('photos'), '${_images.length} ${tv('uploaded')}'),
+                _summaryRow(t('features'), _features.isEmpty ? tv('none') : '${_features.length} ${tv('selected')}'),
+              ],
+            ),
+          ),
+          FormSection(
+            title: t('contact_info_title'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Field(
+                  label: t('your_name'),
+                  child: TextFormField(
+                    key: _nameKey,
+                    controller: _name,
+                    decoration: const InputDecoration(hintText: 'Your name'),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
                 ),
-              ),
-            ],
+                Field(
+                  label: t('phone_number_label'),
+                  child: TextFormField(
+                    key: _phoneKey,
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(hintText: '+251 911 000 000'),
+                    validator: (v) {
+                      final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
+                      if (digits.length < 9) return 'Enter a valid phone number';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        FormSection(
-          title: t('description'),
-          child: Text(
-            _description.text.trim().isEmpty ? tv('not_set') : _description.text.trim(),
-            style: const TextStyle(fontSize: 13, color: AppColors.foreground),
+          FormSection(
+            title: t('description'),
+            child: Text(
+              _description.text.trim().isEmpty ? tv('not_set') : _description.text.trim(),
+              style: const TextStyle(fontSize: 13, color: AppColors.foreground),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -776,6 +834,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
               ),
             Expanded(
               child: ListView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
                   switch (_step) {
@@ -785,35 +844,48 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                     3 => _buildMap(),
                     _ => _buildReview(),
                   },
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: _step == 0 || _submitting ? null : _back,
-                        icon: const Icon(Icons.arrow_back, size: 18),
-                        label: Text(t('back')),
-                      ),
-                      const Spacer(),
-                      if (!_isLastStep)
-                        FilledButton.icon(
-                          onPressed: (_submitting || (_step == 2 && _images.length < 3)) ? null : _next,
-                          icon: const Icon(Icons.arrow_forward, size: 18),
-                          label: Text(t('next')),
-                        )
-                      else
-                        FilledButton.icon(
-                          onPressed: _submitting ? null : _submit,
-                          icon: _submitting
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Icon(Icons.send, size: 18),
-                          label: Text(_submitting ? t('submitting') : (_isEdit ? 'Update Property' : t('submit_listing'))),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
                 ],
               ),
             ),
+            _buildBottomBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    final t = context.read<LanguageProvider>().t;
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        child: Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: _step == 0 || _submitting ? null : _back,
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: Text(t('back')),
+            ),
+            const Spacer(),
+            if (!_isLastStep)
+              FilledButton.icon(
+                onPressed: (_submitting || (_step == 2 && _images.length < 3)) ? null : _next,
+                icon: const Icon(Icons.arrow_forward, size: 18),
+                label: Text(t('next')),
+              )
+            else
+              FilledButton.icon(
+                onPressed: _submitting ? null : _submit,
+                icon: _submitting
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send, size: 18),
+                label: Text(_submitting ? t('submitting') : (_isEdit ? 'Update Property' : t('submit_listing'))),
+              ),
           ],
         ),
       ),

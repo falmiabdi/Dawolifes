@@ -1,14 +1,20 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/i18n/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/listing_item.dart';
+import '../../data/models/user.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/home_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/listing_card.dart';
 import '../../widgets/service_cards.dart';
+import '../auth/login_screen.dart';
+import '../auth/signup_screen.dart';
 import '../listings/listing_detail_screen.dart';
+import '../profile/profile_screen.dart';
 import 'about_screen.dart';
 import 'categories_screen.dart';
 import 'how_to_buy_screen.dart';
@@ -117,9 +123,12 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: _LanguageDropdown(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _LanguageDropdown(),
+              const _AccountButton(),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
@@ -498,6 +507,133 @@ class _FooterLink extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Account entry point in the header, replacing the old bottom-nav person icon.
+/// Logged-in users are taken to their Account page; guests get a choice between
+/// creating an account (with the buyer/agent role picker) and signing in.
+class _AccountButton extends StatelessWidget {
+  const _AccountButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    return IconButton(
+      onPressed: () => _openAccount(context, auth),
+      tooltip: 'Account',
+      icon: user != null
+          ? _Avatar(user: user)
+          : const Icon(Icons.person_outline, color: Colors.white, size: 26),
+    );
+  }
+
+  void _openAccount(BuildContext context, AuthProvider auth) {
+    if (auth.isLoggedIn) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+      );
+      return;
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Your Account',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SignupScreen()),
+                  );
+                },
+                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                label: const Text('Signup \u00b7 Galma\u2019i'),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                icon: const Icon(Icons.login, size: 18),
+                label: const Text('Sign in \u00b7 Seeni'),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.user});
+
+  final SessionUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = user.profilePhoto;
+    if (photo != null && photo.isNotEmpty) {
+      return Container(
+        width: 34,
+        height: 34,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 1.5),
+        ),
+        child: CachedNetworkImage(
+          imageUrl: photo,
+          fit: BoxFit.cover,
+          errorWidget: (_, _, _) => _initialBadge(user),
+        ),
+      );
+    }
+    return _initialBadge(user);
+  }
+
+  Widget _initialBadge(SessionUser user) {
+    final name = user.name.trim();
+    final initial = name.isEmpty ? '?' : String.fromCharCode(name.runes.first).toUpperCase();
+    return Container(
+      width: 34,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

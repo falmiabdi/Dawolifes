@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -84,17 +85,60 @@ Future<String> pickAndUploadImage(ApiClient api, {String endpoint = '/api/agent/
   return '$url';
 }
 
-/// Picks a location document (image, JPG/PNG) and uploads it, returning the URL.
-Future<String> pickAndUploadDocument(ApiClient api) async {
-  final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80, maxWidth: 2000);
-  if (file == null) throw ImagePickCancelled();
-  final bytes = await file.readAsBytes();
-  final mime = file.mimeType?.isNotEmpty == true ? file.mimeType! : _mimeFromExtension(file.name);
-  final safeName = _ensureExtension(file.name, mime);
+/// Picks a location document (image or PDF) and uploads it, returning the URL.
+///
+/// Presents a source picker so users can attach either a JPG/PNG photo or a
+/// PDF file, mirroring the web app's document upload (which accepts PDF/JPG/PNG).
+Future<String> pickAndUploadDocument(BuildContext context, ApiClient api) async {
+  final kind = await showModalBottomSheet<_DocKind>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.image_outlined),
+            title: const Text('Image (JPG/PNG)', style: TextStyle(fontSize: 14)),
+            subtitle: const Text('Photo of the document', style: TextStyle(fontSize: 12)),
+            onTap: () => Navigator.of(ctx).pop(_DocKind.image),
+          ),
+          ListTile(
+            leading: const Icon(Icons.picture_as_pdf_outlined),
+            title: const Text('PDF document', style: TextStyle(fontSize: 14)),
+            subtitle: const Text('Upload a scanned PDF', style: TextStyle(fontSize: 12)),
+            onTap: () => Navigator.of(ctx).pop(_DocKind.pdf),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (kind == null) throw ImagePickCancelled();
+
+  if (kind == _DocKind.image) {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80, maxWidth: 2000);
+    if (file == null) throw ImagePickCancelled();
+    final bytes = await file.readAsBytes();
+    final mime = file.mimeType?.isNotEmpty == true ? file.mimeType! : _mimeFromExtension(file.name);
+    return _uploadDocument(api, bytes, _ensureExtension(file.name, mime), mime);
+  }
+
+  final picked = await FilePicker.pickFile(
+    type: FileType.custom,
+    allowedExtensions: ['pdf'],
+  );
+  if (picked == null) throw ImagePickCancelled();
+  final bytes = await picked.readAsBytes();
+  final name = picked.name.toLowerCase().endsWith('.pdf') ? picked.name : '${picked.name}.pdf';
+  return _uploadDocument(api, bytes, name, 'application/pdf');
+}
+
+enum _DocKind { image, pdf }
+
+Future<String> _uploadDocument(ApiClient api, List<int> bytes, String filename, String mime) async {
   final data = await api.uploadFile(
     '/api/agent/upload',
     bytes: bytes,
-    filename: safeName,
+    filename: filename,
     contentType: mime,
     fields: const {'field': 'document'},
   ) as Map<String, dynamic>;

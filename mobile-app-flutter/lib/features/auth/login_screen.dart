@@ -5,8 +5,8 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import '../admin/admin_portal.dart';
-import '../agent/agent_portal.dart';
+import '../../widgets/google_sign_in_button.dart';
+import 'auth_routing.dart';
 import 'auth_shell.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
@@ -54,11 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await auth.login(email: _email.text, password: _password.text);
       if (!mounted) return;
       Navigator.of(context).popUntil((route) => route.isFirst);
-      if (auth.user != null && auth.user!.isAdmin) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
-      } else if (auth.user != null && auth.user!.isAgent) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
-      }
+      routeToRoleHome(context);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -84,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final auth = context.read<AuthProvider>();
       final result = await auth.loginWithGoogle();
       if (!mounted) return;
+      if (result == null) return;
 
       if (result.user != null && !result.user!.emailVerified) {
         setState(() {
@@ -94,11 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       Navigator.of(context).popUntil((route) => route.isFirst);
-      if (auth.user != null && auth.user!.isAdmin) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminPortalScreen()));
-      } else if (auth.user != null && auth.user!.isAgent) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
-      }
+      routeToRoleHome(context);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -244,20 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: _submitting ? null : _submitGoogle,
-              icon: Image.network(
-                'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                height: 18,
-                width: 18,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 20),
-              ),
-              label: const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w600)),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            GoogleSignInButton(
+              onPressed: _submitGoogle,
+              loading: _submitting,
             ),
           ],
         ),

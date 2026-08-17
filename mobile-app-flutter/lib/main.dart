@@ -36,6 +36,7 @@ Future<void> main() async {
   final auth = AuthProvider(
     repository: AuthRepository(api),
     storage: storage,
+    webSocket: ws,
   );
   final language = LanguageProvider(prefs);
   final listingRepo = ListingRepository(api);

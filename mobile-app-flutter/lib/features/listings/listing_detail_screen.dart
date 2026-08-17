@@ -455,6 +455,12 @@ class _SpecsRow extends StatelessWidget {
     if (item.beds != null && item.beds! > 0) add(Icons.bed_outlined, '${item.beds} Beds');
     if (item.baths != null && item.baths! > 0) add(Icons.bathtub_outlined, '${item.baths} Baths');
     if (item.area != null && item.area! > 0) add(Icons.straighten, '${_num(item.area!)} m²');
+    if (!item.isVehicle && item.floorNumber != null && item.floorNumber!.trim().isNotEmpty) {
+      add(Icons.apartment_outlined, 'Floor ${item.floorNumber!.trim()}');
+    }
+    if (!item.isVehicle && item.condition != null && item.condition!.trim().isNotEmpty) {
+      add(Icons.check_circle_outline, item.condition!.trim());
+    }
     if (item.year != null) add(Icons.calendar_today_outlined, '${item.year}');
     if (item.mileage != null && item.mileage! > 0) add(Icons.speed, '${Formatters.formatPrice(item.mileage!)} km');
 

@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../data/models/listing_item.dart';
 import '../../data/models/vehicle.dart';
 import '../../data/repositories/agent_repository.dart';
 import '../../providers/language_provider.dart';
+import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 import 'agent_post_vehicle.dart';
 
@@ -175,8 +177,17 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
                                         ),
                                       ],
                                       const SizedBox(height: 10),
-                                      Row(
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
                                         children: [
+                                          OutlinedButton.icon(
+                                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                                              builder: (_) => ListingDetailScreen(item: ListingItem.fromVehicle(v)),
+                                            )),
+                                            icon: const Icon(Icons.visibility_outlined, size: 15),
+                                            label: const Text('View'),
+                                          ),
                                           if (v.status == 'Rejected')
                                             OutlinedButton.icon(
                                               onPressed: () async {
@@ -188,7 +199,6 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
                                               icon: const Icon(Icons.edit_outlined, size: 15),
                                               label: const Text('Edit'),
                                             ),
-                                          const SizedBox(width: 8),
                                           OutlinedButton.icon(
                                             onPressed: () => _delete(v),
                                             style: OutlinedButton.styleFrom(foregroundColor: AppColors.destructive),

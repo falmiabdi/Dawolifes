@@ -1,13 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../admin/admin_portal.dart';
 import '../agent/agent_portal.dart';
 import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
+import 'edit_profile_screen.dart';
 
 /// Profile tab, mirroring the profileHref destinations (verify/account).
 class ProfileScreen extends StatelessWidget {
@@ -21,7 +24,7 @@ class ProfileScreen extends StatelessWidget {
 
     if (!auth.isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(title: Text(t('profile'))),
+        appBar: AppBar(title: Text(t('account'))),
         body: ListView(
           padding: const EdgeInsets.all(32),
           children: [
@@ -53,20 +56,13 @@ class ProfileScreen extends StatelessWidget {
     final user = auth.user!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('profile'))),
+      appBar: AppBar(title: Text(t('account'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
+              _UserAvatar(user: user, radius: 32),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -75,8 +71,6 @@ class ProfileScreen extends StatelessWidget {
                     Text(user.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
                     Text(user.email, style: const TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
-                    const SizedBox(height: 4),
-                    _RoleChip(role: user.role),
                   ],
                 ),
               ),
@@ -84,7 +78,6 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           _InfoTile(icon: Icons.phone_outlined, label: t('phone'), value: user.phone ?? 'Not provided'),
-          _InfoTile(icon: Icons.badge_outlined, label: 'Role', value: user.role),
           const SizedBox(height: 24),
           if (user.isAdmin)
             Card(
@@ -125,6 +118,14 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+            ),
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('Edit Profile'),
+          ),
+          const SizedBox(height: 10),
           FilledButton.icon(
             onPressed: () async {
               await context.read<AuthProvider>().logout();
@@ -134,27 +135,6 @@ class ProfileScreen extends StatelessWidget {
             label: Text(t('logout')),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RoleChip extends StatelessWidget {
-  const _RoleChip({required this.role});
-
-  final String role;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.muted,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        role,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.mutedForeground),
       ),
     );
   }
@@ -174,6 +154,51 @@ class _InfoTile extends StatelessWidget {
       leading: Icon(icon, color: AppColors.mutedForeground),
       title: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
       subtitle: Text(value, style: const TextStyle(color: AppColors.foreground)),
+    );
+  }
+}
+
+class _UserAvatar extends StatelessWidget {
+  const _UserAvatar({required this.user, required this.radius});
+
+  final SessionUser user;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = user.profilePhoto;
+    if (photo != null && photo.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primary,
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: photo,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            errorWidget: (_, _, _) => _initialBadge(user, radius),
+          ),
+        ),
+      );
+    }
+    return _initialBadge(user, radius);
+  }
+
+  Widget _initialBadge(SessionUser user, double radius) {
+    final name = user.name.trim();
+    final initial = name.isEmpty ? '?' : String.fromCharCode(name.runes.first).toUpperCase();
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.white,
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: AppColors.primary,
+          fontSize: radius * 0.75,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

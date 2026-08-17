@@ -1,13 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/network/api_client.dart';
+import '../../core/network/websocket_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/notification.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../portal/widgets.dart';
 
 /// Notifications list mirroring components/notifications/notification-list.tsx.
+///
+/// Stays fresh via real-time WebSocket pushes (same as the web app):
+/// new notifications and unread-count changes reload the list, and a live
+/// status pill mirrors the web sidebar's connection indicator. The underlying
+/// WS client reconnects automatically with exponential backoff.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -19,6 +27,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   List<AppNotification> _notifications = [];
   bool _loading = true;
   String? _error;
+  StreamSubscription<WSMessage>? _wsSub;
+  StreamSubscription<WSConnectionState>? _connSub;
+  WSConnectionState _connection = WSConnectionState.disconnected;
 
   NotificationRepository get _repo => NotificationRepository(context.read<ApiClient>());
 
@@ -26,13 +37,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     _load();
+    _wsSub = context.read<WebSocketService>().messages.listen((msg) {
+      if (!mounted) return;
+      switch (msg.type) {
+        case WSMessageType.notification:
+        case WSMessageType.unreadCount:
+        case WSMessageType.markReadAck:
+        case WSMessageType.markSingleReadAck:
+          _load(silent: true);
+          break;
+        default:
+          break;
+      }
+    });
+    _connSub = context.read<WebSocketService>().connectionState.listen((state) {
+      if (!mounted) return;
+      setState(() => _connection = state);
+    });
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  @override
+  void dispose() {
+    _wsSub?.cancel();
+    _connSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final items = await _repo.fetchNotifications();
       if (!mounted) return;
@@ -42,14 +79,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _error = '$e';
-        _loading = false;
-      });
+      if (!silent) {
+        setState(() {
+          _error = '$e';
+          _loading = false;
+        });
+      }
     }
   }
 
   Future<void> _markAllRead() async {
+    final ws = context.read<WebSocketService>();
+    ws.markAllRead();
     try {
       await _repo.markAllRead();
       if (!mounted) return;
@@ -61,6 +102,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markRead(AppNotification notification) async {
     if (notification.read) return;
+    context.read<WebSocketService>().markSingleRead(notification.id);
     try {
       await _repo.markRead(notification.id);
       if (!mounted) return;
@@ -87,69 +129,77 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
         ],
       ),
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: _notifications.isEmpty
-                      ? ListView(
-                          children: [
-                            const SizedBox(height: 120),
-                            Center(
-                              child: Column(
+      body: Column(
+        children: [
+          _ConnectionPill(state: _connection),
+          Expanded(
+            child: _loading
+                ? const LoadingState()
+                : _error != null
+                    ? ErrorState(message: _error!, onRetry: _load)
+                    : RefreshIndicator(
+                        onRefresh: _load,
+                        child: _notifications.isEmpty
+                            ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 children: [
-                                  Icon(Icons.notifications_none, size: 48, color: AppColors.mutedForeground),
-                                  const SizedBox(height: 12),
-                                  Text('No notifications yet', style: TextStyle(color: AppColors.mutedForeground)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _notifications.length,
-                          separatorBuilder: (_, _) => const Divider(height: 1),
-                          itemBuilder: (context, i) {
-                            final n = _notifications[i];
-                            final (icon, color) = _typeStyle(n.type);
-                            return ListTile(
-                              onTap: () => _markRead(n),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                              leading: CircleAvatar(
-                                backgroundColor: color.withValues(alpha: 0.12),
-                                child: Icon(icon, color: color, size: 20),
-                              ),
-                              title: Row(
-                                children: [
-                                  if (!n.read)
-                                    Container(width: 8, height: 8, margin: const EdgeInsets.only(right: 6), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4))),
-                                  Expanded(
-                                    child: Text(
-                                      n.title,
-                                      style: TextStyle(fontSize: 14, fontWeight: n.read ? FontWeight.normal : FontWeight.w600),
+                                  const SizedBox(height: 120),
+                                  Center(
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.notifications_none, size: 48, color: AppColors.mutedForeground),
+                                        const SizedBox(height: 12),
+                                        Text('No notifications yet', style: TextStyle(color: AppColors.mutedForeground)),
+                                      ],
                                     ),
                                   ),
                                 ],
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _notifications.length,
+                                separatorBuilder: (_, _) => const Divider(height: 1),
+                                itemBuilder: (context, i) {
+                                  final n = _notifications[i];
+                                  final (icon, color) = _typeStyle(n.type);
+                                  return ListTile(
+                                    onTap: () => _markRead(n),
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                    leading: CircleAvatar(
+                                      backgroundColor: color.withValues(alpha: 0.12),
+                                      child: Icon(icon, color: color, size: 20),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        if (!n.read)
+                                          Container(width: 8, height: 8, margin: const EdgeInsets.only(right: 6), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4))),
+                                        Expanded(
+                                          child: Text(
+                                            n.title,
+                                            style: TextStyle(fontSize: 14, fontWeight: n.read ? FontWeight.normal : FontWeight.w600),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Text(n.body, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          n.createdAt != null ? _formatTime(n.createdAt!) : '',
+                                          style: const TextStyle(fontSize: 11, color: AppColors.mutedForeground),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Text(n.body, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    n.createdAt != null ? _formatTime(n.createdAt!) : '',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.mutedForeground),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -174,5 +224,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (_) {
       return '';
     }
+  }
+}
+
+/// Thin live/offline bar mirroring the web app's connection indicator.
+class _ConnectionPill extends StatelessWidget {
+  const _ConnectionPill({required this.state});
+
+  final WSConnectionState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, label) = switch (state) {
+      WSConnectionState.connected => (Colors.green, 'Live'),
+      WSConnectionState.connecting => (Colors.amber, 'Connecting…'),
+      WSConnectionState.disconnected => (AppColors.mutedForeground, 'Offline'),
+    };
+    return Container(
+      width: double.infinity,
+      color: color.withValues(alpha: 0.08),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+          ),
+        ],
+      ),
+    );
   }
 }

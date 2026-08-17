@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/models/listing_item.dart';
 import '../../data/models/property.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../core/utils/formatters.dart';
 import '../../providers/language_provider.dart';
+import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
 /// Admin property moderation mirroring app/admin/properties/page.tsx.
@@ -256,7 +258,15 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
               icon: const Icon(Icons.phone_outlined, size: 16),
               label: const Text('Switch Contact Phone'),
             ),
+            const SizedBox(height: 8),
           ],
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ListingDetailScreen(item: ListingItem.fromProperty(p))),
+            ),
+            icon: const Icon(Icons.visibility_outlined, size: 16),
+            label: const Text('View Public Listing'),
+          ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _busy ? null : _delete,

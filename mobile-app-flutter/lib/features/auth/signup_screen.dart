@@ -5,6 +5,8 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../widgets/google_sign_in_button.dart';
+import 'auth_routing.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 import 'verify_email_screen.dart';
@@ -115,6 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
       final roleStr = _role == SignupRole.agent ? 'agent' : 'user';
       final result = await auth.loginWithGoogle(role: roleStr);
       if (!mounted) return;
+      if (result == null) return;
 
       if (result.user != null && !result.user!.emailVerified) {
         Navigator.of(context).pushReplacement(
@@ -126,6 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       Navigator.of(context).popUntil((route) => route.isFirst);
+      routeToRoleHome(context);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -184,20 +188,9 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _submitting ? null : _submitGoogle,
-                icon: Image.network(
-                  'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                  height: 18,
-                  width: 18,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 20),
-                ),
-                label: const Text('Continue with Google', style: TextStyle(fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+              GoogleSignInButton(
+                onPressed: _submitGoogle,
+                loading: _submitting,
               ),
             ] else ...[
               Form(
@@ -332,20 +325,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                     ),
                     const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: _submitting ? null : _submitGoogle,
-                      icon: Image.network(
-                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                        height: 18,
-                        width: 18,
-                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, size: 20),
-                      ),
-                      label: const Text('Sign up with Google', style: TextStyle(fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                    GoogleSignInButton(
+                      onPressed: _submitGoogle,
+                      loading: _submitting,
                     ),
                   ],
                 ),

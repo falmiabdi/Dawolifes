@@ -12,7 +12,6 @@ import '../features/auth/signup_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/messages/messages_screen.dart';
 import '../features/more/more_screen.dart';
-import '../features/profile/profile_screen.dart';
 import '../features/saved/saved_screen.dart';
 import '../features/sell/sell_screen.dart';
 import '../providers/auth_provider.dart';
@@ -99,7 +98,6 @@ class _AppShellState extends State<AppShell> {
           const SavedScreen(),
           const SellScreen(),
           const MessagesScreen(),
-          const ProfileScreen(),
           const MoreScreen(),
         ],
       ),
@@ -123,7 +121,6 @@ class _AppShellState extends State<AppShell> {
             icon: _UnreadBadge(icon: Icons.chat_bubble_outline, count: _unread),
             label: 'Messages',
           ),
-          const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
           const BottomNavigationBarItem(
             icon: Icon(Icons.more_horiz),
             label: 'More',

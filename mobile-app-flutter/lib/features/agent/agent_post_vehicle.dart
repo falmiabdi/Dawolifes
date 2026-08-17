@@ -64,6 +64,13 @@ class AgentPostVehicleScreen extends StatefulWidget {
 
 class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
+
+  final _titleKey = GlobalKey<FormFieldState<String>>();
+  final _modelKey = GlobalKey<FormFieldState<String>>();
+  final _yearKey = GlobalKey<FormFieldState<String>>();
+  final _priceKey = GlobalKey<FormFieldState<String>>();
+  final _cityKey = GlobalKey<FormFieldState<String>>();
 
   late final TextEditingController _title;
   late final TextEditingController _model;
@@ -205,6 +212,7 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     for (final c in [
       _title, _model, _trimVersion, _year, _registrationYear, _engineSize,
       _horsepower, _cylinders, _seatingCapacity, _doors, _mileage,
@@ -241,8 +249,28 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
     return t.isEmpty ? null : num.tryParse(t);
   }
 
+  void _scrollToFirstError() {
+    final keys = [_titleKey, _modelKey, _yearKey, _priceKey, _cityKey];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final k in keys) {
+        if (k.currentState?.hasError == true && k.currentContext != null) {
+          Scrollable.ensureVisible(
+            k.currentContext!,
+            alignment: 0.1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+          return;
+        }
+      }
+    });
+  }
+
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _scrollToFirstError();
+      return;
+    }
     if (_images.length < 3) {
       setState(() => _error = 'At least 3 photos are required to list a vehicle.');
       return;
@@ -356,10 +384,12 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
     String? hint,
     TextInputType? keyboard,
     String? Function(String?)? validator,
+    Key? fieldKey,
   }) {
     return Field(
       label: label,
       child: TextFormField(
+        key: fieldKey,
         controller: controller,
         keyboardType: keyboard,
         decoration: InputDecoration(hintText: hint),
@@ -381,12 +411,14 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
 
   Widget _dropdown(String label, String value, List<String> options, ValueChanged<String> onChanged) {
     final tv = context.read<LanguageProvider>().tv;
+    final hasMatch = options.contains(value);
     return Field(
       label: label,
       child: DropdownButtonFormField<String>(
-        initialValue: value.isEmpty ? null : value,
+        initialValue: hasMatch ? value : null,
+        isExpanded: true,
         decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
-        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
         items: options.map((o) => DropdownMenuItem(
           value: o,
           child: Text(tv(o), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
@@ -443,15 +475,16 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
                 children: [
                   _text(t('vehicle_title'), _title,
                       hint: 'e.g. 2020 Toyota Land Cruiser V8',
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
-                  _row([
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      fieldKey: _titleKey),                  _row([
                     _dropdown(t('listing_type'), _listingType, _listingTypes, (v) => setState(() => _listingType = v)),
                     _dropdown(t('vehicle_category'), _vehicleCategory, _vehicleCategories, (v) => setState(() => _vehicleCategory = v)),
                   ]),
                   _row([
                     _dropdown(t('make'), _make, _makes, (v) => setState(() => _make = v)),
                     _text(t('model'), _model, hint: 'e.g. Land Cruiser',
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        fieldKey: _modelKey),
                   ]),
                   _row([
                     _text(t('trim_version'), _trimVersion, hint: 'e.g. VX-R'),
@@ -463,7 +496,8 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
                           final n = int.tryParse((v ?? '').trim());
                           if (n == null || n < 1900 || n > 2030) return 'Valid year required';
                           return null;
-                        }),
+                        },
+                        fieldKey: _yearKey),
                     _text(t('registration_year'), _registrationYear, hint: '2020', keyboard: TextInputType.number),
                   ]),
                   _dropdown(t('color'), _color, _colors, (v) => setState(() => _color = v)),
@@ -538,7 +572,8 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
                           final n = num.tryParse((v ?? '').trim());
                           if (n == null || n <= 0) return 'Enter a valid price';
                           return null;
-                        }),
+                        },
+                        fieldKey: _priceKey),
                     _dropdown(t('price_type'), _priceType, _priceTypes, (v) => setState(() => _priceType = v)),
                   ]),
                   _row([
@@ -589,7 +624,8 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
                 children: [
                   _dropdown(t('region'), _region, ethiopianRegions, (v) => setState(() => _region = v)),
                   _text(t('city'), _city, hint: 'e.g. Addis Ababa',
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      fieldKey: _cityKey),
                   _row([
                     _text(t('sub_city'), _subCity, hint: 'e.g. Bole'),
                     _text(t('woreda'), _woreda, hint: 'e.g. 03'),

@@ -6,6 +6,7 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../agent/agent_onboarding_screen.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 
@@ -15,8 +16,9 @@ import 'login_screen.dart';
 /// signed up with. The backend emails a verification link; the user opens their
 /// email app, taps the "Verify Email" button, then returns here and presses
 /// "Check". The server confirms the account is now verified: for a buyer a
-/// session is issued (straight to the app shell/dashboard); an agent, still
-/// Pending admin approval, is sent to the login screen.
+/// session is issued (straight to the app shell/dashboard); an agent also gets
+/// a session and is sent straight to the agent application form so they can
+/// complete it without waiting for admin approval.
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key, required this.email});
 
@@ -42,7 +44,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   /// The user clicked the "Verify Email" button in their inbox. Ask the server
   /// whether the account is now verified, then route: buyer -> app shell
-  /// (dashboard), agent -> login screen.
+  /// (dashboard), agent -> agent application form.
   Future<void> _checkViaLink() async {
     setState(() {
       _checking = true;
@@ -53,7 +55,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       final result = await context.read<AuthProvider>().checkVerification(email: widget.email);
       if (!mounted) return;
       if (result.user != null) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        if (result.user!.isAgent) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
+            (route) => route.isFirst,
+          );
+        } else {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
       } else {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen(verified: true)),

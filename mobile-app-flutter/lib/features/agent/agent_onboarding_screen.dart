@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/listing_options.dart';
+import '../../core/i18n/app_strings.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
@@ -11,7 +12,6 @@ import 'post_form_widgets.dart';
 const _stepLabels = ['personal', 'contact', 'identity', 'education', 'professional', 'submit'];
 const _regions = ethiopianRegions;
 const _genderOptions = ['Male', 'Female', 'Other'];
-const _languageOptions = ['English', 'Afaan Oromo', 'Amharic'];
 const _educationOptions = [
   'Grade 10',
   'Grade 12',
@@ -56,7 +56,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   late final TextEditingController _nationality;
   String _userType = '';
   String _gender = '';
-  String _language = '';
 
   // Step 2 – Contact
   late final TextEditingController _ethPhone;
@@ -222,7 +221,11 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
               'userType': _userType == 'owner' ? 'Owner' : 'Agent',
               'dateOfBirth': _dob.text.trim(),
               'nationality': _nationality.text.trim(),
-              'preferredLanguage': _language,
+              'preferredLanguage': switch (context.read<LanguageProvider>().lang) {
+                AppLanguage.amharic => 'Amharic',
+                AppLanguage.oromo => 'Afaan Oromo',
+                AppLanguage.english => 'English',
+              },
             })) {
           return;
         }
@@ -367,18 +370,20 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _labelledDropdown(String label, String value, List<(String, String)> options, ValueChanged<String> onChanged) {
+    final hasMatch = options.any((o) => o.$1 == value);
     return Field(
       label: label,
       child: DropdownButtonFormField<String>(
-        initialValue: value.isEmpty ? null : value,
+        initialValue: hasMatch ? value : null,
+        isExpanded: true,
         decoration: const InputDecoration(
           isDense: true,
           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         ),
-        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+        hint: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
         items: options.map((o) => DropdownMenuItem(
           value: o.$1,
-          child: Text(o.$2, style: const TextStyle(fontSize: 13, color: AppColors.foreground)),
+          child: Text(o.$2, style: const TextStyle(fontSize: 13, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
         )).toList(),
         onChanged: (v) => onChanged(v ?? value),
       ),
@@ -459,20 +464,51 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   void _showLegalModal(String title, String body) {
     showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title, style: const TextStyle(fontSize: 17)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Text(body, style: const TextStyle(fontSize: 13, height: 1.5)),
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: context.read<LanguageProvider>().t('close'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(body, style: const TextStyle(fontSize: 13, height: 1.5)),
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(context.read<LanguageProvider>().t('close')),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.read<LanguageProvider>().t('close')),
-          ),
-        ],
       ),
     );
   }
@@ -520,19 +556,9 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
               ),
             ),
           ),
-          Row(
-            children: [
-              Expanded(child: _textField(_nationality, t('nationality'))),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _labelledDropdown(
-                  t('preferred_language'),
-                  _language,
-                  _languageOptions.map((l) => (l, t(l == 'English' ? 'lang_english' : l == 'Afaan Oromo' ? 'lang_oromo' : 'lang_amharic'))).toList(),
-                  (v) => setState(() => _language = v),
-                ),
-              ),
-            ],
+          Field(
+            label: t('nationality'),
+            child: _textField(_nationality, t('nationality')),
           ),
         ],
       ),
@@ -608,15 +634,16 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           Field(
             label: '${t('highest_education')} *',
             child: DropdownButtonFormField<String>(
-              initialValue: _education.isEmpty ? null : _education,
+              initialValue: _educationOptions.contains(_education) ? _education : null,
+              isExpanded: true,
               decoration: const InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
-              hint: Text(t('select_education'), style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+              hint: Text(t('select_education'), style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground), overflow: TextOverflow.ellipsis),
               items: _educationOptions.map((e) => DropdownMenuItem(
                 value: e,
-                child: Text(_eduLabel(e, t), style: const TextStyle(fontSize: 13, color: AppColors.foreground)),
+                child: Text(_eduLabel(e, t), style: const TextStyle(fontSize: 13, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
               )).toList(),
               onChanged: (v) => setState(() => _education = v ?? ''),
             ),
@@ -836,14 +863,17 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
                     _ => _buildReview(),
                   },
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
                       OutlinedButton.icon(
                         onPressed: _step == 0 || _saving ? null : _back,
                         icon: const Icon(Icons.arrow_back, size: 18),
                         label: Text(t('back')),
                       ),
-                      const Spacer(),
                       if (!isLast)
                         FilledButton.icon(
                           onPressed: _saving ? null : _next,

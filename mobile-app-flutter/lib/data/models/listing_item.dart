@@ -18,6 +18,8 @@ class ListingItem {
     this.beds,
     this.baths,
     this.area,
+    this.floorNumber,
+    this.condition,
     this.year,
     this.mileage,
     this.features = const [],
@@ -37,6 +39,8 @@ class ListingItem {
   final int? beds;
   final int? baths;
   final num? area;
+  final String? floorNumber;
+  final String? condition;
   final int? year;
   final num? mileage;
   final List<String> features;
@@ -60,6 +64,8 @@ class ListingItem {
         beds: p.bedrooms,
         baths: p.bathrooms,
         area: p.area,
+        floorNumber: p.floorNumber,
+        condition: p.condition,
         features: p.features,
         agent: p.agent,
         displayPhone: p.displayPhone,

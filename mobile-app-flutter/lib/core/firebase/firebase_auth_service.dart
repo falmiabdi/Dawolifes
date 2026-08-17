@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// Firebase Auth wrapper for email/password + email verification.
 ///
@@ -38,8 +39,27 @@ class FirebaseAuthService {
     return user.emailVerified;
   }
 
-  /// Signs out of Firebase (does not touch the backend session).
+  /// Signs in with Google and returns a fresh Firebase ID token for the
+  /// signed-in user. Returns `null` if the user canceled the sign-in sheet.
+  Future<String?> getGoogleIdToken() async {
+    final googleSignIn = GoogleSignIn();
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) return null;
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final userCredential = await _auth.signInWithCredential(credential);
+    return userCredential.user?.getIdToken(true);
+  }
+
+  /// Signs out of Firebase Auth and the Google Sign-In session (so the next
+  /// Google sign-in shows the account chooser instead of auto-resolving).
   Future<void> signOut() async {
     await _auth.signOut();
+    await GoogleSignIn().signOut();
   }
 }

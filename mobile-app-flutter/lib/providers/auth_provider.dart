@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
+import '../core/firebase/firebase_auth_service.dart';
 import '../core/network/api_client.dart';
+import '../core/network/websocket_service.dart';
 import '../core/storage/token_storage.dart';
 import '../data/models/user.dart';
 import '../data/repositories/auth_repository.dart';
@@ -12,10 +13,12 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required this.repository,
     required this.storage,
+    this.webSocket,
   });
 
   final AuthRepository repository;
   final TokenStorage storage;
+  final WebSocketService? webSocket;
 
   SessionUser? _user;
   bool _loading = true;
@@ -48,30 +51,17 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Signs in or registers via Google using Firebase Auth + backend sync.
-  Future<VerifyOtpResult> loginWithGoogle({String role = 'user'}) async {
-    final googleSignIn = GoogleSignIn();
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      throw ApiException('Google sign in was cancelled');
-    }
-
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-    final idToken = await userCredential.user?.getIdToken(true);
-    if (idToken == null) {
-      throw ApiException('Failed to retrieve Firebase ID token');
-    }
+  ///
+  /// Returns `null` if the user canceled the Google sign-in sheet (no session
+  /// change, no error state). Otherwise exchanges the Firebase ID token for a
+  /// DawoLife session and returns the server result for the UI to react to.
+  Future<VerifyOtpResult?> loginWithGoogle({String role = 'user'}) async {
+    final idToken = await FirebaseAuthService().getGoogleIdToken();
+    if (idToken == null) return null;
 
     final result = await repository.signInWithFirebase(
       idToken: idToken,
       role: role,
-      name: userCredential.user?.displayName ?? googleUser.displayName,
-      phone: userCredential.user?.phoneNumber,
     );
 
     if (result.user != null && result.user!.emailVerified) {
@@ -223,6 +213,12 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     await storage.clear();
+    try {
+      await FirebaseAuthService().signOut();
+    } catch (_) {
+      // Firebase/Google sign-out is best-effort; never block logout on it.
+    }
+    await webSocket?.disconnect();
     _user = null;
     notifyListeners();
   }

@@ -24,6 +24,13 @@ class WebSocketService {
   /// Requests the current unread notification count over the socket.
   void requestUnreadCount() => _client.requestUnreadCount();
 
+  /// Marks all notifications as read over the socket (server replies with an
+  /// `mark_read_ack` push that listeners can use to refresh their badge).
+  void markAllRead() => _client.markAllRead();
+
+  /// Marks a single notification as read over the socket.
+  void markSingleRead(String notificationId) => _client.markSingleRead(notificationId);
+
   /// Closes the socket (e.g. on logout).
   Future<void> disconnect() async {
     if (_disposed) return;

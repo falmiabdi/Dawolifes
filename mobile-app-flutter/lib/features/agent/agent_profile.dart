@@ -63,21 +63,7 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
     final status = _s('status').isNotEmpty ? _s('status') : (user?.status ?? 'Pending');
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        actions: [
-          TextButton.icon(
-            onPressed: () async {
-              await Navigator.of(context).push<bool>(
-                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-              );
-              if (mounted) _load();
-            },
-            icon: const Icon(Icons.edit_outlined, size: 16),
-            label: Text(t('edit_profile')),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('My Profile')),
       body: _loading
           ? const LoadingState()
           : _error != null
@@ -87,7 +73,23 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                     children: [
-                      _headerCard(name, email, status),
+                      _bannerCard(name, email, status),
+                      const SizedBox(height: 14),
+                      Center(
+                        child: FilledButton.icon(
+                          onPressed: () async {
+                            await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                            );
+                            if (mounted) _load();
+                          },
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                          ),
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          label: Text(t('edit_profile')),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       if (status == 'Rejected') _rejectionBanner(),
                       if (status == 'Approved') _approvedBanner(),
@@ -134,38 +136,57 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
     );
   }
 
-  Widget _headerCard(String name, String email, String status) {
+  Widget _bannerCard(String name, String email, String status) {
     final photo = _s('profilePhoto');
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppColors.radius),
-        border: Border.all(color: AppColors.border),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.accent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppColors.radius + 4),
       ),
-      child: Row(
+      child: Column(
         children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: AppColors.primary,
-            backgroundImage: photo.isNotEmpty ? CachedNetworkImageProvider(photo) : null,
-            child: photo.isNotEmpty
-                ? null
-                : Text(name.isNotEmpty ? name[0].toUpperCase() : 'A', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                ),
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.white.withValues(alpha: 0.25),
+                  backgroundImage: photo.isNotEmpty ? CachedNetworkImageProvider(photo) : null,
+                  child: photo.isNotEmpty
+                      ? null
+                      : Text(name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              if (status == 'Approved')
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    child: const Icon(Icons.verified, color: AppColors.success, size: 22),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text(email, style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
-                const SizedBox(height: 4),
-                StatusChip(status: status),
-              ],
-            ),
-          ),
+          const SizedBox(height: 12),
+          Text(name, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(email, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
+          const SizedBox(height: 10),
+          StatusChip(status: status),
         ],
       ),
     );
