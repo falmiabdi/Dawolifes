@@ -31,7 +31,14 @@ class AdminPortalScreen extends StatelessWidget {
     final t = l10n.t;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Portal')),
+      appBar: AppBar(
+        title: const Text('Admin Portal'),
+        leading: IconButton(
+          icon: const Icon(Icons.home_outlined),
+          tooltip: 'Home',
+          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

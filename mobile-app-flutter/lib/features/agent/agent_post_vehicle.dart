@@ -52,7 +52,16 @@ const _exteriorFeatures = [
 const _fuelPolicies = ['Full to Full', 'Prepaid', 'Included'];
 const _plateTypes = ['Black', 'Red', 'Green', 'Yellow', 'Diplomatic'];
 
-/// Post/edit vehicle mirroring components/post/post-vehicle-wizard.tsx.
+const _stepLabels = [
+  'basic_vehicle_info',
+  'technical_specs',
+  'features_condition',
+  'pricing_info',
+  'location_legal',
+  'photos_description',
+];
+
+/// Post/edit vehicle wizard (6-step) mirroring components/post/post-vehicle-wizard.tsx.
 class AgentPostVehicleScreen extends StatefulWidget {
   const AgentPostVehicleScreen({super.key, this.edit});
 
@@ -63,7 +72,10 @@ class AgentPostVehicleScreen extends StatefulWidget {
 }
 
 class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _basicFormKey = GlobalKey<FormState>();
+  final _pricingFormKey = GlobalKey<FormState>();
+  final _locationFormKey = GlobalKey<FormState>();
+  final _reviewFormKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
 
   final _titleKey = GlobalKey<FormFieldState<String>>();
@@ -149,8 +161,10 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
   bool _uploading = false;
   bool _submitting = false;
   String? _error;
+  int _step = 0;
 
   bool get _isEdit => widget.edit != null;
+  bool get _isLastStep => _step == _stepLabels.length - 1;
   bool get _isRent => _listingType.toLowerCase().contains('rent');
 
   @override
@@ -228,6 +242,40 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
     super.dispose();
   }
 
+  void _next() {
+    switch (_step) {
+      case 0:
+        if (!(_basicFormKey.currentState?.validate() ?? false)) {
+          _scrollToFirstError();
+          return;
+        }
+        break;
+      case 3:
+        if (!(_pricingFormKey.currentState?.validate() ?? false)) {
+          _scrollToFirstError();
+          return;
+        }
+        break;
+      case 4:
+        if (!(_locationFormKey.currentState?.validate() ?? false)) {
+          _scrollToFirstError();
+          return;
+        }
+        break;
+    }
+    setState(() {
+      _error = null;
+      _step = _step + 1;
+    });
+  }
+
+  void _back() {
+    setState(() {
+      _error = null;
+      _step = _step - 1;
+    });
+  }
+
   Future<void> _pickImage() async {
     setState(() => _uploading = true);
     try {
@@ -267,12 +315,12 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      _scrollToFirstError();
-      return;
-    }
     if (_images.length < 3) {
       setState(() => _error = 'At least 3 photos are required to list a vehicle.');
+      return;
+    }
+    if (!(_reviewFormKey.currentState?.validate() ?? false)) {
+      _scrollToFirstError();
       return;
     }
     setState(() {
@@ -457,242 +505,425 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
     );
   }
 
+  Widget _stepper() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppColors.border))),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(_stepLabels.length, (i) {
+            final active = i == _step;
+            final done = i < _step;
+            return Row(
+              children: [
+                Column(
+                  children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: active ? AppColors.primary : (done ? Colors.green : Colors.white),
+                        border: Border.all(
+                          color: active || done ? Colors.transparent : AppColors.border,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: done
+                            ? const Icon(Icons.check, size: 16, color: Colors.white)
+                            : Text(
+                                '${i + 1}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: active ? Colors.white : AppColors.mutedForeground,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _stepLabels[i],
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                        color: active ? AppColors.primary : AppColors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+                if (i < _stepLabels.length - 1)
+                  Container(height: 2, width: 14, color: done ? Colors.green : AppColors.border),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.read<LanguageProvider>();
     final t = l10n.t;
     return Scaffold(
       appBar: AppBar(title: Text(_isEdit ? 'Edit Vehicle' : t('post_vehicle'))),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      body: SafeArea(
+        child: Column(
           children: [
-            FormSection(
-              title: t('basic_vehicle_info'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _text(t('vehicle_title'), _title,
-                      hint: 'e.g. 2020 Toyota Land Cruiser V8',
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                      fieldKey: _titleKey),                  _row([
-                    _dropdown(t('listing_type'), _listingType, _listingTypes, (v) => setState(() => _listingType = v)),
-                    _dropdown(t('vehicle_category'), _vehicleCategory, _vehicleCategories, (v) => setState(() => _vehicleCategory = v)),
-                  ]),
-                  _row([
-                    _dropdown(t('make'), _make, _makes, (v) => setState(() => _make = v)),
-                    _text(t('model'), _model, hint: 'e.g. Land Cruiser',
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                        fieldKey: _modelKey),
-                  ]),
-                  _row([
-                    _text(t('trim_version'), _trimVersion, hint: 'e.g. VX-R'),
-                    _dropdown(t('condition'), _condition, _conditions, (v) => setState(() => _condition = v)),
-                  ]),
-                  _row([
-                    _text(t('manufacturing_year'), _year, hint: '2020', keyboard: TextInputType.number,
-                        validator: (v) {
-                          final n = int.tryParse((v ?? '').trim());
-                          if (n == null || n < 1900 || n > 2030) return 'Valid year required';
-                          return null;
-                        },
-                        fieldKey: _yearKey),
-                    _text(t('registration_year'), _registrationYear, hint: '2020', keyboard: TextInputType.number),
-                  ]),
-                  _dropdown(t('color'), _color, _colors, (v) => setState(() => _color = v)),
-                  _dropdown(t('country_of_origin'), _countryOfOrigin, _origins, (v) => setState(() => _countryOfOrigin = v)),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('technical_specs'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _dropdown(t('fuel_type'), _fuelType, _fuelTypes, (v) => setState(() => _fuelType = v)),
-                  _row([
-                    _text(t('engine_size'), _engineSize, hint: 'e.g. 4.5', keyboard: TextInputType.number),
-                    _text(t('horsepower'), _horsepower, hint: 'e.g. 381', keyboard: TextInputType.number),
-                  ]),
-                  _row([
-                    _dropdown(t('transmission'), _transmission, _transmissions, (v) => setState(() => _transmission = v)),
-                    _dropdown(t('drivetrain'), _drivetrain, _drivetrains, (v) => setState(() => _drivetrain = v)),
-                  ]),
-                  _text(t('cylinders'), _cylinders, hint: 'e.g. 6', keyboard: TextInputType.number),
-                  _row([
-                    _text(t('seating_capacity'), _seatingCapacity, hint: 'e.g. 7', keyboard: TextInputType.number),
-                    _text(t('doors'), _doors, hint: 'e.g. 5', keyboard: TextInputType.number),
-                    _text(t('mileage'), _mileage, hint: 'e.g. 45000', keyboard: TextInputType.number),
-                  ]),
-                  _row([
-                    _text(t('fuel_consumption'), _fuelConsumption, hint: 'e.g. 12.5'),
-                    _text(t('fuel_tank_capacity'), _fuelTankCapacity, hint: 'e.g. 93', keyboard: TextInputType.number),
-                    _text(t('ground_clearance'), _groundClearance, hint: 'e.g. 225', keyboard: TextInputType.number),
-                  ]),
-                  _row([
-                    _text(t('weight'), _weight, hint: 'e.g. 2650', keyboard: TextInputType.number),
-                    _text(t('tire_size'), _tireSize, hint: 'e.g. 265/65R18'),
-                  ]),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('vehicle_condition_features'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _row([
-                    _yesNo(t('accident_free'), _accidentFree, (v) => setState(() => _accidentFree = v)),
-                    _yesNo(t('service_history'), _serviceHistoryAvailable, (v) => setState(() => _serviceHistoryAvailable = v)),
-                  ]),
-                  _text(t('ownership_count'), _ownershipCount, hint: 'e.g. 2', keyboard: TextInputType.number),
-                  _row([
-                    _yesNo(t('imported'), _imported, (v) => setState(() => _imported = v)),
-                    _yesNo(t('locally_assembled'), _locallyAssembled, (v) => setState(() => _locallyAssembled = v)),
-                  ]),
-                  _text(t('accident_history'), _accidentHistory, hint: 'Describe any accident history...'),
-                  const SizedBox(height: 8),
-                  _chips(t('safety_features'), _safetyFeatures, _safety, (v) => setState(() => _safety = v)),
-                  const SizedBox(height: 12),
-                  _chips(t('interior_features'), _interiorFeatures, _interior, (v) => setState(() => _interior = v)),
-                  const SizedBox(height: 12),
-                  _chips(t('exterior_features'), _exteriorFeatures, _exterior, (v) => setState(() => _exterior = v)),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('pricing_info'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _row([
-                    _text(t('price_etb'), _price, hint: 'e.g. 3500000', keyboard: TextInputType.number,
-                        validator: (v) {
-                          final n = num.tryParse((v ?? '').trim());
-                          if (n == null || n <= 0) return 'Enter a valid price';
-                          return null;
-                        },
-                        fieldKey: _priceKey),
-                    _dropdown(t('price_type'), _priceType, _priceTypes, (v) => setState(() => _priceType = v)),
-                  ]),
-                  _row([
-                    _text(t('selling_price'), _sellingPrice, hint: 'e.g. 3500000', keyboard: TextInputType.number),
-                    _yesNo(t('negotiable'), _negotiable, (v) => setState(() => _negotiable = v)),
-                  ]),
-                  _row([
-                    _yesNo(t('financing_available'), _financingAvailable, (v) => setState(() => _financingAvailable = v)),
-                    _yesNo(t('exchange_accepted'), _exchangeAccepted, (v) => setState(() => _exchangeAccepted = v)),
-                  ]),
-                  _yesNo(t('bank_loan'), _bankLoanAccepted, (v) => setState(() => _bankLoanAccepted = v)),
-                  if (_isRent) ...[
-                    const Divider(height: 24),
-                    Text(t('rental_info'),
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.foreground)),
-                    const SizedBox(height: 8),
-                    _row([
-                      _text(t('daily_rate'), _dailyRate, hint: 'e.g. 5000', keyboard: TextInputType.number),
-                      _text(t('weekly_rate'), _weeklyRate, hint: 'e.g. 30000', keyboard: TextInputType.number),
-                      _text(t('monthly_rate'), _monthlyRate, hint: 'e.g. 100000', keyboard: TextInputType.number),
-                    ]),
-                    _row([
-                      _text(t('security_deposit'), _securityDeposit, hint: 'e.g. 50000', keyboard: TextInputType.number),
-                      _text(t('min_rental_days'), _minRentalDays, hint: 'e.g. 1', keyboard: TextInputType.number),
-                      _text(t('max_rental_days'), _maxRentalDays, hint: 'e.g. 30', keyboard: TextInputType.number),
-                    ]),
-                    _row([
-                      _yesNo(t('driver_included'), _driverIncluded, (v) => setState(() => _driverIncluded = v)),
-                      _yesNo(t('self_drive'), _selfDrive, (v) => setState(() => _selfDrive = v)),
-                    ]),
-                    _dropdown(t('fuel_policy'), _fuelPolicy, _fuelPolicies, (v) => setState(() => _fuelPolicy = v)),
-                    _row([
-                      _text(t('mileage_limit'), _mileageLimit, hint: 'e.g. 200', keyboard: TextInputType.number),
-                      _text(t('extra_km_charge'), _extraKmCharge, hint: 'e.g. 15', keyboard: TextInputType.number),
-                    ]),
-                    _row([
-                      _yesNo(t('delivery_available'), _deliveryAvailable, (v) => setState(() => _deliveryAvailable = v)),
-                      _yesNo(t('airport_pickup'), _airportPickup, (v) => setState(() => _airportPickup = v)),
-                    ]),
+            _stepper(),
+            if (_error != null)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.destructive.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, size: 18, color: AppColors.destructive),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_error!, style: const TextStyle(fontSize: 12, color: AppColors.destructive)),
+                    ),
                   ],
+                ),
+              ),
+            Expanded(
+              child: ListView(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                children: [
+                  switch (_step) {
+                    0 => _buildBasicInfo(t),
+                    1 => _buildTechnicalSpecs(t),
+                    2 => _buildFeaturesCondition(t),
+                    3 => _buildPricing(t),
+                    4 => _buildLocationLegal(t),
+                    _ => _buildReview(t),
+                  },
                 ],
               ),
             ),
-            FormSection(
-              title: t('location_legal_info'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _dropdown(t('region'), _region, ethiopianRegions, (v) => setState(() => _region = v)),
-                  _text(t('city'), _city, hint: 'e.g. Addis Ababa',
+            _buildBottomBar(t),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBasicInfo(String Function(String) t) {
+    return Form(
+      key: _basicFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FormSection(
+            title: t('basic_vehicle_info'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _text(t('vehicle_title'), _title,
+                    hint: 'e.g. 2020 Toyota Land Cruiser V8',
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    fieldKey: _titleKey),
+                _row([
+                  _dropdown(t('listing_type'), _listingType, _listingTypes, (v) => setState(() => _listingType = v)),
+                  _dropdown(t('vehicle_category'), _vehicleCategory, _vehicleCategories, (v) => setState(() => _vehicleCategory = v)),
+                ]),
+                _row([
+                  _dropdown(t('make'), _make, _makes, (v) => setState(() => _make = v)),
+                  _text(t('model'), _model, hint: 'e.g. Land Cruiser',
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                      fieldKey: _cityKey),
-                  _row([
-                    _text(t('sub_city'), _subCity, hint: 'e.g. Bole'),
-                    _text(t('woreda'), _woreda, hint: 'e.g. 03'),
-                  ]),
-                  _text(t('pickup_address'), _pickupAddress, hint: 'e.g. Bole Road, near Edna Mall'),
+                      fieldKey: _modelKey),
+                ]),
+                _row([
+                  _text(t('trim_version'), _trimVersion, hint: 'e.g. VX-R'),
+                  _dropdown(t('condition'), _condition, _conditions, (v) => setState(() => _condition = v)),
+                ]),
+                _row([
+                  _text(t('manufacturing_year'), _year, hint: '2020', keyboard: TextInputType.number,
+                      validator: (v) {
+                        final n = int.tryParse((v ?? '').trim());
+                        if (n == null || n < 1900 || n > 2030) return 'Valid year required';
+                        return null;
+                      },
+                      fieldKey: _yearKey),
+                  _text(t('registration_year'), _registrationYear, hint: '2020', keyboard: TextInputType.number),
+                ]),
+                _dropdown(t('color'), _color, _colors, (v) => setState(() => _color = v)),
+                _dropdown(t('country_of_origin'), _countryOfOrigin, _origins, (v) => setState(() => _countryOfOrigin = v)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTechnicalSpecs(String Function(String) t) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FormSection(
+          title: t('technical_specs'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _dropdown(t('fuel_type'), _fuelType, _fuelTypes, (v) => setState(() => _fuelType = v)),
+              _row([
+                _text(t('engine_size'), _engineSize, hint: 'e.g. 4.5', keyboard: TextInputType.number),
+                _text(t('horsepower'), _horsepower, hint: 'e.g. 381', keyboard: TextInputType.number),
+              ]),
+              _row([
+                _dropdown(t('transmission'), _transmission, _transmissions, (v) => setState(() => _transmission = v)),
+                _dropdown(t('drivetrain'), _drivetrain, _drivetrains, (v) => setState(() => _drivetrain = v)),
+              ]),
+              _text(t('cylinders'), _cylinders, hint: 'e.g. 6', keyboard: TextInputType.number),
+              _row([
+                _text(t('seating_capacity'), _seatingCapacity, hint: 'e.g. 7', keyboard: TextInputType.number),
+                _text(t('doors'), _doors, hint: 'e.g. 5', keyboard: TextInputType.number),
+                _text(t('mileage'), _mileage, hint: 'e.g. 45000', keyboard: TextInputType.number),
+              ]),
+              _row([
+                _text(t('fuel_consumption'), _fuelConsumption, hint: 'e.g. 12.5'),
+                _text(t('fuel_tank_capacity'), _fuelTankCapacity, hint: 'e.g. 93', keyboard: TextInputType.number),
+                _text(t('ground_clearance'), _groundClearance, hint: 'e.g. 225', keyboard: TextInputType.number),
+              ]),
+              _row([
+                _text(t('weight'), _weight, hint: 'e.g. 2650', keyboard: TextInputType.number),
+                _text(t('tire_size'), _tireSize, hint: 'e.g. 265/65R18'),
+              ]),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturesCondition(String Function(String) t) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FormSection(
+          title: t('vehicle_condition_features'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _row([
+                _yesNo(t('accident_free'), _accidentFree, (v) => setState(() => _accidentFree = v)),
+                _yesNo(t('service_history'), _serviceHistoryAvailable, (v) => setState(() => _serviceHistoryAvailable = v)),
+              ]),
+              _text(t('ownership_count'), _ownershipCount, hint: 'e.g. 2', keyboard: TextInputType.number),
+              _row([
+                _yesNo(t('imported'), _imported, (v) => setState(() => _imported = v)),
+                _yesNo(t('locally_assembled'), _locallyAssembled, (v) => setState(() => _locallyAssembled = v)),
+              ]),
+              _text(t('accident_history'), _accidentHistory, hint: 'Describe any accident history...'),
+              const SizedBox(height: 8),
+              _chips(t('safety_features'), _safetyFeatures, _safety, (v) => setState(() => _safety = v)),
+              const SizedBox(height: 12),
+              _chips(t('interior_features'), _interiorFeatures, _interior, (v) => setState(() => _interior = v)),
+              const SizedBox(height: 12),
+              _chips(t('exterior_features'), _exteriorFeatures, _exterior, (v) => setState(() => _exterior = v)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPricing(String Function(String) t) {
+    return Form(
+      key: _pricingFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FormSection(
+            title: t('pricing_info'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _row([
+                  _text(t('price_etb'), _price, hint: 'e.g. 3500000', keyboard: TextInputType.number,
+                      validator: (v) {
+                        final n = num.tryParse((v ?? '').trim());
+                        if (n == null || n <= 0) return 'Enter a valid price';
+                        return null;
+                      },
+                      fieldKey: _priceKey),
+                  _dropdown(t('price_type'), _priceType, _priceTypes, (v) => setState(() => _priceType = v)),
+                ]),
+                _row([
+                  _text(t('selling_price'), _sellingPrice, hint: 'e.g. 3500000', keyboard: TextInputType.number),
+                  _yesNo(t('negotiable'), _negotiable, (v) => setState(() => _negotiable = v)),
+                ]),
+                _row([
+                  _yesNo(t('financing_available'), _financingAvailable, (v) => setState(() => _financingAvailable = v)),
+                  _yesNo(t('exchange_accepted'), _exchangeAccepted, (v) => setState(() => _exchangeAccepted = v)),
+                ]),
+                _yesNo(t('bank_loan'), _bankLoanAccepted, (v) => setState(() => _bankLoanAccepted = v)),
+                if (_isRent) ...[
                   const Divider(height: 24),
-                  Text(t('legal_documents'),
+                  Text(t('rental_info'),
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.foreground)),
                   const SizedBox(height: 8),
                   _row([
-                    _text(t('region_registration'), _regionRegistration, hint: 'e.g. Addis Ababa'),
-                    _yesNo(t('ownership_certificate'), _ownershipCertificate, (v) => setState(() => _ownershipCertificate = v)),
+                    _text(t('daily_rate'), _dailyRate, hint: 'e.g. 5000', keyboard: TextInputType.number),
+                    _text(t('weekly_rate'), _weeklyRate, hint: 'e.g. 30000', keyboard: TextInputType.number),
+                    _text(t('monthly_rate'), _monthlyRate, hint: 'e.g. 100000', keyboard: TextInputType.number),
                   ]),
                   _row([
-                    _yesNo(t('road_fund_paid'), _roadFundPaid, (v) => setState(() => _roadFundPaid = v)),
-                    _yesNo(t('insurance_valid'), _insuranceValid, (v) => setState(() => _insuranceValid = v)),
+                    _text(t('security_deposit'), _securityDeposit, hint: 'e.g. 50000', keyboard: TextInputType.number),
+                    _text(t('min_rental_days'), _minRentalDays, hint: 'e.g. 1', keyboard: TextInputType.number),
+                    _text(t('max_rental_days'), _maxRentalDays, hint: 'e.g. 30', keyboard: TextInputType.number),
                   ]),
-                  _yesNo(t('inspection_certificate'), _inspectionCertificate, (v) => setState(() => _inspectionCertificate = v)),
                   _row([
-                    _yesNo(t('customs_clearance'), _customsClearance, (v) => setState(() => _customsClearance = v)),
-                    _yesNo(t('duty_paid'), _dutyPaid, (v) => setState(() => _dutyPaid = v)),
+                    _yesNo(t('driver_included'), _driverIncluded, (v) => setState(() => _driverIncluded = v)),
+                    _yesNo(t('self_drive'), _selfDrive, (v) => setState(() => _selfDrive = v)),
                   ]),
-                  _dropdown(t('plate_type'), _plateType, _plateTypes, (v) => setState(() => _plateType = v)),
-                  _text(t('plate_number'), _plateNumber, hint: 'e.g. AA-123456'),
-                  const Divider(height: 24),
-                  Text('Location coordinates (optional)', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.foreground)),
-                  const SizedBox(height: 8),
-                  MapPickerField(latController: _latitude, lngController: _longitude),
+                  _dropdown(t('fuel_policy'), _fuelPolicy, _fuelPolicies, (v) => setState(() => _fuelPolicy = v)),
+                  _row([
+                    _text(t('mileage_limit'), _mileageLimit, hint: 'e.g. 200', keyboard: TextInputType.number),
+                    _text(t('extra_km_charge'), _extraKmCharge, hint: 'e.g. 15', keyboard: TextInputType.number),
+                  ]),
+                  _row([
+                    _yesNo(t('delivery_available'), _deliveryAvailable, (v) => setState(() => _deliveryAvailable = v)),
+                    _yesNo(t('airport_pickup'), _airportPickup, (v) => setState(() => _airportPickup = v)),
+                  ]),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationLegal(String Function(String) t) {
+    return Form(
+      key: _locationFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FormSection(
+            title: t('location_legal_info'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _dropdown(t('region'), _region, ethiopianRegions, (v) => setState(() => _region = v)),
+                _text(t('city'), _city, hint: 'e.g. Addis Ababa',
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    fieldKey: _cityKey),
+                _row([
+                  _text(t('sub_city'), _subCity, hint: 'e.g. Bole'),
+                  _text(t('woreda'), _woreda, hint: 'e.g. 03'),
+                ]),
+                _text(t('pickup_address'), _pickupAddress, hint: 'e.g. Bole Road, near Edna Mall'),
+                const Divider(height: 24),
+                Text(t('legal_documents'),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.foreground)),
+                const SizedBox(height: 8),
+                _row([
+                  _text(t('region_registration'), _regionRegistration, hint: 'e.g. Addis Ababa'),
+                  _yesNo(t('ownership_certificate'), _ownershipCertificate, (v) => setState(() => _ownershipCertificate = v)),
+                ]),
+                _row([
+                  _yesNo(t('road_fund_paid'), _roadFundPaid, (v) => setState(() => _roadFundPaid = v)),
+                  _yesNo(t('insurance_valid'), _insuranceValid, (v) => setState(() => _insuranceValid = v)),
+                ]),
+                _yesNo(t('inspection_certificate'), _inspectionCertificate, (v) => setState(() => _inspectionCertificate = v)),
+                _row([
+                  _yesNo(t('customs_clearance'), _customsClearance, (v) => setState(() => _customsClearance = v)),
+                  _yesNo(t('duty_paid'), _dutyPaid, (v) => setState(() => _dutyPaid = v)),
+                ]),
+                _dropdown(t('plate_type'), _plateType, _plateTypes, (v) => setState(() => _plateType = v)),
+                _text(t('plate_number'), _plateNumber, hint: 'e.g. AA-123456'),
+                const Divider(height: 24),
+                const Text('Location coordinates (optional)',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.foreground)),
+                const SizedBox(height: 8),
+                MapPickerField(latController: _latitude, lngController: _longitude),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReview(String Function(String) t) {
+    return Form(
+      key: _reviewFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FormSection(
+            title: t('photos_media_title'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ImageGridPicker(
+                  images: _images,
+                  onChanged: (list) => setState(() => _images = list),
+                  onPick: _pickImage,
+                  uploading: _uploading,
+                ),
+                const SizedBox(height: 12),
+                _text(t('video_url'), _videoUrl, hint: 'https://youtube.com/watch?v=...'),
+              ],
+            ),
+          ),
+          FormSection(
+            title: t('description'),
+            child: TextFormField(
+              controller: _description,
+              maxLines: 4,
+              decoration: const InputDecoration(hintText: 'Describe the vehicle...'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(String Function(String) t) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        child: Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: _step == 0 || _submitting ? null : _back,
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: Text(t('back')),
+            ),
+            const Spacer(),
+            if (!_isLastStep)
+              FilledButton.icon(
+                onPressed: _submitting ? null : _next,
+                icon: const Icon(Icons.arrow_forward, size: 18),
+                label: Text(t('next')),
+              )
+            else
+              FilledButton.icon(
+                onPressed: _submitting ? null : _submit,
+                icon: _submitting
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send, size: 18),
+                label: Text(_submitting ? t('submitting') : (_isEdit ? 'Update Vehicle' : t('submit_vehicle'))),
               ),
-            ),
-            FormSection(
-              title: t('photos_media_title'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ImageGridPicker(
-                    images: _images,
-                    onChanged: (list) => setState(() => _images = list),
-                    onPick: _pickImage,
-                    uploading: _uploading,
-                  ),
-                  const SizedBox(height: 12),
-                  _text(t('video_url'), _videoUrl, hint: 'https://youtube.com/watch?v=...'),
-                ],
-              ),
-            ),
-            FormSection(
-              title: t('description'),
-              child: TextFormField(
-                controller: _description,
-                maxLines: 4,
-                decoration: const InputDecoration(hintText: 'Describe the vehicle...'),
-              ),
-            ),
-            if (_error != null) ...[
-              Text(_error!, style: const TextStyle(color: AppColors.destructive, fontSize: 13)),
-              const SizedBox(height: 12),
-            ],
-            FilledButton.icon(
-              onPressed: _submitting ? null : _submit,
-              icon: _submitting
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.send, size: 18),
-              label: Text(_submitting ? t('submitting') : (_isEdit ? 'Update Vehicle' : t('submit_vehicle'))),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),

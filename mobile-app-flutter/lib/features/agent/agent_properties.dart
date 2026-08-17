@@ -157,6 +157,8 @@ class _AgentPropertiesScreenState extends State<AgentPropertiesScreen> {
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                                       const SizedBox(height: 4),
+                                      Text('${p.type} · ${tv(p.condition ?? '')}',
+                                          style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
                                       Text('${Formatters.formatPrice(p.price)} ETB · ${tv(p.priceType ?? '')}',
                                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.orange.shade700)),
                                       if (p.status == 'Rejected' && (p.rejectionReason ?? '').isNotEmpty) ...[

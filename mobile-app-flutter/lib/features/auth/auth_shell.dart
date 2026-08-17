@@ -96,6 +96,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final language = context.watch<LanguageProvider>();
+    final t = context.read<LanguageProvider>().t;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -121,7 +122,11 @@ class _TopBar extends StatelessWidget {
                 .map((lang) => PopupMenuItem(
                       value: lang,
                       child: Text(
-                        lang.label,
+                        switch (lang) {
+                          AppLanguage.english => t('lang_english'),
+                          AppLanguage.oromo => t('lang_oromo'),
+                          AppLanguage.amharic => t('lang_amharic'),
+                        },
                         style: TextStyle(
                           color: AppColors.foreground,
                           fontWeight: language.lang == lang ? FontWeight.bold : FontWeight.normal,

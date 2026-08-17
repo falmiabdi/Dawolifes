@@ -7,7 +7,7 @@ import '../../data/repositories/agent_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
-import '../profile/edit_profile_screen.dart';
+import '../agent/agent_onboarding_screen.dart';
 
 /// Agent profile mirroring app/agent/profile/page.tsx. Shows all onboarding
 /// info; read-only when Approved, shows rejection reason + resubmit CTA when
@@ -79,7 +79,7 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                         child: FilledButton.icon(
                           onPressed: () async {
                             await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                              MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
                             );
                             if (mounted) _load();
                           },

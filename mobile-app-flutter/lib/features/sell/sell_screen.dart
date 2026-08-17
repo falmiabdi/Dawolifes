@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../agent/agent_post_property.dart';
 import '../agent/agent_post_vehicle.dart';
+import '../agent/agent_profile.dart';
 import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 
@@ -42,6 +43,18 @@ class SellScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const SignupScreen(initialRole: SignupRole.agent)),
           );
         },
+      );
+    }
+
+    if (auth.user!.isAgent && auth.user!.status != 'Approved') {
+      return _Gate(
+        icon: Icons.hourglass_top_outlined,
+        title: 'Verify Account Before Posting',
+        subtitle: 'Your agent account is pending admin approval. Please wait for verification before posting properties and vehicles.',
+        actionLabel: 'Go to Profile',
+        onAction: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AgentProfileScreen()),
+        ),
       );
     }
 

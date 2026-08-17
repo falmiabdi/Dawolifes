@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -66,9 +69,66 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.description_outlined,
               label: 'Terms of Service',
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Terms of Service coming soon.')),
-                );
+                final auth = context.read<AuthProvider>();
+                final user = auth.user;
+                final approved = user?.status == 'Approved';
+                final isAgent = user?.isAgent == true;
+                if (isAgent && approved) {
+                  final l10n = context.read<LanguageProvider>();
+                  final t = l10n.t;
+                  showDialog<void>(
+                    context: context,
+                    barrierDismissible: true,
+                    builder: (_) => Dialog(
+                      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppColors.radius)),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(t('terms_conditions'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 20),
+                                    onPressed: () => Navigator.of(context).pop(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1),
+                            Flexible(
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(20),
+                                child: Text(t('terms_conditions_agent_full'), style: const TextStyle(fontSize: 13, height: 1.5)),
+                              ),
+                            ),
+                            const Divider(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: Text(t('close')),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('You are not an agent or owner.')),
+                  );
+                }
               },
             ),
           ]),

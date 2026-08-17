@@ -6,8 +6,9 @@ import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/google_sign_in_button.dart';
-import 'auth_routing.dart';
+import '../agent/agent_onboarding_screen.dart';
 import 'auth_shell.dart';
+import 'complete_profile_screen.dart';
 import 'login_screen.dart';
 import 'verify_email_screen.dart';
 
@@ -41,6 +42,7 @@ class _SignupScreenState extends State<SignupScreen> {
   SignupRole? _role;
   bool _showPassword = false;
   bool _submitting = false;
+  bool _submittingGoogle = false;
   String? _error;
 
   @override
@@ -108,7 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _submitGoogle() async {
     setState(() {
-      _submitting = true;
+      _submittingGoogle = true;
       _error = null;
     });
 
@@ -129,7 +131,15 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       Navigator.of(context).popUntil((route) => route.isFirst);
-      routeToRoleHome(context);
+      if (_role == SignupRole.agent) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
+        );
+      } else {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CompleteProfileScreen()),
+        );
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -137,7 +147,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
       setState(() => _error = 'Google sign up failed. Please try again.');
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) setState(() => _submittingGoogle = false);
     }
   }
 
@@ -190,7 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 16),
               GoogleSignInButton(
                 onPressed: _submitGoogle,
-                loading: _submitting,
+                loading: _submittingGoogle,
               ),
             ] else ...[
               Form(
@@ -327,7 +337,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 16),
                     GoogleSignInButton(
                       onPressed: _submitGoogle,
-                      loading: _submitting,
+                      loading: _submittingGoogle,
                     ),
                   ],
                 ),

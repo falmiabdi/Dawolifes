@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
-import '../../providers/auth_provider.dart';
-import '../admin/admin_portal.dart';
-import '../agent/agent_onboarding_screen.dart';
-import '../agent/agent_portal.dart';
 import 'onboarding_screen.dart';
 
 /// Decides whether to show the onboarding flow or go straight to the app.
 ///
 /// Onboarding is shown once (first launch) and skipped afterwards. Once seen,
 /// the user is routed to their role-appropriate home: admins to the admin
-/// portal, agents to the agent portal (or their onboarding form while not yet
-/// approved), and buyers/users to the app shell.
+/// portal, agents to the agent portal, and buyers/users to the app shell.
+/// Post features are locked until the agent profile is approved.
 class OnboardingGate extends StatefulWidget {
   const OnboardingGate({super.key, required this.storage});
 
@@ -36,11 +31,6 @@ class _OnboardingGateState extends State<OnboardingGate> {
   }
 
   Widget _roleHome() {
-    final user = context.read<AuthProvider>().user;
-    if (user != null && user.isAdmin) return const AdminPortalScreen();
-    if (user != null && user.isAgent) {
-      return user.status == 'Approved' ? const AgentPortalScreen() : const AgentOnboardingScreen();
-    }
     return const AppShell();
   }
 

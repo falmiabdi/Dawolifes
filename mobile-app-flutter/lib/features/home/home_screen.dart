@@ -250,6 +250,7 @@ class _LanguageDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final language = context.watch<LanguageProvider>();
+    final t = context.read<LanguageProvider>().t;
 
     return PopupMenuButton<AppLanguage>(
       color: Colors.white,
@@ -258,7 +259,11 @@ class _LanguageDropdown extends StatelessWidget {
           .map((lang) => PopupMenuItem(
                 value: lang,
                 child: Text(
-                  lang.label,
+                  switch (lang) {
+                    AppLanguage.english => t('lang_english'),
+                    AppLanguage.oromo => t('lang_oromo'),
+                    AppLanguage.amharic => t('lang_amharic'),
+                  },
                   style: TextStyle(
                     color: AppColors.foreground,
                     fontWeight: language.lang == lang ? FontWeight.bold : FontWeight.normal,
@@ -466,22 +471,6 @@ class _Footer extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const AboutScreen()),
             ),
           ),
-          _FooterLink(
-            label: 'Privacy Policy',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Privacy Policy coming soon.')),
-              );
-            },
-          ),
-          _FooterLink(
-            label: 'Terms',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Terms of Service coming soon.')),
-              );
-            },
-          ),
         ],
       ),
     );
@@ -540,6 +529,8 @@ class _AccountButton extends StatelessWidget {
       return;
     }
 
+    final t = context.read<LanguageProvider>().t;
+
     showModalBottomSheet<void>(
       context: context,
       builder: (sheetCtx) => SafeArea(
@@ -547,12 +538,12 @@ class _AccountButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                'Your Account',
+                t('your_account'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             Padding(
@@ -565,7 +556,7 @@ class _AccountButton extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.person_add_alt_1, size: 18),
-                label: const Text('Signup \u00b7 Galma\u2019i'),
+                label: Text(t('create_account')),
               ),
             ),
             Padding(
@@ -578,7 +569,7 @@ class _AccountButton extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.login, size: 18),
-                label: const Text('Sign in \u00b7 Seeni'),
+                label: Text(t('sign_in')),
               ),
             ),
             const SizedBox(height: 16),

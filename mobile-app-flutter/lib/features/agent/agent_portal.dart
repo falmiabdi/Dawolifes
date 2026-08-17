@@ -12,7 +12,6 @@ import '../../providers/language_provider.dart';
 import '../notifications/notifications_screen.dart';
 import '../portal/widgets.dart';
 import 'agent_dashboard.dart';
-import 'agent_onboarding_screen.dart';
 import 'agent_payments.dart';
 import 'agent_post_property.dart';
 import 'agent_post_vehicle.dart';
@@ -23,10 +22,8 @@ import 'agent_vehicles.dart';
 
 /// Agent portal hub mirroring the agent sidebar in dashboard/sidebar.tsx.
 ///
-/// Non-approved agents (Pending/Rejected/Suspended) see a full-screen status
-/// gate instead of the hub, matching the web app's PendingApprovalScreen: the
-/// agent can only check their approval status or sign out (Rejected agents may
-/// also re-enter onboarding to update and resubmit).
+/// All agents (Pending/Approved/Rejected) see the full hub. Post features
+/// (Post Property, Post Vehicle) are locked until the profile is approved.
 class AgentPortalScreen extends StatefulWidget {
   const AgentPortalScreen({super.key});
 
@@ -91,21 +88,17 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
     final t = l10n.t;
 
     final status = user?.status ?? 'Pending';
-    if (status != 'Approved') {
-      return _PendingApprovalView(
-        status: status,
-        rejectionReason: user?.rejectionReason,
-        onRefresh: auth.refreshUser,
-        onSignOut: () async {
-          await auth.logout();
-          if (context.mounted) Navigator.of(context).popUntil((r) => r.isFirst);
-        },
-        onUpdateProfile: () => _open(context, const AgentOnboardingScreen()),
-      );
-    }
+    final approved = status == 'Approved';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Agent Portal')),
+      appBar: AppBar(
+        title: const Text('Agent Portal'),
+        leading: IconButton(
+          icon: const Icon(Icons.home_outlined),
+          tooltip: 'Home',
+          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -140,14 +133,52 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
               ],
             ),
           ),
+          if (!approved) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Color(0xFF16A34A), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      status == 'Rejected'
+                          ? 'Your profile was rejected. Update your profile and resubmit for review.'
+                          : 'Complete your profile and wait for admin approval to start posting.',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF15803D), height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           const SectionHeader(title: 'Menu'),
           _menuTile(context, Icons.dashboard_outlined, t('dashboard'), () => _open(context, const AgentDashboardScreen())),
           _menuTile(context, Icons.person_outline, 'My Profile', () => _open(context, const AgentProfileScreen())),
           _menuTile(context, Icons.house_outlined, 'My Properties', () => _open(context, const AgentPropertiesScreen())),
-          _menuTile(context, Icons.add_home_outlined, t('post_property'), () => _open(context, const AgentPostPropertyScreen())),
+          _lockedMenuTile(
+            context,
+            Icons.add_home_outlined,
+            t('post_property'),
+            approved,
+            status,
+            () => _open(context, const AgentPostPropertyScreen()),
+          ),
           _menuTile(context, Icons.directions_car_outlined, 'My Vehicles', () => _open(context, const AgentVehiclesScreen())),
-          _menuTile(context, Icons.add_box_outlined, t('post_vehicle'), () => _open(context, const AgentPostVehicleScreen())),
+          _lockedMenuTile(
+            context,
+            Icons.add_box_outlined,
+            t('post_vehicle'),
+            approved,
+            status,
+            () => _open(context, const AgentPostVehicleScreen())),
           _menuTile(context, Icons.notifications_outlined, 'Notifications', () => _open(context, const NotificationsScreen()), badge: _unread),
           _menuTile(context, Icons.credit_card_outlined, 'Commission History', () => _open(context, const AgentPaymentsScreen())),
           _menuTile(context, Icons.settings_outlined, 'Settings', () => _open(context, const AgentSettingsScreen())),
@@ -200,135 +231,69 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
       ),
     );
   }
-}
 
-/// Full-screen approval gate mirroring components/agent/pending-approval.tsx.
-class _PendingApprovalView extends StatelessWidget {
-  const _PendingApprovalView({
-    required this.status,
-    required this.onRefresh,
-    required this.onSignOut,
-    this.rejectionReason,
-    this.onUpdateProfile,
-  });
-
-  final String status;
-  final String? rejectionReason;
-  final Future<void> Function() onRefresh;
-  final Future<void> Function() onSignOut;
-  final VoidCallback? onUpdateProfile;
-
-  @override
-  Widget build(BuildContext context) {
-    final isRejected = status == 'Rejected';
-    final isSuspended = status == 'Suspended';
-
-    final icon = isRejected
-        ? Icons.cancel_outlined
-        : isSuspended
-            ? Icons.block_outlined
-            : Icons.hourglass_empty;
-    final color = isRejected || isSuspended ? AppColors.destructive : Colors.amber;
-
-    final title = isRejected
-        ? 'Account Rejected'
-        : isSuspended
-            ? 'Account Suspended'
-            : 'Application Under Review';
-    final message = isRejected
-        ? (rejectionReason?.isNotEmpty == true ? rejectionReason! : 'Your agent application was not approved. Review the reason and update your profile to resubmit.')
-        : isSuspended
-            ? 'Your account has been suspended. Contact support for more information.'
-            : 'Your application is being reviewed by our team. You will be able to post listings once approved. This usually takes 24–48 hours.';
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(maxWidth: 420),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppColors.radius),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: (isRejected || isSuspended ? AppColors.destructive : Colors.amber).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 32, color: color),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.foreground),
-                  ),
-                  const SizedBox(height: 12),
-                  StatusChip(status: status),
-                  const SizedBox(height: 12),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, height: 1.5, color: AppColors.mutedForeground),
-                  ),
-                  if (isRejected) ...[
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Update your profile to resubmit your application.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.orange),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await onRefresh();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(context.read<AuthProvider>().user?.status == 'Approved' ? 'Approved! Welcome to the portal.' : 'Still under review.')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Check Approval Status'),
-                    style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 44)),
-                  ),
-                  if (onUpdateProfile != null) ...[
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: onUpdateProfile,
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('Update Profile'),
-                      style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 44)),
-                    ),
-                  ],
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await onSignOut();
-                    },
-                    icon: const Icon(Icons.logout, size: 18),
-                    label: const Text('Sign Out'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 44),
-                      foregroundColor: AppColors.destructive,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+  Widget _lockedMenuTile(BuildContext context, IconData icon, String label, bool approved, String status, VoidCallback onTap) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: AppColors.border)),
+      child: ListTile(
+        leading: Icon(icon, color: approved ? AppColors.primary : AppColors.mutedForeground),
+        title: Text(
+          label,
+          style: TextStyle(fontSize: 15, color: approved ? AppColors.foreground : AppColors.mutedForeground),
         ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!approved)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: const Text(
+                  'Locked',
+                  style: TextStyle(fontSize: 10, color: Color(0xFF16A34A), fontWeight: FontWeight.w600),
+                ),
+              ),
+            const SizedBox(width: 4),
+            Icon(
+              approved ? Icons.chevron_right : Icons.lock_outline,
+              color: AppColors.mutedForeground,
+              size: 20,
+            ),
+          ],
+        ),
+        onTap: approved
+            ? onTap
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            status == 'Rejected'
+                                ? 'Update your profile and resubmit to start posting.'
+                                : 'Complete your profile and wait for admin approval to post.',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFF16A34A),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              },
       ),
     );
   }

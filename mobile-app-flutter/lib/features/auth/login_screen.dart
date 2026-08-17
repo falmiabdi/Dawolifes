@@ -31,8 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _password = TextEditingController();
   bool _showPassword = false;
   bool _submitting = false;
+  bool _submittingGoogle = false;
   String? _error;
   bool _needsVerification = false;
+  bool _emailNotFound = false;
 
   @override
   void dispose() {
@@ -47,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _submitting = true;
       _error = null;
       _needsVerification = false;
+      _emailNotFound = false;
     });
 
     try {
@@ -59,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       setState(() {
         _error = e.message;
+        _emailNotFound = e.statusCode == 404;
         _needsVerification = e.statusCode == 403 && e.message.toLowerCase().contains('verif');
       });
     } catch (_) {
@@ -71,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitGoogle() async {
     setState(() {
-      _submitting = true;
+      _submittingGoogle = true;
       _error = null;
       _needsVerification = false;
     });
@@ -99,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       setState(() => _error = 'Google sign in failed. Please try again.');
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) setState(() => _submittingGoogle = false);
     }
   }
 
@@ -190,12 +194,33 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
+                  color: _emailNotFound ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFECACA)),
+                  border: Border.all(color: _emailNotFound ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA)),
                 ),
-                child: Text(_error!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 14)),
+                child: Text(
+                  _error!,
+                  style: TextStyle(
+                    color: _emailNotFound ? const Color(0xFF15803D) : const Color(0xFFDC2626),
+                    fontSize: 14,
+                  ),
+                ),
               ),
+              if (_emailNotFound) ...[
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const SignupScreen()),
+                    ),
+                    child: const Text(
+                      'Create Account',
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
               if (_needsVerification) ...[
                 const SizedBox(height: 4),
                 Align(
@@ -239,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
             GoogleSignInButton(
               onPressed: _submitGoogle,
-              loading: _submitting,
+              loading: _submittingGoogle,
             ),
           ],
         ),
