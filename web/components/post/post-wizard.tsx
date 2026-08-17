@@ -294,6 +294,8 @@ export function PostWizard() {
           latitude: form.latitude,
           longitude: form.longitude,
           locationDocument: form.locationDocument,
+          name: form.name,
+          phone: form.phone,
         })
       })
 

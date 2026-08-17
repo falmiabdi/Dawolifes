@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { Camera, Eye, EyeOff, Loader2, ShoppingBag, Store, User as UserIcon, X, CheckCircle2 } from 'lucide-react'
 
 import { useAuth } from '@/components/auth/auth-guard'
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
 import { createFirebaseUser } from '@/lib/firebase-auth'
 import { getApiUrlAsync } from '@/lib/get-api-url'
 import { useI18n } from '@/lib/i18n'
@@ -26,11 +27,12 @@ interface SignupFormValues {
 
 export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   const router = useRouter()
-  const { registerBuyer } = useAuth()
+  const { registerBuyer, googleSignIn } = useAuth()
   const { t } = useI18n()
   const [role, setRole] = useState<Role>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [photo, setPhoto] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -126,6 +128,33 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    setMessage('')
+    setGoogleLoading(true)
+    try {
+      const result = await googleSignIn(role ?? 'user')
+      if (!result) return // canceled the Google sheet
+      if (result.requiresEmailVerification) {
+        setMessage('Please verify your email address to continue.')
+        return
+      }
+      if (result.user) {
+        if (result.user.role === 'admin') router.push('/admin')
+        else if (result.user.role === 'agent') router.push('/agent')
+        else router.push(redirectParam || '/saved')
+      }
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
+        setMessage('Cannot connect to the server. Check your network connection.')
+      } else {
+        setMessage(msg || 'Google sign up failed. Please try again.')
+      }
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
+
   const roleCards: { value: 'buyer' | 'agent'; icon: any; title: string; desc: string }[] = [
     {
       value: 'buyer',
@@ -164,6 +193,13 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
             )
           })}
         </div>
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-medium text-slate-400">OR</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+        <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
+        {message ? <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
       </div>
     )
   }
@@ -291,6 +327,17 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
       <p className="text-center text-xs text-slate-400">
         {isBuyer ? t('registration_verified') : t('application_reviewed')}
       </p>
+      <div className="my-2 flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+      <GoogleSignInButton
+        onPress={handleGoogleSignIn}
+        loading={googleLoading}
+        label={isBuyer ? 'Continue with Google' : 'Continue with Google as Agent'}
+      />
+      {message ? <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
     </form>
   )
 }

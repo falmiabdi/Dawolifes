@@ -408,7 +408,7 @@ All of these rules and agreements are valid and accepted under the laws and regu
     // agent profile
     personal_identity: 'Personal & Identity', contact_information: 'Contact Information', education_background: 'Education & Background', uploaded_documents: 'Uploaded Documents',
     region_city: 'Region & City', woreda_kebele: 'Woreda / Kebele', doc_fayda_front: 'Fayda ID Front', doc_fayda_back: 'Fayda ID Back', doc_selfie: 'Selfie with Fayda', doc_passport: 'Passport Photo', doc_education: 'Education Certificate', doc_license: 'Business License',
-    view_document: 'View Document', not_uploaded: 'Not Uploaded', under_review: 'Under Review', verified_agent: 'Verified Agent', application_rejected: 'Application Rejected', reason_label: 'Reason:', edit_resubmit: 'Edit Profile & Resubmit',
+    view_document: 'View Document', not_uploaded: 'Not Uploaded', under_review: 'Under Review', verified_agent: 'Verified Agent', application_rejected: 'Application Rejected', reason_label: 'Reason:', edit_resubmit: 'Edit Profile & Resubmit', edit_profile: 'Edit Profile',
     // property wizard
     post_property: 'Post a Property', list_property_note: 'List your property for millions of buyers across Ethiopia',
     basic_info: 'Basic Info', location_map: 'Location & Map', photos_media: 'Photos & Media', location_map2: 'Location Map',
@@ -640,7 +640,7 @@ DawoLife ለገዥዎች ትክክለኛ መረጃ ያቀርባል። ከንብ�
     email_readonly: 'ኢሜይል (ለማንበብ ብቻ)',
     personal_identity: 'የግል እና ማንነት', contact_information: 'የግንኙነት መረጃ', education_background: 'ትምህርት እና ታሪክ', uploaded_documents: 'የተሰቀሉ ሰነዶች',
     region_city: 'ክልል እና ከተማ', woreda_kebele: 'ወረዳ / ቀበሌ', doc_fayda_front: 'የፋይዳ መታወቂያ ፊት', doc_fayda_back: 'የፋይዳ መታወቂያ ጀርባ', doc_selfie: 'ከፋይዳ ጋር ሴልፊ', doc_passport: 'የፓስፖርት ፎቶ', doc_education: 'የትምህርት ሰርተፊኬት', doc_license: 'የንግድ ፍቃድ',
-    view_document: 'ሰነድ ይመልከቱ', not_uploaded: 'አልተሰቀለም', under_review: 'በግምገማ ላይ', verified_agent: 'የተረጋገጠ ወኪል', application_rejected: 'ማመልከቻ ውድቅ ተደርጓል', reason_label: 'ምክንያት:', edit_resubmit: 'መገለጫ አርትዕ እና እንደገና አስገባ',
+    view_document: 'ሰነድ ይመልከቱ', not_uploaded: 'አልተሰቀለም', under_review: 'በግምገማ ላይ', verified_agent: 'የተረጋገጠ ወኪል', application_rejected: 'ማመልከቻ ውድቅ ተደርጓል', reason_label: 'ምክንያት:', edit_resubmit: 'መገለጫ አርትዕ እና እንደገና አስገባ', edit_profile: 'መገለጫ አርትዕ',
     post_property: 'ንብረት ለጥፍ', list_property_note: 'ንብረትዎን በመላ ኢትዮጵያ ለሚገኙ በሚሊዮን ለሚቆጠሩ ገዢዎች ይዘርዝሩ',
     basic_info: 'መሰረታዊ መረጃ', location_map: 'አካባቢ እና ካርታ', photos_media: 'ፎቶዎች እና ሚዲያ', location_map2: 'አካባቢ ካርታ',
     property_details: 'የንብረት ዝርዝሮች', property_location: 'የንብረት አካባቢ', photos_media_title: 'ፎቶዎች እና ሚዲያ', property_location_map: 'የንብረት አካባቢ ካርታ', contact_info_title: 'የግንኙነት መረጃ',
@@ -870,7 +870,7 @@ Seeronni fi waliigalteen kun hundi dambii fi seera biyya keenyaa biratti fudhata
     email_readonly: 'Imeelii (dubbisuuf qofa)',
     personal_identity: 'Dhuunfaa fi Eenyummaa', contact_information: 'Odeeffannoo Quunnamti', education_background: 'Barnoota fi Seenaa', uploaded_documents: 'Waraqaa Fe\'aman',
     region_city: 'Naannoo fi Magaalaa', woreda_kebele: 'Aanaa / Ganda', doc_fayda_front: 'Fulduree Faayidaa', doc_fayda_back: 'Duubee Faayidaa', doc_selfie: 'Suuraa kaafamee Faayidaa qabachaa', doc_passport: 'Suura Passport', doc_education: 'Sertifikeetii Barnootaa', doc_license: 'Hayyama Daldalaa',
-    view_document: 'Waraqaa ilaali', not_uploaded: 'Hin fe\'amne', under_review: 'Sakatta\'aa jira', verified_agent: 'Erijantii mirkanaa\'e', application_rejected: 'Iyyatni ittifameera', reason_label: 'Sababa:', edit_resubmit: 'Ibsa sirreessi itti deebi\'i galchi',
+    view_document: 'Waraqaa ilaali', not_uploaded: 'Hin fe\'amne', under_review: 'Sakatta\'aa jira', verified_agent: 'Erijantii mirkanaa\'e', application_rejected: 'Iyyatni ittifameera', reason_label: 'Sababa:', edit_resubmit: 'Ibsa sirreessi itti deebi\'i galchi', edit_profile: 'Ibsa sirreessi',
     post_property: 'Qabeenya maxxansi', list_property_note: 'Qabeenya kee miliyoona bituu fi gurguruuf maxxansi',
     basic_info: 'Odeeffannoo Bu\'uuraa', location_map: 'Naannoo fi Maapii', photos_media: 'Suura fi Miidiyaa', location_map2: 'Maapii Naannoo',
     property_details: 'Ibsa Qabeenyaa', property_location: 'Naannoo Qabeenyaa', photos_media_title: 'Suura fi Miidiyaa', property_location_map: 'Maapii Naannoo Qabeenyaa', contact_info_title: 'Odeeffannoo Quunnamti',

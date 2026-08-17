@@ -4,6 +4,7 @@ import { useState, useEffect, createContext, useContext } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Capacitor } from '@capacitor/core'
 import { getApiUrlAsync, patchFetchForCapacitor } from '@/lib/get-api-url'
+import { signInWithGoogle } from '@/lib/firebase-auth'
 
 patchFetchForCapacitor()
 
@@ -60,6 +61,7 @@ interface AuthContextType {
   role: UserRole
   isVerified: boolean
   login: (email: string, password: string) => Promise<any>
+  googleSignIn: (role?: string) => Promise<any>
   register: (data: { username: string; email: string; password: string }) => Promise<any>
   registerBuyer: (data: { name: string; email: string; phone: string; password: string; profilePhoto?: string }) => Promise<any>
   verifyOtp: (email: string, otp: string) => Promise<any>
@@ -75,6 +77,7 @@ const AuthContext = createContext<AuthContextType>({
   role: 'buyer',
   isVerified: false,
   login: async () => {},
+  googleSignIn: async () => {},
   register: async () => {},
   registerBuyer: async () => {},
   verifyOtp: async () => {},
@@ -163,6 +166,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await persistToken(data.accessToken)
     setUserAndCache(data.user)
+    return data
+  }
+
+  /**
+   * Google sign-in: opens the Google sheet, then exchanges the Firebase ID
+   * token for a DawoLife session. Returns `null` if the user canceled the
+   * sheet. If the account needs email verification the backend responds with
+   * `requiresEmailVerification` and no session — surfaced for the UI.
+   */
+  async function googleSignIn(role?: string) {
+    const cred = await signInWithGoogle()
+    if (!cred) return null
+
+    const response = await fetch(`${await getApiUrlAsync()}/api/auth/firebase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ idToken: cred.idToken, role }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Google sign in failed' }))
+      throw new Error(error.message || 'Google sign in failed')
+    }
+
+    const data = await response.json()
+
+    if (data.requiresEmailVerification) {
+      return data
+    }
+
+    if (data.accessToken) {
+      await persistToken(data.accessToken)
+    }
+    if (data.user) {
+      setUserAndCache(data.user)
+    }
     return data
   }
 
@@ -268,6 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: mapUserRole(user?.role),
         isVerified: !!user,
         login,
+        googleSignIn,
         register,
         registerBuyer,
         verifyOtp,

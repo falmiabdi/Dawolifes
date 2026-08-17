@@ -41,7 +41,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-4">
           <LanguageDropdown className="hidden sm:block" />
           {isAuth ? (
-            <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"} className="flex items-center gap-2 hover:opacity-80 transition">
+            <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/saved"} className="flex items-center gap-2 hover:opacity-80 transition">
               {photoUrl ? (
                 <div className="h-6 w-6 rounded-full overflow-hidden bg-primary/10 ring-2 ring-primary/30">
                   <Image src={photoUrl} alt={user.name || "Profile"} width={24} height={24} className="h-full w-full object-cover" />
@@ -120,7 +120,7 @@ export function SiteHeader() {
 
           <div className="flex items-center gap-2">
             {isAuth && (
-              <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"} className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition text-sm font-medium text-primary">
+              <Link href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/saved"} className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition text-sm font-medium text-primary">
                 {photoUrl ? (
                   <div className="h-7 w-7 rounded-full overflow-hidden bg-primary/10">
                     <Image src={photoUrl} alt={user.name || "Profile"} width={28} height={28} className="h-full w-full object-cover" />
@@ -169,7 +169,7 @@ export function SiteHeader() {
               <div className="mt-2 border-t border-border pt-2 flex flex-col gap-1">
                 {isAuth ? (
                   <Link
-                    href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/dashboard"}
+                    href={user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/saved"}
                     onClick={() => setOpen(false)}
                     className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center gap-2"
                   >

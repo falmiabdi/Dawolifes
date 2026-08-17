@@ -8,6 +8,7 @@ import { AlertTriangle, Eye, EyeOff, Loader2, RotateCcw } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useAuth } from '@/components/auth/auth-guard'
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
 import { isFirebaseEmailVerified, resendFirebaseVerification, signInFirebaseUser } from '@/lib/firebase-auth'
 import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
@@ -28,12 +29,13 @@ function getRedirectParam(): string {
 
 export default function AuthLoginPage() {
   const router = useRouter()
-  const { user, login } = useAuth()
+  const { user, login, googleSignIn } = useAuth()
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [unverifiedWarning, setUnverifiedWarning] = useState('')
   const [resendingVerify, setResendingVerify] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const {
     register,
     handleSubmit,
@@ -93,6 +95,22 @@ export default function AuthLoginPage() {
       setUnverifiedWarning('Could not resend the verification email. Try again later.')
     } finally {
       setResendingVerify(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setMessage('')
+    setGoogleLoading(true)
+    try {
+      const result = await googleSignIn()
+      if (result?.requiresEmailVerification) {
+        setMessage('Please verify your email address to continue.')
+      }
+      // On success the `user` effect above routes to the right place.
+    } catch (err: any) {
+      setMessage(err?.message || 'Google sign in failed. Please try again.')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -165,6 +183,14 @@ export default function AuthLoginPage() {
           {t('sign_in')}
         </Button>
       </form>
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
     </AuthShell>
   )
 }

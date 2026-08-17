@@ -1,8 +1,10 @@
 import {
   createUserWithEmailAndPassword,
   getAuth,
+  GoogleAuthProvider,
   sendEmailVerification,
   signInWithEmailAndPassword,
+  signInWithPopup,
   type Auth,
   type User,
 } from 'firebase/auth'
@@ -14,6 +16,18 @@ let auth: Auth | null = null
 function getAuthInstance(): Auth {
   if (!auth) auth = getAuth(getFirebaseApp())
   return auth
+}
+
+/**
+ * Opens the Google sign-in sheet and returns the Firebase ID token (plus
+ * email) for exchanging against the DawoLife backend. Returns `null` when the
+ * user closes the sheet without choosing an account.
+ */
+export async function signInWithGoogle(): Promise<{ idToken: string; email: string | null } | null> {
+  const provider = new GoogleAuthProvider()
+  const credential = await signInWithPopup(getAuthInstance(), provider)
+  const idToken = await credential.user.getIdToken()
+  return { idToken, email: credential.user.email }
 }
 
 /**

@@ -2,38 +2,41 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Calendar, Mail, MapPin, Phone, Shield, GraduationCap, Briefcase, FileCheck, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react'
+import { Calendar, Mail, MapPin, Phone, Shield, GraduationCap, Briefcase, FileCheck, CheckCircle2, Clock, XCircle, AlertCircle, PencilLine } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import { useI18n } from '@/lib/i18n'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { ProfilePhotoUploader } from '@/components/dashboard/profile-photo-uploader'
+import { EditProfileDialog } from '@/components/agent/edit-profile-dialog'
 
 
 export default function AgentProfilePage() {
   const { user: authUser, getToken } = useAuth()
   const { t, tv } = useI18n()
   const [user, setUser] = useState<any>(null)
+  const [editOpen, setEditOpen] = useState(false)
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const token = await getToken()
+      const res = await fetch(`${getApiUrl()}/api/agent/profile`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!res.ok) throw new Error('Failed to fetch')
+      const data = await res.json()
+      setUser(data.user)
+    } catch {
+      // Fall back to auth user data if profile endpoint fails
+      setUser(authUser)
+    }
+  }, [authUser, getToken])
 
   useEffect(() => {
     if (!authUser) return
-    const fetchProfile = async () => {
-      try {
-        const token = await getToken()
-        const res = await fetch(`${getApiUrl()}/api/agent/profile`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        setUser(data.user)
-      } catch {
-        // Fall back to auth user data if profile endpoint fails
-        setUser(authUser)
-      }
-    }
-    fetchProfile()
-  }, [authUser, getToken])
+    loadProfile()
+  }, [authUser, loadProfile])
 
   const displayUser = user || authUser
 
@@ -65,6 +68,13 @@ export default function AgentProfilePage() {
           </div>
         </div>
         <div>
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="mb-2 inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            <PencilLine className="h-4 w-4" /> {t('edit_profile')}
+          </button>
           {displayUser.status === 'Pending' && (
             <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 border border-amber-100">
               <Clock className="h-4 w-4" /> {t('under_review')}
@@ -205,6 +215,15 @@ export default function AgentProfilePage() {
           </div>
         </div>
       </div>
+
+      <EditProfileDialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSaved={loadProfile}
+        name={displayUser.fullName || displayUser.username || ''}
+        phone={displayUser.phone || displayUser.ethPhone || ''}
+        email={displayUser.email || ''}
+      />
     </div>
   )
 }

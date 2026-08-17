@@ -156,12 +156,14 @@ export default function AgentVehiclesPage() {
                      >
                        <ExternalLink className="h-3.5 w-3.5" /> {t('view')}
                      </Link>
-                     <Link
-                       href={`/agent/vehicles/edit?id=${v.id.toString()}`}
-                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
-                     >
-                       <Pencil className="h-3.5 w-3.5" /> {t('edit')}
-                     </Link>
+                     {v.status === 'Rejected' && (
+                       <Link
+                         href={`/agent/vehicles/edit?id=${v.id.toString()}`}
+                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
+                       >
+                         <Pencil className="h-3.5 w-3.5" /> {t('edit')}
+                       </Link>
+                     )}
                     <button
                       onClick={async () => {
                         if (!confirm(t('confirm_delete_vehicle'))) return

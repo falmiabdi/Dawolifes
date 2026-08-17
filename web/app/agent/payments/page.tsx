@@ -8,13 +8,11 @@ import { useAuth } from '@/components/auth/auth-guard'
 import {
   CreditCard,
   Wallet,
-  ShieldCheck,
   Landmark,
   CheckCircle2,
   QrCode,
   ArrowDownLeft,
   RefreshCw,
-  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -132,21 +130,7 @@ export default function AgentPaymentsPage() {
           </div>
         </div>
 
-        {/* System Fee */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between md:p-6">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              {t('system_platform_fee')}
-            </span>
-            <ShieldCheck className="h-5 w-5 text-orange-500" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-extrabold text-slate-900 md:text-3xl">2.5%</h2>
-            <p className="text-xs text-slate-500 mt-1">{t('applied_per_transaction')}</p>
-          </div>
-        </div>
-
-        {/* Subscription Plan */}
+        {/* Current Plan */}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between sm:col-span-2 lg:col-span-1 md:p-6">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
