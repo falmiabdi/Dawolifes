@@ -119,11 +119,16 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Recipient not found' })
     }
 
+    const sender = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { username: true },
+    })
+
     const msgDoc = await prisma.message.create({
       data: {
         propertyId,
         senderId: req.user!.userId,
-        senderName: req.user!.email,
+        senderName: sender?.username ?? req.user!.email,
         senderRole: req.user!.role,
         recipientId,
         recipientName: recipient.username,

@@ -217,7 +217,7 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     const payload = { userId, email: emailVal, role }
     const response: any = { message: 'Email verified successfully' }
 
-    if (role === 'user') {
+    if (role === 'user' || role === 'agent') {
       const accessToken = signAccessToken(payload)
       const refreshToken = signRefreshToken(payload)
       response.accessToken = accessToken
@@ -339,7 +339,7 @@ router.post('/check-verification', otpLimiter, async (req, res) => {
     const { id: userId, email: emailVal, role } = user
     const response: any = { verified: true, message: 'Email verified successfully' }
 
-    if (role === 'user') {
+    if (role === 'user' || role === 'agent') {
       const payload = { userId, email: emailVal, role }
       const accessToken = signAccessToken(payload)
       const refreshToken = signRefreshToken(payload)
