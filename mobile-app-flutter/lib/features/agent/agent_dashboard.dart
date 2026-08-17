@@ -383,7 +383,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               children: [
                 Text('Account $status', style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 2),
-                Text(msg, style: const TextStyle(color: Colors.black87, fontSize: 12)),
+                Text(msg, style: const TextStyle(color: Colors.black87, fontSize: 12), maxLines: 3, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -430,7 +430,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         ),
         title: Row(
           children: [
-            Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+            ),
             if (!enabled) ...[
               const SizedBox(width: 8),
               Container(
