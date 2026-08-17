@@ -6,6 +6,7 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/listing_item.dart';
 import '../../data/models/property.dart';
 import '../../data/repositories/agent_repository.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
@@ -85,15 +86,22 @@ class _AgentPropertiesScreenState extends State<AgentPropertiesScreen> {
   Widget build(BuildContext context) {
     final l10n = context.read<LanguageProvider>();
     final tv = l10n.tv;
+    final approved = context.watch<AuthProvider>().user?.status == 'Approved';
     return Scaffold(
       appBar: AppBar(title: const Text('My Properties')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPostPropertyScreen()));
-          _load();
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Post'),
+        onPressed: approved
+            ? () async {
+                await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPostPropertyScreen()));
+                _load();
+              }
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Your account must be approved before posting.')),
+                );
+              },
+        icon: Icon(approved ? Icons.add : Icons.lock_outline),
+        label: Text(approved ? 'Post' : 'Pending Approval'),
       ),
       body: _loading
           ? const LoadingState()
