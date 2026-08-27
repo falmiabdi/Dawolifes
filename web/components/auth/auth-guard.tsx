@@ -4,7 +4,7 @@ import { useState, useEffect, createContext, useContext } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Capacitor } from '@capacitor/core'
 import { getApiUrlAsync, patchFetchForCapacitor } from '@/lib/get-api-url'
-import { signInWithGoogle } from '@/lib/firebase-auth'
+import { getGoogleRedirectResult, signInWithGoogle } from '@/lib/firebase-auth'
 
 patchFetchForCapacitor()
 
@@ -91,6 +91,7 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const [user, setUser] = useState<SessionUser | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -101,7 +102,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }
     fetchAuthSession()
+    resolveRedirectSignIn()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  /**
+   * Completes a Google sign-in that used the redirect flow (chosen when the
+   * popup flow is blocked by Cross-Origin-Opener-Policy). Runs once on mount.
+   */
+  async function resolveRedirectSignIn() {
+    try {
+      const cred = await getGoogleRedirectResult()
+      if (!cred) return
+      const loc = window.location
+      history.replaceState({}, '', loc.pathname + loc.search)
+      const response = await fetch(`${await getApiUrlAsync()}/api/auth/firebase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken: cred.idToken }),
+      })
+      if (!response.ok) return
+      const data = await response.json()
+      if (data.accessToken) await persistToken(data.accessToken)
+      if (data.user) setUserAndCache(data.user)
+      const target = data.user?.role === 'admin' ? '/admin' : data.user?.role === 'agent' ? '/agent' : '/saved'
+      router.replace(target)
+    } catch {
+      // Silently fail — user can retry from the sign-in UI.
+    }
+  }
 
   function setUserAndCache(u: SessionUser | null) {
     setUser(u)

@@ -1,10 +1,12 @@
 import {
   createUserWithEmailAndPassword,
   getAuth,
+  getRedirectResult,
   GoogleAuthProvider,
   sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   type Auth,
   type User,
 } from 'firebase/auth'
@@ -22,12 +24,37 @@ function getAuthInstance(): Auth {
  * Opens the Google sign-in sheet and returns the Firebase ID token (plus
  * email) for exchanging against the DawoLife backend. Returns `null` when the
  * user closes the sheet without choosing an account.
+ *
+ * Note: `Cross-Origin-Opener-Policy` from hosting (e.g. Render) can block the
+ * popup flow. We try popup first, and if it fails fall back to the redirect
+ * flow (which is immune to COOP). Redirect results are resolved on the next
+ * page load.
  */
 export async function signInWithGoogle(): Promise<{ idToken: string; email: string | null } | null> {
   const provider = new GoogleAuthProvider()
-  const credential = await signInWithPopup(getAuthInstance(), provider)
-  const idToken = await credential.user.getIdToken()
-  return { idToken, email: credential.user.email }
+
+  try {
+    const credential = await signInWithPopup(getAuthInstance(), provider)
+    const idToken = await credential.user.getIdToken()
+    return { idToken, email: credential.user.email }
+  } catch (err: any) {
+    if (err?.code === 'auth/operation-not-supported-in-this-environment') {
+      await signInWithRedirect(getAuthInstance(), provider)
+      return null
+    }
+    throw err
+  }
+}
+
+/**
+ * Resolves a redirected Google sign-in result (chosen in the Firebase
+ * popup/redirect flow). Returns `null` when there is no pending redirect.
+ */
+export async function getGoogleRedirectResult(): Promise<{ idToken: string; email: string | null } | null> {
+  const result = await getRedirectResult(getAuthInstance())
+  if (!result) return null
+  const idToken = await result.user.getIdToken()
+  return { idToken, email: result.user.email }
 }
 
 /**
