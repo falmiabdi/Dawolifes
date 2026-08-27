@@ -430,7 +430,7 @@ function ListingPage() {
               <div className="rounded-2xl border border-border bg-card p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Property Info</p>
                 <dl className="mt-3 divide-y divide-border text-sm">
-                  {info.map(([label, value]) => (
+                  {info.filter(([, v]) => v).map(([label, value]) => (
                     <div key={label} className="flex items-center justify-between py-2">
                       <dt className="text-muted-foreground">{label}</dt>
                       <dd className="font-medium text-foreground">{value || 'N/A'}</dd>
