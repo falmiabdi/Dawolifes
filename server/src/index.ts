@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { connectDB, prisma } from './utils/db.js'
 import { withPrismaRetry, startKeepAlive } from './lib/prisma.js'
+import { ensureRootAdmin } from './bootstrap.js'
 import authRoutes from './routes/auth.js'
 import propertyRoutes from './routes/properties.js'
 import paymentRoutes from './routes/payments.js'
@@ -125,6 +126,13 @@ async function start() {
   const db = await connectDB()
   if (db) {
     startKeepAlive()
+  }
+
+  try {
+    await ensureRootAdmin()
+    console.log('✅ Root admin ensured (falmitesfaye@gmail.com)')
+  } catch (e: any) {
+    console.error('⚠️ Failed to ensure root admin:', e?.message || e)
   }
 
   // Public helper: returns this server's public egress IP (used to configure
