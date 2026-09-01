@@ -185,32 +185,56 @@ async function deleteUserCascade(userId: string) {
   await prisma.user.delete({ where: { id: userId } })
 }
 
-// Toggle the contact phone shown on a listing. Cycles between the agent's
-// own phone and the configured fallback numbers.
+// Resolve the admin's own profile contact (name, phone, photo). Falling back
+// to the configured numbers when the profile phone is unset.
+async function resolveAdminContact(userId: string) {
+  const admin = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { username: true, phone: true, profilePhoto: true },
+  })
+  return {
+    name: admin?.username?.trim() || 'DawoLife',
+    phone: admin?.phone?.trim() || ADMIN_PHONES[0],
+    photo: admin?.profilePhoto?.trim() || '',
+  }
+}
+
+// Toggle the full contact identity (name + phone + photo) shown on a listing
+// between the admin account and the agent's account. The identity that is
+// currently displayed determines the next one: admin ⇄ agent.
 router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const property = await prisma.property.findUnique({
       where: { id: req.params.id },
-      include: { agent: { select: { id: true, phone: true } } },
+      include: { agent: { select: { id: true, username: true, phone: true, profilePhoto: true } } },
     })
     if (!property) {
       return res.status(404).json({ message: 'Property not found' })
     }
 
-    const currentPhone = property.displayPhone || ''
-    const agentPhone = property.agent?.phone || ''
+    const admin = await resolveAdminContact(req.user!.userId)
+    const agent = property.agent
 
-    let newPhone: string
-    if (currentPhone === ADMIN_PHONES[0]) {
-      newPhone = ADMIN_PHONES[1]
-    } else if (currentPhone === ADMIN_PHONES[1]) {
-      newPhone = agentPhone || ADMIN_PHONES[0]
-    } else {
-      newPhone = ADMIN_PHONES[0]
-    }
-    await prisma.property.update({ where: { id: req.params.id }, data: { displayPhone: newPhone } })
+    const showingAdmin =
+      (property.agentName?.trim() || '') === admin.name &&
+      (property.displayPhone?.trim() || '') === admin.phone &&
+      (property.displayPhoto?.trim() || '') === admin.photo
 
-    res.json({ message: 'Contact phone updated', displayPhone: newPhone })
+    const nextAdmin = !showingAdmin
+    await prisma.property.update({
+      where: { id: req.params.id },
+      data: {
+        agentName: nextAdmin ? admin.name : agent?.username?.trim() || admin.name,
+        displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
+        displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
+      },
+    })
+    const updated = await prisma.property.findUnique({
+      where: { id: req.params.id },
+      select: { agentName: true, displayPhone: true, displayPhoto: true },
+    })
+
+    res.json({ message: 'Contact updated', contact: nextAdmin ? 'admin' : 'agent', ...updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update contact' })
   }
@@ -220,26 +244,35 @@ router.patch('/vehicles/:id/contact', authMiddleware, adminMiddleware, async (re
   try {
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: req.params.id },
-      include: { agent: { select: { id: true, phone: true } } },
+      include: { agent: { select: { id: true, username: true, phone: true, profilePhoto: true } } },
     })
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
 
-    const currentPhone = vehicle.displayPhone || ''
-    const agentPhone = vehicle.agent?.phone || ''
+    const admin = await resolveAdminContact(req.user!.userId)
+    const agent = vehicle.agent
 
-    let newPhone: string
-    if (currentPhone === ADMIN_PHONES[0]) {
-      newPhone = ADMIN_PHONES[1]
-    } else if (currentPhone === ADMIN_PHONES[1]) {
-      newPhone = agentPhone || ADMIN_PHONES[0]
-    } else {
-      newPhone = ADMIN_PHONES[0]
-    }
-    await prisma.vehicle.update({ where: { id: req.params.id }, data: { displayPhone: newPhone } })
+    const showingAdmin =
+      (vehicle.agentName?.trim() || '') === admin.name &&
+      (vehicle.displayPhone?.trim() || '') === admin.phone &&
+      (vehicle.displayPhoto?.trim() || '') === admin.photo
 
-    res.json({ message: 'Contact phone updated', displayPhone: newPhone })
+    const nextAdmin = !showingAdmin
+    await prisma.vehicle.update({
+      where: { id: req.params.id },
+      data: {
+        agentName: nextAdmin ? admin.name : agent?.username?.trim() || admin.name,
+        displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
+        displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
+      },
+    })
+    const updated = await prisma.vehicle.findUnique({
+      where: { id: req.params.id },
+      select: { agentName: true, displayPhone: true, displayPhoto: true },
+    })
+
+    res.json({ message: 'Contact updated', contact: nextAdmin ? 'admin' : 'agent', ...updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update contact' })
   }

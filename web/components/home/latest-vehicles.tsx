@@ -6,6 +6,7 @@ import { VehicleCard } from "@/components/vehicle-card"
 import { SearchSummary } from "@/components/home/search-summary"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 import { matchesVehicle, parseSearchFilters } from "@/lib/search"
+import { resolveListingAgent } from "@/lib/data"
 
 export function LatestVehicles() {
   const [vehicles, setVehicles] = useState<any[]>([])
@@ -66,13 +67,7 @@ export function LatestVehicles() {
             images: v.images && v.images.length > 0 ? v.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
             videoUrl: v.videoUrl || undefined,
             featured: v.featured || false,
-            agent: {
-              id: v.agent.id,
-              name: v.agent.fullName || v.agent.username || 'Unknown Agent',
-              role: v.agent.role === 'admin' ? 'Administrator' : 'Vehicle Agent',
-              phone: v.agent.ethPhone || v.agent.safaricomPhone || v.agent.phone || '+251 900 000 000',
-              avatar: v.agent.profilePhoto || '/placeholder.svg',
-            }
+            agent: { ...resolveListingAgent(v, { section: 'vehicles' }), role: v.agent?.role === 'admin' ? 'Administrator' : 'Vehicle Agent' },
           }))
         setVehicles(transformed)
       })

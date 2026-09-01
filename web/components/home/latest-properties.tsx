@@ -6,6 +6,7 @@ import { PropertyCard } from "@/components/property-card"
 import { SearchSummary } from "@/components/home/search-summary"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
 import { matchesProperty, parseSearchFilters, PROPERTY_CATEGORY_KEYS } from "@/lib/search"
+import { resolveListingAgent } from "@/lib/data"
 
 export function LatestProperties() {
   const [properties, setProperties] = useState<any[]>([])
@@ -50,13 +51,7 @@ export function LatestProperties() {
           description: p.description || '',
           features: p.features || [],
           images: p.images && p.images.length > 0 ? p.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
-          agent: {
-            id: p.agent?.id || p.agentId || 'unknown',
-            name: p.agent?.username || p.agentName || 'Unknown Agent',
-            role: 'Real Estate Agent',
-            phone: p.displayPhone || p.agent?.phone || '+251 900 000 000',
-            avatar: p.agent?.profilePhoto || '/placeholder.svg',
-          }
+          agent: resolveListingAgent(p),
         }))
         setProperties(transformed)
       })

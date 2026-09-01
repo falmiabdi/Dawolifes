@@ -148,8 +148,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   String get _phone {
-    final p = widget.item.displayPhone ?? widget.item.agent?.phone;
-    return (p ?? '').trim();
+    return widget.item.contactPhone;
   }
 
   /// The fetched property record, when this listing is a property.
@@ -754,12 +753,12 @@ class _VehicleDetails extends StatelessWidget {
 
     final facts = <(String, String)>[
       ('Make / Model', _join([clean(vehicle.make), clean(vehicle.model)], ' ')),
-      ('Year', vehicle.manufacturingYear != null ? '$vehicle.manufacturingYear' : ''),
+      ('Year', vehicle.manufacturingYear != null ? '${vehicle.manufacturingYear}' : ''),
       ('Mileage', vehicle.mileage != null ? '${numVal(vehicle.mileage)} km' : ''),
       ('Transmission', clean(vehicle.transmission)),
       ('Fuel Type', clean(vehicle.fuelType)),
-      ('Seating', vehicle.seatingCapacity != null ? '$vehicle.seatingCapacity Seats' : ''),
-      ('Doors', vehicle.doors != null ? '$vehicle.doors' : ''),
+      ('Seating', vehicle.seatingCapacity != null ? '${vehicle.seatingCapacity} Seats' : ''),
+      ('Doors', vehicle.doors != null ? '${vehicle.doors}' : ''),
       ('Condition', clean(vehicle.condition)),
       ('Color', clean(vehicle.color)),
       ('Category', clean(vehicle.vehicleCategory)),
@@ -770,7 +769,7 @@ class _VehicleDetails extends StatelessWidget {
       ('Make', clean(vehicle.make)),
       ('Model', clean(vehicle.model)),
       ('Trim / Version', clean(vehicle.trimVersion)),
-      ('Year', vehicle.manufacturingYear != null ? '$vehicle.manufacturingYear' : ''),
+      ('Year', vehicle.manufacturingYear != null ? '${vehicle.manufacturingYear}' : ''),
       ('Color', clean(vehicle.color)),
       ('Country of Origin', clean(vehicle.countryOfOrigin)),
       ('Category', clean(vehicle.vehicleCategory)),
@@ -778,13 +777,13 @@ class _VehicleDetails extends StatelessWidget {
       ('Horsepower', vehicle.horsepower != null ? '${numVal(vehicle.horsepower)} hp' : ''),
       ('Transmission', clean(vehicle.transmission)),
       ('Drivetrain', clean(vehicle.drivetrain)),
-      ('Cylinders', vehicle.cylinders != null ? '$vehicle.cylinders' : ''),
+      ('Cylinders', vehicle.cylinders != null ? '${vehicle.cylinders}' : ''),
       ('Fuel Type', clean(vehicle.fuelType)),
       ('Mileage', vehicle.mileage != null ? '${numVal(vehicle.mileage)} km' : ''),
       ('Fuel Consumption', clean(vehicle.fuelConsumption)),
       ('Fuel Tank Capacity', vehicle.fuelTankCapacity != null ? '${numVal(vehicle.fuelTankCapacity)} L' : ''),
-      ('Seating Capacity', vehicle.seatingCapacity != null ? '$vehicle.seatingCapacity' : ''),
-      ('Doors', vehicle.doors != null ? '$vehicle.doors' : ''),
+      ('Seating Capacity', vehicle.seatingCapacity != null ? '${vehicle.seatingCapacity}' : ''),
+      ('Doors', vehicle.doors != null ? '${vehicle.doors}' : ''),
       ('Ground Clearance', vehicle.groundClearance != null ? '${numVal(vehicle.groundClearance)} mm' : ''),
       ('Weight', vehicle.weight != null ? '${numVal(vehicle.weight)} kg' : ''),
       ('Tire Size', clean(vehicle.tireSize)),
@@ -797,7 +796,7 @@ class _VehicleDetails extends StatelessWidget {
       ('Locally Assembled', _yesNo(vehicle.locallyAssembled)),
       if (clean(vehicle.accidentHistory).isNotEmpty) ('Accident History', clean(vehicle.accidentHistory)),
       ('Service History', _yesNo(vehicle.serviceHistoryAvailable)),
-      if (vehicle.ownershipCount != null) ('Ownership Count', '$vehicle.ownershipCount'),
+      if (vehicle.ownershipCount != null) ('Ownership Count', '${vehicle.ownershipCount}'),
     ];
 
     final sale = <(String, String)>[
@@ -1250,10 +1249,8 @@ class _ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final agent = item.agent;
-    final tv = context.read<LanguageProvider>().tv;
-    final phone = (item.displayPhone ?? agent?.phone ?? '').trim();
-    final avatar = (agent?.avatar ?? '').trim();
+    final phone = item.contactPhone;
+    final avatar = item.contactPhoto;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1290,7 +1287,7 @@ class _ContactCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      agent?.displayName ?? tv('Agent'),
+                      item.contactName,
                       style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.foreground),
                     ),
                     const SizedBox(height: 2),

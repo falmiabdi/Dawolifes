@@ -97,6 +97,7 @@ class Vehicle {
     this.agent,
     this.agentName,
     this.displayPhone,
+    this.displayPhoto,
     this.rejectionReason,
     this.createdAt,
     this.updatedAt,
@@ -196,6 +197,7 @@ class Vehicle {
   final ListingAgent? agent;
   final String? agentName;
   final String? displayPhone;
+  final String? displayPhoto;
   final String? rejectionReason;
   final String? createdAt;
   final String? updatedAt;
@@ -206,6 +208,137 @@ class Vehicle {
   }
 
   String get location => [subCity, city, region].where((e) => e != null && e.isNotEmpty).join(', ');
+
+  /// Name shown on the public listing: the stored override wins when present,
+  /// otherwise falls back to the agent account name.
+  String get contactName {
+    final n = agentName?.trim() ?? '';
+    final email = agent?.email?.trim() ?? '';
+    if (n.isNotEmpty && n.toLowerCase() != email.toLowerCase()) return n;
+    return agent?.displayName ?? 'Agent';
+  }
+
+  /// Phone shown on the public listing: stored override wins over agent phone.
+  String get contactPhone {
+    final p = displayPhone?.trim() ?? '';
+    if (p.isNotEmpty) return p;
+    return agent?.phone?.trim() ?? '';
+  }
+
+  /// Profile photo shown on the public listing: stored override wins.
+  String get contactPhoto {
+    final p = displayPhoto?.trim() ?? '';
+    if (p.isNotEmpty) return p;
+    return agent?.avatar?.trim() ?? '';
+  }
+
+  /// Copy of this vehicle with the contact override replaced.
+  Vehicle withContact({
+    String? agentName,
+    String? displayPhone,
+    String? displayPhoto,
+  }) {
+    return Vehicle(
+      id: id,
+      title: title,
+      listingType: listingType,
+      vehicleCategory: vehicleCategory,
+      make: make,
+      model: model,
+      trimVersion: trimVersion,
+      manufacturingYear: manufacturingYear,
+      registrationYear: registrationYear,
+      vin: vin,
+      engineNumber: engineNumber,
+      plateNumber: plateNumber,
+      color: color,
+      countryOfOrigin: countryOfOrigin,
+      fuelType: fuelType,
+      engineSize: engineSize,
+      horsepower: horsepower,
+      transmission: transmission,
+      drivetrain: drivetrain,
+      cylinders: cylinders,
+      seatingCapacity: seatingCapacity,
+      doors: doors,
+      mileage: mileage,
+      fuelConsumption: fuelConsumption,
+      fuelTankCapacity: fuelTankCapacity,
+      groundClearance: groundClearance,
+      weight: weight,
+      tireSize: tireSize,
+      condition: condition,
+      accidentFree: accidentFree,
+      accidentHistory: accidentHistory,
+      serviceHistoryAvailable: serviceHistoryAvailable,
+      ownershipCount: ownershipCount,
+      imported: imported,
+      locallyAssembled: locallyAssembled,
+      safetyFeatures: safetyFeatures,
+      interiorFeatures: interiorFeatures,
+      exteriorFeatures: exteriorFeatures,
+      dailyRate: dailyRate,
+      weeklyRate: weeklyRate,
+      monthlyRate: monthlyRate,
+      securityDeposit: securityDeposit,
+      minRentalDays: minRentalDays,
+      maxRentalDays: maxRentalDays,
+      driverIncluded: driverIncluded,
+      selfDrive: selfDrive,
+      fuelPolicy: fuelPolicy,
+      mileageLimit: mileageLimit,
+      extraKmCharge: extraKmCharge,
+      deliveryAvailable: deliveryAvailable,
+      airportPickup: airportPickup,
+      availableLocations: availableLocations,
+      availableDates: availableDates,
+      driverAgeRequirement: driverAgeRequirement,
+      minDrivingExperience: minDrivingExperience,
+      drivingLicenseRequired: drivingLicenseRequired,
+      passportRequired: passportRequired,
+      smokingAllowed: smokingAllowed,
+      petsAllowed: petsAllowed,
+      offroadAllowed: offroadAllowed,
+      crossborderAllowed: crossborderAllowed,
+      insuranceIncluded: insuranceIncluded,
+      damageLiability: damageLiability,
+      sellingPrice: sellingPrice,
+      negotiable: negotiable,
+      financingAvailable: financingAvailable,
+      exchangeAccepted: exchangeAccepted,
+      bankLoanAccepted: bankLoanAccepted,
+      regionRegistration: regionRegistration,
+      ownershipCertificate: ownershipCertificate,
+      roadFundPaid: roadFundPaid,
+      insuranceValid: insuranceValid,
+      inspectionCertificate: inspectionCertificate,
+      customsClearance: customsClearance,
+      dutyPaid: dutyPaid,
+      plateType: plateType,
+      region: region,
+      city: city,
+      subCity: subCity,
+      woreda: woreda,
+      latitude: latitude,
+      longitude: longitude,
+      pickupAddress: pickupAddress,
+      description: description,
+      images: images,
+      videoUrl: videoUrl,
+      price: price,
+      priceType: priceType,
+      features: features,
+      featured: featured,
+      status: status,
+      agent: agent,
+      agentName: agentName ?? this.agentName,
+      displayPhone: displayPhone ?? this.displayPhone,
+      displayPhoto: displayPhoto ?? this.displayPhoto,
+      rejectionReason: rejectionReason,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
 
   factory Vehicle.fromJson(Map<String, dynamic> json) {
     final title = json['title'] as String?;
@@ -309,6 +442,7 @@ class Vehicle {
       status: json['status'] as String?,
       agentName: json['agentName'] as String?,
       displayPhone: json['displayPhone'] as String?,
+      displayPhoto: json['displayPhoto'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
       createdAt: json['createdAt'] as String?,
       updatedAt: json['updatedAt'] as String?,

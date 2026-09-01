@@ -77,11 +77,13 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _saveProfile() async {
     setState(() => _saving = true);
     try {
+      final auth = context.read<AuthProvider>();
       await context.read<AdminRepository>().updateProfile(
             phone: _phone.text.trim(),
             email: _email.text.trim(),
             profilePhoto: _profilePhoto,
           );
+      await auth.refreshUser();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
     } on ApiException catch (e) {
@@ -174,14 +176,25 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  t('phone_number_label'),
+                  style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500, fontSize: 14),
+                ),
+                const SizedBox(height: 6),
                 TextField(
                   controller: _phone,
-                  decoration: InputDecoration(labelText: t('phone_number'), hintText: '+251 900 000 000'),
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(hintText: '+251 900 000 000'),
                 ),
                 const SizedBox(height: 12),
+                Text(
+                  t('email'),
+                  style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500, fontSize: 14),
+                ),
+                const SizedBox(height: 6),
                 TextField(
                   controller: _email,
-                  decoration: InputDecoration(labelText: t('email')),
+                  decoration: const InputDecoration(hintText: 'you@example.com'),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(

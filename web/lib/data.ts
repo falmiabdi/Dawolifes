@@ -115,6 +115,29 @@ export const categories = [
 
 ] as const
 
+/**
+ * Builds the public-facing agent for a raw listing row. Stored contact
+ * overrides (agentName / displayPhone / displayPhoto, set by the admin
+ * contact toggle) win over the agent account; the fallback name is ignored
+ * when it is just the account email, so old listings don't leak emails.
+ */
+export function resolveListingAgent(raw: any, opts?: { role?: string; section?: string }): Agent {
+  const overrideName = (raw.agentName || "").trim()
+  const relEmail = (raw.agent?.email || "").trim()
+  const name =
+    overrideName && overrideName.toLowerCase() !== relEmail.toLowerCase()
+      ? overrideName
+      : raw.agent?.username || overrideName || "Unknown Agent"
+  const isVehicle = opts?.section === "vehicles"
+  return {
+    id: raw.agent?.id || raw.agentId || "unknown",
+    name,
+    role: isVehicle ? "Vehicle Agent" : "Real Estate Agent",
+    phone: raw.displayPhone || raw.agent?.phone || "+251 900 000 000",
+    avatar: raw.displayPhoto || raw.agent?.profilePhoto || (isVehicle ? "/placeholder-user.svg" : "/placeholder.svg"),
+  }
+}
+
 export const services = [
   {
     titleKey: "service_house_sales",

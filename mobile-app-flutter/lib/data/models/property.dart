@@ -32,6 +32,7 @@ class Property {
     this.agent,
     this.agentName,
     this.displayPhone,
+    this.displayPhoto,
     this.posterType,
     this.ownerType,
     this.latitude,
@@ -71,6 +72,7 @@ class Property {
   final ListingAgent? agent;
   final String? agentName;
   final String? displayPhone;
+  final String? displayPhoto;
   final String? posterType;
   final String? ownerType;
   final double? latitude;
@@ -86,6 +88,77 @@ class Property {
   }
 
   String get location => [subCity, city, region].where((e) => e != null && e.isNotEmpty).join(', ');
+
+  /// Name shown on the public listing: the stored override wins when present,
+  /// otherwise falls back to the agent account name.
+  String get contactName {
+    final n = agentName?.trim() ?? '';
+    final email = agent?.email?.trim() ?? '';
+    if (n.isNotEmpty && n.toLowerCase() != email.toLowerCase()) return n;
+    return agent?.displayName ?? 'Agent';
+  }
+
+  /// Phone shown on the public listing: stored override wins over agent phone.
+  String get contactPhone {
+    final p = displayPhone?.trim() ?? '';
+    if (p.isNotEmpty) return p;
+    return agent?.phone?.trim() ?? '';
+  }
+
+  /// Profile photo shown on the public listing: stored override wins.
+  String get contactPhoto {
+    final p = displayPhoto?.trim() ?? '';
+    if (p.isNotEmpty) return p;
+    return agent?.avatar?.trim() ?? '';
+  }
+
+  /// Copy of this property with the contact override replaced.
+  Property withContact({
+    String? agentName,
+    String? displayPhone,
+    String? displayPhoto,
+  }) {
+    return Property(
+      id: id,
+      title: title,
+      type: type,
+      listingType: listingType,
+      price: price,
+      priceType: priceType,
+      region: region,
+      city: city,
+      subCity: subCity,
+      woreda: woreda,
+      kebele: kebele,
+      parcel: parcel,
+      block: block,
+      homeNo: homeNo,
+      area: area,
+      bedrooms: bedrooms,
+      bathrooms: bathrooms,
+      floorNumber: floorNumber,
+      condition: condition,
+      legalizedYear: legalizedYear,
+      description: description,
+      features: features,
+      images: images,
+      videoUrl: videoUrl,
+      featured: featured,
+      status: status,
+      agent: agent,
+      agentName: agentName ?? this.agentName,
+      displayPhone: displayPhone ?? this.displayPhone,
+      displayPhoto: displayPhoto ?? this.displayPhoto,
+      posterType: posterType,
+      ownerType: ownerType,
+      latitude: latitude,
+      longitude: longitude,
+      locationDocument: locationDocument,
+      rejectionReason: rejectionReason,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
 
   factory Property.fromJson(Map<String, dynamic> json) {
     return Property(
@@ -117,6 +190,7 @@ class Property {
       status: json['status'] as String?,
       agentName: json['agentName'] as String?,
       displayPhone: json['displayPhone'] as String?,
+      displayPhoto: json['displayPhoto'] as String?,
       posterType: json['posterType'] as String?,
       ownerType: json['ownerType'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),

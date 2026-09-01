@@ -196,13 +196,30 @@ void main() {
     });
 
     group('switchPropertyContact', () {
-      test('returns displayPhone from response', () async {
-        when(() => api.patch('/api/admin/properties/p1/contact'))
-            .thenAnswer((_) async => {'displayPhone': '0912345678'});
+      test('returns ListingContact from response', () async {
+        when(() => api.patch('/api/admin/properties/p1/contact')).thenAnswer(
+            (_) async => {'contact': 'admin', 'agentName': 'DawoLife', 'displayPhone': '0912345678'});
 
         final result = await repository.switchPropertyContact('p1');
 
-        expect(result, '0912345678');
+        expect(result, isA<ListingContact>());
+        expect(result.displayName, 'DawoLife');
+        expect(result.phone, '0912345678');
+        expect(result.isAdmin, isTrue);
+      });
+    });
+
+    group('switchVehicleContact', () {
+      test('returns ListingContact from response', () async {
+        when(() => api.patch('/api/admin/vehicles/v1/contact')).thenAnswer(
+            (_) async => {'contact': 'agent', 'agentName': 'bob', 'displayPhone': '0987654321'});
+
+        final result = await repository.switchVehicleContact('v1');
+
+        expect(result, isA<ListingContact>());
+        expect(result.displayName, 'bob');
+        expect(result.phone, '0987654321');
+        expect(result.isAdmin, isFalse);
       });
     });
 

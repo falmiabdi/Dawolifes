@@ -24,7 +24,9 @@ class ListingItem {
     this.mileage,
     this.features = const [],
     this.agent,
+    this.agentName,
     this.displayPhone,
+    this.displayPhoto,
   });
 
   final String id;
@@ -45,7 +47,32 @@ class ListingItem {
   final num? mileage;
   final List<String> features;
   final ListingAgent? agent;
+  final String? agentName;
   final String? displayPhone;
+  final String? displayPhoto;
+
+  /// Name shown on the public listing: the stored override wins when present,
+  /// otherwise falls back to the agent account name.
+  String get contactName {
+    final n = agentName?.trim() ?? '';
+    final email = agent?.email?.trim() ?? '';
+    if (n.isNotEmpty && n.toLowerCase() != email.toLowerCase()) return n;
+    return agent?.displayName ?? 'Agent';
+  }
+
+  /// Phone shown on the public listing: stored override wins over agent phone.
+  String get contactPhone {
+    final p = displayPhone?.trim() ?? '';
+    if (p.isNotEmpty) return p;
+    return agent?.phone?.trim() ?? '';
+  }
+
+  /// Profile photo shown on the public listing: stored override wins.
+  String get contactPhoto {
+    final p = displayPhoto?.trim() ?? '';
+    if (p.isNotEmpty) return p;
+    return agent?.avatar?.trim() ?? '';
+  }
 
   bool get isRent {
     final t = listingType.toLowerCase();
@@ -68,7 +95,9 @@ class ListingItem {
         condition: p.condition,
         features: p.features,
         agent: p.agent,
+        agentName: p.agentName,
         displayPhone: p.displayPhone,
+        displayPhoto: p.displayPhoto,
         isVehicle: false,
       );
 
@@ -85,6 +114,9 @@ class ListingItem {
         mileage: v.mileage,
         features: v.features,
         agent: v.agent,
+        agentName: v.agentName,
+        displayPhone: v.displayPhone,
+        displayPhoto: v.displayPhoto,
         isVehicle: true,
       );
 

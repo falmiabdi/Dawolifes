@@ -170,7 +170,7 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
           Text(v.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
-            'By: ${v.agent?.displayName ?? v.agentName ?? 'Agent'} · ${v.agent?.phone ?? ''}',
+            'By: ${v.contactName} · ${v.contactPhone}',
             style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
           ),
           const SizedBox(height: 8),
@@ -242,8 +242,8 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
           if (v.status == 'Approved') ...[
             OutlinedButton.icon(
               onPressed: _busy ? null : _switchContact,
-              icon: const Icon(Icons.phone_outlined, size: 16),
-              label: const Text('Switch Contact Phone'),
+              icon: const Icon(Icons.swap_horiz_outlined, size: 16),
+              label: const Text('Switch Contact'),
             ),
             const SizedBox(height: 8),
           ],
@@ -326,9 +326,18 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
   Future<void> _switchContact() async {
     setState(() => _busy = true);
     try {
-      final phone = await context.read<AdminRepository>().switchVehicleContact(_v.id);
+      final contact = await context.read<AdminRepository>().switchVehicleContact(_v.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Contact phone updated: $phone')));
+      setState(() {
+        _v = _v.withContact(
+          agentName: contact.agentName,
+          displayPhone: contact.displayPhone,
+          displayPhoto: contact.displayPhoto,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Contact switched to ${contact.displayName} · ${contact.phone}')),
+      );
     } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

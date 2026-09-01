@@ -138,6 +138,7 @@ model Property {
   agentId         String              @db.Uuid
   agentName       String
   displayPhone    String?
+  displayPhoto    String?
   status          PropertyStatus      @default(Draft)
   rejectionReason String?
   latitude        Float?
@@ -248,6 +249,7 @@ model Vehicle {
   agentId             String           @db.Uuid
   agentName           String
   displayPhone        String?
+  displayPhoto        String?
   status              VehicleStatus     @default(Draft)
   rejectionReason     String?
   views               Int              @default(0)

@@ -66,6 +66,8 @@ class AdminPortalScreen extends StatelessWidget {
                     children: [
                       Text(user?.name ?? 'Admin', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(user?.email ?? '', style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+                      if ((user?.phone ?? '').isNotEmpty)
+                        Text(user!.phone!, style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
                     ],
                   ),
                 ),

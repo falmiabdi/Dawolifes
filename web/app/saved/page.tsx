@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site-header"
 import { PropertyCard } from "@/components/property-card"
 import { VehicleCard } from "@/components/vehicle-card"
 import { getApiUrl, getImageUrl } from "@/lib/get-api-url"
+import { resolveListingAgent } from "@/lib/data"
 
 interface SavedEntry {
   itemType: "property" | "vehicle"
@@ -39,13 +40,7 @@ function mapProperty(p: any) {
     description: p.description || "",
     features: p.features || [],
     images: p.images && p.images.length > 0 ? p.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
-    agent: {
-      id: p.agent?.id || p.agentId || "",
-      name: p.agent?.username || p.agentName || "Agent",
-      role: "Real Estate Agent",
-      phone: p.displayPhone || p.agent?.phone || "+251 900 000 000",
-      avatar: p.agent?.profilePhoto || "/placeholder-user.svg",
-    },
+    agent: resolveListingAgent(p, { section: "properties" }),
   }
 }
 
@@ -76,13 +71,7 @@ function mapVehicle(v: any) {
     subCity: v.subCity || "",
     features: v.features || [],
     images: v.images && v.images.length > 0 ? v.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],
-    agent: {
-      id: v.agent?.id || v.agentId || "",
-      name: v.agent?.username || v.agentName || "Agent",
-      role: "Vehicle Agent",
-      phone: v.agent?.phone || "+251 900 000 000",
-      avatar: v.agent?.profilePhoto || "/placeholder-user.svg",
-    },
+    agent: resolveListingAgent(v, { section: "vehicles" }),
   }
 }
 

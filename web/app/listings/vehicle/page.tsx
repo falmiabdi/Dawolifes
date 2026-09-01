@@ -34,7 +34,7 @@ import {
   CircleX,
   Loader2
 } from "lucide-react"
-import { formatPrice } from "@/lib/data"
+import { formatPrice, resolveListingAgent } from "@/lib/data"
 import type { Vehicle } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
 import { Gallery } from "@/components/listing/gallery"
@@ -173,13 +173,7 @@ function VehicleListingPage() {
               ownershipCertificate: db.ownershipCertificate ?? false,
               roadFundPaid: db.roadFundPaid ?? false,
               inspectionCertificate: db.inspectionCertificate ?? false,
-              agent: {
-                id: db.agentId || "unknown",
-                name: db.agent?.username || db.agentName || "Unknown Agent",
-                role: "Vehicle Agent",
-                phone: db.displayPhone || db.agent?.phone || "+251 900 000 000",
-                avatar: db.agent?.profilePhoto || "/placeholder-user.svg",
-              },
+              agent: resolveListingAgent(db, { section: "vehicles" }),
             }
             setVehicle(mapped)
             setLoading(false)

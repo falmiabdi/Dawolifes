@@ -38,6 +38,7 @@ interface Vehicle {
   agentId: string
   agentName?: string
   displayPhone?: string
+  displayPhoto?: string
   agent?: {
     id: string
     username: string
@@ -121,8 +122,8 @@ export default function AdminVehiclesPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        toast.success(`Contact switched to ${data.displayPhone}`)
-        setSelectedVehicle(prev => prev ? { ...prev, displayPhone: data.displayPhone } : null)
+        toast.success(`Contact switched to ${data.agentName || ''} · ${data.displayPhone || ''}`)
+        setSelectedVehicle(prev => prev ? { ...prev, agentName: data.agentName ?? prev.agentName, displayPhone: data.displayPhone ?? prev.displayPhone, displayPhoto: data.displayPhoto ?? prev.displayPhoto } : null)
         fetchVehicles()
       } else {
         toast.error('Failed to toggle contact')
@@ -275,7 +276,7 @@ export default function AdminVehiclesPage() {
 
               <div className="text-xs text-slate-500 border-t border-slate-100 pt-3">
                 <p className="text-slate-400">Listed by:</p>
-                <p className="font-semibold text-slate-700">{selectedVehicle.agent?.username || selectedVehicle.agentName || 'Unknown'}</p>
+                <p className="font-semibold text-slate-700">{selectedVehicle.agentName || selectedVehicle.agent?.username || 'Unknown'}</p>
                 <p className="text-slate-400 mt-1">Contact:</p>
                 <p className="font-semibold text-slate-700">{selectedVehicle.displayPhone || selectedVehicle.agent?.phone || 'No phone set'}</p>
               </div>

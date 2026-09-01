@@ -95,13 +95,18 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { username: true, phone: true, profilePhoto: true },
+    })
     const vehicle = await prisma.vehicle.create({
       data: {
         ...parsed.data,
         agentId: req.user!.userId,
-        agentName: req.user!.email,
+        agentName: currentUser?.username || req.user!.email,
         status: 'Pending',
-        displayPhone: null,
+        displayPhone: currentUser?.phone || null,
+        displayPhoto: currentUser?.profilePhoto || null,
       },
     })
 

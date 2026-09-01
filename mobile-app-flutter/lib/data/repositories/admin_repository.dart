@@ -56,9 +56,9 @@ class AdminRepository {
     await _api.patch('/api/admin/properties/$id/reject', {'reason': reason ?? ''});
   }
 
-  Future<String> switchPropertyContact(String id) async {
+  Future<ListingContact> switchPropertyContact(String id) async {
     final data = await _api.patch('/api/admin/properties/$id/contact') as Map<String, dynamic>;
-    return '${data['displayPhone'] ?? ''}';
+    return ListingContact.fromJson(data);
   }
 
   Future<void> deleteProperty(String id) async {
@@ -87,9 +87,9 @@ class AdminRepository {
     await _api.delete('/api/vehicles/$id');
   }
 
-  Future<String> switchVehicleContact(String id) async {
+  Future<ListingContact> switchVehicleContact(String id) async {
     final data = await _api.patch('/api/admin/vehicles/$id/contact') as Map<String, dynamic>;
-    return '${data['displayPhone'] ?? ''}';
+    return ListingContact.fromJson(data);
   }
 
   Future<List<Payment>> fetchPayments({
@@ -173,4 +173,26 @@ class AdminRepository {
   Future<void> deleteAdminNotification(String id) async {
     await _api.delete('/api/notifications/admin/$id');
   }
+}
+
+/// The contact identity currently shown on a listing after an admin toggle.
+class ListingContact {
+  const ListingContact({this.agentName, this.displayPhone, this.displayPhoto, this.role = ''});
+
+  final String? agentName;
+  final String? displayPhone;
+  final String? displayPhoto;
+  final String role;
+
+  String get displayName => (agentName?.trim().isNotEmpty ?? false) ? agentName!.trim() : 'Agent';
+  String get phone => displayPhone?.trim() ?? '';
+
+  bool get isAdmin => role == 'admin';
+
+  factory ListingContact.fromJson(Map<String, dynamic> json) => ListingContact(
+        agentName: json['agentName'] as String?,
+        displayPhone: json['displayPhone'] as String?,
+        displayPhoto: json['displayPhoto'] as String?,
+        role: '${json['contact'] ?? ''}',
+      );
 }

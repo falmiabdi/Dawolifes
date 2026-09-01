@@ -86,13 +86,18 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     const contactName = parsed.data.name?.trim() || ''
     const contactPhone = parsed.data.phone?.trim() || ''
     const { name: _name, phone: _phone, ...propertyData } = parsed.data
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { username: true, phone: true, profilePhoto: true },
+    })
     const property = await prisma.property.create({
       data: {
         ...propertyData,
         agentId: req.user!.userId,
-        agentName: contactName || req.user!.email,
+        agentName: contactName || currentUser?.username || req.user!.email,
         status: 'Pending',
-        displayPhone: contactPhone || null,
+        displayPhone: contactPhone || currentUser?.phone || null,
+        displayPhoto: currentUser?.profilePhoto || null,
       },
     })
 

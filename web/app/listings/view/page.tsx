@@ -21,7 +21,7 @@ import {
   FileText,
   Loader2
 } from "lucide-react"
-import { formatPrice } from "@/lib/data"
+import { formatPrice, resolveListingAgent } from "@/lib/data"
 import { SiteHeader } from "@/components/site-header"
 import { Gallery } from "@/components/listing/gallery"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -133,13 +133,7 @@ function ListingPage() {
               locationDocument: dbProp.locationDocument || '',
               status: dbProp.status || '',
               rejectionReason: dbProp.rejectionReason || '',
-              agent: {
-                id: dbProp.agent?.id || dbProp.agentId || 'unknown',
-                name: dbProp.agent?.username || dbProp.agentName || 'Unknown Agent',
-                role: 'Real Estate Agent',
-                phone: dbProp.displayPhone || dbProp.agent?.phone || '+251 900 000 000',
-                avatar: dbProp.agent?.profilePhoto || '/placeholder-user.svg',
-              }
+              agent: resolveListingAgent(dbProp, { section: "properties" }),
             }
             setProperty(mapped)
             setLoading(false)

@@ -111,7 +111,7 @@ class _AdminPropertiesScreenState extends State<AdminPropertiesScreen> {
                                     leading: PortalThumb(url: p.images.isNotEmpty ? p.images.first : null),
                                     title: Text(p.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                                     subtitle: Text(
-                                      '${p.agent?.displayName ?? p.agentName ?? 'Agent'} · ${Formatters.formatPrice(p.price)} ETB',
+                                      '${p.contactName} · ${Formatters.formatPrice(p.price)} ETB',
                                       style: const TextStyle(fontSize: 12),
                                     ),
                                     trailing: StatusChip(status: p.status ?? 'Pending'),
@@ -170,7 +170,7 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
           Text(p.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
-            'By: ${p.agent?.displayName ?? p.agentName ?? 'Agent'} · ${p.displayPhone ?? p.agent?.phone ?? ''}',
+            'By: ${p.contactName} · ${p.contactPhone}',
             style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
           ),
           const SizedBox(height: 8),
@@ -255,8 +255,8 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
           if (p.status == 'Approved') ...[
             OutlinedButton.icon(
               onPressed: _busy ? null : _switchContact,
-              icon: const Icon(Icons.phone_outlined, size: 16),
-              label: const Text('Switch Contact Phone'),
+              icon: const Icon(Icons.swap_horiz_outlined, size: 16),
+              label: const Text('Switch Contact'),
             ),
             const SizedBox(height: 8),
           ],
@@ -306,9 +306,18 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
   Future<void> _switchContact() async {
     setState(() => _busy = true);
     try {
-      final phone = await context.read<AdminRepository>().switchPropertyContact(_p.id);
+      final contact = await context.read<AdminRepository>().switchPropertyContact(_p.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Contact phone updated: $phone')));
+      setState(() {
+        _p = _p.withContact(
+          agentName: contact.agentName,
+          displayPhone: contact.displayPhone,
+          displayPhoto: contact.displayPhoto,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Contact switched to ${contact.displayName} · ${contact.phone}')),
+      );
     } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

@@ -42,6 +42,7 @@ interface Property {
   agentId: string
   agentName?: string
   displayPhone?: string
+  displayPhoto?: string
   agent?: {
     id: string
     username: string
@@ -204,7 +205,7 @@ export default function AdminPropertiesPage() {
                     <div className="min-w-0">
                       <p className="font-bold text-slate-900 truncate">{p.title}</p>
                       <p className="text-xs text-orange-600 font-bold mt-0.5">{formatPrice(p.price)} ETB</p>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">By: {p.agent?.username || 'Unknown'}</p>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">By: {p.agentName || p.agent?.username || 'Unknown'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -237,7 +238,7 @@ export default function AdminPropertiesPage() {
               <div>
                 <h3 className="text-sm font-bold text-slate-900">{selectedProperty.title}</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Listed by: <span className="font-semibold text-slate-600">{selectedProperty.agent?.username || selectedProperty.agentName || 'Unknown'}</span>
+                  Listed by: <span className="font-semibold text-slate-600">{selectedProperty.agentName || selectedProperty.agent?.username || 'Unknown'}</span>
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   Contact: <span className="font-semibold text-slate-600">{selectedProperty.displayPhone || selectedProperty.agent?.phone || 'No phone set'}</span>
@@ -300,8 +301,8 @@ export default function AdminPropertiesPage() {
                       })
                       if (res.ok) {
                         const data = await res.json()
-                        toast.success(`Contact switched to ${data.displayPhone}`)
-                        setSelectedProperty(prev => prev ? { ...prev, displayPhone: data.displayPhone } : null)
+                        toast.success(`Contact switched to ${data.agentName || ''} · ${data.displayPhone || ''}`)
+                        setSelectedProperty(prev => prev ? { ...prev, agentName: data.agentName ?? prev.agentName, displayPhone: data.displayPhone ?? prev.displayPhone, displayPhoto: data.displayPhoto ?? prev.displayPhoto } : null)
                         fetchProperties()
                       } else {
                         toast.error('Failed to toggle contact')
