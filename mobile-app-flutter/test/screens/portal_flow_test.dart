@@ -45,6 +45,7 @@ void main() {
     addTearDown(tester.view.reset);
     addTearDown(binding.platformDispatcher.clearTextScaleFactorTestValue);
 
+    SharedPreferences.setMockInitialValues({});
     final p = await SharedPreferences.getInstance();
     await seedApprovedAgent(p);
     final storage = TokenStorage(p);
@@ -79,7 +80,9 @@ void main() {
 
     expect(find.text('Agent Portal'), findsOneWidget);
 
-    await tester.tap(find.text('Post Property'));
+    final postPropertyTile = find.text('Post a Property');
+    await tester.scrollUntilVisible(postPropertyTile, 150, scrollable: find.byType(Scrollable).first);
+    await tester.tap(postPropertyTile);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'navigating to post property');
 
@@ -103,7 +106,9 @@ void main() {
   testWidgets('portal -> post property flow narrow + large text', (tester) async {
     await pumpPortal(tester, width: 320, textScale: 2.0);
 
-    await tester.tap(find.text('Post Property'));
+    final postPropertyTile = find.text('Post a Property');
+    await tester.scrollUntilVisible(postPropertyTile, 150, scrollable: find.byType(Scrollable).first);
+    await tester.tap(postPropertyTile);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'navigate at narrow + big text');
 

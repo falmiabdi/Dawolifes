@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -101,7 +102,8 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error = e.message);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Google sign in failed. Please try again.');
+      final detail = e is FirebaseAuthException ? e.message ?? e.code : e.toString();
+      setState(() => _error = 'Google sign in failed. $detail'.trim());
     } finally {
       if (mounted) setState(() => _submittingGoogle = false);
     }

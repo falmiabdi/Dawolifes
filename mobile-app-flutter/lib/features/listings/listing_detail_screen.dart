@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/listing_item.dart';
@@ -145,6 +152,70 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     return (p ?? '').trim();
   }
 
+  /// The fetched property record, when this listing is a property.
+  Property? get _property =>
+      _detail is Property ? _detail as Property : null;
+
+  /// The fetched vehicle record, when this listing is a vehicle.
+  Vehicle? get _vehicle => _detail is Vehicle ? _detail as Vehicle : null;
+
+  String? get _videoUrl => _property?.videoUrl ?? _vehicle?.videoUrl;
+
+  double? get _latitude => _property?.latitude ?? _vehicle?.latitude;
+
+  double? get _longitude => _property?.longitude ?? _vehicle?.longitude;
+
+  Future<void> _share() async {
+    final item = widget.item;
+    final video = _videoUrl;
+
+    final webBase = AppConfig.webShareBaseUrl.replaceAll(RegExp(r'/+$'), '');
+    final deepLink = item.isVehicle
+        ? '$webBase/listings/vehicle?id=${item.id}'
+        : '$webBase/listings/view?id=${item.id}';
+
+    final caption = <String>[
+      item.title,
+      if (item.location?.isNotEmpty == true) item.location!,
+      '${Formatters.formatPrice(item.price)} ETB${item.isRent ? ' / month' : ''}',
+      if (_description.isNotEmpty) _description,
+      '',
+      'Listed on ${AppConfig.appName} — ${AppConfig.appTagline}',
+      deepLink,
+      AppConfig.playStoreUrl,
+      if (video?.isNotEmpty == true) video!,
+    ].where((e) => e.isNotEmpty).join('\n');
+
+    // Download the first gallery image so it attaches (as a preview) on
+    // WhatsApp, Telegram, Instagram etc. instead of just plain text.
+    XFile? image;
+    try {
+      final src = _allImages.isNotEmpty ? Formatters.imageUrl(_allImages.first) : null;
+      if (src != null && src.isNotEmpty) {
+        final res = await http.get(Uri.parse(src)).timeout(const Duration(seconds: 20));
+        if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
+          final file = File(
+            '${Directory.systemTemp.path}/dawolife_share_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          );
+          await file.writeAsBytes(res.bodyBytes, flush: true);
+          image = XFile(file.path, mimeType: 'image/jpeg');
+        }
+      }
+    } catch (_) {
+      // Image attachment is best-effort; share the rich text even if it fails.
+    }
+
+    await SharePlus.instance.share(
+      ShareParams(
+        subject: '$item.title — ${AppConfig.appName}',
+        text: caption,
+        files: image == null ? null : [image],
+        previewThumbnail: image,
+      ),
+    );
+    if (!mounted) return;
+  }
+
   Future<void> _call() async {
     final phone = _phone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (phone.isEmpty) return;
@@ -227,7 +298,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           style: const TextStyle(color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
-                        _SpecsRow(item: item),
+                        _SpecsRow(item: item, detail: _detail),
                         const SizedBox(height: 24),
                         if (item.features.isNotEmpty) _FeaturesList(features: item.features),
                         const SizedBox(height: 24),
@@ -238,14 +309,33 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           style: const TextStyle(color: AppColors.foreground, fontSize: 14, height: 1.5),
                         ),
                         const SizedBox(height: 32),
+                        if (_property != null) _PropertyInfoCard(property: _property!),
+                        if (_vehicle != null) ...[
+                          const SizedBox(height: 24),
+                          _VehicleDetails(vehicle: _vehicle!),
+                        ],
+                        if (_videoUrl != null && _videoUrl!.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          _VideoTourCard(
+                            videoUrl: _videoUrl!,
+                            thumbnailUrl: _allImages.isNotEmpty ? _allImages.first : null,
+                          ),
+                        ],
+                        if (_latitude != null && _longitude != null) ...[
+                          const SizedBox(height: 24),
+                          _LocationCard(
+                            latitude: _latitude!,
+                            longitude: _longitude!,
+                            address: item.location?.isNotEmpty == true
+                                ? item.location!
+                                : '${_property?.subCity ?? ''} ${_property?.city ?? ''} ${_property?.region ?? ''}'.trim(),
+                          ),
+                        ],
+                        const SizedBox(height: 32),
                         _ContactCard(item: item, onCall: _call, onMessage: _openMessage),
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Share coming soon')),
-                            );
-                          },
+                          onPressed: _share,
                           icon: const Icon(Icons.share_outlined, size: 18),
                           label: const Text('Share'),
                         ),
@@ -439,12 +529,26 @@ class _Badge extends StatelessWidget {
 }
 
 class _SpecsRow extends StatelessWidget {
-  const _SpecsRow({required this.item});
+  const _SpecsRow({required this.item, this.detail});
 
   final ListingItem item;
+  final dynamic detail;
 
   @override
   Widget build(BuildContext context) {
+    final prop = detail is Property ? detail as Property : null;
+    final veh = !item.isVehicle ? null : (detail is Vehicle ? detail as Vehicle : null);
+
+    final floorNumber = prop?.floorNumber?.trim() ?? item.floorNumber?.trim();
+    final condition = item.isVehicle
+        ? (veh?.condition?.trim() ?? item.condition?.trim())
+        : (prop?.condition?.trim() ?? item.condition?.trim());
+    final beds = prop?.bedrooms ?? item.beds;
+    final baths = prop?.bathrooms ?? item.baths;
+    final area = prop?.area ?? item.area;
+    final year = veh?.manufacturingYear ?? item.year;
+    final mileage = veh?.mileage ?? item.mileage;
+
     final specs = <Widget>[];
     void add(IconData icon, String label) {
       specs.add(Expanded(
@@ -452,17 +556,17 @@ class _SpecsRow extends StatelessWidget {
       ));
     }
 
-    if (item.beds != null && item.beds! > 0) add(Icons.bed_outlined, '${item.beds} Beds');
-    if (item.baths != null && item.baths! > 0) add(Icons.bathtub_outlined, '${item.baths} Baths');
-    if (item.area != null && item.area! > 0) add(Icons.straighten, '${_num(item.area!)} m²');
-    if (!item.isVehicle && item.floorNumber != null && item.floorNumber!.trim().isNotEmpty) {
-      add(Icons.apartment_outlined, 'Floor ${item.floorNumber!.trim()}');
+    if (beds != null && beds > 0) add(Icons.bed_outlined, '$beds Beds');
+    if (baths != null && baths > 0) add(Icons.bathtub_outlined, '$baths Baths');
+    if (area != null && area > 0) add(Icons.straighten, '${_num(area)} m²');
+    if (!item.isVehicle && floorNumber != null && floorNumber.isNotEmpty) {
+      add(Icons.apartment_outlined, 'Floor $floorNumber');
     }
-    if (!item.isVehicle && item.condition != null && item.condition!.trim().isNotEmpty) {
-      add(Icons.check_circle_outline, item.condition!.trim());
+    if (!item.isVehicle && condition != null && condition.isNotEmpty) {
+      add(Icons.check_circle_outline, condition);
     }
-    if (item.year != null) add(Icons.calendar_today_outlined, '${item.year}');
-    if (item.mileage != null && item.mileage! > 0) add(Icons.speed, '${Formatters.formatPrice(item.mileage!)} km');
+    if (year != null) add(Icons.calendar_today_outlined, '$year');
+    if (mileage != null && mileage > 0) add(Icons.speed, '${Formatters.formatPrice(mileage)} km');
 
     if (specs.isEmpty) return const SizedBox.shrink();
 
@@ -551,6 +655,588 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.foreground),
+    );
+  }
+}
+
+/// Card showing the property's address identifiers (floor, parcel, block,
+/// home number) and full location details fetched from the database.
+class _PropertyInfoCard extends StatelessWidget {
+  const _PropertyInfoCard({required this.property});
+
+  final Property property;
+
+  @override
+  Widget build(BuildContext context) {
+    final info = <(String, String)>[
+      ('Type', property.type),
+      ('Status', property.listingType),
+      if (property.posterType?.isNotEmpty == true) ('Listing By', property.posterType!),
+      if (property.ownerType?.isNotEmpty == true) ('Owner Type', property.ownerType!),
+      if (property.region?.isNotEmpty == true) ('Region', property.region!),
+      if (property.city?.isNotEmpty == true) ('City', property.city!),
+      if (property.subCity?.isNotEmpty == true) ('Sub-city', property.subCity!),
+      if (property.woreda?.isNotEmpty == true) ('Woreda', property.woreda!),
+      if (property.kebele?.isNotEmpty == true) ('Kebele', property.kebele!),
+      if (property.floorNumber?.trim().isNotEmpty == true) ('Floor Number', property.floorNumber!.trim()),
+      if (property.parcel?.trim().isNotEmpty == true) ('Parcel', property.parcel!.trim()),
+      if (property.block?.trim().isNotEmpty == true) ('Block', property.block!.trim()),
+      if (property.homeNo?.trim().isNotEmpty == true) ('Home No', property.homeNo!.trim()),
+      if (property.area != null && property.area! > 0) ('Area', '${_num(property.area!)} m²'),
+      if (property.condition?.isNotEmpty == true) ('Condition', property.condition!),
+      if (property.legalizedYear != null) ('Legalized Year', '${property.legalizedYear}'),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.muted,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.home_work_outlined, size: 20, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
+                'Property Information',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.foreground),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final (label, value) in info)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      value,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.foreground),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _num(num value) => value == value.roundToDouble() ? '${value.round()}' : '$value';
+}
+
+/// Renders the full vehicle record fetched from the database, mirroring the
+/// web detail page: key facts, interior/exterior/safety features, technical
+/// specifications, condition, sale info and Ethiopian legal info.
+class _VehicleDetails extends StatelessWidget {
+  const _VehicleDetails({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    String clean(String? v) => (v ?? '').trim();
+    String numVal(num? v) => v == null ? '' : _num(v);
+
+    final facts = <(String, String)>[
+      ('Make / Model', _join([clean(vehicle.make), clean(vehicle.model)], ' ')),
+      ('Year', vehicle.manufacturingYear != null ? '$vehicle.manufacturingYear' : ''),
+      ('Mileage', vehicle.mileage != null ? '${numVal(vehicle.mileage)} km' : ''),
+      ('Transmission', clean(vehicle.transmission)),
+      ('Fuel Type', clean(vehicle.fuelType)),
+      ('Seating', vehicle.seatingCapacity != null ? '$vehicle.seatingCapacity Seats' : ''),
+      ('Doors', vehicle.doors != null ? '$vehicle.doors' : ''),
+      ('Condition', clean(vehicle.condition)),
+      ('Color', clean(vehicle.color)),
+      ('Category', clean(vehicle.vehicleCategory)),
+      ('Trim / Version', clean(vehicle.trimVersion)),
+    ];
+
+    final technical = <(String, String)>[
+      ('Make', clean(vehicle.make)),
+      ('Model', clean(vehicle.model)),
+      ('Trim / Version', clean(vehicle.trimVersion)),
+      ('Year', vehicle.manufacturingYear != null ? '$vehicle.manufacturingYear' : ''),
+      ('Color', clean(vehicle.color)),
+      ('Country of Origin', clean(vehicle.countryOfOrigin)),
+      ('Category', clean(vehicle.vehicleCategory)),
+      ('Engine Size', vehicle.engineSize != null ? '${numVal(vehicle.engineSize)} cc' : ''),
+      ('Horsepower', vehicle.horsepower != null ? '${numVal(vehicle.horsepower)} hp' : ''),
+      ('Transmission', clean(vehicle.transmission)),
+      ('Drivetrain', clean(vehicle.drivetrain)),
+      ('Cylinders', vehicle.cylinders != null ? '$vehicle.cylinders' : ''),
+      ('Fuel Type', clean(vehicle.fuelType)),
+      ('Mileage', vehicle.mileage != null ? '${numVal(vehicle.mileage)} km' : ''),
+      ('Fuel Consumption', clean(vehicle.fuelConsumption)),
+      ('Fuel Tank Capacity', vehicle.fuelTankCapacity != null ? '${numVal(vehicle.fuelTankCapacity)} L' : ''),
+      ('Seating Capacity', vehicle.seatingCapacity != null ? '$vehicle.seatingCapacity' : ''),
+      ('Doors', vehicle.doors != null ? '$vehicle.doors' : ''),
+      ('Ground Clearance', vehicle.groundClearance != null ? '${numVal(vehicle.groundClearance)} mm' : ''),
+      ('Weight', vehicle.weight != null ? '${numVal(vehicle.weight)} kg' : ''),
+      ('Tire Size', clean(vehicle.tireSize)),
+    ];
+
+    final conditionRows = <(String, String)>[
+      ('Condition', clean(vehicle.condition)),
+      ('Accident Free', _yesNo(vehicle.accidentFree)),
+      ('Imported', _yesNo(vehicle.imported)),
+      ('Locally Assembled', _yesNo(vehicle.locallyAssembled)),
+      if (clean(vehicle.accidentHistory).isNotEmpty) ('Accident History', clean(vehicle.accidentHistory)),
+      ('Service History', _yesNo(vehicle.serviceHistoryAvailable)),
+      if (vehicle.ownershipCount != null) ('Ownership Count', '$vehicle.ownershipCount'),
+    ];
+
+    final sale = <(String, String)>[
+      if (_isSale(vehicle) && vehicle.sellingPrice != null) ('Selling Price', '${Formatters.formatPrice(vehicle.sellingPrice!)} ETB'),
+      ('Negotiable', _yesNo(vehicle.negotiable)),
+      ('Financing Available', _yesNo(vehicle.financingAvailable)),
+      ('Exchange Accepted', _yesNo(vehicle.exchangeAccepted)),
+      ('Bank Loan Accepted', _yesNo(vehicle.bankLoanAccepted)),
+      if (vehicle.isRent) ...[
+        if (vehicle.dailyRate != null) ('Daily Rate', '${Formatters.formatPrice(vehicle.dailyRate!)} ETB'),
+        if (vehicle.weeklyRate != null) ('Weekly Rate', '${Formatters.formatPrice(vehicle.weeklyRate!)} ETB'),
+        if (vehicle.monthlyRate != null) ('Monthly Rate', '${Formatters.formatPrice(vehicle.monthlyRate!)} ETB'),
+        if (vehicle.securityDeposit != null) ('Security Deposit', '${Formatters.formatPrice(vehicle.securityDeposit!)} ETB'),
+        if (vehicle.driverIncluded != null) ('Driver Included', _yesNo(vehicle.driverIncluded)),
+        if (vehicle.selfDrive != null) ('Self Drive', _yesNo(vehicle.selfDrive)),
+        if (clean(vehicle.fuelPolicy).isNotEmpty) ('Fuel Policy', clean(vehicle.fuelPolicy)),
+        if (vehicle.insuranceIncluded != null) ('Insurance Included', _yesNo(vehicle.insuranceIncluded)),
+      ],
+    ];
+
+    final legal = <(String, String)>[
+      ('Plate Number', clean(vehicle.plateNumber)),
+      ('Plate Type', clean(vehicle.plateType)),
+      ('Region Registration', clean(vehicle.regionRegistration)),
+      ('Insurance Valid', _yesNo(vehicle.insuranceValid)),
+      ('Ownership Certificate', _yesNo(vehicle.ownershipCertificate)),
+      ('Road Fund Paid', _yesNo(vehicle.roadFundPaid)),
+      ('Inspection Certificate', _yesNo(vehicle.inspectionCertificate)),
+      ('Customs Clearance', _yesNo(vehicle.customsClearance)),
+      ('Duty Paid', _yesNo(vehicle.dutyPaid)),
+    ];
+
+    final location = <(String, String)>[
+      if (clean(vehicle.region).isNotEmpty) ('Region', clean(vehicle.region)),
+      if (clean(vehicle.city).isNotEmpty) ('City', clean(vehicle.city)),
+      if (clean(vehicle.subCity).isNotEmpty) ('Sub-city', clean(vehicle.subCity)),
+      if (clean(vehicle.woreda).isNotEmpty) ('Woreda', clean(vehicle.woreda)),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _DetailCard(
+          title: 'Vehicle Information',
+          icon: Icons.directions_car_filled_outlined,
+          rows: _filtered(facts),
+        ),
+        if (vehicle.interiorFeatures.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailChips(title: 'Interior Features', values: vehicle.interiorFeatures),
+        ],
+        if (vehicle.exteriorFeatures.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailChips(title: 'Exterior Features', values: vehicle.exteriorFeatures),
+        ],
+        if (vehicle.safetyFeatures.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailChips(title: 'Safety Features', values: vehicle.safetyFeatures),
+        ],
+        const SizedBox(height: 16),
+        _DetailCard(title: 'Technical Specifications', icon: Icons.tune, rows: _filtered(technical)),
+        if (_filtered(conditionRows).isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailCard(title: 'Vehicle Condition', icon: Icons.verified_outlined, rows: _filtered(conditionRows)),
+        ],
+        if (_filtered(sale).isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailCard(title: 'Sale Information', icon: Icons.payments_outlined, rows: _filtered(sale)),
+        ],
+        if (_filtered(legal).isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailCard(title: 'Ethiopian Legal Information', icon: Icons.gavel_outlined, rows: _filtered(legal)),
+        ],
+        if (_filtered(location).isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _DetailCard(title: 'Location', icon: Icons.map_outlined, rows: _filtered(location)),
+        ],
+      ],
+    );
+  }
+
+  bool _isSale(Vehicle v) {
+    final t = v.listingType.toLowerCase();
+    return t.contains('sale') || t.contains('both') || v.sellingPrice != null;
+  }
+
+  String _join(List<String> parts, String sep) =>
+      parts.where((e) => e.isNotEmpty).join(sep);
+
+  String _yesNo(bool? b) =>
+      b == null ? '' : (b ? 'Yes' : 'No');
+
+  String _num(num value) => value == value.roundToDouble() ? '${value.round()}' : '$value';
+
+  List<(String, String)> _filtered(List<(String, String)> rows) =>
+      rows.where((r) => r.$2.isNotEmpty).toList();
+}
+
+/// A titled card that prints a list of label/value rows (values that are
+/// empty are dropped by the caller).
+class _DetailCard extends StatelessWidget {
+  const _DetailCard({
+    required this.title,
+    required this.icon,
+    required this.rows,
+  });
+
+  final String title;
+  final IconData icon;
+  final List<(String, String)> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.muted,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.foreground),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final (label, value) in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      value,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.foreground),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A titled wrap of pill chips (used for interior / exterior / safety lists).
+class _DetailChips extends StatelessWidget {
+  const _DetailChips({required this.title, required this.values});
+
+  final String title;
+  final List<String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.muted,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.foreground),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final value in values)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    value,
+                    style: const TextStyle(fontSize: 12, color: AppColors.foreground),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Extracts a YouTube video ID from common share/embed URL formats, or
+/// returns the original URL for non-YouTube hosts (e.g. Vimeo).
+String _videoIdFromUrl(String url) {
+  final trimmed = url.trim();
+  final uri = Uri.tryParse(trimmed);
+  if (uri == null || !trimmed.contains('youtu')) return trimmed;
+
+  final host = (uri.host.startsWith('www.') ? uri.host.substring(4) : uri.host).toLowerCase();
+  String? id;
+
+  if (host == 'youtu.be') {
+    id = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+  } else if (uri.path.startsWith('/embed/') || uri.path.startsWith('/shorts/') || uri.path.startsWith('/live/')) {
+    id = uri.pathSegments.isEmpty ? null : uri.pathSegments.first;
+  } else {
+    id = uri.queryParameters['v'];
+  }
+
+  return (id == null || id.isEmpty) ? trimmed : id;
+}
+
+/// Card showing the house image thumbnail with a play button that
+/// opens the video in the YouTube app/browser.
+class _VideoTourCard extends StatefulWidget {
+  const _VideoTourCard({required this.videoUrl, this.thumbnailUrl});
+
+  final String videoUrl;
+
+  /// The first property image used as the video thumbnail, if available.
+  final String? thumbnailUrl;
+
+  @override
+  State<_VideoTourCard> createState() => _VideoTourCardState();
+}
+
+class _VideoTourCardState extends State<_VideoTourCard> {
+  late final String _videoRef;
+  bool _isYoutube = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _videoRef = _videoIdFromUrl(widget.videoUrl);
+    _isYoutube = _videoRef != widget.videoUrl.trim() &&
+        _videoRef.isNotEmpty &&
+        _videoRef.length <= 20;
+  }
+
+  Future<void> _openExternally() async {
+    final ok = await launchUrl(
+      Uri.parse(widget.videoUrl.trim()),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open video on YouTube')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.muted),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.play_circle_fill, size: 22, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
+                'Video Tour',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.foreground),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: GestureDetector(
+              onTap: _openExternally,
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: _thumbnail(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _openExternally,
+              icon: const Icon(Icons.play_arrow, size: 18),
+              label: Text(_isYoutube ? 'Watch on YouTube' : 'Open Video'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _thumbnail() {
+    final imageUrl = widget.thumbnailUrl?.isNotEmpty == true
+        ? Formatters.imageUrl(widget.thumbnailUrl!)
+        : (_isYoutube ? 'https://img.youtube.com/vi/$_videoRef/hqdefault.jpg' : null);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (imageUrl != null)
+          CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            placeholder: (_, _) => const ColoredBox(color: AppColors.muted),
+            errorWidget: (_, _, _) => _placeholderThumb(),
+          )
+        else
+          _placeholderThumb(),
+        Center(
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.play_arrow, color: Colors.white, size: 34),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _placeholderThumb() {
+    return Container(
+      color: AppColors.muted,
+      alignment: Alignment.center,
+      child: const Icon(Icons.videocam_outlined, size: 40, color: AppColors.mutedForeground),
+    );
+  }
+}
+
+/// Interactive map of the property location fetched from the database.
+class _LocationCard extends StatelessWidget {
+  const _LocationCard({
+    required this.latitude,
+    required this.longitude,
+    required this.address,
+  });
+
+  final double latitude;
+  final double longitude;
+  final String address;
+
+  @override
+  Widget build(BuildContext context) {
+    final point = LatLng(latitude, longitude);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.muted),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.map_outlined, size: 22, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
+                'Property Location',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.foreground),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.mutedForeground),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  address,
+                  style: const TextStyle(color: AppColors.mutedForeground, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: point,
+                  initialZoom: 15.0,
+                  interactionOptions: const InteractionOptions(flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.dawolife.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: point,
+                        width: 40,
+                        height: 40,
+                        child: const Icon(Icons.location_pin, color: AppColors.primary, size: 40),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

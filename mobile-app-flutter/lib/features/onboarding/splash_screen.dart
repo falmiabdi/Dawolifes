@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               const SizedBox(height: 48),
               Image.asset(
-                'assets/images/icon 1.png',
+                'assets/images/louncher_icon.png',
                 height: 120,
                 fit: BoxFit.contain,
                 errorBuilder: (_, _, _) => const SizedBox(height: 120),
@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Image.asset(
-                      'assets/images/icon 1.png',
+                      'assets/images/louncher_icon.png',
                       fit: BoxFit.contain,
                       errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),

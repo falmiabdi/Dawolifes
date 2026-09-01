@@ -47,18 +47,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     with SingleTickerProviderStateMixin {
   static const _pages = <_OnboardingPage>[
     _OnboardingPage(
-      headline: 'Baga Nagaan Gara DawoLife Dhuftan!',
-      subtitle: 'DawoLife – Bakka argama Jireenyaa fi Gammachuu.',
-      ctaLabel: 'Jalaqabi!',
-      languageLabel: 'Afaan Oromoo',
-      language: AppLanguage.oromo,
-    ),
-    _OnboardingPage(
       headline: 'Welcome to DawoLife!',
       subtitle: 'DawoLife – Find Property, Buy Vehicles, Get Services Easily.',
       ctaLabel: 'Get Started',
       languageLabel: 'English',
       language: AppLanguage.english,
+    ),
+    _OnboardingPage(
+      headline: 'Baga Nagaan Gara DawoLife Dhuftan!',
+      subtitle: 'DawoLife – Bakka argama Jireenyaa fi Gammachuu.',
+      ctaLabel: 'Jalaqabi!',
+      languageLabel: 'Afaan Oromoo',
+      language: AppLanguage.oromo,
     ),
     _OnboardingPage(
       headline: 'ወደ Dawolife እንኳን በደህና መጡ!',
@@ -90,17 +90,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   _OnboardingPage get _page => _pages[_current];
-  bool get _isLast => _current == _pages.length - 1;
 
   void _onCtaPressed() {
-    if (_isLast) {
-      widget.onDone();
-      return;
-    }
-    _controller.nextPage(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-    );
+    context.read<LanguageProvider>().setLang(_page.language);
+    widget.onDone();
   }
 
   void _openLanguagePicker() {
@@ -212,7 +205,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             image: true,
             label: 'DawoLife logo',
             child: Image.asset(
-              'assets/images/icon 1.png',
+              'assets/images/louncher_icon.png',
               height: 72,
               fit: BoxFit.contain,
               errorBuilder: (_, _, _) => const SizedBox(height: 72),

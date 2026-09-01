@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -143,9 +144,10 @@ class _SignupScreenState extends State<SignupScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Google sign up failed. Please try again.');
+      final detail = e is FirebaseAuthException ? e.message ?? e.code : e.toString();
+      setState(() => _error = 'Google sign up failed. $detail'.trim());
     } finally {
       if (mounted) setState(() => _submittingGoogle = false);
     }

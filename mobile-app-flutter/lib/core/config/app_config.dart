@@ -22,4 +22,17 @@ abstract final class AppConfig {
   static const String authTokenKey = 'auth_token';
   static const String cachedUserKey = 'auth_user';
   static const String languageKey = 'dawolife_lang';
+
+  /// Branding / share constants. Update [webShareBaseUrl] to your frontend
+  /// deployment and [playStorePackageId] to the Play Store package id.
+  static const String appName = 'DawoLife';
+  static const String appTagline = "Ethiopia's Digital Real Estate Marketplace";
+  static const String playStorePackageId = 'com.dawolife.dawolife_mobile';
+
+  /// Public web frontend used to build shareable listing deep-links.
+  static String webShareBaseUrl = 'https://dawolifes.vercel.app';
+
+  /// Play Store listing URL for this app.
+  static String get playStoreUrl =>
+      'https://play.google.com/store/apps/details?id=$playStorePackageId';
 }

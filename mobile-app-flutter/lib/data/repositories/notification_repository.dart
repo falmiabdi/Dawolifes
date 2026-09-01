@@ -27,4 +27,17 @@ class NotificationRepository {
   Future<void> markRead(String id) async {
     await _api.patch('/api/notifications/$id/read');
   }
+
+  /// Registers this device's FCM token for push notifications.
+  Future<void> registerPushToken(String token, {String platform = 'android'}) async {
+    await _api.post('/api/push-tokens/register', {
+      'token': token,
+      'platform': platform,
+    });
+  }
+
+  /// Removes this device's FCM token (e.g. on logout).
+  Future<void> unregisterPushToken(String token) async {
+    await _api.delete('/api/push-tokens/$token');
+  }
 }
