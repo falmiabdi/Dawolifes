@@ -17,6 +17,7 @@ import favoriteRoutes from './routes/favorites.js'
 import chapaRoutes from './routes/chapa.js'
 import telebirrRoutes from './routes/telebirr.js'
 import announcementRoutes from './routes/announcements.js'
+import pushTokenRoutes from './routes/pushTokens.js'
 import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
@@ -79,6 +80,7 @@ app.use('/api/favorites', favoriteRoutes)
 app.use('/api/chapa', chapaRoutes)
 app.use('/api/telebirr', telebirrRoutes)
 app.use('/api/announcements', announcementRoutes)
+app.use('/api/push-tokens', pushTokenRoutes)
 
 // Root route
 app.get('/', (_req, res) => {
@@ -101,6 +103,7 @@ app.get('/', (_req, res) => {
       favorites: '/api/favorites',
       upload: '/api/upload',
       announcements: '/api/announcements',
+      pushTokens: '/api/push-tokens',
     },
   })
 })

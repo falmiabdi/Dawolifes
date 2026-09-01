@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js'
 import { broadcastToUser } from '../ws/server.js'
+import { sendPushToUser } from './fcm.js'
 
 export async function createAndBroadcastNotification(
   userId: string,
@@ -31,6 +32,9 @@ export async function createAndBroadcastNotification(
       createdAt: notification.createdAt,
     },
   })
+
+  // Fire-and-forget: FCM failures must never break the caller.
+  await sendPushToUser(userId, title, body, type, data)
 
   return notification
 }
