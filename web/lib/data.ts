@@ -14,11 +14,9 @@ export type Property = {
   kebele: string
   parcel: string
   block: string
-  homeNo: string
   area: number
   bedrooms: number
   bathrooms: number
-  floorNumber?: string
   condition: string
   legalizedYear: number
   description: string

@@ -538,7 +538,6 @@ class _SpecsRow extends StatelessWidget {
     final prop = detail is Property ? detail as Property : null;
     final veh = !item.isVehicle ? null : (detail is Vehicle ? detail as Vehicle : null);
 
-    final floorNumber = prop?.floorNumber?.trim() ?? item.floorNumber?.trim();
     final condition = item.isVehicle
         ? (veh?.condition?.trim() ?? item.condition?.trim())
         : (prop?.condition?.trim() ?? item.condition?.trim());
@@ -558,9 +557,6 @@ class _SpecsRow extends StatelessWidget {
     if (beds != null && beds > 0) add(Icons.bed_outlined, '$beds Beds');
     if (baths != null && baths > 0) add(Icons.bathtub_outlined, '$baths Baths');
     if (area != null && area > 0) add(Icons.straighten, '${_num(area)} m²');
-    if (!item.isVehicle && floorNumber != null && floorNumber.isNotEmpty) {
-      add(Icons.apartment_outlined, 'Floor $floorNumber');
-    }
     if (!item.isVehicle && condition != null && condition.isNotEmpty) {
       add(Icons.check_circle_outline, condition);
     }
@@ -658,8 +654,8 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-/// Card showing the property's address identifiers (floor, parcel, block,
-/// home number) and full location details fetched from the database.
+/// Card showing the property's address identifiers (parcel, block)
+/// and full location details fetched from the database.
 class _PropertyInfoCard extends StatelessWidget {
   const _PropertyInfoCard({required this.property});
 
@@ -677,10 +673,8 @@ class _PropertyInfoCard extends StatelessWidget {
       if (property.subCity?.isNotEmpty == true) ('Sub-city', property.subCity!),
       if (property.woreda?.isNotEmpty == true) ('Woreda', property.woreda!),
       if (property.kebele?.isNotEmpty == true) ('Kebele', property.kebele!),
-      if (property.floorNumber?.trim().isNotEmpty == true) ('Floor Number', property.floorNumber!.trim()),
       if (property.parcel?.trim().isNotEmpty == true) ('Parcel', property.parcel!.trim()),
       if (property.block?.trim().isNotEmpty == true) ('Block', property.block!.trim()),
-      if (property.homeNo?.trim().isNotEmpty == true) ('Home No', property.homeNo!.trim()),
       if (property.area != null && property.area! > 0) ('Area', '${_num(property.area!)} m²'),
       if (property.condition?.isNotEmpty == true) ('Condition', property.condition!),
       if (property.legalizedYear != null) ('Legalized Year', '${property.legalizedYear}'),

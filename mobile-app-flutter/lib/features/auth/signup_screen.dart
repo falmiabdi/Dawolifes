@@ -73,24 +73,27 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       final auth = context.read<AuthProvider>();
       final email = _email.text.trim();
+      String? devOtp;
       if (_role == SignupRole.buyer) {
-        await auth.registerBuyer(
+        final result = await auth.registerBuyer(
           name: _name.text.trim(),
           email: email,
           phone: _phone.text.trim(),
           password: _password.text,
         );
+        devOtp = result.devOtp;
       } else {
-        await auth.registerAgent(
+        final result = await auth.registerAgent(
           username: _username.text.trim(),
           email: email,
           password: _password.text,
         );
+        devOtp = result.devOtp;
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => VerifyEmailScreen(email: email),
+          builder: (_) => VerifyEmailScreen(email: email, devOtp: devOtp),
         ),
       );
     } on ApiException catch (e) {

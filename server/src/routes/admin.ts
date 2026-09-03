@@ -5,6 +5,7 @@ import { createAndBroadcastNotification } from '../utils/notifications.js'
 import { hashPassword } from '../utils/password.js'
 import { ADMIN_PHONES } from '../config/constants.js'
 import { readSmtpConfig, sendMailViaSmtp, verifySmtpConnection, isSmtpConfigured } from '../services/mail.js'
+import { isResendConfigured, testResendConnection } from '../services/email.js'
 
 function flattenAgent(user: any) {
   const profile = user.profile || {}
@@ -687,6 +688,22 @@ router.get('/smtp/verify', authMiddleware, async (_req, res) => {
 // POST /api/admin/smtp-test
 // Sends a fixed-content test email to the configured sender address through
 // Brevo SMTP. Returns the masked recipient so an admin can confirm delivery.
+router.post('/resend-test', authMiddleware, async (_req, res) => {
+  try {
+    const to = process.env.RESEND_FROM_EMAIL || process.env.RESEND_FORCE_TO
+    if (!to) {
+      return res.status(400).json({ ok: false, message: 'Resend from email is not set (RESEND_FROM_EMAIL).' })
+    }
+    const result = await testResendConnection(to)
+    if (!result.ok) {
+      return res.status(502).json({ ok: false, message: result.message })
+    }
+    res.json({ ok: true, message: result.message, sentTo: maskEmail(to) })
+  } catch (err: any) {
+    res.status(502).json({ ok: false, message: err?.message || 'Failed to send Resend test email.' })
+  }
+})
+
 router.post('/smtp-test', authMiddleware, async (_req, res) => {
   try {
     if (!isSmtpConfigured()) {

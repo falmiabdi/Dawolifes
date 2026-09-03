@@ -1,0 +1,35 @@
+# Local development / self-hosting helper for the DawoLife API.
+#
+# The API uses Neon Postgres (via DATABASE_URL) by default, so a local
+# database is optional. If you want a fully local Postgres, uncomment the db
+# service below and set DATABASE_URL=postgresql://dawolife:dawolife@db:5432/dawolife?schema=public
+#
+# Usage:
+#   cp .env.example .env   # fill in your secrets
+#   docker compose up --build
+services:
+  api:
+    build: .
+    container_name: dawolife-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+
+  # Uncomment for a local Postgres instead of Neon.
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: dawolife-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: dawolife
+  #     POSTGRES_PASSWORD: dawolife
+  #     POSTGRES_DB: dawolife
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+  #
+  # volumes:
+  #   db-data:

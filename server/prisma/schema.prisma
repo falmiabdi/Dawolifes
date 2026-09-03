@@ -120,11 +120,9 @@ model Property {
   kebele          String?
   parcel          String?
   block           String?
-  homeNo          String?
   area            Float?
   bedrooms        Int?
   bathrooms       Int?
-  floorNumber     String?
   condition       String?
   legalizedYear   Int?
   description     String?

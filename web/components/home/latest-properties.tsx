@@ -42,7 +42,6 @@ export function LatestProperties() {
           kebele: p.kebele || '',
           parcel: p.parcel || '',
           block: p.block || '',
-          homeNo: p.homeNo || '',
           area: p.area || 0,
           bedrooms: p.bedrooms || 0,
           bathrooms: p.bathrooms || 0,

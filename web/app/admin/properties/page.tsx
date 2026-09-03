@@ -28,7 +28,6 @@ interface Property {
   kebele: string
   parcel: string
   block: string
-  homeNo: string
   area: number
   bedrooms: number
   bathrooms: number

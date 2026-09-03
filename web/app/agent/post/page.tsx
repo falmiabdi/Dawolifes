@@ -58,7 +58,6 @@ export default function AgentPostPage() {
   const [kebele, setKebele] = useState('')
   const [parcel, setParcel] = useState('')
   const [block, setBlock] = useState('')
-  const [homeNo, setHomeNo] = useState('')
 
   // Images
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
@@ -190,7 +189,7 @@ export default function AgentPostPage() {
           bathrooms: bathrooms ? Number(bathrooms) : undefined,
           condition, legalizedYear: legalizedYear ? Number(legalizedYear) : undefined,
           description, features, region, city, subCity,
-          woreda, kebele, parcel, block, homeNo,
+          woreda, kebele, parcel, block,
           images: uploadedImages,
           ...(videoUrl ? { videoUrl } : {}),
           ...(latitude ? { latitude } : {}),
@@ -511,10 +510,6 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>{t('block_number')}</Label>
                   <Input value={block} onChange={(e) => setBlock(e.target.value)} placeholder={t('block_placeholder')} />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('house_number')}</Label>
-                  <Input value={homeNo} onChange={(e) => setHomeNo(e.target.value)} placeholder={t('home_no_placeholder')} />
                 </div>
               </div>
             </div>

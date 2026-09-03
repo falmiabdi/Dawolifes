@@ -1,5 +1,6 @@
 import 'dotenv/config'
 
+import { Resend } from 'resend'
 import { isSmtpConfigured, sendMailViaSmtp } from './mail.js'
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
@@ -7,6 +8,42 @@ const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
 const BREVO_CAMPAIGN_URL = 'https://api.brevo.com/v3/emailCampaigns'
 const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'jebugeneraltradingplc@gmail.com'
 const FROM_NAME = process.env.BREVO_FROM_NAME || 'DawoLife'
+
+const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || ''
+const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || FROM_NAME
+
+// Lazy singleton so the Resend SDK is only constructed when a key is present.
+let resendClient: Resend | null = null
+function getResendClient(): Resend | null {
+  if (!RESEND_API_KEY) return null
+  if (!resendClient) resendClient = new Resend(RESEND_API_KEY)
+  return resendClient
+}
+
+export function isResendConfigured(): boolean {
+  return Boolean(RESEND_API_KEY && RESEND_FROM_EMAIL)
+}
+
+/** Sends a test email via Resend and returns a credential-free result. */
+export async function testResendConnection(to: string): Promise<{ ok: boolean; message: string }> {
+  if (!isResendConfigured()) {
+    return {
+      ok: false,
+      message: 'Resend is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.',
+    }
+  }
+  const resend = getResendClient()!
+  const { error } = await resend.emails.send({
+    from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
+    to: [to],
+    subject: 'DawoLife Resend Test',
+    html: '<h2 style="color:#f97316;">DawoLife Resend Test</h2><p>Resend is working successfully.</p>',
+    text: 'DawoLife Resend is working successfully.',
+  })
+  if (error) return { ok: false, message: error.message }
+  return { ok: true, message: 'Test email sent via Resend.' }
+}
 
 interface SendEmailParams {
   to: { email: string; name: string }
@@ -16,7 +53,24 @@ interface SendEmailParams {
 }
 
 async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailParams) {
-  // 1) Brevo SMTP relay when SMTP_* variables are configured.
+  // 1) Resend API (preferred transactional provider for OTP delivery).
+  if (isResendConfigured()) {
+    const resend = getResendClient()!
+    const { error } = await resend.emails.send({
+      from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
+      to: [to.email],
+      subject,
+      html: htmlContent,
+      text: textContent || undefined,
+    })
+    if (error) {
+      throw new Error(`Resend email failed: ${error.message}`)
+    }
+    console.log(`[Resend] sent "${subject}" to ${to.email}`)
+    return
+  }
+
+  // 2) Brevo SMTP relay when SMTP_* variables are configured.
   if (isSmtpConfigured()) {
     return sendMailViaSmtp({
       to: to.email,
@@ -26,7 +80,7 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
     })
   }
 
-  // 2) Fallback: Brevo REST transactional API (BREVO_API_KEY only).
+  // 3) Fallback: Brevo REST transactional API (BREVO_API_KEY only).
   if (!BREVO_API_KEY) {
     console.warn('Email transport not configured. Skipping email to', to.email)
     return

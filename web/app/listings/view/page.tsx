@@ -117,11 +117,9 @@ function ListingPage() {
               kebele: dbProp.kebele || '',
               parcel: dbProp.parcel || '',
               block: dbProp.block || '',
-              homeNo: dbProp.homeNo || '',
               area: dbProp.area || 0,
               bedrooms: dbProp.bedrooms || 0,
               bathrooms: dbProp.bathrooms || 0,
-              floorNumber: dbProp.floorNumber || '',
               condition: dbProp.condition || 'Finished',
               legalizedYear: dbProp.legalizedYear || 2024,
               description: dbProp.description || '',
@@ -192,8 +190,6 @@ function ListingPage() {
     ["Kebele", property.kebele],
     ["Parcel", property.parcel],
     ["Block", property.block],
-    ["Home No", property.homeNo],
-    ["Floor Number", property.floorNumber || ''],
     ["Condition", property.condition],
     ["Legalized Year", String(property.legalizedYear)],
   ]
@@ -258,8 +254,7 @@ function ListingPage() {
                   <h1 className="text-2xl font-bold text-foreground">{property.title}</h1>
                   <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 text-primary" />
-                    {property.subCity}, {property.woreda} · Parcel {property.parcel || 'N/A'} · Block {property.block || 'N/A'} · Home No{" "}
-                    {property.homeNo || 'N/A'}
+                    {property.subCity}, {property.woreda} · Parcel {property.parcel || 'N/A'} · Block {property.block || 'N/A'}
                   </p>
                 </div>
                 <div className="text-right">

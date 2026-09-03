@@ -28,3 +28,6 @@ package-lock.json
 server/firebase-service-account.json
 server/firebase-service-account.oneline.txt
 server/test-fb.mjs
+
+# Backup archives (large, not source)
+*.zip

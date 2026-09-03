@@ -22,6 +22,7 @@ import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
 import { readSmtpConfig } from './services/mail.js'
+import { isResendConfigured } from './services/email.js'
 
 dotenv.config()
 
@@ -154,13 +155,21 @@ async function start() {
   // No secrets exposed — only boolean flags + the masked key prefix.
   app.get('/api/debug/email', (_req, res) => {
     const mask = (v: string | undefined) => (v ? `${v.slice(0, 6)}…${v.slice(-4)} (len ${v.length})` : '(unset)')
-    const transport = readSmtpConfig()
-      ? 'BREVO_SMTP'
-      : process.env.BREVO_API_KEY
-        ? 'BREVO_REST'
-        : 'NONE (emails skipped)'
+    const transport = isResendConfigured()
+      ? 'RESEND'
+      : readSmtpConfig()
+        ? 'BREVO_SMTP'
+        : process.env.BREVO_API_KEY
+          ? 'BREVO_REST'
+          : 'NONE (emails skipped)'
     res.json({
       transport,
+      resend: {
+        configured: isResendConfigured(),
+        apiKey: process.env.RESEND_API_KEY ? mask(process.env.RESEND_API_KEY) : '(unset)',
+        fromEmail: process.env.RESEND_FROM_EMAIL || '(unset)',
+        fromName: process.env.RESEND_FROM_NAME || 'DawoLife',
+      },
       brevoSmtp: {
         configured: !!readSmtpConfig(),
         host: process.env.SMTP_HOST || process.env.SMTP_NAME || process.env.BREVO_SMTP_NAME || '(unset)',
@@ -180,12 +189,14 @@ async function start() {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
 
     const smtp = readSmtpConfig()
-    if (smtp) {
+    if (isResendConfigured()) {
+      console.log('Email transport: Resend API')
+    } else if (smtp) {
       console.log(`Email transport: SMTP via ${smtp.host}:${smtp.port} from ${smtp.fromEmail}`)
     } else if (process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY) {
       console.log('Email transport: Brevo REST API (SMTP not configured — set BREVO_SMTP_NAME/BREVO_SMTP_USER/BREVO_SMTP_KEY/BREVO_FROM_EMAIL)')
     } else {
-      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set BREVO_SMTP_* vars or BREVO_API_KEY)')
+      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set RESEND_API_KEY + RESEND_FROM_EMAIL, or BREVO_SMTP_* vars)')
     }
 
     // Discover this server's public egress IP (needed for Brevo's IP allowlist).

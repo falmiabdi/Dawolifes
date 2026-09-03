@@ -49,7 +49,6 @@ type FormState = {
   area: string
   bedrooms: string
   bathrooms: string
-  floorNumber: string
   condition: string
   legalizedYear: string
   description: string
@@ -171,7 +170,6 @@ function EditPropertyPage() {
           area: String(p.area || ""),
           bedrooms: String(p.bedrooms || ""),
           bathrooms: String(p.bathrooms || ""),
-          floorNumber: p.floorNumber || "",
           condition: p.condition || "Finished",
           legalizedYear: String(p.legalizedYear || ""),
           description: p.description || "",
@@ -313,7 +311,6 @@ function EditPropertyPage() {
           area: form.area ? Number(form.area) : undefined,
           bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
           bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
-          floorNumber: form.floorNumber || undefined,
           condition: form.condition,
           legalizedYear: form.legalizedYear ? Number(form.legalizedYear) : undefined,
           description: form.description,
@@ -512,15 +509,6 @@ function EditPropertyPage() {
                       </Field>
                       <Field label="Bathrooms">
                         <Input value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} placeholder="2" />
-                      </Field>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <Field label="Floor Number">
-                        <Input
-                          value={form.floorNumber}
-                          onChange={(e) => set("floorNumber", e.target.value)}
-                          placeholder="Example: Floor 2"
-                        />
                       </Field>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

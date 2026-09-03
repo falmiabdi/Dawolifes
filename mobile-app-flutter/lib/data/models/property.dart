@@ -16,11 +16,9 @@ class Property {
     this.kebele,
     this.parcel,
     this.block,
-    this.homeNo,
     this.area,
     this.bedrooms,
     this.bathrooms,
-    this.floorNumber,
     this.condition,
     this.legalizedYear,
     this.description,
@@ -56,11 +54,9 @@ class Property {
   final String? kebele;
   final String? parcel;
   final String? block;
-  final String? homeNo;
   final num? area;
   final int? bedrooms;
   final int? bathrooms;
-  final String? floorNumber;
   final String? condition;
   final int? legalizedYear;
   final String? description;
@@ -132,11 +128,9 @@ class Property {
       kebele: kebele,
       parcel: parcel,
       block: block,
-      homeNo: homeNo,
       area: area,
       bedrooms: bedrooms,
       bathrooms: bathrooms,
-      floorNumber: floorNumber,
       condition: condition,
       legalizedYear: legalizedYear,
       description: description,
@@ -175,11 +169,9 @@ class Property {
       kebele: json['kebele'] as String?,
       parcel: json['parcel'] as String?,
       block: json['block'] as String?,
-      homeNo: json['homeNo'] as String?,
       area: (json['area'] as num?)?.toDouble(),
       bedrooms: json['bedrooms'] as int?,
       bathrooms: json['bathrooms'] as int?,
-      floorNumber: json['floorNumber'] as String?,
       condition: json['condition'] as String?,
       legalizedYear: json['legalizedYear'] as int?,
       description: json['description'] as String?,

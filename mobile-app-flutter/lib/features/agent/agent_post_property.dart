@@ -47,7 +47,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   late final TextEditingController _area;
   late final TextEditingController _bedrooms;
   late final TextEditingController _bathrooms;
-  late final TextEditingController _floorNumber;
   late final TextEditingController _legalizedYear;
   late final TextEditingController _description;
   late final TextEditingController _city;
@@ -56,7 +55,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   late final TextEditingController _kebele;
   late final TextEditingController _parcel;
   late final TextEditingController _block;
-  late final TextEditingController _homeNo;
   late final TextEditingController _latitude;
   late final TextEditingController _longitude;
   late final TextEditingController _videoUrl;
@@ -96,7 +94,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     _area = TextEditingController(text: p?.area != null ? '${p!.area}' : '');
     _bedrooms = TextEditingController(text: p?.bedrooms != null ? '${p!.bedrooms}' : '');
     _bathrooms = TextEditingController(text: p?.bathrooms != null ? '${p!.bathrooms}' : '');
-    _floorNumber = TextEditingController(text: p?.floorNumber ?? '');
     _legalizedYear = TextEditingController(text: p?.legalizedYear != null ? '${p!.legalizedYear}' : '');
     _description = TextEditingController(text: p?.description ?? '');
     _city = TextEditingController(text: p?.city ?? '');
@@ -105,7 +102,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     _kebele = TextEditingController(text: p?.kebele ?? '');
     _parcel = TextEditingController(text: p?.parcel ?? '');
     _block = TextEditingController(text: p?.block ?? '');
-    _homeNo = TextEditingController(text: p?.homeNo ?? '');
     _latitude = TextEditingController(text: p?.latitude != null ? '${p!.latitude}' : '');
     _longitude = TextEditingController(text: p?.longitude != null ? '${p!.longitude}' : '');
     _videoUrl = TextEditingController(text: p?.videoUrl ?? '');
@@ -132,8 +128,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   void dispose() {
     _scrollController.dispose();
     for (final c in [
-      _title, _price, _area, _bedrooms, _bathrooms, _floorNumber, _legalizedYear, _description,
-      _city, _subCity, _woreda, _kebele, _parcel, _block, _homeNo, _latitude, _longitude,
+      _title, _price, _area, _bedrooms, _bathrooms, _legalizedYear, _description,
+      _city, _subCity, _woreda, _kebele, _parcel, _block, _latitude, _longitude,
       _videoUrl, _name, _phone, _customFeature, _customSafety, _customInterior, _customExterior,
     ]) {
       c.dispose();
@@ -272,7 +268,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       'area': num.tryParse(_area.text.trim()),
       'bedrooms': int.tryParse(_bedrooms.text.trim()),
       'bathrooms': int.tryParse(_bathrooms.text.trim()),
-      'floorNumber': _floorNumber.text.trim().isEmpty ? null : _floorNumber.text.trim(),
       'condition': _condition,
       'legalizedYear': int.tryParse(_legalizedYear.text.trim()),
       'description': _description.text.trim(),
@@ -284,7 +279,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       'kebele': _kebele.text.trim(),
       'parcel': _parcel.text.trim(),
       'block': _block.text.trim(),
-      'homeNo': _homeNo.text.trim(),
       'images': _images,
       'videoUrl': _videoUrl.text.trim().isEmpty ? null : _videoUrl.text.trim(),
       'locationDocument': _locationDocument,
@@ -453,14 +447,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                 Expanded(child: Field(label: t('bathrooms'), child: TextFormField(controller: _bathrooms, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'e.g. 2')))),
               ],
             ),
-            Field(
-              label: t('floor_number'),
-              child: TextFormField(
-                controller: _floorNumber,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: 'e.g. 3'),
-              ),
-            ),
             Row(
               children: [
                 Expanded(child: _dropdown(t('condition'), _condition, _conditions, (v) => setState(() => _condition = v))),
@@ -531,17 +517,12 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             ),
             Row(
               children: [
-                Expanded(child: Field(label: t('kebele'), child: TextFormField(controller: _kebele, decoration: const InputDecoration(hintText: 'e.g. 08')))),
-                const SizedBox(width: 10),
                 Expanded(child: Field(label: t('parcel'), child: TextFormField(controller: _parcel, decoration: const InputDecoration(hintText: 'e.g. 1234')))),
               ],
             ),
-            Row(
-              children: [
-                Expanded(child: Field(label: t('block'), child: TextFormField(controller: _block, decoration: const InputDecoration(hintText: 'e.g. 05')))),
-                const SizedBox(width: 10),
-                Expanded(child: Field(label: t('home_no'), child: TextFormField(controller: _homeNo, decoration: const InputDecoration(hintText: 'e.g. 12')))),
-              ],
+            Field(
+              label: t('block'),
+              child: TextFormField(controller: _block, decoration: const InputDecoration(hintText: 'e.g. 05')),
             ),
           ],
         ),
@@ -657,7 +638,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       _kebele.text.trim(),
       _parcel.text.trim(),
       _block.text.trim(),
-      _homeNo.text.trim(),
       _city.text.trim(),
       _region,
     ].where((e) => e.isNotEmpty);
@@ -681,7 +661,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                 _summaryRow(t('location'), addressParts.isEmpty ? tv('not_set') : addressParts.join(', ')),
                 _summaryRow('Beds / Baths', '${_bedrooms.text.trim().isEmpty ? '-' : _bedrooms.text.trim()} / ${_bathrooms.text.trim().isEmpty ? '-' : _bathrooms.text.trim()}'),
                 _summaryRow(t('area'), _area.text.trim().isEmpty ? tv('not_set') : '${_area.text.trim()} m²'),
-                _summaryRow(t('floor_number'), _floorNumber.text.trim().isEmpty ? tv('not_set') : _floorNumber.text.trim()),
                 _summaryRow(t('condition'), tv(_condition)),
                 _summaryRow(t('photos'), '${_images.length} ${tv('uploaded')}'),
                 _summaryRow(t('features'), _features.isEmpty ? tv('none') : '${_features.length} ${tv('selected')}'),
