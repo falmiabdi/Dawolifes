@@ -2,6 +2,7 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import { useAuth } from '@/components/auth/auth-guard'
 import {
@@ -51,6 +52,8 @@ interface Agent {
 
 export default function AdminAgentsPage() {
   const { getToken } = useAuth()
+  const searchParams = useSearchParams()
+  const highlightId = searchParams.get('highlight')
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -77,6 +80,10 @@ export default function AdminAgentsPage() {
       })
       const data = await res.json()
       setAgents(data.agents || [])
+      if (highlightId && data.agents) {
+        const match = data.agents.find((a: Agent) => a.id === highlightId)
+        if (match) setSelectedAgent(match)
+      }
     } catch (err) {
       console.error(err)
     } finally {

@@ -2,6 +2,7 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
 import {
@@ -28,6 +29,8 @@ interface Property {
   kebele: string
   parcel: string
   block: string
+  floorNumber?: string
+  houseNumber?: string
   area: number
   bedrooms: number
   bathrooms: number
@@ -56,6 +59,8 @@ interface Property {
 
 export default function AdminPropertiesPage() {
   const { getToken } = useAuth()
+  const searchParams = useSearchParams()
+  const highlightId = searchParams.get('highlight')
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -78,6 +83,10 @@ export default function AdminPropertiesPage() {
       const res = await fetch(`${getApiUrl()}/api/admin/properties?status=${statusFilter}&search=${debouncedSearch}`, { headers: authHeaders })
       const data = await res.json()
       setProperties(data.properties || [])
+      if (highlightId && data.properties) {
+        const match = data.properties.find((p: Property) => p.id === highlightId)
+        if (match) setSelectedProperty(match)
+      }
     } catch (err) {
       console.error(err)
     } finally {
@@ -87,7 +96,7 @@ export default function AdminPropertiesPage() {
 
   useEffect(() => {
     fetchProperties()
-  }, [debouncedSearch, statusFilter])
+  }, [debouncedSearch, statusFilter, highlightId])
 
   async function handleStatusChange(propertyId: string, status: 'Approved' | 'Rejected', reason?: string) {
     setSubmittingAction(true)
@@ -348,6 +357,7 @@ export default function AdminPropertiesPage() {
                     <p><span className="text-slate-400">Subcity:</span> <span className="font-semibold text-slate-700">{selectedProperty.subCity || '-'}</span></p>
                     <p><span className="text-slate-400">Woreda/Kebele:</span> <span className="font-semibold text-slate-700">{selectedProperty.woreda || '-'}/{selectedProperty.kebele || '-'}</span></p>
                     <p><span className="text-slate-400">Parcel/Block:</span> <span className="font-semibold text-slate-700">{selectedProperty.parcel || '-'}/{selectedProperty.block || '-'}</span></p>
+                    <p><span className="text-slate-400">Floor/House No.:</span> <span className="font-semibold text-slate-700">{selectedProperty.floorNumber || '-'}/{selectedProperty.houseNumber || '-'}</span></p>
                   </div>
                 </div>
 

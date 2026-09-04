@@ -73,6 +73,8 @@ type FormState = {
   city: string
   subCity: string
   woreda: string
+  floorNumber: string
+  houseNumber: string
   name: string
   phone: string
   images: string[]
@@ -104,6 +106,8 @@ const initialState: FormState = {
   city: "",
   subCity: "",
   woreda: "",
+  floorNumber: "",
+  houseNumber: "",
   name: "",
   phone: "",
   images: [],
@@ -286,6 +290,8 @@ export function PostWizard() {
           city: form.city,
           subCity: form.subCity,
           woreda: form.woreda,
+          floorNumber: form.floorNumber,
+          houseNumber: form.houseNumber,
           images: form.images,
           videoUrl: form.videoUrl,
           latitude: form.latitude,
@@ -674,6 +680,20 @@ export function PostWizard() {
                     value={form.woreda}
                     onChange={(e) => set("woreda", e.target.value)}
                     placeholder="e.g. Waddessa"
+                  />
+                </Field>
+                <Field label="Floor Number">
+                  <Input
+                    value={form.floorNumber}
+                    onChange={(e) => set("floorNumber", e.target.value)}
+                    placeholder="e.g. 3rd floor"
+                  />
+                </Field>
+                <Field label="House Number">
+                  <Input
+                    value={form.houseNumber}
+                    onChange={(e) => set("houseNumber", e.target.value)}
+                    placeholder="e.g. 105"
                   />
                 </Field>
               </div>

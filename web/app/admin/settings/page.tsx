@@ -2,7 +2,7 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useCallback, useEffect } from 'react'
-import { Camera, Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2 } from 'lucide-react'
+import { Camera, Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2, Phone, Mail, Share2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import { useI18n } from '@/lib/i18n'
 
@@ -33,10 +33,38 @@ export default function AdminSettingsPage() {
   const [creatingAdmin, setCreatingAdmin] = useState(false)
   const [isRootAdmin, setIsRootAdmin] = useState(false)
 
+  // Contact / Social (app-wide settings)
+  const [contactPhone1, setContactPhone1] = useState('')
+  const [contactPhone2, setContactPhone2] = useState('')
+  const [contactPhone3, setContactPhone3] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
+  const [socialFacebook, setSocialFacebook] = useState('')
+  const [socialTelegram, setSocialTelegram] = useState('')
+  const [socialWhatsapp, setSocialWhatsapp] = useState('')
+  const [socialTiktok, setSocialTiktok] = useState('')
+  const [savingSettings, setSavingSettings] = useState(false)
+
   const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await getToken()
     return token ? { Authorization: `Bearer ${token}` } : {}
   }, [getToken])
+
+  useEffect(() => {
+    fetch(`${getApiUrl()}/api/settings`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data) return
+        setContactPhone1(data.contactPhone1 || '')
+        setContactPhone2(data.contactPhone2 || '')
+        setContactPhone3(data.contactPhone3 || '')
+        setContactEmail(data.contactEmail || '')
+        setSocialFacebook(data.socialFacebook || '')
+        setSocialTelegram(data.socialTelegram || '')
+        setSocialWhatsapp(data.socialWhatsapp || '')
+        setSocialTiktok(data.socialTiktok || '')
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (user) {
@@ -156,6 +184,31 @@ export default function AdminSettingsPage() {
     }
   }
 
+  const saveContactSettings = async () => {
+    setSavingSettings(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${getApiUrl()}/api/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          contactPhone1, contactPhone2, contactPhone3, contactEmail,
+          socialFacebook, socialTelegram, socialWhatsapp, socialTiktok,
+        }),
+      })
+      if (res.ok) {
+        toast.success('Contact & social settings updated')
+      } else {
+        const data = await res.json()
+        toast.error(data.message || 'Failed to update settings')
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
@@ -260,6 +313,62 @@ export default function AdminSettingsPage() {
           </Button>
         </div>
       )}
+
+      {/* Contact & Social (app-wide, shown in footer + mobile About) */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+        <div className="flex items-center gap-2 text-orange-600 font-bold">
+          <Phone className="h-5 w-5" />
+          <h2>Contact & Social</h2>
+        </div>
+        <p className="text-xs text-slate-400">
+          These phone numbers, email, and social links are shown to the public on the website footer and the mobile app.
+          Tap-to-call works on phones; email opens the user's mail app.
+        </p>
+
+        <div className="space-y-2">
+          <Label>Phone 1</Label>
+          <Input value={contactPhone1} onChange={(e) => setContactPhone1(e.target.value)} placeholder="+251 900 000 000" className="rounded-xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Phone 2</Label>
+          <Input value={contactPhone2} onChange={(e) => setContactPhone2(e.target.value)} placeholder="+251 900 000 000" className="rounded-xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Phone 3</Label>
+          <Input value={contactPhone3} onChange={(e) => setContactPhone3(e.target.value)} placeholder="+251 900 000 000" className="rounded-xl" />
+        </div>
+        <div className="space-y-2">
+          <Label>Email</Label>
+          <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} type="email" placeholder="info@dawolife.com" className="rounded-xl" />
+        </div>
+
+        <div className="border-t border-slate-100 pt-4 space-y-2">
+          <div className="flex items-center gap-2 text-orange-600 font-bold">
+            <Share2 className="h-4 w-4" />
+            <h3 className="text-sm">Social Media Links</h3>
+          </div>
+          <div className="space-y-2">
+            <Label>Facebook</Label>
+            <Input value={socialFacebook} onChange={(e) => setSocialFacebook(e.target.value)} placeholder="https://facebook.com/yourpage" className="rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Telegram</Label>
+            <Input value={socialTelegram} onChange={(e) => setSocialTelegram(e.target.value)} placeholder="https://t.me/yourchannel" className="rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>WhatsApp</Label>
+            <Input value={socialWhatsapp} onChange={(e) => setSocialWhatsapp(e.target.value)} placeholder="https://wa.me/251900000000" className="rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>TikTok</Label>
+            <Input value={socialTiktok} onChange={(e) => setSocialTiktok(e.target.value)} placeholder="https://tiktok.com/@yourpage" className="rounded-xl" />
+          </div>
+        </div>
+
+        <Button onClick={saveContactSettings} disabled={savingSettings} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
+          {savingSettings ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Saving…</> : 'Save Contact & Social'}
+        </Button>
+      </div>
     </div>
   )
 }

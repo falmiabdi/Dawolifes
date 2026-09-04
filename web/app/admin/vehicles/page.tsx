@@ -3,6 +3,7 @@
 import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
 import {
@@ -53,6 +54,8 @@ interface Vehicle {
 
 export default function AdminVehiclesPage() {
   const { getToken } = useAuth()
+  const searchParams = useSearchParams()
+  const highlightId = searchParams.get('highlight')
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -78,12 +81,16 @@ export default function AdminVehiclesPage() {
       const res = await fetch(`${getApiUrl()}/api/admin/vehicles?${params}`, { headers: authHeaders })
       const data = await res.json()
       setVehicles(data.vehicles || [])
+      if (highlightId && data.vehicles) {
+        const match = data.vehicles.find((v: Vehicle) => v.id === highlightId)
+        if (match) setSelectedVehicle(match)
+      }
     } catch {
       toast.error('Failed to fetch vehicles')
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, debouncedSearch, getAuthHeaders])
+  }, [statusFilter, debouncedSearch, getAuthHeaders, highlightId])
 
   useEffect(() => { fetchVehicles() }, [fetchVehicles])
 

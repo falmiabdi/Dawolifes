@@ -120,6 +120,8 @@ model Property {
   kebele          String?
   parcel          String?
   block           String?
+  floorNumber     String?
+  houseNumber     String?
   area            Float?
   bedrooms        Int?
   bathrooms       Int?
@@ -353,4 +355,19 @@ model SavedItem {
 
   @@unique([userId, itemType, itemId])
   @@map("saved_items")
+}
+
+model Setting {
+  id           String @id @default("default")
+  contactPhone1 String?
+  contactPhone2 String?
+  contactPhone3 String?
+  contactEmail  String?
+  socialFacebook String?
+  socialTelegram String?
+  socialWhatsapp String?
+  socialTiktok  String?
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  @@map("settings")
 }

@@ -18,6 +18,7 @@ import chapaRoutes from './routes/chapa.js'
 import telebirrRoutes from './routes/telebirr.js'
 import announcementRoutes from './routes/announcements.js'
 import pushTokenRoutes from './routes/pushTokens.js'
+import settingsRoutes from './routes/settings.js'
 import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
@@ -82,6 +83,7 @@ app.use('/api/chapa', chapaRoutes)
 app.use('/api/telebirr', telebirrRoutes)
 app.use('/api/announcements', announcementRoutes)
 app.use('/api/push-tokens', pushTokenRoutes)
+app.use('/api/settings', settingsRoutes)
 
 // Root route
 app.get('/', (_req, res) => {

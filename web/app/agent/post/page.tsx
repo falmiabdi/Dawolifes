@@ -58,6 +58,8 @@ export default function AgentPostPage() {
   const [kebele, setKebele] = useState('')
   const [parcel, setParcel] = useState('')
   const [block, setBlock] = useState('')
+  const [floorNumber, setFloorNumber] = useState('')
+  const [houseNumber, setHouseNumber] = useState('')
 
   // Images
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
@@ -189,7 +191,7 @@ export default function AgentPostPage() {
           bathrooms: bathrooms ? Number(bathrooms) : undefined,
           condition, legalizedYear: legalizedYear ? Number(legalizedYear) : undefined,
           description, features, region, city, subCity,
-          woreda, kebele, parcel, block,
+          woreda, kebele, parcel, block, floorNumber, houseNumber,
           images: uploadedImages,
           ...(videoUrl ? { videoUrl } : {}),
           ...(latitude ? { latitude } : {}),
@@ -510,6 +512,14 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>{t('block_number')}</Label>
                   <Input value={block} onChange={(e) => setBlock(e.target.value)} placeholder={t('block_placeholder')} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Floor Number</Label>
+                  <Input value={floorNumber} onChange={(e) => setFloorNumber(e.target.value)} placeholder="e.g. 3rd floor" />
+                </div>
+                <div className="space-y-2">
+                  <Label>House Number</Label>
+                  <Input value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} placeholder="e.g. 105" />
                 </div>
               </div>
             </div>

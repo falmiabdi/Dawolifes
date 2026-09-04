@@ -71,6 +71,8 @@ export const propertySchema = z.object({
   kebele: optStr,
   parcel: optStr,
   block: optStr,
+  floorNumber: optStr,
+  houseNumber: optStr,
   area: optNum(z.number().positive()),
   bedrooms: optNum(z.number().int().min(0)),
   bathrooms: optNum(z.number().int().min(0)),

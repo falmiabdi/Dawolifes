@@ -208,6 +208,8 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
           SectionHeader(title: t('location')),
           InfoRow(label: t('location'), value: p.location),
           InfoRow(label: t('woreda'), value: p.woreda ?? '-'),
+          InfoRow(label: 'Floor Number', value: p.floorNumber ?? '-'),
+          InfoRow(label: 'House Number', value: p.houseNumber ?? '-'),
           if ((p.description ?? '').isNotEmpty) ...[
             SectionHeader(title: t('description')),
             Text(p.description!, style: const TextStyle(fontSize: 13, height: 1.4)),

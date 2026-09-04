@@ -6,8 +6,13 @@ import 'package:provider/provider.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/websocket_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/models/listing_item.dart';
 import '../../data/models/notification.dart';
+import '../../data/repositories/listing_repository.dart';
 import '../../data/repositories/notification_repository.dart';
+import '../../providers/auth_provider.dart';
+import '../admin/admin_agents.dart';
+import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
 /// Notifications list mirroring components/notifications/notification-list.tsx.
@@ -113,6 +118,58 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (_) {}
   }
 
+  Future<void> _handleTap(AppNotification notification) async {
+    _markRead(notification);
+    final data = notification.data;
+    final type = data?['type'] as String?;
+    final id = data?['id'] as String?;
+    if (type == null || id == null || id.isEmpty) return;
+    switch (type) {
+      case 'property':
+        await _openListing(id, isVehicle: false);
+        break;
+      case 'vehicle':
+        await _openListing(id, isVehicle: true);
+        break;
+      case 'agent':
+        if (context.read<AuthProvider>().user?.isAdmin == true) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AdminAgentsScreen()),
+          );
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> _openListing(String id, {required bool isVehicle}) async {
+    final repo = ListingRepository(context.read<ApiClient>());
+    ListingItem? item;
+    try {
+      if (isVehicle) {
+        final v = await repo.fetchVehicleDetail(id);
+        item = v == null ? null : ListingItem.fromVehicle(v);
+      } else {
+        final p = await repo.fetchPropertyDetail(id);
+        item = p == null ? null : ListingItem.fromProperty(p);
+      }
+    } catch (_) {
+      item = null;
+    }
+    if (!mounted) return;
+    final resolved = item;
+    if (resolved == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open listing.')),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ListingDetailScreen(item: resolved)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final unread = _notifications.where((n) => !n.read).length;
@@ -163,7 +220,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   final n = _notifications[i];
                                   final (icon, color) = _typeStyle(n.type);
                                   return ListTile(
-                                    onTap: () => _markRead(n),
+                                    onTap: () => _handleTap(n),
                                     contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                                     leading: CircleAvatar(
                                       backgroundColor: color.withValues(alpha: 0.12),

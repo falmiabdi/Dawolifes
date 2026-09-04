@@ -3,6 +3,7 @@
 import { getApiUrl, getWsUrlAsync } from '@/lib/get-api-url'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 import { useI18n } from '@/lib/i18n'
 
@@ -28,6 +29,7 @@ const iconConfig: Record<string, { icon: any; color: string }> = {
 export function NotificationList() {
   const { getToken } = useAuth()
   const { t } = useI18n()
+  const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting')
@@ -148,6 +150,22 @@ export function NotificationList() {
     })
   }, [getAuthHeaders])
 
+  const handleClick = async (notif: NotificationItem) => {
+    if (!notif.read) await markSingleRead(notif.id)
+    const data = notif.data
+    const target = data?.type as string | undefined
+    const entityId = data?.id as string | undefined
+    if (target === 'agent') {
+      router.push(`/admin/agents${entityId ? `?highlight=${entityId}` : ''}`)
+    } else if (target === 'property') {
+      router.push(`/admin/properties${entityId ? `?highlight=${entityId}` : ''}`)
+    } else if (target === 'vehicle') {
+      router.push(`/admin/vehicles${entityId ? `?highlight=${entityId}` : ''}`)
+    } else if (target === 'message') {
+      router.push('/messages')
+    }
+  }
+
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr)
     const now = new Date()
@@ -228,7 +246,7 @@ export function NotificationList() {
           return (
             <div
               key={notif.id}
-              onClick={() => !notif.read && markSingleRead(notif.id)}
+              onClick={() => handleClick(notif)}
               className={`flex gap-4 p-5 rounded-2xl border ${cfg.color} shadow-sm transition hover:shadow-md animate-in fade-in slide-in-from-top-2 duration-300 ${
                 notif.read ? 'opacity-60' : 'cursor-pointer'
               }`}
