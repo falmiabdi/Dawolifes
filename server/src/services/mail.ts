@@ -71,9 +71,10 @@ export interface SmtpMailParams {
   subject: string
   html: string
   text?: string
+  replyTo?: string
 }
 
-export async function sendMailViaSmtp({ to, subject, html, text }: SmtpMailParams): Promise<void> {
+export async function sendMailViaSmtp({ to, subject, html, text, replyTo }: SmtpMailParams): Promise<void> {
   const cfg = readSmtpConfig()
   if (!cfg) {
     throw new Error('SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/SMTP_FROM_EMAIL required)')
@@ -86,6 +87,7 @@ export async function sendMailViaSmtp({ to, subject, html, text }: SmtpMailParam
       subject,
       html,
       text: text || subject,
+      ...(replyTo ? { replyTo } : {}),
     })
     console.log(`[SMTP] sent "${subject}" to ${to}`)
   } catch (err: any) {

@@ -19,6 +19,7 @@ import telebirrRoutes from './routes/telebirr.js'
 import announcementRoutes from './routes/announcements.js'
 import pushTokenRoutes from './routes/pushTokens.js'
 import settingsRoutes from './routes/settings.js'
+import contactRoutes from './routes/contact.js'
 import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
@@ -50,6 +51,7 @@ const allowedOrigins = [
   'http://10.0.2.2',
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   process.env.FRONTEND_URL || '',
+  process.env.CONTACT_ALLOWED_ORIGIN || '',
   'https://dawolifes.vercel.app',
 ].filter(Boolean)
 
@@ -84,6 +86,7 @@ app.use('/api/telebirr', telebirrRoutes)
 app.use('/api/announcements', announcementRoutes)
 app.use('/api/push-tokens', pushTokenRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/contact', contactRoutes)
 
 // Root route
 app.get('/', (_req, res) => {
@@ -107,6 +110,7 @@ app.get('/', (_req, res) => {
       upload: '/api/upload',
       announcements: '/api/announcements',
       pushTokens: '/api/push-tokens',
+      contact: '/api/contact',
     },
   })
 })
