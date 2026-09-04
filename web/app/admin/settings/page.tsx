@@ -42,6 +42,8 @@ export default function AdminSettingsPage() {
   const [socialTelegram, setSocialTelegram] = useState('')
   const [socialWhatsapp, setSocialWhatsapp] = useState('')
   const [socialTiktok, setSocialTiktok] = useState('')
+  const [socialLinkedin, setSocialLinkedin] = useState('')
+  const [socialInstagram, setSocialInstagram] = useState('')
   const [savingSettings, setSavingSettings] = useState(false)
 
   const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
@@ -62,6 +64,8 @@ export default function AdminSettingsPage() {
         setSocialTelegram(data.socialTelegram || '')
         setSocialWhatsapp(data.socialWhatsapp || '')
         setSocialTiktok(data.socialTiktok || '')
+        setSocialLinkedin(data.socialLinkedin || '')
+        setSocialInstagram(data.socialInstagram || '')
       })
       .catch(() => {})
   }, [])
@@ -194,6 +198,7 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           contactPhone1, contactPhone2, contactPhone3, contactEmail,
           socialFacebook, socialTelegram, socialWhatsapp, socialTiktok,
+          socialLinkedin, socialInstagram,
         }),
       })
       if (res.ok) {
@@ -362,6 +367,14 @@ export default function AdminSettingsPage() {
           <div className="space-y-2">
             <Label>TikTok</Label>
             <Input value={socialTiktok} onChange={(e) => setSocialTiktok(e.target.value)} placeholder="https://tiktok.com/@yourpage" className="rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>LinkedIn</Label>
+            <Input value={socialLinkedin} onChange={(e) => setSocialLinkedin(e.target.value)} placeholder="https://linkedin.com/company/yourpage" className="rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Label>Instagram</Label>
+            <Input value={socialInstagram} onChange={(e) => setSocialInstagram(e.target.value)} placeholder="https://instagram.com/yourpage" className="rounded-xl" />
           </div>
         </div>
 

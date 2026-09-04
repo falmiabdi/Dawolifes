@@ -17,6 +17,38 @@ function FacebookIcon({ className }: { className?: string }) {
   )
 }
 
+function LinkedinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.13 1 2.5 1s2.48 1.12 2.48 2.5ZM.5 8h4V23h-4V8Zm7.5 0h3.8v2.05h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.66 4.78 6.12V23h-4v-7.72c0-1.84-.03-4.2-2.56-4.2-2.56 0-2.96 2-2.96 4.07V23H8V8Z" />
+    </svg>
+  )
+}
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z" />
+      <line x1="17.5" y1="6.5" x2="17.5" y2="6.5" />
+    </svg>
+  )
+}
+
 const serviceLinks = [
   { label: "Buy a House", href: "/#listings" },
   { label: "Rent a House", href: "/#listings" },
@@ -45,6 +77,8 @@ interface Settings {
   socialTelegram?: string
   socialWhatsapp?: string
   socialTiktok?: string
+  socialLinkedin?: string
+  socialInstagram?: string
 }
 
 export function WebFooter() {
@@ -71,6 +105,8 @@ export function WebFooter() {
     { label: "Telegram", href: settings.socialTelegram, icon: Send },
     { label: "WhatsApp", href: settings.socialWhatsapp, icon: MessageCircle },
     { label: "TikTok", href: settings.socialTiktok, icon: Music2 },
+    { label: "LinkedIn", href: settings.socialLinkedin, icon: LinkedinIcon },
+    { label: "Instagram", href: settings.socialInstagram, icon: InstagramIcon },
   ].filter((s) => s.href)
 
   return (

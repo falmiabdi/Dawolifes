@@ -14,6 +14,8 @@ const DEFAULT_SETTINGS = {
   socialTelegram: '',
   socialWhatsapp: '',
   socialTiktok: '',
+  socialLinkedin: '',
+  socialInstagram: '',
 }
 
 async function getSettings() {
@@ -50,6 +52,8 @@ router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
       socialTelegram,
       socialWhatsapp,
       socialTiktok,
+      socialLinkedin,
+      socialInstagram,
     } = req.body ?? {}
 
     const data: Record<string, any> = {}
@@ -61,6 +65,8 @@ router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
     if (socialTelegram !== undefined) data.socialTelegram = String(socialTelegram).trim()
     if (socialWhatsapp !== undefined) data.socialWhatsapp = String(socialWhatsapp).trim()
     if (socialTiktok !== undefined) data.socialTiktok = String(socialTiktok).trim()
+    if (socialLinkedin !== undefined) data.socialLinkedin = String(socialLinkedin).trim()
+    if (socialInstagram !== undefined) data.socialInstagram = String(socialInstagram).trim()
 
     const settings = await prisma.setting.upsert({
       where: { id: 'default' },

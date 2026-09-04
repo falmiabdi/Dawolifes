@@ -367,6 +367,8 @@ model Setting {
   socialTelegram String?
   socialWhatsapp String?
   socialTiktok  String?
+  socialLinkedin String?
+  socialInstagram String?
   updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("settings")

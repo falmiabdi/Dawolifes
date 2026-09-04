@@ -67,11 +67,13 @@ class _AboutScreenState extends State<AboutScreen> {
         .map(_phoneN)
         .where((p) => p.isNotEmpty)
         .toList();
-    final socials = <(IconData, String, String)>[
+final socials = <(IconData, String, String)>[
       (Icons.facebook, 'Facebook', _social('Facebook')),
       (Icons.send, 'Telegram', _social('Telegram')),
       (Icons.chat, 'WhatsApp', _social('Whatsapp')),
       (Icons.music_video, 'TikTok', _social('Tiktok')),
+      (Icons.business, 'LinkedIn', _social('Linkedin')),
+      (Icons.camera_alt, 'Instagram', _social('Instagram')),
     ].where((s) => s.$3.isNotEmpty).toList();
 
     return Scaffold(
