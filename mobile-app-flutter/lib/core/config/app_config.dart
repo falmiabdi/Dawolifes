@@ -27,10 +27,10 @@ abstract final class AppConfig {
   /// deployment and [playStorePackageId] to the Play Store package id.
   static const String appName = 'DawoLife';
   static const String appTagline = "Ethiopia's Digital Real Estate Marketplace";
-  static const String playStorePackageId = 'com.dawolife.dawolife_mobile';
+  static const String playStorePackageId = 'com.dawolife.mobile';
 
   /// Public web frontend used to build shareable listing deep-links.
-  static String webShareBaseUrl = 'https://dawolifes.vercel.app';
+  static String webShareBaseUrl = 'https://dawolife.jebugeneraltrading.com';
 
   /// Play Store listing URL for this app.
   static String get playStoreUrl =>

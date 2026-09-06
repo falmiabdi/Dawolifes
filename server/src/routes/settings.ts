@@ -6,9 +6,9 @@ const router = Router()
 
 const DEFAULT_SETTINGS = {
   id: 'default',
-  contactPhone1: '+251911234567',
-  contactPhone2: '+251962395282',
-  contactPhone3: '+251922477886',
+  contactPhone1: '+251947896869',
+  contactPhone2: '+251948436869',
+  contactPhone3: '',
   contactEmail: 'info@dawolife.com',
   socialFacebook: '',
   socialTelegram: '',
