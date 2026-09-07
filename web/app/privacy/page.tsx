@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'DawoLife Privacy Policy — how we collect, use, disclose, store, protect, and delete information when you use DawoLife.',
 }
 
-const CONTACT_EMAIL = 'info@dawolife.com'
+const CONTACT_EMAIL = 'info@dawolife.jebugeneraltrading.com'
 const CONTACT_PHONES = ['+251 947 896 869', '+251 948 436 869']
 const WEBSITE = 'https://dawolife.jebugeneraltrading.com'
 

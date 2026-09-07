@@ -208,6 +208,10 @@ export function getApiUrl(): string {
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
       const port = window.location.port
       if (port === '3000' || port === '') {
+        if (hostname.includes('jebugeneraltrading.com')) {
+          cachedUrl = 'https://api.jebugeneraltrading.com'
+          return cachedUrl
+        }
         cachedUrl = `${window.location.protocol}//${hostname}:4000`
         return cachedUrl
       }

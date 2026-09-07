@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'How DawoLife users can request deletion of their account and associated data.',
 }
 
-const CONTACT_EMAIL = 'info@dawolife.com'
+const CONTACT_EMAIL = 'info@dawolife.jebugeneraltrading.com'
 
 export default function AccountDeletionPage() {
   return (
