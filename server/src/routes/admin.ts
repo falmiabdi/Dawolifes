@@ -228,11 +228,12 @@ router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (
         agentName: nextAdmin ? admin.name : agent?.username?.trim() || admin.name,
         displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
         displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
+        contactMode: nextAdmin ? 'Admin' : 'Owner',
       },
     })
     const updated = await prisma.property.findUnique({
       where: { id: req.params.id },
-      select: { agentName: true, displayPhone: true, displayPhoto: true },
+      select: { agentName: true, displayPhone: true, displayPhoto: true, contactMode: true },
     })
 
     res.json({ message: 'Contact updated', contact: nextAdmin ? 'admin' : 'agent', ...updated })

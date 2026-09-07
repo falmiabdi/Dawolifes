@@ -9,13 +9,14 @@ const DEFAULT_SETTINGS = {
   contactPhone1: '+251947896869',
   contactPhone2: '+251948436869',
   contactPhone3: '',
-  contactEmail: 'info@dawolife.com',
+  contactEmail: 'info@dawolife.jebugeneraltrading.com',
   socialFacebook: '',
   socialTelegram: '',
   socialWhatsapp: '',
   socialTiktok: '',
   socialLinkedin: '',
   socialInstagram: '',
+  socialYoutube: '',
 }
 
 async function getSettings() {
@@ -54,6 +55,7 @@ router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
       socialTiktok,
       socialLinkedin,
       socialInstagram,
+      socialYoutube,
     } = req.body ?? {}
 
     const data: Record<string, any> = {}
@@ -67,6 +69,7 @@ router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
     if (socialTiktok !== undefined) data.socialTiktok = String(socialTiktok).trim()
     if (socialLinkedin !== undefined) data.socialLinkedin = String(socialLinkedin).trim()
     if (socialInstagram !== undefined) data.socialInstagram = String(socialInstagram).trim()
+    if (socialYoutube !== undefined) data.socialYoutube = String(socialYoutube).trim()
 
     const settings = await prisma.setting.upsert({
       where: { id: 'default' },

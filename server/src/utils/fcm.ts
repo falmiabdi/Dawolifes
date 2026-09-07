@@ -34,6 +34,8 @@ export async function sendPushToUser(
         type: type ?? 'info',
         title,
         body,
+        entityType: data?.entityType ?? '',
+        entityId: data?.entityId ?? '',
         ...(data ? { data: JSON.stringify(data) } : {}),
       },
       android: {

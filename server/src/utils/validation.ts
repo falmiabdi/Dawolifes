@@ -31,6 +31,7 @@ export const registerSchema = z.object({
   username: z.string().min(3).max(50),
   email: z.string().email(),
   password: z.string().min(8).max(100),
+  role: z.enum(['agent', 'owner']).optional(),
   phone: optStr,
   profilePhoto: z.string().url().optional(),
 })
@@ -89,6 +90,7 @@ export const propertySchema = z.object({
   locationDocument: optStr,
   posterType: optStr,
   ownerType: optStr,
+  contactMode: z.enum(['Admin', 'Owner', 'Agent']).optional(),
 })
 
 export const vehicleSchema = z.object({

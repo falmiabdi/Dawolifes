@@ -1,6 +1,7 @@
 ﻿import { Router } from 'express'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { broadcastToUser } from '../ws/server.js'
 import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
@@ -30,6 +31,16 @@ export async function cleanupExpiredNotifications(): Promise<number> {
   } catch (err) {
     console.error('[notifications] Cleanup failed:', err)
     return 0
+  }
+}
+
+/** Recompute and broadcast a user's unread count so every open client stays in sync. */
+async function broadcastUnreadCount(userId: string) {
+  try {
+    const count = await prisma.notification.count({ where: { userId, read: false } })
+    broadcastToUser(userId, { type: 'unread_count', count })
+  } catch (err) {
+    console.error('[notifications] Broadcast unread count failed:', err)
   }
 }
 
@@ -106,6 +117,7 @@ router.patch('/read-all', authMiddleware, async (req, res) => {
       where: { userId: req.user!.userId, read: false },
       data: { read: true, readAt: new Date() },
     })
+    broadcastUnreadCount(req.user!.userId)
     res.json({ message: 'All notifications marked as read' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update notifications' })
@@ -126,6 +138,7 @@ router.patch('/:id/read', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' })
     }
     await prisma.notification.update({ where: { id: req.params.id }, data: { read: true, readAt: new Date() } })
+    broadcastUnreadCount(req.user!.userId)
     res.json({ message: 'Notification marked as read' })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to update notification' })

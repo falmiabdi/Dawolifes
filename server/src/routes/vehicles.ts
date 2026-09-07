@@ -114,7 +114,7 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       'New Vehicle Listing',
       `A new vehicle "${parsed.data.title}" has been posted and needs review.`,
       'info',
-      { type: 'vehicle', id: vehicle.id }
+      { entityType: 'VEHICLE', entityId: vehicle.id, type: 'vehicle', id: vehicle.id }
     ).catch(() => {})
 
     res.status(201).json({ message: 'Vehicle created', vehicle })

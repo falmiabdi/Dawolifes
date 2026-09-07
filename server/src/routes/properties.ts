@@ -11,7 +11,7 @@ const ALLOWED_UPDATE_FIELDS = [
   'subCity', 'woreda', 'kebele', 'parcel', 'block', 'floorNumber', 'houseNumber', 'area',
   'bedrooms', 'bathrooms', 'condition', 'legalizedYear', 'description',
   'features', 'images', 'videoUrl', 'latitude', 'longitude', 'locationDocument',
-  'posterType', 'ownerType',
+  'posterType', 'ownerType', 'contactMode',
 ]
 
 const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
@@ -37,7 +37,8 @@ router.get('/', async (req, res) => {
         }),
       ]),
     )
-    res.json({ properties, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } })
+    const sanitized = properties.map(({ floorNumber: _floor, houseNumber: _house, ...rest }) => rest)
+    res.json({ properties: sanitized, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch properties' })
   }
@@ -61,12 +62,17 @@ router.get('/:id', async (req, res) => {
 
     // Only expose approved listings publicly; owner and admins may preview
     // drafts/pending/rejected listings via their own dashboards.
-    if (property.status !== 'Approved') {
-      const caller = getRequestUserId(req)
-      const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === property.agentId)
-      if (!isOwnerOrAdmin) {
-        return res.status(404).json({ message: 'Property not found' })
-      }
+    const caller = getRequestUserId(req)
+    const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === property.agentId)
+    if (property.status !== 'Approved' && !isOwnerOrAdmin) {
+      return res.status(404).json({ message: 'Property not found' })
+    }
+
+    // Floor/house number are private address details: only the seller and
+    // admins may see them. Public users must never receive these fields.
+    if (!isOwnerOrAdmin) {
+      const { floorNumber: _floor, houseNumber: _house, ...publicProperty } = property
+      return res.json({ property: publicProperty })
     }
 
     res.json({ property })
@@ -90,14 +96,29 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       where: { id: req.user!.userId },
       select: { username: true, phone: true, profilePhoto: true },
     })
+
+    // Centralized contact switching: default is the Admin (System Admin) number,
+    // the poster may select Property Owner or Property Agent instead.
+    const contactMode = parsed.data.contactMode || 'Admin'
+    let agentName = contactName || currentUser?.username || req.user!.email
+    let displayPhone: string | null = contactPhone || currentUser?.phone || null
+    let displayPhoto = currentUser?.profilePhoto || null
+    if (contactMode === 'Admin') {
+      const setting = await prisma.setting.findUnique({ where: { id: 'default' } })
+      agentName = 'System Admin'
+      displayPhone = setting?.contactPhone1 || '+251947896869'
+      displayPhoto = null
+    }
+
     const property = await prisma.property.create({
       data: {
         ...propertyData,
+        contactMode,
         agentId: req.user!.userId,
-        agentName: contactName || currentUser?.username || req.user!.email,
+        agentName,
         status: 'Pending',
-        displayPhone: contactPhone || currentUser?.phone || null,
-        displayPhoto: currentUser?.profilePhoto || null,
+        displayPhone,
+        displayPhoto,
       },
     })
 
@@ -105,7 +126,7 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       'New Property Listing',
       `A new property "${parsed.data.title}" has been posted and needs review.`,
       'info',
-      { type: 'property', id: property.id }
+      { entityType: 'PROPERTY', entityId: property.id, type: 'property', id: property.id }
     ).catch(() => {})
 
     res.status(201).json({ message: 'Property created', property })
@@ -139,6 +160,21 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
     for (const field of ALLOWED_UPDATE_FIELDS) {
       if (parsed.data[field as keyof typeof parsed.data] !== undefined) {
         updates[field] = parsed.data[field as keyof typeof parsed.data]
+      }
+    }
+
+    // Recalculate the displayed contact when the poster (or admin) switches modes.
+    if (parsed.data.contactMode) {
+      if (parsed.data.contactMode === 'Admin') {
+        const setting = await prisma.setting.findUnique({ where: { id: 'default' } })
+        updates.agentName = 'System Admin'
+        updates.displayPhone = setting?.contactPhone1 || '+251947896869'
+        updates.displayPhoto = null
+      } else {
+        const contactName = parsed.data.name?.trim() || ''
+        const contactPhone = parsed.data.phone?.trim() || ''
+        if (contactName) updates.agentName = contactName
+        if (contactPhone) updates.displayPhone = contactPhone
       }
     }
 
