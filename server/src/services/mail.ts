@@ -33,10 +33,14 @@ export function readSmtpConfig(): SmtpConfig | null {
   const pass = process.env.SMTP_PASSWORD || process.env.BREVO_SMTP_KEY
   const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || process.env.BREVO_FROM_EMAIL
   if (!host || !user || !pass || !fromEmail) return null
+  const port = Number(process.env.SMTP_PORT || process.env.BREVO_PORT) || 587
   return {
     host,
-    port: Number(process.env.SMTP_PORT || process.env.BREVO_PORT) || 587,
-    secure: false,
+    port,
+    // cPanel/webmail relays commonly serve SMTP on 465 (implicit TLS) where
+    // nodemailer must use `secure: true`, while 587 uses STARTTLS with
+    // `secure: false`. Derive it from the port so both setups work.
+    secure: port === 465,
     user,
     pass,
     fromEmail,

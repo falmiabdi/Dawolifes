@@ -50,9 +50,10 @@ interface SendEmailParams {
   subject: string
   htmlContent: string
   textContent?: string
+  replyTo?: string
 }
 
-async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailParams) {
+export async function sendEmail({ to, subject, htmlContent, textContent, replyTo }: SendEmailParams) {
   // 1) Resend API (preferred transactional provider for OTP delivery).
   if (isResendConfigured()) {
     const resend = getResendClient()!
@@ -62,6 +63,7 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
       subject,
       html: htmlContent,
       text: textContent || undefined,
+      ...(replyTo ? { replyTo } : {}),
     })
     if (error) {
       throw new Error(`Resend email failed: ${error.message}`)
@@ -77,6 +79,7 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
       subject,
       html: htmlContent,
       text: textContent,
+      replyTo,
     })
   }
 
@@ -98,6 +101,7 @@ async function sendEmail({ to, subject, htmlContent, textContent }: SendEmailPar
       subject,
       htmlContent,
       textContent: textContent || subject,
+      ...(replyTo ? { replyTo: { email: replyTo } } : {}),
     }),
   })
 
@@ -128,9 +132,6 @@ export async function sendVerificationEmail(email: string, name: string, token: 
 }
 
 export async function sendOtpEmail(email: string, name: string, otp: string, verifyToken?: string) {
-  const verifyLink = verifyToken
-    ? `${process.env.BASE_URL || 'http://localhost:4000'}/api/auth/verify-email?token=${verifyToken}`
-    : ''
   await sendEmail({
     to: { email, name },
     subject: 'Your DawoLife verification code',
@@ -138,18 +139,12 @@ export async function sendOtpEmail(email: string, name: string, otp: string, ver
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
         <h2 style="color:#f97316;">Verify your email</h2>
         <p>Hi ${name},</p>
-        <p>Welcome to DawoLife! To finish creating your account, click the button below:</p>
-        <a href="${verifyLink}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 32px;border-radius:999px;text-decoration:none;margin:16px 0;">
-          Verify Email
-        </a>
-        <p style="color:#64748b;font-size:14px;">If the button does not work, copy this link into your browser:<br/>${verifyLink}</p>
-        <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;"/>
-        <p>Or use the code below to verify your DawoLife email address:</p>
+        <p>Welcome to DawoLife! To finish creating your account, use this <strong>verification code</strong>:</p>
         <p style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#0f172a;background:#f1f5f9;border-radius:12px;padding:16px;text-align:center;">
           ${otp}
         </p>
-        <p style="color:#64748b;font-size:14px;">This code expires in 1 hour and the link in 24 hours.</p>
-        <p style="color:#64748b;font-size:14px;">If you did not create a DawoLife account, you can ignore this email.</p>
+        <p style="color:#64748b;font-size:14px;">Enter this code on the verification page to confirm your email address. Please do not share it with anyone.</p>
+        <p style="color:#64748b;font-size:14px;">This code expires in 1 hour. If you did not create a DawoLife account, you can ignore this email.</p>
       </div>
     `,
   })
