@@ -7,13 +7,13 @@ import '../../core/theme/app_colors.dart';
 import '../../data/models/property.dart';
 import '../../data/repositories/agent_repository.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/auth_provider.dart';
 import 'map_picker.dart';
 import 'post_form_widgets.dart';
 
-const _propertyTypes = ['House', 'Apartment', 'Land', 'Commercial', 'Villa', 'Townhouse', 'Office', 'Studio', 'Penthouse'];
+const _propertyTypes = ['Condominium', 'Apartment', 'Land', 'Commercial', 'Villa', 'Townhouse', 'Office', 'Studio', 'Penthouse'];
 const _listingTypes = ['For Sale', 'For Rent'];
 const _priceTypes = ['Fixed Price', 'Negotiable', 'per month'];
-const _posterTypes = ['Agent', 'Owner'];
 const _ownerTypes = ['Farmer Owner', 'Saving Owner', 'Private Owner', 'Government', 'Company'];
 const _conditions = ['Finished', 'Semi-Finished', 'Under Construction', 'Unfinished', 'Shell'];
 
@@ -70,7 +70,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
 
   String _posterType = 'Agent';
   String _ownerType = 'Farmer Owner';
-  String _propertyType = 'House';
+  String _contactMode = 'Admin';
+  String _propertyType = 'Condominium';
   String _listingType = 'For Sale';
   String _priceType = 'Fixed Price';
   String _condition = 'Finished';
@@ -115,9 +116,16 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     _customSafety = TextEditingController();
     _customInterior = TextEditingController();
     _customExterior = TextEditingController();
+    if (p == null) {
+      final current = context.read<AuthProvider>().user;
+      if (current?.isOwner ?? false) {
+        _posterType = 'Owner';
+      }
+    }
     if (p != null) {
       _posterType = p.posterType ?? _posterType;
       _ownerType = p.ownerType ?? _ownerType;
+      _contactMode = p.contactMode ?? _contactMode;
       _propertyType = p.type.isNotEmpty ? p.type : _propertyType;
       _listingType = p.listingType.isNotEmpty ? p.listingType : _listingType;
       _priceType = p.priceType ?? _priceType;
@@ -266,6 +274,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       'title': _title.text.trim(),
       'posterType': _posterType,
       'ownerType': _ownerType,
+      'contactMode': _contactMode,
       'type': _propertyType,
       'listingType': _listingType,
       'price': num.tryParse(_price.text.trim()) ?? 0,
@@ -402,9 +411,9 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
           children: [
             Row(
               children: [
-                Expanded(child: _dropdown(t('listing_by'), _posterType, _posterTypes, (v) => setState(() => _posterType = v))),
-                const SizedBox(width: 10),
                 Expanded(child: _dropdown(t('owner_type'), _ownerType, _ownerTypes, (v) => setState(() => _ownerType = v))),
+                const SizedBox(width: 10),
+                Expanded(child: _dropdown(t('contact_mode'), _contactMode, const ['Admin', 'Owner', 'Agent'], (v) => setState(() => _contactMode = v))),
               ],
             ),
             Field(
@@ -470,6 +479,13 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
                 ),
               ],
             ),
+            Row(
+              children: [
+                Expanded(child: Field(label: t('floor_number'), child: TextFormField(controller: _floorNumber, decoration: const InputDecoration(hintText: 'e.g. 3rd')))),
+                const SizedBox(width: 10),
+                Expanded(child: Field(label: t('house_number'), child: TextFormField(controller: _houseNumber, decoration: const InputDecoration(hintText: 'e.g. 12')))),
+              ],
+            ),
             Field(
               label: t('description'),
               child: TextFormField(
@@ -530,13 +546,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             Field(
               label: t('block'),
               child: TextFormField(controller: _block, decoration: const InputDecoration(hintText: 'e.g. 05')),
-            ),
-            Row(
-              children: [
-                Expanded(child: Field(label: t('floor_number'), child: TextFormField(controller: _floorNumber, decoration: const InputDecoration(hintText: 'e.g. 3rd')))),
-                const SizedBox(width: 10),
-                Expanded(child: Field(label: t('house_number'), child: TextFormField(controller: _houseNumber, decoration: const InputDecoration(hintText: 'e.g. 12')))),
-              ],
             ),
           ],
         ),

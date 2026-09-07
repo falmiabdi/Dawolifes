@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const _categoryOptions = [
     (value: '', label: 'select'),
-    (value: 'House', label: 'House'),
+    (value: 'Condominium', label: 'Condominium'),
     (value: 'Apartment', label: 'Apartment'),
     (value: 'Villa', label: 'Villa'),
     (value: 'Land', label: 'Land'),

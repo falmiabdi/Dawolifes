@@ -35,6 +35,7 @@ class Property {
     this.displayPhoto,
     this.posterType,
     this.ownerType,
+    this.contactMode,
     this.latitude,
     this.longitude,
     this.locationDocument,
@@ -75,6 +76,7 @@ class Property {
   final String? displayPhoto;
   final String? posterType;
   final String? ownerType;
+  final String? contactMode;
   final double? latitude;
   final double? longitude;
   final String? locationDocument;
@@ -117,6 +119,7 @@ class Property {
     String? agentName,
     String? displayPhone,
     String? displayPhoto,
+    String? contactMode,
   }) {
     return Property(
       id: id,
@@ -151,6 +154,7 @@ class Property {
       displayPhoto: displayPhoto ?? this.displayPhoto,
       posterType: posterType,
       ownerType: ownerType,
+      contactMode: contactMode ?? this.contactMode,
       latitude: latitude,
       longitude: longitude,
       locationDocument: locationDocument,
@@ -193,6 +197,7 @@ class Property {
       displayPhoto: json['displayPhoto'] as String?,
       posterType: json['posterType'] as String?,
       ownerType: json['ownerType'] as String?,
+      contactMode: json['contactMode'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       locationDocument: json['locationDocument'] as String?,

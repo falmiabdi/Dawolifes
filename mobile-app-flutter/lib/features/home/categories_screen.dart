@@ -8,7 +8,7 @@ class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
 
   static const _categories = [
-    (label: 'House', icon: Icons.home_outlined),
+    (label: 'Condominium', icon: Icons.home_outlined),
     (label: 'Apartment', icon: Icons.apartment_outlined),
     (label: 'Land', icon: Icons.landscape_outlined),
     (label: 'Commercial', icon: Icons.business_outlined),

@@ -36,7 +36,7 @@ class _AboutScreenState extends State<AboutScreen> {
 
   String _phoneN(int n) => (_settings['contactPhone$n'] as String?) ?? '';
   String get _email =>
-      (_settings['contactEmail'] as String?) ?? 'info@dawolife.com';
+      (_settings['contactEmail'] as String?) ?? 'info@dawolife.jebugeneraltrading.com';
   String _social(String key) => (_settings['social$key'] as String?) ?? '';
 
   Future<void> _call(String phone) async {
@@ -69,6 +69,7 @@ class _AboutScreenState extends State<AboutScreen> {
         .toList();
 final socials = <(IconData, String, String)>[
       (Icons.facebook, 'Facebook', _social('Facebook')),
+      (Icons.play_circle_fill, 'YouTube', _social('Youtube')),
       (Icons.send, 'Telegram', _social('Telegram')),
       (Icons.chat, 'WhatsApp', _social('Whatsapp')),
       (Icons.music_video, 'TikTok', _social('Tiktok')),
