@@ -10,6 +10,7 @@ datasource db {
 enum UserRole {
   admin
   agent
+  owner
   user
 }
 
@@ -135,6 +136,7 @@ model Property {
   locationDocument String?
   posterType      String?
   ownerType       String?
+  contactMode     String?             @default("Admin")
   agentId         String              @db.Uuid
   agentName       String
   displayPhone    String?
@@ -369,6 +371,7 @@ model Setting {
   socialTiktok  String?
   socialLinkedin String?
   socialInstagram String?
+  socialYoutube String?
   updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("settings")

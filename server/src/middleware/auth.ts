@@ -59,7 +59,7 @@ export function adminMiddleware(req: AuthenticatedRequest, res: Response, next: 
 }
 
 export function agentMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (!req.user || (req.user.role !== 'agent' && req.user.role !== 'admin')) {
+  if (!req.user || (req.user.role !== 'agent' && req.user.role !== 'owner' && req.user.role !== 'admin')) {
     return res.status(403).json({ message: 'Agent access required' })
   }
   next()

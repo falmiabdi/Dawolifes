@@ -30,7 +30,7 @@ function createUserWithOtp(data: {
   phone?: string
   passwordHash: string
   profilePhoto?: string
-  role: 'agent' | 'user'
+  role: 'agent' | 'owner' | 'user'
 }) {
   const otp = generateOtp()
   const expiresAt = otpExpiresAt()
@@ -44,9 +44,9 @@ function createUserWithOtp(data: {
       profilePhoto: data.profilePhoto,
       role: data.role,
       roles: [data.role],
-      status: data.role === 'agent' ? 'Pending' : 'Approved',
+      status: data.role === 'agent' || data.role === 'owner' ? 'Pending' : 'Approved',
       emailVerified: false,
-      onboardingComplete: data.role === 'user',
+      onboardingComplete: data.role !== 'agent' && data.role !== 'owner',
       otp,
       otpExpiresAt: expiresAt,
     },
@@ -69,7 +69,7 @@ router.post('/register', authLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
-    const { username, email, password } = parsed.data
+    const { username, email, password, role = 'agent', phone } = parsed.data
     const normalizedEmail = normalizeEmail(email)
 
     const existingUser = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
@@ -101,8 +101,9 @@ router.post('/register', authLimiter, async (req, res) => {
     const user = await createUserWithOtp({
       username,
       email: normalizedEmail,
+      phone,
       passwordHash: hashedPassword,
-      role: 'agent',
+      role,
     })
 
     res.status(201).json({
@@ -202,12 +203,12 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
         data: { otp: null, otpExpiresAt: null, emailVerified: true, emailVerifiedAt: new Date() },
       })
 
-      if (user.role === 'agent') {
+      if (user.role === 'agent' || user.role === 'owner') {
         notifyAdmins(
           'New Agent Registration',
           `${user.username} (${user.email}) has verified their email and is awaiting approval.`,
           'info',
-          { type: 'agent', id: user.id }
+          { entityType: 'USER', entityId: user.id, type: 'agent', id: user.id }
         ).catch(() => {})
       }
     }
@@ -217,7 +218,7 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     const payload = { userId, email: emailVal, role }
     const response: any = { message: 'Email verified successfully' }
 
-    if (role === 'user' || role === 'agent') {
+    if (role === 'user' || role === 'agent' || role === 'owner') {
       const accessToken = signAccessToken(payload)
       const refreshToken = signRefreshToken(payload)
       response.accessToken = accessToken
@@ -304,12 +305,12 @@ router.get('/verify-email', async (req, res) => {
       data: { emailVerified: true, emailVerifiedAt: new Date(), otp: null, otpExpiresAt: null },
     })
 
-    if (user.role === 'agent') {
+    if (user.role === 'agent' || user.role === 'owner') {
       notifyAdmins(
         'New Agent Registration',
         `${user.username} (${user.email}) has verified their email and is now approved.`,
         'info',
-        { type: 'agent', id: user.id }
+        { entityType: 'USER', entityId: user.id, type: 'agent', id: user.id }
       ).catch(() => {})
     }
 
@@ -390,19 +391,9 @@ router.post('/signin', authLimiter, async (req, res) => {
     }
 
     const { status } = user
-    // Agents may only sign in after their application has been approved.
-    if (user.role === 'agent' && status !== 'Approved') {
-      return res.status(403).json({
-        message:
-          status === 'Rejected'
-            ? 'Your account has been rejected'
-            : status === 'Suspended'
-              ? 'Your account has been suspended'
-              : 'Your application is under review. You can sign in once your account is approved.',
-      })
-    }
-
-    // Backwards-compatible guards for non-agent accounts.
+    // Pending (agent/owner) sign in so they can complete their profile;
+    // posting is locked until admin approval (requireActiveUser).
+    // Rejected / Suspended are blocked below.
     if (status === 'Rejected') {
       return res.status(403).json({ message: 'Your account has been rejected', rejectionReason: user.rejectionReason })
     }
@@ -471,7 +462,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
       },
     })
 
-    const targetRole = requestedRole === 'agent' ? 'agent' : 'user'
+    const targetRole = requestedRole === 'agent' ? 'agent' : requestedRole === 'owner' ? 'owner' : 'user'
     const finalName = providedName || name || email.split('@')[0]
     const finalPhone = providedPhone || phoneNumber || null
 
@@ -486,10 +477,10 @@ router.post('/firebase', authLimiter, async (req, res) => {
           profilePhoto: picture || null,
           role: targetRole,
           roles: [targetRole],
-          status: targetRole === 'agent' ? 'Pending' : 'Approved',
+          status: targetRole === 'agent' || targetRole === 'owner' ? 'Pending' : 'Approved',
           emailVerified,
           emailVerifiedAt: emailVerified ? new Date() : null,
-          onboardingComplete: targetRole === 'user',
+          onboardingComplete: targetRole !== 'agent' && targetRole !== 'owner',
         },
       })
     } else {

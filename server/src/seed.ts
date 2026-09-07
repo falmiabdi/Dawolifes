@@ -36,7 +36,7 @@ const USERS = [
 const PROPERTIES = [
   {
     title: "Modern 3-Bedroom Family Home in Bole Bulbula",
-    type: "House",
+    type: "Condominium",
     listingType: "For Sale" as const,
     price: 18500000,
     priceType: "Total",
