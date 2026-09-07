@@ -22,7 +22,12 @@ import '../portal/widgets.dart';
 /// status pill mirrors the web sidebar's connection indicator. The underlying
 /// WS client reconnects automatically with exponential backoff.
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.entityType, this.entityId});
+
+  /// Set when arriving from a push notification tap; the destination
+  /// listing/agent is resolved and opened after the list loads.
+  final String? entityType;
+  final String? entityId;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -59,6 +64,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       setState(() => _connection = state);
     });
+    if (widget.entityType != null && widget.entityId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _openDeepLink(widget.entityType!, widget.entityId!);
+      });
+    }
   }
 
   @override
@@ -121,17 +132,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _handleTap(AppNotification notification) async {
     _markRead(notification);
     final data = notification.data;
-    final type = data?['type'] as String?;
-    final id = data?['id'] as String?;
+    final type = (data?['entityType'] as String?) ?? (data?['type'] as String?);
+    final id = (data?['entityId'] as String?) ?? (data?['id'] as String?);
     if (type == null || id == null || id.isEmpty) return;
-    switch (type) {
-      case 'property':
+    await _openDeepLink(type, id);
+  }
+
+  Future<void> _openDeepLink(String type, String id) async {
+    final upper = type.toUpperCase();
+    switch (upper) {
+      case 'PROPERTY':
         await _openListing(id, isVehicle: false);
         break;
-      case 'vehicle':
+      case 'VEHICLE':
         await _openListing(id, isVehicle: true);
         break;
-      case 'agent':
+      case 'USER':
+      case 'AGENT':
         if (context.read<AuthProvider>().user?.isAdmin == true) {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const AdminAgentsScreen()),

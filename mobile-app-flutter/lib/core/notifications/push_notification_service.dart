@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -46,6 +48,8 @@ class PushNotificationService {
   final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
   String? _fcmToken;
   bool _pendingOpen = false;
+  String? _pendingEntityType;
+  String? _pendingEntityId;
 
   String? get fcmToken => _fcmToken;
 
@@ -71,9 +75,19 @@ class PushNotificationService {
     FirebaseMessaging.onMessage.listen((message) {
       _showLocal(_local, message, id: message.messageId?.hashCode ?? 0);
     });
-    FirebaseMessaging.onMessageOpenedApp.listen((_) => _openNotifications());
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      _openNotifications(
+        entityType: _entityOf(message.data, 'entityType'),
+        entityId: _entityOf(message.data, 'entityId'),
+      );
+    });
     final initial = await FirebaseMessaging.instance.getInitialMessage();
-    if (initial != null) _openNotifications();
+    if (initial != null) {
+      _openNotifications(
+        entityType: _entityOf(initial.data, 'entityType'),
+        entityId: _entityOf(initial.data, 'entityId'),
+      );
+    }
   }
 
   /// Fetches the current FCM token (cached for unregister-on-logout).
@@ -107,22 +121,53 @@ class PushNotificationService {
     _fcmToken = null;
   }
 
-  /// Navigates to the notifications screen when a push is tapped. If the
-  /// navigator isn't ready yet (cold-start tap before first frame), defers the
-  /// navigation until [maybeOpenPending] is called.
-  void _openNotifications() {
+  /// Routes to the notifications screen when a push is tapped. The entity
+  /// target (pulled from the FCM/locale payload) is forwarded so the screen can
+  /// deep-link to the relevant listing/agent. If the navigator isn't ready yet
+  /// (cold-start tap before first frame), defers until [maybeOpenPending].
+  void _openNotifications({String entityType = '', String entityId = ''}) {
     final nav = appNavigatorKey.currentState;
     if (nav == null || !nav.mounted) {
       _pendingOpen = true;
+      _pendingEntityType = entityType;
+      _pendingEntityId = entityId;
       return;
     }
-    nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    nav.push(
+      MaterialPageRoute(
+        builder: (_) => NotificationsScreen(
+          entityType: entityType.isEmpty ? null : entityType,
+          entityId: entityId.isEmpty ? null : entityId,
+        ),
+      ),
+    );
   }
 
   void maybeOpenPending() {
     if (!_pendingOpen) return;
     _pendingOpen = false;
-    _openNotifications();
+    final et = _pendingEntityType;
+    final eid = _pendingEntityId;
+    _pendingEntityType = null;
+    _pendingEntityId = null;
+    _openNotifications(entityType: et ?? '', entityId: eid ?? '');
+  }
+
+  /// Pulls [key] from the FCM data map, preferring the top-level value and
+  /// falling back to the nested `data` JSON string the server also ships.
+  static String _entityOf(Map<String, dynamic> data, String key) {
+    final direct = data[key] as String?;
+    final nested = data['data'];
+    if (nested is String && nested.isNotEmpty) {
+      try {
+        final obj = jsonDecode(nested);
+        if (obj is Map<String, dynamic>) {
+          final inner = obj[key] as String?;
+          if (inner != null && inner.isNotEmpty) return inner;
+        }
+      } catch (_) {}
+    }
+    return direct ?? '';
   }
 
   static Future<void> _initLocalPlugin(FlutterLocalNotificationsPlugin plugin) async {
@@ -134,7 +179,22 @@ class PushNotificationService {
         requestSoundPermission: false,
       ),
     );
-    await plugin.initialize(settings: settings);
+    await plugin.initialize(
+      settings: settings,
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload == null || payload.isEmpty) return;
+        try {
+          final obj = jsonDecode(payload);
+          if (obj is Map<String, dynamic>) {
+            PushNotificationService.instance._openNotifications(
+              entityType: obj['entityType'] as String? ?? '',
+              entityId: obj['entityId'] as String? ?? '',
+            );
+          }
+        } catch (_) {}
+      },
+    );
   }
 
   static Future<void> _showLocal(
@@ -160,7 +220,10 @@ class PushNotificationService {
       title: title,
       body: body,
       notificationDetails: details,
-      payload: data['type'] as String?,
+      payload: jsonEncode({
+        'entityType': _entityOf(data, 'entityType'),
+        'entityId': _entityOf(data, 'entityId'),
+      }),
     );
   }
 }
