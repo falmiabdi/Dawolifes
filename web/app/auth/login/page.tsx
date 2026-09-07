@@ -33,6 +33,7 @@ export default function AuthLoginPage() {
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [unverifiedWarning, setUnverifiedWarning] = useState('')
   const [resendingVerify, setResendingVerify] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -52,12 +53,13 @@ export default function AuthLoginPage() {
       return
     }
     if (user.role === 'admin') router.replace('/admin')
-    else if (user.role === 'agent') router.replace('/agent')
+    else if (user.role === 'agent' || user.role === 'owner') router.replace('/agent')
     else router.replace('/')
   }, [user, router])
 
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
+    setSuccessMessage('')
     setUnverifiedWarning('')
     try {
       await login(values.email, values.password)
@@ -85,6 +87,16 @@ export default function AuthLoginPage() {
       }
     }
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('verified') === '1') {
+      setSuccessMessage('Email verified. You can now sign in.')
+    } else if (params.get('reset') === '1') {
+      setSuccessMessage('Password reset. You can now sign in.')
+    }
+  }, [])
 
   const handleResendVerification = async () => {
     setResendingVerify(true)
@@ -156,7 +168,14 @@ export default function AuthLoginPage() {
             </button>
           </div>
           {errors.password ? <p className="text-sm text-red-600">{errors.password.message}</p> : null}
+          <div className="mt-1 text-right">
+            <Link href="/forgot-password" className="text-sm font-semibold text-orange-600 hover:text-orange-700">
+              {t('forgot_password')}
+            </Link>
+          </div>
         </div>
+
+        {successMessage ? <p className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{successMessage}</p> : null}
 
         {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
 

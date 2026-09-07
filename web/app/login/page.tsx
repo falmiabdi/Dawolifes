@@ -63,7 +63,7 @@ function LoginForm() {
       return
     }
     if (user.role === 'admin') router.replace('/admin')
-    else if (user.role === 'agent') {
+    else if (user.role === 'agent' || user.role === 'owner') {
       router.replace(user.onboardingComplete ? '/agent' : '/agent/onboarding')
     }
     else router.replace('/')
@@ -72,6 +72,9 @@ function LoginForm() {
   useEffect(() => {
     if (searchParams.get('verified') === '1') {
       setMessage('Email verified. You can now sign in.')
+      setMessageIsSuccess(true)
+    } else if (searchParams.get('reset') === '1') {
+      setMessage('Password reset. You can now sign in.')
       setMessageIsSuccess(true)
     }
   }, [searchParams])
@@ -139,6 +142,11 @@ function LoginForm() {
             </button>
           </div>
           {errors.password ? <p className="text-sm text-red-600">{errors.password.message}</p> : null}
+          <div className="mt-1 text-right">
+            <Link href="/forgot-password" className="text-sm font-semibold text-orange-600 hover:text-orange-700">
+              {t('forgot_password')}
+            </Link>
+          </div>
         </div>
 
         {message ? (
