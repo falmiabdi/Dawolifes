@@ -45,8 +45,8 @@ export default function ForgotPasswordPage() {
         return
       }
       setSent(true)
-      const devOtp = data.devOtp || ''
-      router.push(`/reset-password?email=${encodeURIComponent(value)}${devOtp ? `&code=${devOtp}` : ''}`)
+      
+      router.push(`/reset-password?email=${encodeURIComponent(value)}`)
     } catch {
       setError('Cannot reach the server. Check your connection.')
     } finally {

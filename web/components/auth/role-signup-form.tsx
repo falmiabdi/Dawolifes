@@ -88,7 +88,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
 
     try {
       let registeredEmail = ''
-      let devOtp = ''
+      
       if (role === 'buyer') {
         const data = await registerBuyer({
           name: values.name,
@@ -98,7 +98,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           profilePhoto: photo || undefined,
         })
         registeredEmail = values.email
-        devOtp = data?.devOtp || ''
+        
       } else {
         const response = await fetch(`${await getApiUrlAsync()}/api/auth/register`, {
           method: 'POST',
@@ -116,7 +116,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           return
         }
         registeredEmail = values.email
-        devOtp = payload.devOtp || ''
+        
       }
 
       if (registeredEmail) {
@@ -127,7 +127,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
         } catch {
           // Ignored — OTP verification is the fallback.
         }
-        router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}${devOtp ? `&code=${devOtp}` : ''}`)
+        router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}`)
       }
     } catch (err: any) {
       const msg = err?.message || ''

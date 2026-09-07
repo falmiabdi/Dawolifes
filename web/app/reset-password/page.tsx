@@ -99,7 +99,7 @@ function ResetPasswordForm() {
         showMessage(data.message || 'Failed to resend the code.', true)
         return
       }
-      if (data.devOtp) setCode(data.devOtp.slice(0, 6))
+      
       showMessage(t('reset_code_sent'))
       setCooldown(RESEND_COOLDOWN)
     } catch {
