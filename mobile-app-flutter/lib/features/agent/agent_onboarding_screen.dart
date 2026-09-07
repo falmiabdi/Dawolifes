@@ -6,6 +6,7 @@ import '../../core/i18n/app_strings.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import 'post_form_widgets.dart';
 
@@ -54,7 +55,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   late final TextEditingController _fullName;
   late final TextEditingController _dob;
   late final TextEditingController _nationality;
-  String _userType = '';
   String _gender = '';
 
   // Step 2 – Contact
@@ -211,14 +211,10 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           setState(() => _error = 'Full name is required.');
           return;
         }
-        if (_userType.isEmpty) {
-          setState(() => _error = 'Please select whether you are registering as an Agent or an Owner.');
-          return;
-        }
         if (!await _saveStep(repo, {
               'fullName': _fullName.text.trim(),
               'gender': _gender,
-              'userType': _userType == 'owner' ? 'Owner' : 'Agent',
+              'userType': (context.read<AuthProvider>().user?.role == 'owner') ? 'Owner' : 'Agent',
               'dateOfBirth': _dob.text.trim(),
               'nationality': _nationality.text.trim(),
               'preferredLanguage': switch (context.read<LanguageProvider>().lang) {
@@ -452,7 +448,7 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
     final t = context.read<LanguageProvider>().t;
     _showLegalModal(
       t('terms_conditions'),
-      _userType == 'owner' ? t('terms_conditions_full') : t('terms_conditions_agent_full'),
+      t('terms_conditions_agent_full'),
     );
   }
 
@@ -531,15 +527,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
                   _gender,
                   _genderOptions.map((g) => (g, t(g == 'Male' ? 'male' : g == 'Female' ? 'female' : 'other'))).toList(),
                   (v) => setState(() => _gender = v),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _labelledDropdown(
-                  t('user_type'),
-                  _userType,
-                  [('owner', t('owner_option')), ('agent', t('agent_option'))],
-                  (v) => setState(() => _userType = v),
                 ),
               ),
             ],
@@ -693,7 +680,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   Widget _buildReview() {
     final t = context.read<LanguageProvider>().t;
     final tv = context.read<LanguageProvider>().tv;
-    final isOwner = _userType == 'owner';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -702,7 +688,7 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _summaryRow(t('user_type'), isOwner ? t('owner_option') : t('agent_option')),
+              _summaryRow(t('user_type'), t('agent_option')),
               _summaryRow(t('name_label'), _fullName.text.trim().isEmpty ? t('not_specified') : _fullName.text.trim()),
               _summaryRow(t('phone_label'), _ethPhone.text.trim().isEmpty ? t('not_specified') : _ethPhone.text.trim()),
               _summaryRow(t('region_label'), _region.isEmpty ? t('not_specified') : tv(_region)),
@@ -722,7 +708,7 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
                 value: _agreedTerms,
                 onChanged: (v) => setState(() => _agreedTerms = v ?? false),
                 title: Text(
-                  '${t('agree_terms')} ${isOwner ? t('owner_terms_title') : t('agent_terms_title')} ${t('of_platform')}',
+                  '${t('agree_terms')} ${t('agent_terms_title')} ${t('of_platform')}',
                   style: const TextStyle(fontSize: 13),
                 ),
                 secondary: TextButton(

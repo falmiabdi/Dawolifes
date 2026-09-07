@@ -168,13 +168,15 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  /// Agent registration. Pending + admin approval even after OTP verification.
+  /// Agent / owner registration. Agents are Pending + admin approval even after
+  /// OTP verification; owners are approved immediately after verifying.
   Future<RegistrationResult> registerAgent({
     required String username,
     required String email,
     required String password,
+    String role = 'agent',
   }) async {
-    return repository.registerAgent(username: username, email: email, password: password);
+    return repository.registerAgent(username: username, email: email, password: password, role: role);
   }
 
   /// Verifies the OTP emailed to [email]. For buyer accounts the server issues a

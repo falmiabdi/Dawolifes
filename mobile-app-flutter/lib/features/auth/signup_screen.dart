@@ -30,7 +30,7 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-enum SignupRole { buyer, agent }
+enum SignupRole { buyer, agent, owner }
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -49,7 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void initState() {
     super.initState();
-    _role = widget.initialRole;
+    _role = widget.initialRole ?? SignupRole.buyer;
   }
 
   @override
@@ -83,10 +83,12 @@ class _SignupScreenState extends State<SignupScreen> {
         );
         devOtp = result.devOtp;
       } else {
+        final roleStr = _role == SignupRole.owner ? 'owner' : 'agent';
         final result = await auth.registerAgent(
           username: _username.text.trim(),
           email: email,
           password: _password.text,
+          role: roleStr,
         );
         devOtp = result.devOtp;
       }
@@ -120,7 +122,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final auth = context.read<AuthProvider>();
-      final roleStr = _role == SignupRole.agent ? 'agent' : 'user';
+      final roleStr = _role == SignupRole.agent
+          ? 'agent'
+          : _role == SignupRole.owner
+              ? 'owner'
+              : 'user';
       final result = await auth.loginWithGoogle(role: roleStr);
       if (!mounted) return;
       if (result == null) return;
@@ -183,46 +189,38 @@ class _SignupScreenState extends State<SignupScreen> {
           key: ValueKey(_role),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_role == null) ...[
-              _RolePicker(
-                t: t,
-                onSelect: (role) => setState(() {
-                  _role = role;
-                  _error = null;
-                }),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: const [
-                  Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('OR', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500)),
-                  ),
-                  Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                ],
-              ),
-              const SizedBox(height: 16),
-              GoogleSignInButton(
-                onPressed: _submitGoogle,
-                loading: _submittingGoogle,
-              ),
-            ] else ...[
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _RoleBanner(
-                      role: _role!,
-                      t: t,
-                      onBack: () => setState(() {
-                        _role = null;
-                        _error = null;
-                      }),
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DropdownButtonFormField<SignupRole>(
+                    initialValue: _role,
+                    decoration: InputDecoration(
+                      labelText: t('choose_account_type'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    if (_role == SignupRole.buyer) ...[
+                    items: const [
+                      DropdownMenuItem(value: SignupRole.buyer, child: Text('Buyer / User')),
+                      DropdownMenuItem(value: SignupRole.owner, child: Text('Property Owner')),
+                      DropdownMenuItem(value: SignupRole.agent, child: Text('Seller / Agent')),
+                    ],
+                    onChanged: (role) => setState(() {
+                      _role = role!;
+                      _error = null;
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_role == SignupRole.buyer) ...[
                       _Field(
                         label: t('full_name'),
                         hint: 'e.g. Abebe Bikila',
@@ -333,9 +331,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _role == SignupRole.buyer
-                          ? 'We will email you a verification link to verify your account.'
-                          : 'Your application will be reviewed by our team after verification.',
+                      _role == SignupRole.agent
+                          ? 'Your application will be reviewed by our team after verification.'
+                          : 'We will email you a verification link to verify your account.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                     ),
@@ -347,150 +345,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
               ),
-            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class _RolePicker extends StatelessWidget {
-  const _RolePicker({required this.t, required this.onSelect});
-
-  final String Function(String) t;
-  final ValueChanged<SignupRole> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(t('choose_account_type'), style: const TextStyle(color: Color(0xFF64748B), fontSize: 14)),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _RoleCard(
-                icon: Icons.shopping_bag,
-                title: t('buyer_user'),
-                desc: t('buyer_user_desc'),
-                onTap: () => onSelect(SignupRole.buyer),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _RoleCard(
-                icon: Icons.storefront,
-                title: t('seller_agent'),
-                desc: t('seller_agent_desc'),
-                onTap: () => onSelect(SignupRole.agent),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _RoleCard extends StatelessWidget {
-  const _RoleCard({
-    required this.icon,
-    required this.title,
-    required this.desc,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String desc;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(color: Color(0xFFFFEDD5), shape: BoxShape.circle),
-                child: Icon(icon, color: AppColors.primary, size: 24),
-              ),
-              const SizedBox(height: 10),
-              Text(title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-              const SizedBox(height: 4),
-              Text(desc,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleBanner extends StatelessWidget {
-  const _RoleBanner({required this.role, required this.t, required this.onBack});
-
-  final SignupRole role;
-  final String Function(String) t;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final isBuyer = role == SignupRole.buyer;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: onBack,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              '← ${t('choose_account_type')}',
-              style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF7ED),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(isBuyer ? Icons.person : Icons.storefront, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${isBuyer ? t('buyer_user') : t('seller_agent')} — ${isBuyer ? t('buyer_user_desc') : t('seller_agent_desc')}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF9A3412)),
-                ),
-              ),
-              const Icon(Icons.check_circle, size: 18, color: Color(0xFF16A34A)),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

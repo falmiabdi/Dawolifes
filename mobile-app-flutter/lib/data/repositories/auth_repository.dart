@@ -101,16 +101,19 @@ class AuthRepository {
     return _registration(data);
   }
 
-  /// Seller / agent registration. Pending + awaiting admin approval after verify.
+  /// Seller / agent / owner registration. Pending + awaiting admin approval
+  /// after verify only for agents; owners are approved immediately.
   Future<RegistrationResult> registerAgent({
     required String username,
     required String email,
     required String password,
+    String role = 'agent',
   }) async {
     final data = await _api.post('/api/auth/register', {
       'username': username,
       'email': email,
       'password': password,
+      'role': role,
     }) as Map<String, dynamic>;
     return _registration(data);
   }

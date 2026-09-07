@@ -30,8 +30,10 @@ class SessionUser {
 
   bool get isAgent => role == 'agent';
 
+  bool get isOwner => role == 'owner';
+
   /// Whether the account can post listings.
-  bool get canSell => isAgent || isAdmin;
+  bool get canSell => isAgent || isOwner || isAdmin;
 
   factory SessionUser.fromJson(Map<String, dynamic> json) {
     final name = (json['name'] as String?) ??

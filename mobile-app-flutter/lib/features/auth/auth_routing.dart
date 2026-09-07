@@ -7,9 +7,9 @@ import '../agent/agent_portal.dart';
 
 /// Routes the logged-in user to their role-appropriate home after sign-in.
 ///
-/// All agents (approved or not) go to the agent portal; post features are
-/// locked until the profile is approved by admin.  Buyers/users stay in the
-/// app shell.
+/// All agents and owners (approved or not) go to the agent portal; post
+/// features are locked until the profile is approved by admin. Buyers/users
+/// stay in the app shell.
 void routeToRoleHome(BuildContext context) {
   final auth = context.read<AuthProvider>();
   final user = auth.user;
@@ -23,7 +23,7 @@ void routeToRoleHome(BuildContext context) {
     return;
   }
 
-  if (user.isAgent) {
+  if (user.isAgent || user.isOwner) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentPortalScreen()));
     return;
   }

@@ -85,12 +85,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// Routes the user based on the verify/check result: agent -> application
-  /// form, buyer -> app shell (dashboard), otherwise -> login (verified).
+  /// Routes the user based on the verify/check result: agent/owner ->
+  /// application form, buyer -> app shell (dashboard), otherwise -> login
+  /// (verified).
   void _routeByResult(dynamic result) {
     final user = result.user;
     if (user != null) {
-      if (user.isAgent) {
+      if (user.isAgent || user.isOwner) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
           (route) => route.isFirst,
