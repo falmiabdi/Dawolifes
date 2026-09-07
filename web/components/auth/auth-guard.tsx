@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useEffect, createContext, useContext } from 'react'
+import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Capacitor } from '@capacitor/core'
 import { getApiUrlAsync, patchFetchForCapacitor } from '@/lib/get-api-url'
@@ -94,8 +94,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [user, setUser] = useState<SessionUser | null>(null)
   const [loading, setLoading] = useState(true)
+  // Remembers the page the Google redirect flow started from, so the return
+  // navigation (which reloads the app) lands on the right route. Defaults to
+  // '/saved' (buyer dashboard) when the origin page was an auth page.
+  const redirectPathRef = useRef<string>('/saved')
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const { pathname, search } = window.location
+      const params = new URLSearchParams(search)
+      const redirect = params.get('redirect')
+      if (redirect && redirect.startsWith('/')) {
+        redirectPathRef.current = redirect
+      } else if (
+        pathname !== '/auth/login' &&
+        pathname !== '/auth/signup' &&
+        pathname !== '/login' &&
+        pathname !== '/register'
+      ) {
+        redirectPathRef.current = pathname + search
+      } else {
+        redirectPathRef.current = '/saved'
+      }
+    }
+
     const cached = readCachedUser()
     if (cached) {
       setUser(cached)
@@ -126,7 +148,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json()
       if (data.accessToken) await persistToken(data.accessToken)
       if (data.user) setUserAndCache(data.user)
-      const target = data.user?.role === 'admin' ? '/admin' : data.user?.role === 'agent' ? '/agent' : '/saved'
+
+      // Route by role exactly like googleSignIn (redirect flow loses the
+      // register-page role, so default to buyer /saved).
+      const target =
+        data.user?.role === 'admin'
+          ? '/admin'
+          : data.user?.role === 'agent'
+            ? '/agent'
+            : redirectPathRef.current || '/saved'
       router.replace(target)
     } catch {
       // Silently fail — user can retry from the sign-in UI.

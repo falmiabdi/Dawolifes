@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
-import { Camera, Eye, EyeOff, Loader2, ShoppingBag, Store, User as UserIcon, X, CheckCircle2 } from 'lucide-react'
+import { Camera, Eye, EyeOff, Loader2, X } from 'lucide-react'
 
 import { useAuth } from '@/components/auth/auth-guard'
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
@@ -13,8 +13,9 @@ import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-type Role = 'buyer' | 'agent' | null
+type Role = 'buyer' | 'agent' | 'owner'
 
 interface SignupFormValues {
   name: string
@@ -27,9 +28,20 @@ interface SignupFormValues {
 
 export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   const router = useRouter()
-  const { registerBuyer, googleSignIn } = useAuth()
+  const { registerBuyer, googleSignIn, user } = useAuth()
+
+  // When the Google redirect flow (popup blocked fallback) completes, the
+  // AuthProvider sets `user` after returning to this page. Route the buyer to
+  // their dashboard exactly as the direct/popup path does.
+  useEffect(() => {
+    if (!user) return
+    if (user.role === 'admin') router.push('/admin')
+    else if (user.role === 'agent') router.push('/agent')
+    else router.push(redirectParam || '/saved')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
   const { t } = useI18n()
-  const [role, setRole] = useState<Role>(null)
+  const [role, setRole] = useState<Role>('buyer')
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -73,10 +85,6 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
       setMessage('Passwords do not match.')
       return
     }
-    if (!role) {
-      setMessage('Please choose an account type.')
-      return
-    }
 
     try {
       let registeredEmail = ''
@@ -95,7 +103,12 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
         const response = await fetch(`${await getApiUrlAsync()}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: values.username, email: values.email, password: values.password }),
+          body: JSON.stringify({
+            username: values.username,
+            email: values.email,
+            password: values.password,
+            role,
+          }),
         })
         const payload = await response.json()
         if (!response.ok) {
@@ -132,7 +145,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
     setMessage('')
     setGoogleLoading(true)
     try {
-      const result = await googleSignIn(role ?? 'user')
+      const result = await googleSignIn(role === 'buyer' ? 'user' : role)
       if (!result) return // canceled the Google sheet
       if (result.requiresEmailVerification) {
         setMessage('Please verify your email address to continue.')
@@ -155,78 +168,37 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
     }
   }
 
-  const roleCards: { value: 'buyer' | 'agent'; icon: any; title: string; desc: string }[] = [
-    {
-      value: 'buyer',
-      icon: ShoppingBag,
-      title: t('buyer_user'),
-      desc: t('buyer_user_desc'),
-    },
-    {
-      value: 'agent',
-      icon: Store,
-      title: t('seller_agent'),
-      desc: t('seller_agent_desc'),
-    },
-  ]
-
-  if (!role) {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-slate-500">{t('choose_account_type')}</p>
-        <div className="grid grid-cols-2 gap-3">
-          {roleCards.map((card) => {
-            const Icon = card.icon
-            return (
-              <button
-                key={card.value}
-                type="button"
-                onClick={() => setRole(card.value)}
-                className="flex flex-col items-center gap-2 rounded-2xl border-2 border-slate-200 bg-white p-4 text-center transition hover:border-orange-500 hover:bg-orange-50 active:scale-[0.98]"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                  <Icon className="h-6 w-6" />
-                </span>
-                <span className="text-sm font-bold text-slate-800">{card.title}</span>
-                <span className="text-xs text-slate-500">{card.desc}</span>
-              </button>
-            )
-          })}
-        </div>
-        <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-200" />
-          <span className="text-xs font-medium text-slate-400">OR</span>
-          <div className="h-px flex-1 bg-slate-200" />
-        </div>
-        <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
-        {message ? <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
-      </div>
-    )
-  }
-
   const isBuyer = role === 'buyer'
+  const isOwner = role === 'owner'
+  const needsApproval = role === 'agent'
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-      <button
-        type="button"
-        onClick={() => setRole(null)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 hover:text-orange-700"
-      >
-        ← {t('choose_account_type')}
-      </button>
+      <div className="space-y-2">
+        <Label htmlFor="role">{t('choose_account_type')}</Label>
+        <Select value={role} onValueChange={(v) => setRole((v as Role) ?? 'buyer')}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="buyer">{t('buyer_user')}</SelectItem>
+            <SelectItem value="owner">{t('property_owner')}</SelectItem>
+            <SelectItem value="agent">{t('seller_agent')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-3 py-2.5 text-xs font-medium text-orange-700">
-        {isBuyer ? (
-          <>
-            <UserIcon className="h-4 w-4" /> {t('buyer_user')} — {t('buyer_user_desc')}
-          </>
-        ) : (
-          <>
-            <Store className="h-4 w-4" /> {t('seller_agent')} — {t('seller_agent_desc')}
-          </>
-        )}
-        <CheckCircle2 className="ml-auto h-4 w-4 text-green-600" />
+      <GoogleSignInButton
+        onPress={handleGoogleSignIn}
+        loading={googleLoading}
+        label={isBuyer || isOwner ? 'Continue with Google' : 'Continue with Google as Agent'}
+      />
+      {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
+
+      <div className="my-2 flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-200" />
       </div>
 
       {isBuyer && (
@@ -318,26 +290,13 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
         {errors.confirmPassword ? <p className="text-sm text-red-600">{errors.confirmPassword.message}</p> : null}
       </div>
 
-      {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
-
       <Button type="submit" className="w-full rounded-full" disabled={isSubmitting || uploading}>
         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         {t('create_account')}
       </Button>
       <p className="text-center text-xs text-slate-400">
-        {isBuyer ? t('registration_verified') : t('application_reviewed')}
+        {needsApproval ? t('application_reviewed') : t('registration_verified')}
       </p>
-      <div className="my-2 flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs font-medium text-slate-400">OR</span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-      <GoogleSignInButton
-        onPress={handleGoogleSignIn}
-        loading={googleLoading}
-        label={isBuyer ? 'Continue with Google' : 'Continue with Google as Agent'}
-      />
-      {message ? <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
     </form>
   )
 }
