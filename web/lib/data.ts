@@ -106,7 +106,7 @@ export type Agent = {
 }
 
 export const categories = [
-  { key: "houses", label: "Houses", icon: "Home" },
+  { key: "houses", label: "Condominiums", icon: "Home" },
   { key: "apartments", label: "Apartments", icon: "Building2" },
   { key: "land", label: "Land", icon: "Trees" },
   { key: "commercial", label: "Commercial", icon: "Store" },

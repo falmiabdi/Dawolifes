@@ -38,7 +38,8 @@ export default function AgentPostPage() {
   const [title, setTitle] = useState('')
   const [posterType, setPosterType] = useState('Agent')
   const [ownerType, setOwnerType] = useState('Farmer Owner')
-  const [propertyType, setPropertyType] = useState('House')
+  const [contactMode, setContactMode] = useState('Admin')
+  const [propertyType, setPropertyType] = useState('Condominium')
   const [listingType, setListingType] = useState('For Rent')
   const [price, setPrice] = useState('')
   const [priceType, setPriceType] = useState('Fixed Price')
@@ -185,7 +186,7 @@ export default function AgentPostPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
-          title, posterType, ownerType, type: propertyType, listingType, price: Number(price), priceType,
+          title, posterType, ownerType, contactMode, type: propertyType, listingType, price: Number(price), priceType,
           area: area ? Number(area) : undefined,
           bedrooms: bedrooms ? Number(bedrooms) : undefined,
           bathrooms: bathrooms ? Number(bathrooms) : undefined,
@@ -307,15 +308,15 @@ export default function AgentPostPage() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>{t('listing_by')} *</Label>
-                  <select value={posterType} onChange={(e) => setPosterType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    {['Agent', 'Owner'].map(o => <option key={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
                   <Label>{t('owner_type')}</Label>
                   <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
                     {['Farmer Owner', 'Saving Owner'].map(o => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('contact_mode')}</Label>
+                  <select value={contactMode} onChange={(e) => setContactMode(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                    {['Admin', 'Owner', 'Agent'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
               </div>
@@ -327,7 +328,7 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>{t('property_type')} *</Label>
                   <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    {['House', 'Apartment', 'Land', 'Commercial', 'Villa'].map(o => <option key={o}>{o}</option>)}
+                    {['Condominium', 'Apartment', 'Land', 'Commercial', 'Villa'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -373,6 +374,16 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>{t('legalized_year')}</Label>
                   <Input type="number" value={legalizedYear} onChange={(e) => setLegalizedYear(e.target.value)} />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>{t('floor_number')}</Label>
+                  <Input value={floorNumber} onChange={(e) => setFloorNumber(e.target.value)} placeholder="e.g. 3rd floor" />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('house_number')}</Label>
+                  <Input value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} placeholder="e.g. 105" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -512,14 +523,6 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>{t('block_number')}</Label>
                   <Input value={block} onChange={(e) => setBlock(e.target.value)} placeholder={t('block_placeholder')} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Floor Number</Label>
-                  <Input value={floorNumber} onChange={(e) => setFloorNumber(e.target.value)} placeholder="e.g. 3rd floor" />
-                </div>
-                <div className="space-y-2">
-                  <Label>House Number</Label>
-                  <Input value={houseNumber} onChange={(e) => setHouseNumber(e.target.value)} placeholder="e.g. 105" />
                 </div>
               </div>
             </div>

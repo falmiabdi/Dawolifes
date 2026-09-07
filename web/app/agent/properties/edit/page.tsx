@@ -42,6 +42,7 @@ type FormState = {
   title: string
   posterType: string
   ownerType: string
+  contactMode: string
   propertyType: string
   listingType: string
   price: string
@@ -165,7 +166,8 @@ function EditPropertyPage() {
           title: p.title || "",
           posterType: p.posterType || "Agent",
           ownerType: p.ownerType || "Farmer Owner",
-          propertyType: p.type || "House",
+          contactMode: p.contactMode || "Admin",
+          propertyType: p.type || "Condominium",
           listingType: p.listingType || "For Rent",
           price: String(p.price || ""),
           priceType: p.priceType || "Fixed Price",
@@ -308,6 +310,7 @@ function EditPropertyPage() {
           title: form.title,
           posterType: form.posterType,
           ownerType: form.ownerType,
+          contactMode: form.contactMode,
           type: form.propertyType,
           listingType: form.listingType,
           price: Number(form.price),
@@ -451,18 +454,18 @@ function EditPropertyPage() {
                   <div className="space-y-5">
                     <SectionTitle icon={<HomeIcon className="h-5 w-5" />} title="Property Details" />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <Field label="Listing By" required>
-                        <SelectBox
-                          value={form.posterType}
-                          onChange={(v) => set("posterType", v)}
-                          options={["Agent", "Owner"]}
-                        />
-                      </Field>
                       <Field label="Owner Type">
                         <SelectBox
                           value={form.ownerType}
                           onChange={(v) => set("ownerType", v)}
                           options={["Farmer Owner", "Saving Owner"]}
+                        />
+                      </Field>
+                      <Field label="Display Contact">
+                        <SelectBox
+                          value={form.contactMode}
+                          onChange={(v) => set("contactMode", v)}
+                          options={["Admin", "Owner", "Agent"]}
                         />
                       </Field>
                     </div>
@@ -478,7 +481,7 @@ function EditPropertyPage() {
                         <SelectBox
                           value={form.propertyType}
                           onChange={(v) => set("propertyType", v)}
-                          options={["House", "Apartment", "Land", "Commercial", "Villa"]}
+                          options={["Condominium", "Apartment", "Land", "Commercial", "Villa"]}
                         />
                       </Field>
                       <Field label="Listing Type" required>
@@ -530,6 +533,22 @@ function EditPropertyPage() {
                           value={form.legalizedYear}
                           onChange={(e) => set("legalizedYear", e.target.value)}
                           placeholder="2023"
+                        />
+                      </Field>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <Field label="Floor Number">
+                        <Input
+                          value={form.floorNumber}
+                          onChange={(e) => set("floorNumber", e.target.value)}
+                          placeholder="e.g. 3rd floor"
+                        />
+                      </Field>
+                      <Field label="House Number">
+                        <Input
+                          value={form.houseNumber}
+                          onChange={(e) => set("houseNumber", e.target.value)}
+                          placeholder="e.g. 105"
                         />
                       </Field>
                     </div>
@@ -718,20 +737,6 @@ function EditPropertyPage() {
                           value={form.woreda}
                           onChange={(e) => set("woreda", e.target.value)}
                           placeholder="e.g. Waddessa"
-                        />
-                      </Field>
-                      <Field label="Floor Number">
-                        <Input
-                          value={form.floorNumber}
-                          onChange={(e) => set("floorNumber", e.target.value)}
-                          placeholder="e.g. 3rd floor"
-                        />
-                      </Field>
-                      <Field label="House Number">
-                        <Input
-                          value={form.houseNumber}
-                          onChange={(e) => set("houseNumber", e.target.value)}
-                          placeholder="e.g. 105"
                         />
                       </Field>
                     </div>

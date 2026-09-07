@@ -41,6 +41,7 @@ interface Property {
   images: string[]
   posterType?: string
   ownerType?: string
+  contactMode?: string
   agentId: string
   agentName?: string
   displayPhone?: string
@@ -118,6 +119,40 @@ export default function AdminPropertiesPage() {
       } else {
         const data = await res.json().catch(() => ({}))
         toast.error(data.message || 'Failed to update property status.')
+      }
+    } catch (err) {
+      toast.error('An error occurred.')
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
+  // Whether the listing is currently showing the admin's contact.
+  const isAdminContact = (p: Property) => {
+    if (p.contactMode) return p.contactMode === 'Admin'
+    return !(p.displayPhone && p.agent?.phone && p.displayPhone === p.agent.phone)
+  }
+
+  async function toggleContact(propertyId: string) {
+    setSubmittingAction(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${getApiUrl()}/api/admin/properties/${propertyId}/contact`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const nextMode = data.contact === 'admin' ? 'Admin' : 'Owner'
+        toast.success(`Contact shown: ${data.agentName || ''} · ${data.displayPhone || ''}`)
+        const patch = (p: Property) =>
+          p.id === propertyId
+            ? { ...p, agentName: data.agentName ?? p.agentName, displayPhone: data.displayPhone ?? p.displayPhone, displayPhoto: data.displayPhoto ?? p.displayPhoto, contactMode: nextMode }
+            : p
+        setProperties(prev => prev.map(patch))
+        setSelectedProperty(prev => (prev && prev.id === propertyId ? patch(prev) : prev))
+      } else {
+        toast.error('Failed to toggle contact')
       }
     } catch (err) {
       toast.error('An error occurred.')
@@ -217,6 +252,16 @@ export default function AdminPropertiesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <ContactSwitch
+                        checked={isAdminContact(p)}
+                        disabled={submittingAction}
+                        onChange={() => toggleContact(p.id)}
+                      />
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                        {isAdminContact(p) ? 'Admin' : 'Agent'}
+                      </span>
+                    </div>
                     <StatusBadge status={p.status} />
                   </div>
                 </div>
@@ -301,21 +346,7 @@ export default function AdminPropertiesPage() {
                 <div className="flex gap-2">
                   <Button
                     onClick={async () => {
-                      setSubmittingAction(true)
-                      const authHeaders = await getAuthHeaders()
-                      const res = await fetch(`${getApiUrl()}/api/admin/properties/${selectedProperty.id}/contact`, {
-                        method: 'PATCH',
-                        headers: { ...authHeaders },
-                      })
-                      if (res.ok) {
-                        const data = await res.json()
-                        toast.success(`Contact switched to ${data.agentName || ''} · ${data.displayPhone || ''}`)
-                        setSelectedProperty(prev => prev ? { ...prev, agentName: data.agentName ?? prev.agentName, displayPhone: data.displayPhone ?? prev.displayPhone, displayPhoto: data.displayPhoto ?? prev.displayPhoto } : null)
-                        fetchProperties()
-                      } else {
-                        toast.error('Failed to toggle contact')
-                      }
-                      setSubmittingAction(false)
+                      await toggleContact(selectedProperty.id)
                     }}
                     disabled={submittingAction}
                     className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
@@ -390,6 +421,24 @@ export default function AdminPropertiesPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function ContactSwitch({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={checked ? 'Switch to agent contact' : 'Switch to admin contact'}
+      title={checked ? 'Showing admin contact — tap to show the agent' : 'Showing agent contact — tap to show the admin'}
+      onClick={(e) => {
+        e.stopPropagation()
+        onChange()
+      }}
+      disabled={disabled}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${checked ? 'bg-orange-500' : 'bg-slate-300'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+    >
+      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+    </button>
   )
 }
 

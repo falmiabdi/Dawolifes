@@ -19,8 +19,9 @@ export function LatestProperties() {
 
   useEffect(() => {
     const limit = isSearching ? 100 : 10
+    const url = `${getApiUrl()}/api/properties?limit=${limit}`
     setLoading(true)
-    fetch(`${getApiUrl()}/api/properties?limit=${limit}`)
+    fetch(url)
       .then(async (res) => {
         const data = await res.json()
         if (!res.ok) throw new Error(data.message || 'Failed to fetch properties')
@@ -54,7 +55,7 @@ export function LatestProperties() {
         }))
         setProperties(transformed)
       })
-      .catch((err) => console.error('[API] ❌ Properties fetch failed:', err))
+      .catch((err) => console.error('[API] ❌ Properties fetch failed →', url, '\n', err))
       .finally(() => setLoading(false))
   }, [isSearching])
 

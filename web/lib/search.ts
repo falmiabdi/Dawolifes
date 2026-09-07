@@ -2,7 +2,7 @@ export const PROPERTY_CATEGORY_KEYS = ["houses", "apartments", "land", "commerci
 export const VEHICLE_CATEGORY_KEYS = ["cars"]
 
 const CATEGORY_TYPES: Record<string, string[]> = {
-  houses: ["House"],
+  houses: ["Condominium"],
   apartments: ["Apartment"],
   villas: ["Villa"],
   land: ["Land"],

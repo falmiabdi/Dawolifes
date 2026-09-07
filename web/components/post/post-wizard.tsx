@@ -3,8 +3,9 @@
 import { getApiUrl } from '@/lib/get-api-url'
 import { getCachedToken } from '@/lib/api'
 import { useI18n } from '@/lib/i18n'
+import { useAuth } from '@/components/auth/auth-guard'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import {
   ArrowLeft,
@@ -55,6 +56,7 @@ type FormState = {
   title: string
   posterType: string
   ownerType: string
+  contactMode: string
   propertyType: string
   listingType: string
   price: string
@@ -88,7 +90,8 @@ const initialState: FormState = {
   title: "",
   posterType: "Agent",
   ownerType: "Farmer Owner",
-  propertyType: "House",
+  contactMode: "Admin",
+  propertyType: "Condominium",
   listingType: "For Rent",
   price: "",
   priceType: "Fixed Price",
@@ -119,6 +122,7 @@ const initialState: FormState = {
 
 export function PostWizard() {
   const { t, tv } = useI18n()
+  const { user } = useAuth()
   const stepLabels: Record<string, string> = {
     'Basic Info': t('basic_info'),
     'Location & Map': t('location_map'),
@@ -136,6 +140,12 @@ export function PostWizard() {
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
+
+  useEffect(() => {
+    if (user?.role === 'owner') {
+      set('posterType', 'Owner')
+    }
+  }, [user])
 
   const toggleFeature = (feature: string) =>
     setForm((f) => ({
@@ -275,6 +285,7 @@ export function PostWizard() {
           title: form.title,
           posterType: form.posterType,
           ownerType: form.ownerType,
+          contactMode: form.contactMode,
           type: form.propertyType,
           listingType: form.listingType,
           price: form.price,
@@ -396,18 +407,18 @@ export function PostWizard() {
             <div className="space-y-5">
               <SectionTitle icon={<HomeIcon className="h-5 w-5" />} title={t('property_details')} />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label={t('listing_by')} required>
-                  <SelectBox
-                    value={form.posterType}
-                    onChange={(v) => set("posterType", v)}
-                    options={["Agent", "Owner"]}
-                  />
-                </Field>
                 <Field label={t('owner_type')}>
                   <SelectBox
                     value={form.ownerType}
                     onChange={(v) => set("ownerType", v)}
                     options={["Farmer Owner", "Saving Owner"]}
+                  />
+                </Field>
+                <Field label={t('contact_mode')}>
+                  <SelectBox
+                    value={form.contactMode}
+                    onChange={(v) => set("contactMode", v)}
+                    options={["Admin", "Owner", "Agent"]}
                   />
                 </Field>
               </div>
@@ -423,7 +434,7 @@ export function PostWizard() {
                   <SelectBox
                     value={form.propertyType}
                     onChange={(v) => set("propertyType", v)}
-                    options={["House", "Apartment", "Land", "Commercial", "Villa"]}
+                    options={["Condominium", "Apartment", "Land", "Commercial", "Villa"]}
                   />
                 </Field>
                 <Field label={t('listing_type')} required>
@@ -460,6 +471,14 @@ export function PostWizard() {
                 </Field>
                 <Field label={t('bathrooms')}>
                   <Input value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} placeholder="2" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field label={t('floor_number')}>
+                  <Input value={form.floorNumber} onChange={(e) => set("floorNumber", e.target.value)} placeholder="e.g. 3rd floor" />
+                </Field>
+                <Field label={t('house_number')}>
+                  <Input value={form.houseNumber} onChange={(e) => set("houseNumber", e.target.value)} placeholder="e.g. 105" />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -680,20 +699,6 @@ export function PostWizard() {
                     value={form.woreda}
                     onChange={(e) => set("woreda", e.target.value)}
                     placeholder="e.g. Waddessa"
-                  />
-                </Field>
-                <Field label="Floor Number">
-                  <Input
-                    value={form.floorNumber}
-                    onChange={(e) => set("floorNumber", e.target.value)}
-                    placeholder="e.g. 3rd floor"
-                  />
-                </Field>
-                <Field label="House Number">
-                  <Input
-                    value={form.houseNumber}
-                    onChange={(e) => set("houseNumber", e.target.value)}
-                    placeholder="e.g. 105"
                   />
                 </Field>
               </div>
