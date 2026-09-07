@@ -53,13 +53,23 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || '',
   process.env.CONTACT_ALLOWED_ORIGIN || '',
   'https://dawolifes.vercel.app',
+  'https://dawolife.jebugeneraltrading.com',
 ].filter(Boolean)
 
 const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === 'true'
 
+const isLocalhostOrigin = (origin: string) => {
+  try {
+    const { hostname } = new URL(origin)
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '10.0.2.2'
+  } catch {
+    return false
+  }
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (allowAllOrigins || !origin || allowedOrigins.includes(origin)) {
+    if (allowAllOrigins || !origin || allowedOrigins.includes(origin) || isLocalhostOrigin(origin)) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))
@@ -116,7 +126,7 @@ app.get('/', (_req, res) => {
 })
 
 // Health check
-app.get('/api/health', async (_req, res) => {
+app.get(['/api/health', '/health'], async (_req, res) => {
   let dbState = 'disconnected'
   try {
     await withPrismaRetry(() => prisma.$queryRaw`SELECT 1`)
