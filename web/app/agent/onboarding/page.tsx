@@ -115,7 +115,7 @@ function FileUpload({ label, value, onChange, field, uploadFile }: {
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { getToken, refreshUser } = useAuth()
+  const { user, getToken, refreshUser } = useAuth()
   const { t, tv } = useI18n()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
@@ -125,7 +125,6 @@ export default function OnboardingPage() {
 
   // Step 1
   const [fullName, setFullName] = useState('')
-  const [userType, setUserType] = useState('')
   const [gender, setGender] = useState('')
   const [dob, setDob] = useState('')
   const [nationality, setNationality] = useState('Ethiopian')
@@ -200,8 +199,7 @@ export default function OnboardingPage() {
     try {
       if (step === 1) {
         if (!fullName.trim()) { setError('Full name is required.'); setSaving(false); return }
-        if (!userType) { setError('Please select whether you are registering as an Agent or an Owner.'); setSaving(false); return }
-        await saveStep({ fullName, gender, userType: userType === 'owner' ? 'Owner' : 'Agent', dateOfBirth: dob, nationality, preferredLanguage: language })
+        await saveStep({ fullName, gender, userType: user?.role === 'owner' ? 'Owner' : 'Agent', dateOfBirth: dob, nationality, preferredLanguage: language })
       } else if (step === 2) {
         if (!ethPhone.trim()) { setError('Ethiopian Telecom phone is required.'); setSaving(false); return }
         await saveStep({ ethPhone, safaricomPhone, region, city, woreda, kebele, fullAddress })
@@ -287,15 +285,7 @@ export default function OnboardingPage() {
                       <option>{t('other')}</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t('user_type')} <span className="text-red-500">*</span></Label>
-                    <select value={userType} onChange={(e) => setUserType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                      <option value="">{t('select_user_type')}</option>
-                      <option value="owner">{t('owner_option')}</option>
-                      <option value="agent">{t('agent_option')}</option>
-                    </select>
                   </div>
-                </div>
                 <div className="space-y-2">
                   <Label>{t('date_of_birth')}</Label>
                   <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
@@ -441,7 +431,7 @@ export default function OnboardingPage() {
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.terms} onChange={(e) => setAgreed((a) => ({ ...a, terms: e.target.checked }))} />
-                  <span className="text-sm text-slate-600">{t('agree_terms')} <button type="button" onClick={(e) => { e.preventDefault(); setTermsModal(userType === 'owner' ? 'owner' : 'agent') }} className="font-semibold text-orange-600 underline">{userType === 'owner' ? t('owner_terms_title') : t('agent_terms_title')}</button> {t('of_platform')}</span>
+                  <span className="text-sm text-slate-600">{t('agree_terms')} <button type="button" onClick={(e) => { e.preventDefault(); setTermsModal('agent') }} className="font-semibold text-orange-600 underline">{t('agent_terms_title')}</button> {t('of_platform')}</span>
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 accent-orange-500" checked={agreed.privacy} onChange={(e) => setAgreed((a) => ({ ...a, privacy: e.target.checked }))} />

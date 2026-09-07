@@ -153,15 +153,15 @@ export function NotificationList() {
   const handleClick = async (notif: NotificationItem) => {
     if (!notif.read) await markSingleRead(notif.id)
     const data = notif.data
-    const target = data?.type as string | undefined
-    const entityId = data?.id as string | undefined
-    if (target === 'agent') {
+    const target = (data?.entityType ?? data?.type) as string | undefined
+    const entityId = (data?.entityId ?? data?.id) as string | undefined
+    if (target === 'agent' || target === 'USER') {
       router.push(`/admin/agents${entityId ? `?highlight=${entityId}` : ''}`)
-    } else if (target === 'property') {
+    } else if (target === 'property' || target === 'PROPERTY') {
       router.push(`/admin/properties${entityId ? `?highlight=${entityId}` : ''}`)
-    } else if (target === 'vehicle') {
+    } else if (target === 'vehicle' || target === 'VEHICLE') {
       router.push(`/admin/vehicles${entityId ? `?highlight=${entityId}` : ''}`)
-    } else if (target === 'message') {
+    } else if (target === 'message' || target === 'MESSAGE') {
       router.push('/messages')
     }
   }

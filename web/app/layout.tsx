@@ -4,7 +4,6 @@ import { AuthProvider } from '@/components/auth/auth-guard'
 import { SmoothScroll } from '@/components/smooth-scroll'
 import { BottomNav } from '@/components/bottom-nav'
 import { CapacitorInit } from '@/components/capacitor-init'
-import { AnalyticsOnWeb } from '@/components/analytics-on-web'
 import { I18nProvider } from '@/lib/i18n'
 import './globals.css'
 
@@ -49,7 +48,6 @@ export default function RootLayout({
             <BottomNav />
           </AuthProvider>
         </I18nProvider>
-        <AnalyticsOnWeb />
       </body>
     </html>
   )

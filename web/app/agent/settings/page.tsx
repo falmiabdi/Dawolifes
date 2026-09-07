@@ -90,7 +90,6 @@ export default function AgentSettingsPage() {
             <Input
               type="password"
               {...register('current')}
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               className="rounded-xl"
             />
             {errors.current && <p className="text-xs text-red-500">{errors.current.message}</p>}
@@ -101,7 +100,6 @@ export default function AgentSettingsPage() {
               <Input
                 type="password"
                 {...register('newPassword')}
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 className="rounded-xl"
               />
               {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
@@ -111,7 +109,6 @@ export default function AgentSettingsPage() {
               <Input
                 type="password"
                 {...register('confirm')}
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 className="rounded-xl"
               />
               {errors.confirm && <p className="text-xs text-red-500">{errors.confirm.message}</p>}

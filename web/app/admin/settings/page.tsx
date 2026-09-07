@@ -44,6 +44,7 @@ export default function AdminSettingsPage() {
   const [socialTiktok, setSocialTiktok] = useState('')
   const [socialLinkedin, setSocialLinkedin] = useState('')
   const [socialInstagram, setSocialInstagram] = useState('')
+  const [socialYoutube, setSocialYoutube] = useState('')
   const [savingSettings, setSavingSettings] = useState(false)
 
   const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
@@ -66,6 +67,7 @@ export default function AdminSettingsPage() {
         setSocialTiktok(data.socialTiktok || '')
         setSocialLinkedin(data.socialLinkedin || '')
         setSocialInstagram(data.socialInstagram || '')
+        setSocialYoutube(data.socialYoutube || '')
       })
       .catch(() => {})
   }, [])
@@ -125,12 +127,16 @@ export default function AdminSettingsPage() {
   }
 
   const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords don't match")
+    if (!currentPassword) {
+      toast.error(t('current_password_required'))
       return
     }
     if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters')
+      toast.error(t('password_min_8'))
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error(t('passwords_dont_match'))
       return
     }
     setChangingPassword(true)
@@ -142,16 +148,16 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({ currentPassword, newPassword }),
       })
       if (res.ok) {
-        toast.success('Password changed')
+        toast.success(t('password_updated'))
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')
       } else {
         const data = await res.json()
-        toast.error(data.message || 'Failed to change password')
+        toast.error(data.message || t('failed_to_update_password'))
       }
     } catch {
-      toast.error('Something went wrong')
+      toast.error(t('failed_to_update_password'))
     } finally {
       setChangingPassword(false)
     }
@@ -198,7 +204,7 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           contactPhone1, contactPhone2, contactPhone3, contactEmail,
           socialFacebook, socialTelegram, socialWhatsapp, socialTiktok,
-          socialLinkedin, socialInstagram,
+          socialLinkedin, socialInstagram, socialYoutube,
         }),
       })
       if (res.ok) {
@@ -273,16 +279,16 @@ export default function AdminSettingsPage() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>{t('current_password')}</Label>
-            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
+            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="rounded-xl" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>{t('new_password')}</Label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>{t('confirm_password')}</Label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" className="rounded-xl" />
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="rounded-xl" />
             </div>
           </div>
           <Button onClick={handleChangePassword} disabled={changingPassword} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
@@ -323,10 +329,11 @@ export default function AdminSettingsPage() {
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Phone className="h-5 w-5" />
-          <h2>Contact & Social</h2>
+          <h2>Contact Information</h2>
         </div>
         <p className="text-xs text-slate-400">
-          These phone numbers, email, and social links are shown to the public on the website footer and the mobile app.
+          These phone numbers and email are shown to the public on the website footer and the mobile app.
+          The first phone number is the default Admin contact used on property listings.
           Tap-to-call works on phones; email opens the user's mail app.
         </p>
 
@@ -344,13 +351,17 @@ export default function AdminSettingsPage() {
         </div>
         <div className="space-y-2">
           <Label>Email</Label>
-          <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} type="email" placeholder="info@dawolife.com" className="rounded-xl" />
+          <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} type="email" placeholder="info@dawolife.jebugeneraltrading.com" className="rounded-xl" />
         </div>
 
         <div className="border-t border-slate-100 pt-4 space-y-2">
           <div className="flex items-center gap-2 text-orange-600 font-bold">
             <Share2 className="h-4 w-4" />
-            <h3 className="text-sm">Social Media Links</h3>
+            <h3 className="text-sm">Social Media</h3>
+          </div>
+          <div className="space-y-2">
+            <Label>YouTube</Label>
+            <Input value={socialYoutube} onChange={(e) => setSocialYoutube(e.target.value)} placeholder="https://youtube.com/@yourchannel" className="rounded-xl" />
           </div>
           <div className="space-y-2">
             <Label>Facebook</Label>
