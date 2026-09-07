@@ -38,6 +38,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       _error = null;
     });
     try {
+      final t = context.read<LanguageProvider>().t;
       await context.read<AuthProvider>().changePassword(
             currentPassword: _current.text,
             newPassword: _new.text,
@@ -47,7 +48,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       _new.clear();
       _confirm.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password changed successfully.')),
+        SnackBar(content: Text(t('password_updated'))),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
