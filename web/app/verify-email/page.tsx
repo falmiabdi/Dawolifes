@@ -71,9 +71,7 @@ function VerifyEmailForm() {
         showMessage(data.message || 'Verification failed. Try again.', true)
         return
       }
-      const role = data.user?.role
-      const target = role === 'admin' ? '/admin' : role === 'agent' ? '/agent' : '/saved'
-      router.push(target)
+      router.push('/login?verified=1')
     } catch {
       showMessage('Cannot reach the server. Check your connection.', true)
     } finally {
