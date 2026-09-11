@@ -12,6 +12,7 @@ class SessionUser {
     this.isRootAdmin,
     this.profilePhoto,
     this.phone,
+    this.onboardingComplete = false,
   });
 
   final String id;
@@ -25,6 +26,7 @@ class SessionUser {
   final bool? isRootAdmin;
   final String? profilePhoto;
   final String? phone;
+  final bool onboardingComplete;
 
   bool get isAdmin => role == 'admin' || (roles?.contains('admin') ?? false);
 
@@ -34,6 +36,10 @@ class SessionUser {
 
   /// Whether the account can post listings.
   bool get canSell => isAgent || isOwner || isAdmin;
+
+  /// Agents/owners who have not finished the onboarding wizard (mirrors the
+  /// web's `user.onboardingComplete ? '/agent' : '/agent/onboarding'`).
+  bool get needsOnboarding => (isAgent || isOwner) && !onboardingComplete;
 
   factory SessionUser.fromJson(Map<String, dynamic> json) {
     final name = (json['name'] as String?) ??
@@ -52,6 +58,7 @@ class SessionUser {
       isRootAdmin: json['isRootAdmin'] as bool?,
       profilePhoto: json['profilePhoto'] as String?,
       phone: json['phone'] as String?,
+      onboardingComplete: json['onboardingComplete'] as bool? ?? false,
     );
   }
 
@@ -67,5 +74,6 @@ class SessionUser {
         'isRootAdmin': isRootAdmin,
         'profilePhoto': profilePhoto,
         'phone': phone,
+        'onboardingComplete': onboardingComplete,
       };
 }

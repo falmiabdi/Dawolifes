@@ -30,15 +30,13 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
     if (!onboardingDone && path !== '/agent/onboarding') {
       setRedirecting(true)
       router.replace('/agent/onboarding')
-      return
+    } else if (redirecting) {
+      // Client-side navigation stays inside this layout (no remount), so once
+      // we arrive at the destination we must clear the redirect flag or the
+      // spinner would spin forever until a manual refresh.
+      setRedirecting(false)
     }
-
-    // Fully onboarded + approved agents should not sit on the onboarding form.
-    if (onboardingDone && approved && path === '/agent/onboarding') {
-      setRedirecting(true)
-      router.replace('/agent')
-    }
-  }, [user, onboardingDone, approved, path, router])
+  }, [user, onboardingDone, approved, path, router, redirecting])
 
   if (redirecting) {
     return (
@@ -67,11 +65,11 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <DashboardShell
-      role="agent"
+      role={user?.role === 'owner' ? 'owner' : 'agent'}
       name={user?.name || user?.email || ''}
       email={user?.email || ''}
       status={user?.status || 'Pending'}
-      title={t('agent_portal')}
+      title={user?.role === 'owner' ? t('owner_portal') : t('agent_portal')}
       profilePhoto={user?.profilePhoto}
     >
       {children}

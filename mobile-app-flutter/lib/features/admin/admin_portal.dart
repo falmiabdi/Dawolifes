@@ -10,6 +10,7 @@ import 'admin_announcements.dart';
 import 'admin_dashboard.dart';
 import 'admin_notifications.dart';
 import 'admin_payments.dart';
+import 'admin_permissions.dart';
 import 'admin_properties.dart';
 import 'admin_settings.dart';
 import 'admin_users.dart';
@@ -82,6 +83,7 @@ class AdminPortalScreen extends StatelessWidget {
           _menuTile(context, Icons.group_outlined, 'Users', () => _open(context, const AdminUsersScreen())),
           _menuTile(context, Icons.house_outlined, 'Properties', () => _open(context, const AdminPropertiesScreen())),
           _menuTile(context, Icons.directions_car_outlined, 'Vehicles', () => _open(context, const AdminVehiclesScreen())),
+          _menuTile(context, Icons.shield_outlined, 'Listing Permissions', () => _open(context, const AdminPermissionsScreen())),
           _menuTile(context, Icons.credit_card_outlined, 'Payments', () => _open(context, const AdminPaymentsScreen())),
           _menuTile(context, Icons.campaign_outlined, 'Announcements', () => _open(context, const AdminAnnouncementsScreen())),
           _menuTile(context, Icons.notifications_outlined, 'Broadcast', () => _open(context, const AdminNotificationsScreen())),

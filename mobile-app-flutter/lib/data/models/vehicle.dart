@@ -98,6 +98,7 @@ class Vehicle {
     this.agentName,
     this.displayPhone,
     this.displayPhoto,
+    this.contactUserId,
     this.rejectionReason,
     this.createdAt,
     this.updatedAt,
@@ -198,6 +199,7 @@ class Vehicle {
   final String? agentName;
   final String? displayPhone;
   final String? displayPhoto;
+  final String? contactUserId;
   final String? rejectionReason;
   final String? createdAt;
   final String? updatedAt;
@@ -232,11 +234,21 @@ class Vehicle {
     return agent?.avatar?.trim() ?? '';
   }
 
+  /// User id the Message button routes to: follows the admin-switched contact
+  /// when one is set, otherwise the listing's original agent.
+  String? get messageRecipientId {
+    final c = contactUserId?.trim();
+    if (c != null && c.isNotEmpty) return c;
+    final a = agent?.id?.trim();
+    return (a != null && a.isNotEmpty) ? a : null;
+  }
+
   /// Copy of this vehicle with the contact override replaced.
   Vehicle withContact({
     String? agentName,
     String? displayPhone,
     String? displayPhoto,
+    String? contactUserId,
   }) {
     return Vehicle(
       id: id,
@@ -334,6 +346,7 @@ class Vehicle {
       agentName: agentName ?? this.agentName,
       displayPhone: displayPhone ?? this.displayPhone,
       displayPhoto: displayPhoto ?? this.displayPhoto,
+      contactUserId: contactUserId ?? this.contactUserId,
       rejectionReason: rejectionReason,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -443,6 +456,7 @@ class Vehicle {
       agentName: json['agentName'] as String?,
       displayPhone: json['displayPhone'] as String?,
       displayPhoto: json['displayPhoto'] as String?,
+      contactUserId: json['contactUserId'] as String?,
       rejectionReason: json['rejectionReason'] as String?,
       createdAt: json['createdAt'] as String?,
       updatedAt: json['updatedAt'] as String?,

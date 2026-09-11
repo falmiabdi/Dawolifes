@@ -11,12 +11,14 @@ export function AuthShell({
   children,
   footer,
   backgroundUrl = "/properties/hero-bg.png",
+  titleClassName = "text-2xl font-bold tracking-tight text-slate-900",
 }: {
   title: string
   subtitle?: string
   children: ReactNode
   backgroundUrl?: string
   footer?: ReactNode
+  titleClassName?: string
 }) {
   const { t } = useI18n()
 
@@ -49,7 +51,7 @@ export function AuthShell({
       {/* Main content */}
       <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
         <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/95 p-6 shadow-2xl shadow-black/40 backdrop-blur sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+          <h1 className={titleClassName}>{title}</h1>
           {children}
           {footer && <div className="mt-6">{footer}</div>}
         </div>

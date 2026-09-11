@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
-import { Camera, Eye, EyeOff, Loader2, X } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { useAuth } from '@/components/auth/auth-guard'
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
@@ -36,8 +36,8 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   useEffect(() => {
     if (!user) return
     if (user.role === 'admin') router.push('/admin')
-    else if (user.role === 'agent') router.push('/agent')
-    else router.push(redirectParam || '/saved')
+    else if (user.role === 'agent' || user.role === 'owner') router.push(user.onboardingComplete ? '/agent' : '/agent/onboarding')
+    else router.push(redirectParam || '/')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
   const { t } = useI18n()
@@ -45,9 +45,6 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [photo, setPhoto] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const {
     register: reg,
     handleSubmit,
@@ -55,29 +52,6 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   } = useForm<SignupFormValues>({
     defaultValues: { name: '', username: '', email: '', phone: '', password: '', confirmPassword: '' },
   })
-
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    setMessage('')
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch(`${await getApiUrlAsync()}/api/upload`, { method: 'POST', body: formData })
-      const data = await res.json()
-      if (!res.ok || !data.url) {
-        setMessage(data.message || 'Photo upload failed.')
-        return
-      }
-      setPhoto(data.url)
-    } catch {
-      setMessage('Photo upload failed. You can add one later.')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
 
   const onSubmit = async (values: SignupFormValues) => {
     setMessage('')
@@ -95,7 +69,6 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           email: values.email,
           phone: values.phone,
           password: values.password,
-          profilePhoto: photo || undefined,
         })
         registeredEmail = values.email
         
@@ -148,14 +121,11 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
       const result = await googleSignIn(role === 'buyer' ? 'user' : role)
       if (!result) return // canceled the Google sheet
       if (result.requiresEmailVerification) {
-        setMessage('Please verify your email address to continue.')
+        router.push(`/verify-email?email=${encodeURIComponent(result.user?.email || '')}`)
         return
       }
-      if (result.user) {
-        if (result.user.role === 'admin') router.push('/admin')
-        else if (result.user.role === 'agent') router.push('/agent')
-        else router.push(redirectParam || '/saved')
-      }
+      // googleSignIn() already calls setUserAndCache() + persistToken().
+      // Routing is handled by the useEffect watching `user`.
     } catch (err: any) {
       const msg = err?.message || ''
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
@@ -177,7 +147,7 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
       <div className="space-y-2">
         <Label htmlFor="role">{t('choose_account_type')}</Label>
         <Select value={role} onValueChange={(v) => setRole((v as Role) ?? 'buyer')}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger size="sm" className="w-full border-orange-300 bg-orange-50 font-medium text-orange-700 focus-visible:ring-orange-300 [&_svg]:text-orange-500 aria-invalid:border-orange-300 dark:bg-orange-500/10 dark:text-orange-300">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -187,53 +157,6 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
           </SelectContent>
         </Select>
       </div>
-
-      <GoogleSignInButton
-        onPress={handleGoogleSignIn}
-        loading={googleLoading}
-        label={isBuyer || isOwner ? 'Continue with Google' : 'Continue with Google as Agent'}
-      />
-      {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
-
-      <div className="my-2 flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs font-medium text-slate-400">OR</span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      {isBuyer && (
-        <div className="flex flex-col items-center">
-          <div className="relative">
-            {photo ? (
-              <div className="relative h-24 w-24 overflow-hidden rounded-full ring-4 ring-orange-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo} alt="Profile preview" className="h-full w-full object-cover" />
-                <button
-                  type="button"
-                  aria-label="Remove photo"
-                  onClick={() => setPhoto(null)}
-                  className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-500 shadow ring-1 ring-black/10"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-orange-100 text-orange-500 ring-4 ring-orange-100">
-                <Camera className="h-9 w-9" />
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="absolute inset-x-0 -bottom-2 mx-auto w-max rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:opacity-60"
-            >
-              {uploading ? t('uploading') : t('add_photo')}
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-          </div>
-        </div>
-      )}
 
       {isBuyer ? (
         <div className="space-y-2">
@@ -290,13 +213,26 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
         {errors.confirmPassword ? <p className="text-sm text-red-600">{errors.confirmPassword.message}</p> : null}
       </div>
 
-      <Button type="submit" className="w-full rounded-full" disabled={isSubmitting || uploading}>
+      <Button type="submit" className="w-full rounded-full" disabled={isSubmitting}>
         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         {t('create_account')}
       </Button>
       <p className="text-center text-xs text-slate-400">
         {needsApproval ? t('application_reviewed') : t('registration_verified')}
       </p>
+
+      <div className="my-2 flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium text-slate-400">OR</span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <GoogleSignInButton
+        onPress={handleGoogleSignIn}
+        loading={googleLoading}
+        label={isBuyer || isOwner ? 'Continue with Google' : 'Continue with Google as Agent'}
+      />
+      {message ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{message}</p> : null}
     </form>
   )
 }

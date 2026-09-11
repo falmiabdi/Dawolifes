@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
@@ -11,15 +10,14 @@ import '../agent/agent_onboarding_screen.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 
-/// Email verification screen (6-digit code + link).
+/// Email verification screen (6-digit code).
 ///
 /// After registering (buyer or agent) the user lands here with the email they
-/// signed up with. The backend emails a 6-digit OTP code and a verification
-/// link. The user can enter the 6-digit code directly (primary path), or open
-/// their email app and tap the "Verify Email" button then press "Check".
-/// On success: a buyer gets a session (straight to the app shell/dashboard);
-/// an agent gets a session and is sent straight to the agent application form
-/// so they can complete it without waiting for admin approval.
+/// signed up with. The backend emails a 6-digit OTP code. Entering the code is
+/// the only verification path (matches the web verify-email page). On success:
+/// a buyer gets a session (straight to the app shell/dashboard); an agent gets
+/// a session and is sent straight to the agent application form so they can
+/// complete it without waiting for admin approval.
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key, required this.email, this.devOtp});
 
@@ -36,7 +34,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
   bool _verifying = false;
-  bool _checking = false;
   bool _resending = false;
   String? _error;
   bool _codeFilled = false;
@@ -76,26 +73,23 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   String get _enteredCode => _controllers.map((c) => c.text.trim()).join();
 
-  Future<void> _openEmail() async {
-    final uri = Uri(scheme: 'mailto', path: widget.email);
-    try {
-      await launchUrl(uri);
-    } catch (_) {
-      // Email apps may not be installed; ignore.
-    }
-  }
-
-  /// Routes the user based on the verify/check result: agent/owner ->
+  /// Routes the user based on the verify result: agent/owner ->
   /// application form, buyer -> app shell (dashboard), otherwise -> login
   /// (verified).
   void _routeByResult(dynamic result) {
     final user = result.user;
     if (user != null) {
       if (user.isAgent || user.isOwner) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
-          (route) => route.isFirst,
-        );
+        // Send fresh sellers to the application form; someone who already
+        // completed onboarding (relogin) goes straight to the app shell.
+        if (user.needsOnboarding) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
+            (route) => route.isFirst,
+          );
+        } else {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
       } else {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -136,31 +130,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// The user clicked the "Verify Email" button in their inbox. Ask the server
-  /// whether the account is now verified, then route (buyer -> dashboard,
-  /// agent -> application form).
-  Future<void> _checkViaLink() async {
-    setState(() {
-      _checking = true;
-      _error = null;
-    });
-
-    try {
-      final result = await context.read<AuthProvider>().checkVerification(email: widget.email);
-      if (!mounted) return;
-      _routeByResult(result);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.message);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _error = context.read<LanguageProvider>().t('verification_failed'));
-    } finally {
-      if (mounted) setState(() => _checking = false);
-    }
-  }
-
-  /// Re-triggers the server to email a fresh 6-digit OTP + link (60s cooldown
+  /// Re-triggers the server to email a fresh 6-digit OTP (60s cooldown
   /// enforced client-side).
   Future<void> _resendLink() async {
     if (_resending) return;
@@ -256,6 +226,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               '${t('verify_email_subtitle')} ${widget.email}',
               style: const TextStyle(color: Color(0xFF475569), fontSize: 14),
             ),
+            const SizedBox(height: 8),
+            Text(
+              t('verify_email_spam_hint'),
+              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.4),
+            ),
             const SizedBox(height: 24),
             // 6-digit OTP entry (primary path).
             Text(
@@ -332,67 +307,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            // Link-based alternative.
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFED7AA)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.mail_outline, size: 20, color: AppColors.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          t('verify_email_link_hint'),
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF9A3412), height: 1.4),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _openEmail,
-                      icon: const Icon(Icons.open_in_new, size: 18),
-                      label: Text(t('open_email')),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _checking ? null : _checkViaLink,
-                      icon: _checking
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.check_circle_outline, size: 18),
-                      label: Text(t('check_verification')),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             if (_error != null) ...[
               const SizedBox(height: 16),
               Container(

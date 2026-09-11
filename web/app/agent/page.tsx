@@ -56,7 +56,7 @@ export default function AgentDashboardPage() {
       <div className="rounded-3xl bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-white md:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-orange-400 md:text-sm">{t('agent_workspace')}</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-orange-400 md:text-sm">{user?.role === 'owner' ? t('owner_workspace') : t('agent_workspace')}</p>
             <h1 className="mt-2 text-2xl font-bold md:text-3xl">{t('welcome_name').replace('{name}', user.name || '')}</h1>
             <p className="mt-2 max-w-lg text-slate-300 text-xs md:text-sm">{t('agent_hub_note')}</p>
           </div>

@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import 'pending_approval.dart';
 import 'post_form_widgets.dart';
 
 const _stepLabels = ['personal', 'contact', 'identity', 'education', 'professional', 'submit'];
@@ -70,7 +71,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   String? _faydaFront;
   String? _faydaBack;
   String? _selfie;
-  String? _passport;
 
   // Step 4 – Education
   String _education = '';
@@ -136,11 +136,19 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   Future<void> _pickFile(String field) async {
     setState(() => _uploading = field);
     try {
-      final url = await pickAndUploadImage(
-        context.read<ApiClient>(),
-        endpoint: '/api/agent/upload',
-        field: field,
-      );
+      // Identity selfie must be captured live with the camera (full face,
+      // no eyeglasses / head cover) rather than picked from the gallery.
+      final url = field == 'selfie'
+          ? await captureAndUploadImage(
+              context.read<ApiClient>(),
+              endpoint: '/api/agent/upload',
+              field: field,
+            )
+          : await pickAndUploadImage(
+              context.read<ApiClient>(),
+              endpoint: '/api/agent/upload',
+              field: field,
+            );
       if (!mounted) return;
       setState(() {
         switch (field) {
@@ -152,9 +160,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
             break;
           case 'selfie':
             _selfie = url;
-            break;
-          case 'passport':
-            _passport = url;
             break;
           case 'eduCert':
             _eduCert = url;
@@ -184,15 +189,12 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
         case 'faydaBack':
           _faydaBack = null;
           break;
-        case 'selfie':
-          _selfie = null;
-          break;
-        case 'passport':
-          _passport = null;
-          break;
-        case 'eduCert':
-          _eduCert = null;
-          break;
+case 'selfie':
+            _selfie = null;
+            break;
+          case 'eduCert':
+            _eduCert = null;
+            break;
         case 'license':
           _licenseFile = null;
           break;
@@ -201,7 +203,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   }
 
   Future<void> _next() async {
-    final t = context.read<LanguageProvider>().t;
     setState(() => _error = null);
     final repo = context.read<AgentRepository>();
 
@@ -244,15 +245,14 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
         }
         break;
       case 2:
-        if (_faydaFront == null || _faydaBack == null || _selfie == null || _passport == null) {
-          setState(() => _error = 'All 4 identity documents are required.');
+        if (_faydaFront == null || _faydaBack == null || _selfie == null) {
+          setState(() => _error = 'Fayda (front & back) and a selfie are required.');
           return;
         }
         if (!await _saveStep(repo, {
               'faydaFront': _faydaFront,
               'faydaBack': _faydaBack,
               'selfieFayda': _selfie,
-              'passportPhoto': _passport,
             })) {
           return;
         }
@@ -290,8 +290,15 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           return;
         }
         if (!mounted) return;
-        _snack(t('application_submitted'));
-        Navigator.of(context).pop();
+        // Mirror the web: after submitting, reload the session so the cached
+        // status/onboardingComplete reflect the server, then land on the
+        // pending-approval screen until an admin approves the account.
+        await context.read<AuthProvider>().refreshUser();
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+          (route) => route.isFirst,
+        );
         return;
     }
 
@@ -329,8 +336,6 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
         return _faydaBack;
       case 'selfie':
         return _selfie;
-      case 'passport':
-        return _passport;
       case 'eduCert':
         return _eduCert;
       case 'license':
@@ -604,8 +609,11 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           const SizedBox(height: 12),
           _uploadTile(t('fayda_front'), 'faydaFront', required: true),
           _uploadTile(t('fayda_back'), 'faydaBack', required: true),
-          _uploadTile(t('selfie_fayda'), 'selfie', required: true),
-          _uploadTile(t('passport_photo'), 'passport', required: true),
+          _uploadTile(
+            '${t('selfie_fayda')} — ${t('camera_selfie')}',
+            'selfie',
+            required: true,
+          ),
         ],
       ),
     );
@@ -680,6 +688,8 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   Widget _buildReview() {
     final t = context.read<LanguageProvider>().t;
     final tv = context.read<LanguageProvider>().tv;
+    final isOwnerAcct = context.read<AuthProvider>().user?.isOwner ?? false;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -688,7 +698,7 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _summaryRow(t('user_type'), t('agent_option')),
+              _summaryRow(t('user_type'), t(isOwnerAcct ? 'property_owner' : 'agent_option')),
               _summaryRow(t('name_label'), _fullName.text.trim().isEmpty ? t('not_specified') : _fullName.text.trim()),
               _summaryRow(t('phone_label'), _ethPhone.text.trim().isEmpty ? t('not_specified') : _ethPhone.text.trim()),
               _summaryRow(t('region_label'), _region.isEmpty ? t('not_specified') : tv(_region)),
@@ -808,16 +818,49 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
     );
   }
 
+  Widget? _buildRejectedBanner() {
+    final user = context.read<AuthProvider>().user;
+    if (user?.status != 'Rejected') return null;
+    final reason = user?.rejectionReason;
+    final message = (reason != null && reason.isNotEmpty)
+        ? 'Your application was rejected: $reason\nUpdate your details below and submit again.'
+        : 'Your application was rejected. Update your details below and submit again.';
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.destructive.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.destructive.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.cancel_outlined, size: 18, color: AppColors.destructive),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 12, color: AppColors.destructive, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.read<LanguageProvider>().t;
     final isLast = _step == _stepLabels.length - 1;
+    final rejectedBanner = _buildRejectedBanner();
     return Scaffold(
       appBar: AppBar(title: Text(t('complete_profile'))),
       body: SafeArea(
         child: Column(
           children: [
             _stepper(),
+            ?rejectedBanner,
             if (_error != null)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),

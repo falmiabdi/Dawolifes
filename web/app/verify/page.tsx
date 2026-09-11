@@ -41,10 +41,18 @@ export default function VerifyPage() {
     setUploading(true)
     setMessage('')
     try {
+      const token = await getToken()
+      if (!token) {
+        setMessage('Your session has expired. Please sign in again.')
+        return
+      }
       const formData = new FormData()
       formData.append('file', file)
       const res = await fetch(`${await getApiUrlAsync()}/api/upload`, {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       })
       const data = await res.json()
@@ -67,6 +75,10 @@ export default function VerifyPage() {
     setMessage('')
     try {
       const token = await getToken()
+      if (!token) {
+        setMessage('Your session has expired. Please sign in again.')
+        return
+      }
       const res = await fetch(`${getApiUrl()}/api/auth/profile`, {
         method: 'PATCH',
         headers: {

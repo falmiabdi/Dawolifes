@@ -2,13 +2,14 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Building2, PlusCircle, ExternalLink, MapPin, AlertCircle, Pencil } from 'lucide-react'
+import { Building2, PlusCircle, ExternalLink, MapPin, AlertCircle, Pencil, Loader2 } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import { formatPrice } from '@/lib/data'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PropertyDeleteButton } from './delete-button'
+import { useListingPermissions } from '@/components/agent/use-listing-permissions'
 import { useI18n } from '@/lib/i18n'
 
 
@@ -16,21 +17,30 @@ export default function AgentPropertiesPage() {
   const { user, getToken } = useAuth()
   const { t, tv } = useI18n()
   const [properties, setProperties] = useState<any[]>([])
+  const permissions = useListingPermissions(getToken)
+  const [requesting, setRequesting] = useState<string | null>(null)
+
+  const fetchProperties = useCallback(async () => {
+    try {
+      const token = await getToken()
+      const res = await fetch(`${getApiUrl()}/api/agent/properties`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      const data = await res.json()
+      setProperties(data.properties || [])
+    } catch {}
+  }, [getToken])
 
   useEffect(() => {
     if (!user?.id) return
-    const fetchProperties = async () => {
-      try {
-        const token = await getToken()
-        const res = await fetch(`${getApiUrl()}/api/agent/properties`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
-        const data = await res.json()
-        setProperties(data.properties || [])
-      } catch {}
-    }
     fetchProperties()
-  }, [getToken, user?.id])
+  }, [user?.id, fetchProperties])
+
+  const sendRequest = async (type: 'EDIT' | 'DELETE', id: string) => {
+    setRequesting(`${type}:${id}`)
+    await permissions.requestPermission({ entityType: 'PROPERTY', entityId: id, type })
+    setRequesting(null)
+  }
 
   if (!user) return null
 
@@ -126,7 +136,21 @@ export default function AgentPropertiesPage() {
                     >
                       <ExternalLink className="h-3.5 w-3.5" /> {t('view')}
                     </Link>
-                    {p.status === 'Rejected' && (
+                    {p.status === 'Approved' && !permissions.granted(p.id.toString(), 'EDIT') ? (
+                      permissions.pending(p.id.toString(), 'EDIT') ? (
+                        <span className="inline-flex items-center justify-center rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-600">
+                          {t('permission_requested')}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => sendRequest('EDIT', p.id.toString())}
+                          disabled={requesting === `EDIT:${p.id.toString()}`}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 text-xs font-bold text-orange-700 transition hover:bg-orange-100 disabled:opacity-60"
+                        >
+                          {requesting === `EDIT:${p.id.toString()}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />} {t('request_edit')}
+                        </button>
+                      )
+                    ) : (
                       <Link
                         href={`/agent/properties/edit?id=${p.id.toString()}`}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 text-xs font-bold text-orange-700 transition hover:bg-orange-100"
@@ -134,7 +158,23 @@ export default function AgentPropertiesPage() {
                         <Pencil className="h-3.5 w-3.5" /> {t('edit')}
                       </Link>
                     )}
-                    <PropertyDeleteButton id={p.id.toString()} />
+                    {p.status === 'Approved' && !permissions.granted(p.id.toString(), 'DELETE') ? (
+                      permissions.pending(p.id.toString(), 'DELETE') ? (
+                        <span className="inline-flex items-center justify-center rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-600">
+                          {t('permission_requested')}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => sendRequest('DELETE', p.id.toString())}
+                          disabled={requesting === `DELETE:${p.id.toString()}`}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                        >
+                          {requesting === `DELETE:${p.id.toString()}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <AlertCircle className="h-3.5 w-3.5" />} {t('request_delete')}
+                        </button>
+                      )
+                    ) : (
+                      <PropertyDeleteButton id={p.id.toString()} />
+                    )}
                   </div>
                 </div>
               </div>

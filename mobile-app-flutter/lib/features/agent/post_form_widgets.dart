@@ -85,6 +85,30 @@ Future<String> pickAndUploadImage(ApiClient api, {String endpoint = '/api/agent/
   return '$url';
 }
 
+/// Captures a photo with the device camera and uploads it, returning the URL.
+///
+/// Used for identity validation (selfie) where a fresh camera capture is
+/// required rather than a gallery pick.
+Future<String> captureAndUploadImage(ApiClient api, {String endpoint = '/api/agent/upload', String field = 'image'}) async {
+  final file = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 80, maxWidth: 1600);
+  if (file == null) throw ImagePickCancelled();
+  final bytes = await file.readAsBytes();
+  final mime = file.mimeType?.isNotEmpty == true
+      ? file.mimeType!
+      : _mimeFromExtension(file.name);
+  final safeName = _ensureExtension(file.name, mime);
+  final data = await api.uploadFile(
+    endpoint,
+    bytes: bytes,
+    filename: safeName,
+    contentType: mime,
+    fields: field.isNotEmpty ? {'field': field} : const {},
+  ) as Map<String, dynamic>;
+  final url = data['url'];
+  if (url == null) throw ApiException('Upload failed');
+  return '$url';
+}
+
 /// Picks a location document (image or PDF) and uploads it, returning the URL.
 ///
 /// Presents a source picker so users can attach either a JPG/PNG photo or a

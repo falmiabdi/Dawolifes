@@ -1,0 +1,33 @@
+# DawoLife — cPanel/LiteSpeed rules for Next.js 16 static export
+# Place this in public_html (or wherever the out/ contents are deployed)
+
+RewriteEngine On
+RewriteBase /
+
+# Pass-through: don't rewrite actual files or directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# SPA fallback — serve index.html for client-side routes
+RewriteRule ^ index.html [L]
+
+# LiteSpeed/Apache: serve .txt with correct MIME type (Next.js RSC payloads)
+<FilesMatch "\.(txt|rsc)$">
+  ForceType text/plain
+</FilesMatch>
+
+# Cache policy for Next.js build assets
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/plain "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 365 days"
+  ExpiresByType text/css "access plus 365 days"
+  ExpiresByType image/png "access plus 365 days"
+  ExpiresByType image/jpeg "access plus 365 days"
+  ExpiresByType image/svg+xml "access plus 365 days"
+  ExpiresByType font/woff2 "access plus 365 days"
+</IfModule>
+
+# Security
+Header always set X-Content-Type-Options "nosniff"

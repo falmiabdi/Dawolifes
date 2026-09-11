@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/agent_repository.dart';
 import '../../providers/auth_provider.dart';
@@ -77,15 +79,23 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                       const SizedBox(height: 14),
                       Center(
                         child: FilledButton.icon(
+                          onPressed: _editPersonal,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                          ),
+                          icon: const Icon(Icons.person_outline, size: 18),
+                          label: const Text('Edit Name & Photo'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: OutlinedButton.icon(
                           onPressed: () async {
                             await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
                             );
                             if (mounted) _load();
                           },
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                          ),
                           icon: const Icon(Icons.edit_outlined, size: 18),
                           label: Text(t('edit_profile')),
                         ),
@@ -133,6 +143,111 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  Future<void> _editPersonal() async {
+    final nameController = TextEditingController(
+      text: _s('fullName').isNotEmpty ? _s('fullName') : _s('username'),
+    );
+    final phoneController = TextEditingController(
+      text: _s('phone').isNotEmpty ? _s('phone') : _s('ethPhone'),
+    );
+    var photo = _s('profilePhoto');
+    var uploading = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Edit Personal Information'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage: photo.isNotEmpty ? CachedNetworkImageProvider(photo) : null,
+                      child: photo.isEmpty ? const Icon(Icons.person, size: 40) : null,
+                    ),
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: uploading
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                          : IconButton.filledTonal(
+                              onPressed: () async {
+                                try {
+                                  final api = context.read<ApiClient>();
+                                  final file = await ImagePicker()
+                                      .pickImage(source: ImageSource.gallery, imageQuality: 70);
+                                  if (file == null) return;
+                                  setDialogState(() => uploading = true);
+                                  final bytes = await file.readAsBytes();
+                                  final mime = file.mimeType?.isNotEmpty == true ? file.mimeType! : 'image/jpeg';
+                                  final url = await api.uploadFile('/api/upload',
+                                      bytes: bytes, filename: file.name, contentType: mime);
+                                  setDialogState(() {
+                                    photo = url;
+                                    uploading = false;
+                                  });
+                                } catch (e) {
+                                  setDialogState(() => uploading = false);
+                                  if (dialogContext.mounted) {
+                                    ScaffoldMessenger.of(dialogContext)
+                                        .showSnackBar(SnackBar(content: Text('Photo upload failed: $e')));
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.photo_camera, size: 18),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () async {
+                if (uploading) return;
+                Navigator.of(dialogContext).pop();
+                try {
+                  await context.read<AgentRepository>().updateProfileInfo(
+                        name: nameController.text,
+                        phone: phoneController.text,
+                        profilePhoto: photo,
+                      );
+                  await context.read<AuthProvider>().refreshUser();
+                  if (!mounted) return;
+                  await _load();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

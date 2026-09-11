@@ -37,6 +37,35 @@ class ApiClient {
   final TokenStorage storage;
   final http.Client _http;
 
+  String? _resolvedBase;
+
+  /// Picks the first reachable backend host and caches it for the session.
+  ///
+  /// Probing covers the local-dev cases transparently: Android emulator
+  /// (http://10.0.2.2:4000) and physical phone over USB with `adb reverse
+  /// tcp:4000 tcp:4000` (http://localhost:4000). An explicit API_BASE_URL
+  /// dart-define is trusted without probing so production never incurs the
+  /// health-check delay.
+  Future<String> resolveApiBaseUrl() async {
+    if (_resolvedBase != null) return _resolvedBase!;
+    final candidates = AppConfig.apiBaseCandidates;
+    if (const String.fromEnvironment('API_BASE_URL').isNotEmpty ||
+        candidates.length == 1) {
+      return _resolvedBase = candidates.first;
+    }
+    for (final candidate in candidates) {
+      try {
+        await _http
+            .get(Uri.parse('$candidate/api/health'))
+            .timeout(const Duration(milliseconds: 1500));
+        return _resolvedBase = candidate;
+      } catch (_) {
+        // Try the next candidate.
+      }
+    }
+    return _resolvedBase = candidates.first;
+  }
+
   /// Number of attempts for transient failures (timeouts, socket errors).
   static const int _maxAttempts = 3;
 
@@ -82,10 +111,11 @@ class ApiClient {
   /// so a transient cold-start wake becomes a brief delay instead of a
   /// connection-error screen.
   Future<http.Response> _attempt(Future<http.Response> Function(String base) run) async {
+    final base = await resolveApiBaseUrl();
     var lastError = ApiException('Request failed');
     for (var attempt = 1; attempt <= _maxAttempts; attempt++) {
       try {
-        return await run(AppConfig.apiBaseUrl)
+        return await run(base)
             .timeout(AppConfig.receiveTimeout);
       } on TimeoutException catch (_) {
         lastError = ApiException('Request timed out. Check your connection.');
@@ -343,7 +373,8 @@ class WSClient {
     _stateController.add(WSConnectionState.connecting);
     
     try {
-      final wsUrl = AppConfig.wsBaseUrl.replaceFirst('http', 'ws');
+      final base = await _api.resolveApiBaseUrl();
+      final wsUrl = base.replaceFirst('http', 'ws');
       final uri = Uri.parse('$wsUrl/ws?token=${Uri.encodeComponent(token)}');
       _channel = WebSocketChannel.connect(uri);
       

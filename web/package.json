@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node static-server.mjs",
+    "build:capacitor": "CAPACITOR_BUILD=true next build",
+    "start": "next start",
+    "start:static": "node static-server.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

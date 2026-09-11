@@ -3,11 +3,11 @@
 import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
 import {
-  Car, Check, X, Search, Loader2, Trash2, Phone
+  Car, Check, X, Search, Loader2, Trash2, Phone, Plus, Edit
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
@@ -46,6 +46,7 @@ interface Vehicle {
     email: string
     phone?: string
     profilePhoto?: string
+    role?: string
   }
   status: string
   rejectionReason?: string
@@ -55,6 +56,7 @@ interface Vehicle {
 export default function AdminVehiclesPage() {
   const { getToken } = useAuth()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const highlightId = searchParams.get('highlight')
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
@@ -172,6 +174,13 @@ export default function AdminVehiclesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Vehicle Management</h1>
           <p className="text-sm text-slate-500">Review, approve, or reject vehicle listings</p>
         </div>
+        <Button
+          onClick={() => router.push('/admin/post/vehicle')}
+          title="Post a new vehicle listing (same page as agents)"
+          className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 h-9"
+        >
+          <Plus className="h-4 w-4 mr-1" /> Post Vehicles
+        </Button>
       </div>
 
       <div className="flex items-center gap-3">
@@ -274,6 +283,7 @@ export default function AdminVehiclesPage() {
                 <p className="text-slate-400">Transmission:</p><p className="font-semibold text-slate-700">{selectedVehicle.transmission || 'N/A'}</p>
                 <p className="text-slate-400">Mileage:</p><p className="font-semibold text-slate-700">{selectedVehicle.mileage ? `${selectedVehicle.mileage.toLocaleString()} km` : 'N/A'}</p>
                 <p className="text-slate-400">Price:</p><p className="font-bold text-orange-600">{selectedVehicle.price.toLocaleString()} ETB</p>
+                <p className="text-slate-400">Posted By:</p><p className="font-semibold text-slate-700 capitalize">{selectedVehicle.agent?.role || 'agent'}</p>
               </div>
 
               <div className="text-xs text-slate-500">
@@ -282,7 +292,9 @@ export default function AdminVehiclesPage() {
               </div>
 
               <div className="text-xs text-slate-500 border-t border-slate-100 pt-3">
-                <p className="text-slate-400">Listed by:</p>
+                <p className="text-slate-400">Posted By:</p>
+                <p className="font-semibold text-slate-700">{selectedVehicle.agent?.role || 'agent'}</p>
+                <p className="text-slate-400 mt-1">Name:</p>
                 <p className="font-semibold text-slate-700">{selectedVehicle.agentName || selectedVehicle.agent?.username || 'Unknown'}</p>
                 <p className="text-slate-400 mt-1">Contact:</p>
                 <p className="font-semibold text-slate-700">{selectedVehicle.displayPhone || selectedVehicle.agent?.phone || 'No phone set'}</p>
@@ -296,59 +308,83 @@ export default function AdminVehiclesPage() {
               )}
 
               <div className="space-y-3 border-t border-b border-slate-100 py-3">
-                {(selectedVehicle.status === 'Pending' || selectedVehicle.status === 'Rejected' || selectedVehicle.status === 'Approved') && (
+                {selectedVehicle.agent?.role === 'admin' ? (
+                  // Admin-posted: only Edit and Delete
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => router.push(`/agent/vehicles/edit?id=${selectedVehicle.id}`)}
+                      disabled={submittingAction}
+                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold py-1.5 text-xs"
+                    >
+                      <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(selectedVehicle.id)}
+                      disabled={submittingAction}
+                      className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                      title="Delete Listing"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  // Agent/owner-posted: Approve/Reject + Switch Contact + Delete
                   <>
+                    {(selectedVehicle.status === 'Pending' || selectedVehicle.status === 'Rejected' || selectedVehicle.status === 'Approved') && (
+                      <>
+                        <div className="flex gap-2">
+                          {selectedVehicle.status !== 'Approved' && (
+                            <Button
+                              onClick={() => handleStatusChange(selectedVehicle.id, 'Approved')}
+                              disabled={submittingAction}
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5 text-xs"
+                            >
+                              <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => {
+                              if (rejectionReason.trim()) {
+                                handleStatusChange(selectedVehicle.id, 'Rejected', rejectionReason.trim())
+                              } else {
+                                toast.error('Please provide a reason for rejection')
+                              }
+                            }}
+                            disabled={submittingAction}
+                            className={`${selectedVehicle.status === 'Approved' ? 'flex-1' : 'flex-1'} bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5 text-xs`}
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" /> Reject
+                          </Button>
+                        </div>
+                        <textarea
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          placeholder="Reason for rejection (required if rejecting)..."
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                          rows={2}
+                        />
+                      </>
+                    )}
                     <div className="flex gap-2">
-                      {selectedVehicle.status !== 'Approved' && (
-                        <Button
-                          onClick={() => handleStatusChange(selectedVehicle.id, 'Approved')}
-                          disabled={submittingAction}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5 text-xs"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                      )}
                       <Button
-                        onClick={() => {
-                          if (rejectionReason.trim()) {
-                            handleStatusChange(selectedVehicle.id, 'Rejected', rejectionReason.trim())
-                          } else {
-                            toast.error('Please provide a reason for rejection')
-                          }
-                        }}
+                        onClick={() => handleSwitchContact(selectedVehicle.id)}
                         disabled={submittingAction}
-                        className={`${selectedVehicle.status === 'Approved' ? 'flex-1' : 'flex-1'} bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5 text-xs`}
+                        className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
+                        title="Toggle contact phone"
                       >
-                        <X className="h-3.5 w-3.5 mr-1" /> Reject
+                        <Phone className="h-3.5 w-3.5 mr-1" /> Switch Contact
+                      </Button>
+                      <Button
+                        onClick={() => handleDelete(selectedVehicle.id)}
+                        disabled={submittingAction}
+                        className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                        title="Delete Listing"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Reason for rejection (required if rejecting)..."
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
-                      rows={2}
-                    />
                   </>
                 )}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleSwitchContact(selectedVehicle.id)}
-                    disabled={submittingAction}
-                    className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
-                    title="Toggle contact phone"
-                  >
-                    <Phone className="h-3.5 w-3.5 mr-1" /> Switch Contact
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(selectedVehicle.id)}
-                    disabled={submittingAction}
-                    className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
-                    title="Delete Listing"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
 
               {selectedVehicle.description && (

@@ -87,9 +87,35 @@ class AdminRepository {
     await _api.delete('/api/vehicles/$id');
   }
 
-  Future<ListingContact> switchVehicleContact(String id) async {
+Future<ListingContact> switchVehicleContact(String id) async {
     final data = await _api.patch('/api/admin/vehicles/$id/contact') as Map<String, dynamic>;
-    return ListingContact.fromJson(data);
+    return ListingContact.fromJson(data['contact'] as Map<String, dynamic>);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPermissionRequests() async {
+    final data = await _api.get('/api/permissions/admin') as Map<String, dynamic>;
+    return (data['requests'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+  }
+
+  Future<void> decidePermission(String id, bool approve) async {
+    await _api.patch('/api/permissions/$id/decide', {'approve': approve});
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMyPermissions() async {
+    final data = await _api.get('/api/permissions/mine') as Map<String, dynamic>;
+    return (data['requests'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+  }
+
+  Future<void> requestPermission({
+    required String entityType,
+    required String entityId,
+    required String type,
+  }) async {
+    await _api.post('/api/permissions', {
+      'entityType': entityType,
+      'entityId': entityId,
+      'type': type,
+    });
   }
 
   Future<List<Payment>> fetchPayments({

@@ -20,10 +20,12 @@ import announcementRoutes from './routes/announcements.js'
 import pushTokenRoutes from './routes/pushTokens.js'
 import settingsRoutes from './routes/settings.js'
 import contactRoutes from './routes/contact.js'
+import reviewRoutes from './routes/reviews.js'
+import statsRoutes from './routes/stats.js'
+import permissionRoutes from './routes/permissions.js'
 import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
-import { readSmtpConfig } from './services/mail.js'
 import { isResendConfigured } from './services/email.js'
 
 dotenv.config()
@@ -97,6 +99,9 @@ app.use('/api/announcements', announcementRoutes)
 app.use('/api/push-tokens', pushTokenRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/contact', contactRoutes)
+app.use('/api/reviews', reviewRoutes)
+app.use('/api/stats', statsRoutes)
+app.use('/api/permissions', permissionRoutes)
 
 // Root route
 app.get('/', (_req, res) => {
@@ -121,6 +126,8 @@ app.get('/', (_req, res) => {
       announcements: '/api/announcements',
       pushTokens: '/api/push-tokens',
       contact: '/api/contact',
+      reviews: '/api/reviews',
+      stats: '/api/stats/overview',
     },
   })
 })
@@ -155,42 +162,17 @@ async function start() {
     console.error('⚠️ Failed to ensure root admin:', e?.message || e)
   }
 
-  // Public helper: returns this server's public egress IP (used to configure
-  // Brevo's IP allowlist). No secrets are exposed.
-  app.get('/api/egress-ip', async (_req, res) => {
-    try {
-      const r = await fetch('https://api.ipify.org?format=json')
-      const d = (await r.json()) as { ip: string }
-      res.json({ ip: d.ip, note: 'Add this IP (or its /24) to Brevo → Settings → API Keys → IP allowlist' })
-    } catch (e: any) {
-      res.status(500).json({ error: e?.message || 'failed' })
-    }
-  })
-
   // DEBUG: reveals which email transport will be used + what BASE_URL is set.
   // No secrets exposed — only boolean flags + the masked key prefix.
   app.get('/api/debug/email', (_req, res) => {
     const mask = (v: string | undefined) => (v ? `${v.slice(0, 6)}…${v.slice(-4)} (len ${v.length})` : '(unset)')
-    const transport = isResendConfigured()
-      ? 'RESEND'
-      : readSmtpConfig()
-        ? 'BREVO_SMTP'
-        : process.env.BREVO_API_KEY
-          ? 'BREVO_REST'
-          : 'NONE (emails skipped)'
     res.json({
-      transport,
+      transport: isResendConfigured() ? 'RESEND' : 'NONE (emails skipped)',
       resend: {
         configured: isResendConfigured(),
         apiKey: process.env.RESEND_API_KEY ? mask(process.env.RESEND_API_KEY) : '(unset)',
         fromEmail: process.env.RESEND_FROM_EMAIL || '(unset)',
         fromName: process.env.RESEND_FROM_NAME || 'DawoLife',
-      },
-      brevoSmtp: {
-        configured: !!readSmtpConfig(),
-        host: process.env.SMTP_HOST || process.env.SMTP_NAME || process.env.BREVO_SMTP_NAME || '(unset)',
-        user: process.env.SMTP_USER || process.env.BREVO_SMTP_USER || '(unset)',
-        port: process.env.SMTP_PORT || process.env.BREVO_PORT || '(unset, default 587)',
       },
       baseUrl: process.env.BASE_URL || '(unset → http://localhost:4000)',
       frontendUrl: process.env.FRONTEND_URL || '(unset)',
@@ -204,22 +186,11 @@ async function start() {
   const server = app.listen(PORT, () => {
     console.log(`DawoLife API server running on port ${PORT} ✅`)
 
-    const smtp = readSmtpConfig()
     if (isResendConfigured()) {
-      console.log('Email transport: Resend API')
-    } else if (smtp) {
-      console.log(`Email transport: SMTP via ${smtp.host}:${smtp.port} from ${smtp.fromEmail}`)
-    } else if (process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY) {
-      console.log('Email transport: Brevo REST API (SMTP not configured — set BREVO_SMTP_NAME/BREVO_SMTP_USER/BREVO_SMTP_KEY/BREVO_FROM_EMAIL)')
+      console.log('Email transport: Resend API ✅')
     } else {
-      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set RESEND_API_KEY + RESEND_FROM_EMAIL, or BREVO_SMTP_* vars)')
+      console.log('Email transport: NOT CONFIGURED — emails will be skipped (set RESEND_API_KEY + RESEND_FROM_EMAIL)')
     }
-
-    // Discover this server's public egress IP (needed for Brevo's IP allowlist).
-    fetch('https://api.ipify.org?format=json')
-      .then((r) => r.json())
-      .then((d: any) => console.log(`[SMTP] This server's public egress IP: ${d.ip}  ← add THIS to Brevo's IP allowlist (or its /24)`))
-      .catch(() => console.log('[SMTP] Could not determine public egress IP'))
 
     // Prevent Render free-tier from spinning down the web server after 15 min
     // of inactivity. A self-ping every 5 min keeps the instance warm.

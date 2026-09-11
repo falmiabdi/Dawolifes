@@ -103,6 +103,9 @@ export type Agent = {
   companyName?: string
   officeAddress?: string
   licenseNumber?: string
+  // User id of the currently displayed contact (set when the admin toggled the
+  // contact to a real account). Clients message this id instead of `id`.
+  contactUserId?: string
 }
 
 export const categories = [
@@ -135,6 +138,7 @@ export function resolveListingAgent(raw: any, opts?: { role?: string; section?: 
     role: isVehicle ? "Vehicle Agent" : "Real Estate Agent",
     phone: raw.displayPhone || raw.agent?.phone || "+251 900 000 000",
     avatar: raw.displayPhoto || raw.agent?.profilePhoto || (isVehicle ? "/placeholder-user.svg" : "/placeholder.svg"),
+    contactUserId: raw.contactUserId || undefined,
   }
 }
 

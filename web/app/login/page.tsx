@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useAuth } from '@/components/auth/auth-guard'
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
 import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,12 +37,13 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, login } = useAuth()
+  const { user, login, googleSignIn } = useAuth()
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState('')
   const [messageIsSuccess, setMessageIsSuccess] = useState(false)
   const [needsVerification, setNeedsVerification] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const {
     register,
     handleSubmit,
@@ -67,7 +69,8 @@ function LoginForm() {
       router.replace(user.onboardingComplete ? '/agent' : '/agent/onboarding')
     }
     else router.replace('/')
-  }, [user, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   useEffect(() => {
     if (searchParams.get('verified') === '1') {
@@ -97,6 +100,25 @@ function LoginForm() {
       } else {
         setMessage('Invalid email or password. Please try again.')
       }
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setMessage('')
+    setMessageIsSuccess(false)
+    setGoogleLoading(true)
+    try {
+      const result = await googleSignIn()
+      if (result?.requiresEmailVerification) {
+        setMessage('Please verify your email address to continue.')
+        return
+      }
+      // googleSignIn() already calls setUserAndCache() + persistToken().
+      // Routing is handled by the useEffect watching `user`.
+    } catch (err: any) {
+      setMessage(err?.message || 'Google sign in failed. Please try again.')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -171,6 +193,14 @@ function LoginForm() {
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {t('sign_in')}
         </Button>
+
+        <div className="my-2 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-medium text-slate-400">OR</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
       </form>
 
     </AuthShell>

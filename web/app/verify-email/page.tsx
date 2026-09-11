@@ -3,10 +3,11 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, Mail, ExternalLink, CheckCircle, KeyRound } from 'lucide-react'
+import { Loader2, CheckCircle, KeyRound } from 'lucide-react'
 
 import { AuthShell } from '@/components/auth/auth-shell'
 import { useI18n } from '@/lib/i18n'
+import { useAuth } from '@/components/auth/auth-guard'
 import { Button } from '@/components/ui/button'
 import { getApiUrlAsync } from '@/lib/get-api-url'
 
@@ -16,6 +17,7 @@ function VerifyEmailForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { t } = useI18n()
+  const { verifyOtp } = useAuth()
 
   const email = searchParams.get('email') || ''
   const prefillCode = (searchParams.get('code') || '').replace(/\D/g, '')
@@ -45,12 +47,6 @@ function VerifyEmailForm() {
     setIsError(error)
   }
 
-  const openEmail = () => {
-    if (email) {
-      window.location.href = `mailto:${email}`
-    }
-  }
-
   const handleVerify = async () => {
     showMessage('')
     const trimmed = code.trim()
@@ -60,20 +56,23 @@ function VerifyEmailForm() {
     }
     setVerifying(true)
     try {
-      const res = await fetch(`${await getApiUrlAsync()}/api/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, otp: trimmed }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        showMessage(data.message || 'Verification failed. Try again.', true)
+      const data = await verifyOtp(email, trimmed)
+      if (!data?.user) {
+        router.push('/auth/login?verified=1')
         return
       }
-      router.push('/login?verified=1')
-    } catch {
-      showMessage('Cannot reach the server. Check your connection.', true)
+      // verifyOtp() already calls setUserAndCache() + persistToken().
+      const u = data.user
+      if (u.role === 'admin') router.push('/admin')
+      else if (u.role === 'agent' || u.role === 'owner') router.push(u.onboardingComplete ? '/agent' : '/agent/onboarding')
+      else router.push('/')
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {
+        showMessage('Cannot reach the server. Check your connection.', true)
+      } else {
+        showMessage(msg || 'Verification failed. Try again.', true)
+      }
     } finally {
       setVerifying(false)
     }
@@ -108,9 +107,10 @@ function VerifyEmailForm() {
       <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
         <div className="flex items-start gap-3 text-sm text-orange-800">
           <KeyRound className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
+          <p className="text-sm italic">
             We emailed a <span className="font-semibold">6-digit code</span> to{' '}
-            <span className="font-semibold">{email || 'your email'}</span>. Enter it below to verify your account.
+            <span className="font-semibold text-green-600">{email || 'your email'}</span>. Check your inbox — or your{' '}
+            <span className="font-semibold text-green-600">spam</span> folder if you don&apos;t see it.
           </p>
         </div>
 
@@ -140,30 +140,6 @@ function VerifyEmailForm() {
         <span className="h-px flex-1 bg-slate-200" />
         OR
         <span className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      {/* Alternative: use the emailed link */}
-      <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
-        <div className="flex items-start gap-3 text-sm text-orange-800">
-          <Mail className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            We also emailed a verification link to <span className="font-semibold">{email || 'your email'}</span>. Open
-            your email and tap the <span className="font-semibold">&quot;Verify Email&quot;</span> button.
-          </p>
-        </div>
-
-        <div className="mt-4 grid gap-3">
-          <Button type="button" variant="outline" onClick={openEmail} className="w-full rounded-full">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Open Email App
-          </Button>
-          <Link href="/login?verified=1" className="block">
-            <Button type="button" className="w-full rounded-full">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              I verified — continue to sign in
-            </Button>
-          </Link>
-        </div>
       </div>
 
       {message ? (

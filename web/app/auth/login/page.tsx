@@ -53,9 +53,10 @@ export default function AuthLoginPage() {
       return
     }
     if (user.role === 'admin') router.replace('/admin')
-    else if (user.role === 'agent' || user.role === 'owner') router.replace('/agent')
+    else if (user.role === 'agent' || user.role === 'owner') router.replace(user.onboardingComplete ? '/agent' : '/agent/onboarding')
     else router.replace('/')
-  }, [user, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const onSubmit = async (values: LoginFormValues) => {
     setMessage('')
@@ -117,8 +118,10 @@ export default function AuthLoginPage() {
       const result = await googleSignIn()
       if (result?.requiresEmailVerification) {
         setMessage('Please verify your email address to continue.')
+        return
       }
-      // On success the `user` effect above routes to the right place.
+      // googleSignIn() already calls setUserAndCache() + persistToken().
+      // Routing is handled by the useEffect watching `user`.
     } catch (err: any) {
       setMessage(err?.message || 'Google sign in failed. Please try again.')
     } finally {
@@ -201,15 +204,15 @@ export default function AuthLoginPage() {
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {t('sign_in')}
         </Button>
+
+        <div className="my-2 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-medium text-slate-400">OR</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
       </form>
-
-      <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs font-medium text-slate-400">OR</span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
     </AuthShell>
   )
 }

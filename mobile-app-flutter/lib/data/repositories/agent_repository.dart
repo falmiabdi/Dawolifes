@@ -71,4 +71,30 @@ class AgentRepository {
   Future<void> saveOnboarding(Map<String, dynamic> payload) async {
     await _api.post('/api/agent/onboarding', payload);
   }
+
+  Future<List<Map<String, dynamic>>> fetchMyPermissions() async {
+    final data = await _api.get('/api/permissions/mine') as Map<String, dynamic>;
+    return (data['requests'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+  }
+
+  /// Updates the poster's public profile (name/phone/photo) via /api/auth/profile.
+  Future<void> updateProfileInfo({String? name, String? phone, String? profilePhoto}) async {
+    await _api.patch('/api/auth/profile', {
+      if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+      if (phone != null) 'phone': phone.trim(),
+      if (profilePhoto != null) 'profilePhoto': profilePhoto,
+    });
+  }
+
+  Future<void> requestPermission({
+    required String entityType,
+    required String entityId,
+    required String type,
+  }) async {
+    await _api.post('/api/permissions', {
+      'entityType': entityType,
+      'entityId': entityId,
+      'type': type,
+    });
+  }
 }

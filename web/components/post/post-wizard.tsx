@@ -89,7 +89,7 @@ type FormState = {
 const initialState: FormState = {
   title: "",
   posterType: "Agent",
-  ownerType: "Farmer Owner",
+  ownerType: "Owner",
   contactMode: "Admin",
   propertyType: "Condominium",
   listingType: "For Rent",
@@ -144,8 +144,11 @@ export function PostWizard() {
   useEffect(() => {
     if (user?.role === 'owner') {
       set('posterType', 'Owner')
+      set('contactMode', 'Owner')
     }
   }, [user])
+
+  const isOwner = user?.role === 'owner'
 
   const toggleFeature = (feature: string) =>
     setForm((f) => ({
@@ -411,7 +414,8 @@ export function PostWizard() {
                   <SelectBox
                     value={form.ownerType}
                     onChange={(v) => set("ownerType", v)}
-                    options={["Farmer Owner", "Saving Owner"]}
+                    options={["Owner", "Saving Owner"]}
+                    disabled={isOwner}
                   />
                 </Field>
                 <Field label={t('contact_mode')}>
@@ -419,6 +423,7 @@ export function PostWizard() {
                     value={form.contactMode}
                     onChange={(v) => set("contactMode", v)}
                     options={["Admin", "Owner", "Agent"]}
+                    disabled={isOwner}
                   />
                 </Field>
               </div>
@@ -960,14 +965,16 @@ function SelectBox({
   value,
   onChange,
   options,
+  disabled,
 }: {
   value: string
   onChange: (v: string) => void
   options: string[]
+  disabled?: boolean
 }) {
   const { tv } = useI18n()
   return (
-    <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
+    <Select value={value} onValueChange={(v) => onChange(v ?? "")} disabled={disabled}>
       <SelectTrigger className="w-full">
         <SelectValue />
       </SelectTrigger>

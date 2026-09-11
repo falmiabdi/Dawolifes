@@ -2,11 +2,11 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
 import {
-  Building2, Check, X, Search, Loader2, Trash2, Phone, PhoneCall
+  Building2, Check, X, Search, Loader2, Trash2, Phone, PhoneCall, Plus, Edit
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,7 @@ interface Property {
     email: string
     phone?: string
     profilePhoto?: string
+    role?: string
   }
   status: string
   rejectionReason?: string
@@ -61,6 +62,7 @@ interface Property {
 export default function AdminPropertiesPage() {
   const { getToken } = useAuth()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const highlightId = searchParams.get('highlight')
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
@@ -203,16 +205,28 @@ export default function AdminPropertiesPage() {
           />
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto">
-          {['all', 'Pending', 'Approved', 'Rejected'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === status ? 'border-orange-500 bg-orange-50 text-orange-950 font-bold' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-orange-300'}`}
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
+          <div className="flex gap-2">
+            {['all', 'Pending', 'Approved', 'Rejected'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${statusFilter === status ? 'border-orange-500 bg-orange-50 text-orange-950 font-bold' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-orange-300'}`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+
+          <div className="ml-auto flex gap-2 border-l border-slate-200 pl-3">
+            <Button
+              onClick={() => router.push('/admin/post/property')}
+              title="Post a new property listing (same page as agents)"
+              className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 h-9"
             >
-              {status}
-            </button>
-          ))}
+              <Plus className="h-4 w-4 mr-1" /> Post Properties
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -308,61 +322,85 @@ export default function AdminPropertiesPage() {
 
               {/* Action Buttons */}
               <div className="space-y-3 border-t border-b border-slate-100 py-3">
-                {(selectedProperty.status === 'Pending' || selectedProperty.status === 'Rejected' || selectedProperty.status === 'Approved') && (
+                {selectedProperty.agent?.role === 'admin' ? (
+                  // Admin-posted: only Edit and Delete
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => router.push(`/agent/properties/edit?id=${selectedProperty.id}`)}
+                      disabled={submittingAction}
+                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold py-1.5"
+                    >
+                      <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(selectedProperty.id)}
+                      disabled={submittingAction}
+                      className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                      title="Delete Listing"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  // Agent/owner-posted: Approve/Reject + Switch Contact + Delete
                   <>
+                    {(selectedProperty.status === 'Pending' || selectedProperty.status === 'Rejected' || selectedProperty.status === 'Approved') && (
+                      <>
+                        <div className="flex gap-2">
+                          {selectedProperty.status !== 'Approved' && (
+                            <Button
+                              onClick={() => handleStatusChange(selectedProperty.id, 'Approved')}
+                              disabled={submittingAction}
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5"
+                            >
+                              <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => {
+                              if (rejectionReason.trim()) {
+                                handleStatusChange(selectedProperty.id, 'Rejected', rejectionReason.trim())
+                              } else {
+                                toast.error('Please provide a reason for rejection')
+                              }
+                            }}
+                            disabled={submittingAction}
+                            className={`${selectedProperty.status === 'Approved' ? 'flex-1' : 'flex-1'} bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5`}
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" /> Reject
+                          </Button>
+                        </div>
+                        <textarea
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          placeholder="Reason for rejection (required if rejecting)..."
+                          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                          rows={2}
+                        />
+                      </>
+                    )}
                     <div className="flex gap-2">
-                      {selectedProperty.status !== 'Approved' && (
-                        <Button
-                          onClick={() => handleStatusChange(selectedProperty.id, 'Approved')}
-                          disabled={submittingAction}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold py-1.5"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                      )}
                       <Button
-                        onClick={() => {
-                          if (rejectionReason.trim()) {
-                            handleStatusChange(selectedProperty.id, 'Rejected', rejectionReason.trim())
-                          } else {
-                            toast.error('Please provide a reason for rejection')
-                          }
+                        onClick={async () => {
+                          await toggleContact(selectedProperty.id)
                         }}
                         disabled={submittingAction}
-                        className={`${selectedProperty.status === 'Approved' ? 'flex-1' : 'flex-1'} bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold py-1.5`}
+                        className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
+                        title="Toggle contact phone"
                       >
-                        <X className="h-3.5 w-3.5 mr-1" /> Reject
+                        <Phone className="h-3.5 w-3.5 mr-1" /> Switch Contact
+                      </Button>
+                      <Button
+                        onClick={() => handleDelete(selectedProperty.id)}
+                        disabled={submittingAction}
+                        className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
+                        title="Delete Listing"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Reason for rejection (required if rejecting)..."
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
-                      rows={2}
-                    />
                   </>
                 )}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={async () => {
-                      await toggleContact(selectedProperty.id)
-                    }}
-                    disabled={submittingAction}
-                    className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl font-bold py-1.5 text-xs"
-                    title="Toggle contact phone"
-                  >
-                    <Phone className="h-3.5 w-3.5 mr-1" /> Switch Contact
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(selectedProperty.id)}
-                    disabled={submittingAction}
-                    className="h-9 w-9 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl flex items-center justify-center shrink-0"
-                    title="Delete Listing"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
 
               {/* Specifications */}
@@ -372,8 +410,7 @@ export default function AdminPropertiesPage() {
                   <div className="grid grid-cols-2 gap-y-2 border-b border-slate-100 pb-3">
                     <p><span className="text-slate-400">Type:</span> <span className="font-semibold text-slate-700">{selectedProperty.type}</span></p>
                     <p><span className="text-slate-400">Listing:</span> <span className="font-semibold text-slate-700">{selectedProperty.listingType}</span></p>
-                    <p><span className="text-slate-400">Listing By:</span> <span className="font-semibold text-slate-700">{selectedProperty.posterType || '-'}</span></p>
-                    <p><span className="text-slate-400">Owner Type:</span> <span className="font-semibold text-slate-700">{selectedProperty.ownerType || '-'}</span></p>
+                    <p><span className="text-slate-400">Posted By:</span> <span className="font-semibold text-slate-700 capitalize">{selectedProperty.agent?.role || 'agent'}</span></p>
                     <p><span className="text-slate-400">Price:</span> <span className="font-bold text-orange-600">{selectedProperty.price.toLocaleString()} ETB ({selectedProperty.priceType})</span></p>
                     <p><span className="text-slate-400">Area:</span> <span className="font-semibold text-slate-700">{selectedProperty.area} mÂ²</span></p>
                     <p><span className="text-slate-400">Beds/Baths:</span> <span className="font-semibold text-slate-700">{selectedProperty.bedrooms} / {selectedProperty.bathrooms}</span></p>

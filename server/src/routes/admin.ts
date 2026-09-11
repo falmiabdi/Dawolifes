@@ -4,8 +4,9 @@ import { prisma } from '../lib/prisma.js'
 import { createAndBroadcastNotification } from '../utils/notifications.js'
 import { hashPassword } from '../utils/password.js'
 import { ADMIN_PHONES } from '../config/constants.js'
-import { readSmtpConfig, sendMailViaSmtp, verifySmtpConnection, isSmtpConfigured } from '../services/mail.js'
 import { isResendConfigured, testResendConnection } from '../services/email.js'
+import { initializeFirebaseAdmin } from '../utils/firebase.js'
+import { getAuth } from 'firebase-admin/auth'
 
 function flattenAgent(user: any) {
   const profile = user.profile || {}
@@ -65,7 +66,7 @@ const router = Router()
 // Get all agents (with search and status filter)
 router.get('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const where: any = { role: 'agent' }
+    const where: any = { role: { in: ['agent', 'owner'] } }
 
     if (req.query.status && req.query.status !== 'all' && req.query.status !== '') {
       where.status = req.query.status
@@ -103,6 +104,10 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id } })
     if (!user) {
       return res.status(404).json({ message: 'Agent not found' })
+    }
+
+    if (user.isRootAdmin) {
+      return res.status(400).json({ message: 'Cannot delete the root admin account' })
     }
 
     switch (action) {
@@ -143,7 +148,7 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
         ).catch(() => {})
         break
       case 'delete':
-        await deleteUserCascade(id)
+        await deleteUserCascade(id, req.user!.userId)
         return res.json({ message: 'Agent deleted' })
       default:
         return res.status(400).json({ message: `Unknown action: ${action}` })
@@ -155,34 +160,87 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Delete a user along with all records that reference them (listings,
-// messages, saved items, notifications) to avoid foreign-key failures.
-async function deleteUserCascade(userId: string) {
+// Delete a user along with all records that reference them (messages, saved
+// items, notifications) to avoid foreign-key failures.
+//
+// Successfully posted listings are PRESERVED for agents/owners: requirements
+// state posted listings may only be edited, never removed. They are reassigned
+// to the acting admin so they stay live. Only unposted (Draft/Pending/Rejected)
+// listings are hard-deleted. The Firebase Authentication account is also
+// deleted so the login no longer exists.
+async function deleteUserCascade(userId: string, actingAdminId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) throw new Error('User not found')
+
   const properties = await prisma.property.findMany({
     where: { agentId: userId },
-    select: { id: true },
+    select: { id: true, status: true },
   })
-  const propertyIds = properties.map((p) => p.id)
   const vehicles = await prisma.vehicle.findMany({
     where: { agentId: userId },
-    select: { id: true },
+    select: { id: true, status: true },
   })
-  const vehicleIds = vehicles.map((v) => v.id)
 
-  if (propertyIds.length > 0) {
-    await prisma.property.deleteMany({ where: { id: { in: propertyIds } } })
+  const POSTED = ['Approved', 'Sold', 'Rented']
+
+  const postedPropertyIds = properties.filter((p) => POSTED.includes(p.status)).map((p) => p.id)
+  const deletePropertyIds = properties.filter((p) => !POSTED.includes(p.status)).map((p) => p.id)
+  const postedVehicleIds = vehicles.filter((v) => POSTED.includes(v.status)).map((v) => v.id)
+  const deleteVehicleIds = vehicles.filter((v) => !POSTED.includes(v.status)).map((v) => v.id)
+
+  // Preserve posted listings by handing them to the acting admin.
+  if (postedPropertyIds.length > 0) {
+    const admin = await resolveAdminContact(actingAdminId)
+    await prisma.property.updateMany({
+      where: { id: { in: postedPropertyIds } },
+      data: {
+        agentId: actingAdminId,
+        agentName: admin.name,
+        displayPhone: admin.phone,
+        displayPhoto: admin.photo || null,
+        contactMode: 'Admin',
+      },
+    })
   }
-  if (vehicleIds.length > 0) {
-    await prisma.vehicle.deleteMany({ where: { id: { in: vehicleIds } } })
+  if (postedVehicleIds.length > 0) {
+    const admin = await resolveAdminContact(actingAdminId)
+    await prisma.vehicle.updateMany({
+      where: { id: { in: postedVehicleIds } },
+      data: {
+        agentId: actingAdminId,
+        agentName: admin.name,
+        displayPhone: admin.phone,
+        displayPhoto: admin.photo || null,
+      },
+    })
+  }
+
+  // Hard-delete only the listings that were never successfully posted.
+  if (deletePropertyIds.length > 0) {
+    await prisma.property.deleteMany({ where: { id: { in: deletePropertyIds } } })
+  }
+  if (deleteVehicleIds.length > 0) {
+    await prisma.vehicle.deleteMany({ where: { id: { in: deleteVehicleIds } } })
   }
 
   const messageOr: any[] = [{ senderId: userId }, { recipientId: userId }]
-  if (propertyIds.length > 0) {
-    messageOr.push({ propertyId: { in: propertyIds } })
+  if (deletePropertyIds.length > 0) {
+    messageOr.push({ propertyId: { in: deletePropertyIds } })
   }
   await prisma.message.deleteMany({ where: { OR: messageOr } })
   await prisma.savedItem.deleteMany({ where: { userId } })
   await prisma.notification.deleteMany({ where: { userId } })
+
+  // Remove the Firebase Authentication account (best-effort; a missing Firebase
+  // setup must not block the DB deletion).
+  if (user.firebaseUid) {
+    try {
+      await getAuth(initializeFirebaseAdmin()).deleteUser(user.firebaseUid)
+    } catch (err: any) {
+      console.warn(`[Delete User] Firebase account deletion skipped: ${err?.message}`)
+    }
+  }
+
   await prisma.user.delete({ where: { id: userId } })
 }
 
@@ -229,6 +287,7 @@ router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (
         displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
         displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
         contactMode: nextAdmin ? 'Admin' : 'Owner',
+        contactUserId: nextAdmin ? req.user!.userId : agent?.id || null,
       },
     })
     const updated = await prisma.property.findUnique({
@@ -267,6 +326,7 @@ router.patch('/vehicles/:id/contact', authMiddleware, adminMiddleware, async (re
         agentName: nextAdmin ? admin.name : agent?.username?.trim() || admin.name,
         displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
         displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
+        contactUserId: nextAdmin ? req.user!.userId : agent?.id || null,
       },
     })
     const updated = await prisma.vehicle.findUnique({
@@ -296,7 +356,7 @@ router.get('/properties', authMiddleware, adminMiddleware, async (req, res) => {
       prisma.property.count({ where }),
       prisma.property.findMany({
         where,
-        include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+        include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true, role: true } } },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -379,7 +439,7 @@ router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
       prisma.vehicle.count({ where }),
       prisma.vehicle.findMany({
         where,
-        include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+        include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true, role: true } } },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -488,6 +548,10 @@ router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'User not found' })
     }
 
+    if (user.isRootAdmin) {
+      return res.status(400).json({ message: 'Cannot delete the root admin account' })
+    }
+
     switch (action) {
       case 'suspend':
         await prisma.user.update({ where: { id }, data: { status: 'Suspended' } })
@@ -496,7 +560,7 @@ router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
         await prisma.user.update({ where: { id }, data: { status: 'Approved' } })
         break
       case 'delete':
-        await deleteUserCascade(id)
+        await deleteUserCascade(id, req.user!.userId)
         return res.json({ message: 'User deleted' })
       default:
         return res.status(400).json({ message: `Unknown action: ${action}` })
@@ -669,26 +733,9 @@ router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
   }
 })
 
-// ─── SMTP (Brevo) test & verify ──────────────────────────────────────────────
-// Admin-only. The test endpoint always sends to the configured SMTP_FROM_EMAIL
-// (self-send) so the API can never be used as an open relay — any `to` value
-// supplied by the client is ignored. No SMTP credentials are ever returned.
+// ─── Resend test ─────────────────────────────────────────────────────────────
+// Admin-only. Sends a test email via Resend to verify the configuration.
 
-// GET /api/admin/smtp/verify
-// Verifies the SMTP connection without sending a message. Returns a sanitized
-// human-readable error (never the SMTP key/password/auth details).
-router.get('/smtp/verify', authMiddleware, async (_req, res) => {
-  try {
-    const result = await verifySmtpConnection()
-    res.status(result.ok ? 200 : 503).json(result)
-  } catch (err: any) {
-    res.status(500).json({ ok: false, message: 'SMTP verify failed.' })
-  }
-})
-
-// POST /api/admin/smtp-test
-// Sends a fixed-content test email to the configured sender address through
-// Brevo SMTP. Returns the masked recipient so an admin can confirm delivery.
 router.post('/resend-test', authMiddleware, async (_req, res) => {
   try {
     const to = process.env.RESEND_FROM_EMAIL || process.env.RESEND_FORCE_TO
@@ -702,30 +749,6 @@ router.post('/resend-test', authMiddleware, async (_req, res) => {
     res.json({ ok: true, message: result.message, sentTo: maskEmail(to) })
   } catch (err: any) {
     res.status(502).json({ ok: false, message: err?.message || 'Failed to send Resend test email.' })
-  }
-})
-
-router.post('/smtp-test', authMiddleware, async (_req, res) => {
-  try {
-    if (!isSmtpConfigured()) {
-      return res.status(400).json({ ok: false, message: 'SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/SMTP_FROM_EMAIL).' })
-    }
-    const cfg = readSmtpConfig()!
-    const to = cfg.fromEmail
-    const subject = 'DawoLife SMTP Test'
-    const html = `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-        <h2 style="color:#f97316;">DawoLife SMTP Test</h2>
-        <p>DawoLife SMTP is working successfully.</p>
-        <p>This is a test email from the DawoLife production backend.</p>
-        <p style="color:#64748b;font-size:14px;">Sent via ${cfg.host}:${cfg.port} to the configured sender address.</p>
-      </div>
-    `
-    await sendMailViaSmtp({ to, subject, html, text: 'DawoLife SMTP is working successfully. This is a test email from the DawoLife production backend.' })
-
-    res.json({ ok: true, message: 'Test email sent.', sentTo: maskEmail(to) })
-  } catch (err: any) {
-    res.status(502).json({ ok: false, message: err?.message || 'Failed to send SMTP test email.' })
   }
 })
 

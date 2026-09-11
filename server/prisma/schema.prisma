@@ -58,36 +58,42 @@ enum SavedItemType {
 }
 
 model User {
-  id                String         @id @default(uuid()) @db.Uuid
-  username          String         @db.VarChar(50)
-  email             String         @unique
-  password          String?
-  role              UserRole       @default(user)
-  roles             Json           @default("[]")
-  status            UserStatus     @default(Pending)
-  rejectionReason   String?
-  isRootAdmin       Boolean        @default(false)
-  profilePhoto      String?
-  phone             String?
-  documents         Json           @default("[]")
-  education         Json           @default("[]")
-  professionalInfo  Json?
-  profile           Json           @default("{}")
-  firebaseUid       String?        @unique
-  emailVerified     Boolean        @default(false)
-  emailVerifiedAt   DateTime?      @db.Timestamptz(3)
-  verificationToken String?
-  otp               String?        @db.VarChar(6)
-  otpExpiresAt      DateTime?      @db.Timestamptz(3)
-  onboardingComplete Boolean       @default(false)
-  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+  id                 String     @id @default(uuid()) @db.Uuid
+  username           String     @db.VarChar(50)
+  email              String     @unique
+  password           String?
+  role               UserRole   @default(user)
+  roles              Json       @default("[]")
+  status             UserStatus @default(Pending)
+  rejectionReason    String?
+  isRootAdmin        Boolean    @default(false)
+  profilePhoto       String?
+  phone              String?
+  documents          Json       @default("[]")
+  education          Json       @default("[]")
+  professionalInfo   Json?
+  profile            Json       @default("{}")
+  firebaseUid        String?    @unique
+  authProvider       String?    @default("email")
+  lastLoginAt        DateTime?  @db.Timestamptz(3)
+  emailVerified      Boolean    @default(false)
+  emailVerifiedAt    DateTime?  @db.Timestamptz(3)
+  verificationToken  String?
+  otp                String?    @db.VarChar(6)
+  otpExpiresAt       DateTime?  @db.Timestamptz(3)
+  onboardingComplete Boolean    @default(false)
+  createdAt          DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime   @updatedAt @db.Timestamptz(3)
 
-  properties    Property[]
-  vehicles      Vehicle[]
-  savedItems    SavedItem[]
-  announcements Announcement[]
-  deviceTokens  DeviceToken[]
+  properties         Property[]
+  vehicles           Vehicle[]
+  savedItems         SavedItem[]
+  announcements      Announcement[]
+  deviceTokens       DeviceToken[]
+  reviewsGiven       Review[]            @relation("reviewerReviews")
+  reviewsReceived    Review[]            @relation("agentReviews")
+  permissionRequests PermissionRequest[] @relation("permissionRequesters")
+  permissionsDecided PermissionRequest[] @relation("permissionDeciders")
 
   @@index([role, status])
   @@map("users")
@@ -108,45 +114,50 @@ model DeviceToken {
 }
 
 model Property {
-  id              String              @id @default(uuid()) @db.Uuid
-  title           String              @db.VarChar(200)
-  type            String
-  listingType     String
-  price           Float
-  priceType       String
-  region          String
-  city            String
-  subCity         String?
-  woreda          String?
-  kebele          String?
-  parcel          String?
-  block           String?
-  floorNumber     String?
-  houseNumber     String?
-  area            Float?
-  bedrooms        Int?
-  bathrooms       Int?
-  condition       String?
-  legalizedYear   Int?
-  description     String?
-  features        Json                @default("[]")
-  images          Json                @default("[]")
-  videoUrl        String?
-  featured        Boolean             @default(false)
+  id               String         @id @default(uuid()) @db.Uuid
+  title            String         @db.VarChar(200)
+  type             String
+  listingType      String
+  price            Float
+  priceType        String
+  region           String
+  city             String
+  subCity          String?
+  woreda           String?
+  kebele           String?
+  parcel           String?
+  block            String?
+  floorNumber      String?
+  houseNumber      String?
+  area             Float?
+  bedrooms         Int?
+  bathrooms        Int?
+  condition        String?
+  legalizedYear    Int?
+  description      String?
+  features         Json           @default("[]")
+  images           Json           @default("[]")
+  videoUrl         String?
+  featured         Boolean        @default(false)
   locationDocument String?
-  posterType      String?
-  ownerType       String?
-  contactMode     String?             @default("Admin")
-  agentId         String              @db.Uuid
-  agentName       String
-  displayPhone    String?
-  displayPhoto    String?
-  status          PropertyStatus      @default(Draft)
-  rejectionReason String?
-  latitude        Float?
-  longitude       Float?
-  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime            @updatedAt @db.Timestamptz(3)
+  posterType       String?
+  ownerType        String?
+  contactMode      String?        @default("Admin")
+  agentId          String         @db.Uuid
+  agentName        String
+  displayPhone     String?
+  displayPhoto     String?
+  // User id of the currently displayed contact (admin or agent). Null for
+  // "System Admin" fallback contacts that have no real user. Public clients
+  // route their Message button to this id so the chat follows the contact
+  // that the admin switched to.
+  contactUserId    String?        @db.Uuid
+  status           PropertyStatus @default(Draft)
+  rejectionReason  String?
+  latitude         Float?
+  longitude        Float?
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
 
   agent User @relation(fields: [agentId], references: [id])
 
@@ -157,107 +168,109 @@ model Property {
 }
 
 model Vehicle {
-  id                  String             @id @default(uuid()) @db.Uuid
-  title               String             @db.VarChar(200)
-  vehicleId           String             @unique
-  listingType         String
-  vehicleCategory     String
-  make                String
-  vehicleModel        String
-  trimVersion         String?
-  manufacturingYear   Int
-  registrationYear    Int?
-  vin                 String?
-  engineNumber        String?
-  plateNumber         String?
-  color               String
-  countryOfOrigin     String
-  fuelType            String?
-  engineSize          Float?
-  horsepower          Float?
-  transmission        String?
-  drivetrain          String?
-  cylinders           Int?
-  seatingCapacity     Int?
-  doors               Int?
-  mileage             Float?
-  fuelConsumption     String?
-  fuelTankCapacity    Float?
-  groundClearance     Float?
-  weight              Float?
-  tireSize            String?
-  condition           String
-  accidentFree        Boolean?
-  accidentHistory     String?
+  id                      String        @id @default(uuid()) @db.Uuid
+  title                   String        @db.VarChar(200)
+  vehicleId               String        @unique
+  listingType             String
+  vehicleCategory         String
+  make                    String
+  vehicleModel            String
+  trimVersion             String?
+  manufacturingYear       Int
+  registrationYear        Int?
+  vin                     String?
+  engineNumber            String?
+  plateNumber             String?
+  color                   String
+  countryOfOrigin         String
+  fuelType                String?
+  engineSize              Float?
+  horsepower              Float?
+  transmission            String?
+  drivetrain              String?
+  cylinders               Int?
+  seatingCapacity         Int?
+  doors                   Int?
+  mileage                 Float?
+  fuelConsumption         String?
+  fuelTankCapacity        Float?
+  groundClearance         Float?
+  weight                  Float?
+  tireSize                String?
+  condition               String
+  accidentFree            Boolean?
+  accidentHistory         String?
   serviceHistoryAvailable Boolean?
-  ownershipCount      Int?
-  imported            Boolean?
-  locallyAssembled    Boolean?
-  safetyFeatures      Json             @default("[]")
-  interiorFeatures    Json             @default("[]")
-  exteriorFeatures    Json             @default("[]")
-  dailyRate           Float?
-  weeklyRate          Float?
-  monthlyRate         Float?
-  securityDeposit     Float?
-  minRentalDays       Int?
-  maxRentalDays       Int?
-  driverIncluded      Boolean?
-  selfDrive           Boolean?
-  fuelPolicy          String?
-  mileageLimit        Int?
-  extraKmCharge       Float?
-  deliveryAvailable   Boolean?
-  airportPickup       Boolean?
-  availableLocations  Json?
-  availableDates      String?
-  driverAgeRequirement Int?
-  minDrivingExperience Int?
-  drivingLicenseRequired String?
-  passportRequired    Boolean?
-  smokingAllowed      Boolean?
-  petsAllowed         Boolean?
-  offroadAllowed      Boolean?
-  crossborderAllowed  Boolean?
-  insuranceIncluded   Boolean?
-  damageLiability     String?
-  sellingPrice        Float?
-  negotiable          Boolean?
-  financingAvailable  Boolean?
-  exchangeAccepted    Boolean?
-  bankLoanAccepted    Boolean?
-  regionRegistration  String?
-  ownershipCertificate Boolean?
-  roadFundPaid        Boolean?
-  insuranceValid      Boolean?
-  inspectionCertificate Boolean?
-  customsClearance    Boolean?
-  dutyPaid            Boolean?
-  plateType           String?
-  region              String
-  city                String
-  subCity             String?
-  woreda              String?
-  latitude            Float?
-  longitude           Float?
-  pickupAddress       String?
-  description         String?
-  images              Json             @default("[]")
-  videoUrl            String?
-  price               Float
-  priceType           String
-  features            Json             @default("[]")
-  featured            Boolean          @default(false)
-  agentId             String           @db.Uuid
-  agentName           String
-  displayPhone        String?
-  displayPhoto        String?
-  status              VehicleStatus     @default(Draft)
-  rejectionReason     String?
-  views               Int              @default(0)
-  favorites           Int              @default(0)
-  createdAt           DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime         @updatedAt @db.Timestamptz(3)
+  ownershipCount          Int?
+  imported                Boolean?
+  locallyAssembled        Boolean?
+  safetyFeatures          Json          @default("[]")
+  interiorFeatures        Json          @default("[]")
+  exteriorFeatures        Json          @default("[]")
+  dailyRate               Float?
+  weeklyRate              Float?
+  monthlyRate             Float?
+  securityDeposit         Float?
+  minRentalDays           Int?
+  maxRentalDays           Int?
+  driverIncluded          Boolean?
+  selfDrive               Boolean?
+  fuelPolicy              String?
+  mileageLimit            Int?
+  extraKmCharge           Float?
+  deliveryAvailable       Boolean?
+  airportPickup           Boolean?
+  availableLocations      Json?
+  availableDates          String?
+  driverAgeRequirement    Int?
+  minDrivingExperience    Int?
+  drivingLicenseRequired  String?
+  passportRequired        Boolean?
+  smokingAllowed          Boolean?
+  petsAllowed             Boolean?
+  offroadAllowed          Boolean?
+  crossborderAllowed      Boolean?
+  insuranceIncluded       Boolean?
+  damageLiability         String?
+  sellingPrice            Float?
+  negotiable              Boolean?
+  financingAvailable      Boolean?
+  exchangeAccepted        Boolean?
+  bankLoanAccepted        Boolean?
+  regionRegistration      String?
+  ownershipCertificate    Boolean?
+  roadFundPaid            Boolean?
+  insuranceValid          Boolean?
+  inspectionCertificate   Boolean?
+  customsClearance        Boolean?
+  dutyPaid                Boolean?
+  plateType               String?
+  region                  String
+  city                    String
+  subCity                 String?
+  woreda                  String?
+  latitude                Float?
+  longitude               Float?
+  pickupAddress           String?
+  description             String?
+  images                  Json          @default("[]")
+  videoUrl                String?
+  price                   Float
+  priceType               String
+  features                Json          @default("[]")
+  featured                Boolean       @default(false)
+  agentId                 String        @db.Uuid
+  agentName               String
+  displayPhone            String?
+  displayPhoto            String?
+  // See Property.contactUserId — same purpose for vehicles.
+  contactUserId           String?       @db.Uuid
+  status                  VehicleStatus @default(Draft)
+  rejectionReason         String?
+  views                   Int           @default(0)
+  favorites               Int           @default(0)
+  createdAt               DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime      @updatedAt @db.Timestamptz(3)
 
   agent User @relation(fields: [agentId], references: [id])
 
@@ -269,23 +282,23 @@ model Vehicle {
 }
 
 model Payment {
-  id              String        @id @default(uuid()) @db.Uuid
-  orderId         String        @unique
-  merchOrderId    String
-  txRef           String
-  status          PaymentStatus @default(Pending)
-  amount          Float
-  currency        String        @default("ETB")
-  method          PaymentMethod
-  paymentType     String
-  buyerName       String
-  buyerEmail      String
-  buyerPhone      String
-  propertyId      String?
-  propertyTitle   String?
+  id               String        @id @default(uuid()) @db.Uuid
+  orderId          String        @unique
+  merchOrderId     String
+  txRef            String
+  status           PaymentStatus @default(Pending)
+  amount           Float
+  currency         String        @default("ETB")
+  method           PaymentMethod
+  paymentType      String
+  buyerName        String
+  buyerEmail       String
+  buyerPhone       String
+  propertyId       String?
+  propertyTitle    String?
   notificationData Json?
-  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @db.Timestamptz(3)
 
   @@index([status])
   @@index([createdAt])
@@ -293,16 +306,16 @@ model Payment {
 }
 
 model Notification {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
   title     String
   body      String
   type      String
-  read      Boolean  @default(false)
+  read      Boolean   @default(false)
   readAt    DateTime? @db.Timestamptz(3)
   data      Json?
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
 
   @@index([userId])
   @@index([createdAt])
@@ -311,17 +324,17 @@ model Notification {
 }
 
 model Message {
-  id           String   @id @default(uuid()) @db.Uuid
-  propertyId   String
-  senderId     String   @db.Uuid
-  senderName   String
-  senderRole   String
-  recipientId  String   @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
+  propertyId    String
+  senderId      String   @db.Uuid
+  senderName    String
+  senderRole    String
+  recipientId   String   @db.Uuid
   recipientName String
-  content      String
-  read         Boolean  @default(false)
-  createdAt    DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  content       String
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 
   @@index([propertyId])
   @@index([senderId])
@@ -360,19 +373,77 @@ model SavedItem {
 }
 
 model Setting {
-  id           String @id @default("default")
-  contactPhone1 String?
-  contactPhone2 String?
-  contactPhone3 String?
-  contactEmail  String?
-  socialFacebook String?
-  socialTelegram String?
-  socialWhatsapp String?
-  socialTiktok  String?
-  socialLinkedin String?
+  id              String   @id @default("default")
+  contactPhone1   String?
+  contactPhone2   String?
+  contactPhone3   String?
+  contactEmail    String?
+  socialFacebook  String?
+  socialTelegram  String?
+  socialWhatsapp  String?
+  socialTiktok    String?
+  socialLinkedin  String?
   socialInstagram String?
-  socialYoutube String?
-  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  socialYoutube   String?
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("settings")
+}
+
+model Review {
+  id         String   @id @default(uuid()) @db.Uuid
+  reviewerId String   @db.Uuid
+  agentId    String   @db.Uuid
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  reviewer User @relation("reviewerReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  agent    User @relation("agentReviews", fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewerId, agentId])
+  @@index([agentId])
+  @@map("reviews")
+}
+
+enum PermissionType {
+  EDIT
+  DELETE
+}
+
+enum PermissionStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum PermissionEntityType {
+  PROPERTY
+  VEHICLE
+}
+
+/// Admin grants sellers permission to edit/delete an already-approved listing.
+/// Before a listing is approved, sellers edit/delete freely; once approved, an
+/// approved (unused) PermissionRequest is required for any further change.
+model PermissionRequest {
+  id          String               @id @default(uuid()) @db.Uuid
+  type        PermissionType
+  entityType  PermissionEntityType
+  entityId    String               @db.Uuid
+  requesterId String               @db.Uuid
+  status      PermissionStatus     @default(Pending)
+  reason      String?
+  used        Boolean              @default(false)
+  createdAt   DateTime             @default(now()) @db.Timestamptz(3)
+  decidedAt   DateTime?            @db.Timestamptz(3)
+  decidedById String?              @db.Uuid
+
+  requester User  @relation("permissionRequesters", fields: [requesterId], references: [id], onDelete: Cascade)
+  decidedBy User? @relation("permissionDeciders", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([requesterId])
+  @@index([status])
+  @@map("permission_requests")
 }

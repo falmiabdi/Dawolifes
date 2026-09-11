@@ -6,9 +6,11 @@ import 'package:provider/provider.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/websocket_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/repositories/message_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../portal/widgets.dart';
 import 'agent_dashboard.dart';
@@ -33,10 +35,12 @@ class AgentPortalScreen extends StatefulWidget {
 
 class _AgentPortalScreenState extends State<AgentPortalScreen> {
   int _unread = 0;
+  int _msgUnread = 0;
   Timer? _unreadTimer;
   StreamSubscription<WSMessage>? _wsSub;
 
   NotificationRepository get _notifRepo => NotificationRepository(context.read<ApiClient>());
+  MessageRepository get _msgRepo => MessageRepository(context.read<ApiClient>());
 
   @override
   void initState() {
@@ -52,6 +56,7 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
         case WSMessageType.unreadCount:
         case WSMessageType.markReadAck:
         case WSMessageType.markSingleReadAck:
+        case WSMessageType.message:
           _loadUnread();
           break;
         default:
@@ -68,9 +73,17 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
   }
 
   Future<void> _loadUnread() async {
+    // Mirror the web sidebar: poll unread notification + message counts every
+    // 30s so the agent portal badges stay fresh.
     try {
       final count = await _notifRepo.fetchUnreadCount();
       if (mounted && count != _unread) setState(() => _unread = count);
+    } catch (_) {
+      // Ignore polling failures.
+    }
+    try {
+      final count = await _msgRepo.fetchUnreadCount();
+      if (mounted && count != _msgUnread) setState(() => _msgUnread = count);
     } catch (_) {
       // Ignore polling failures.
     }
@@ -92,7 +105,7 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agent Portal'),
+        title: Text(user?.isOwner == true ? 'Owner Portal' : 'Agent Portal'),
         leading: IconButton(
           icon: const Icon(Icons.home_outlined),
           tooltip: 'Home',
@@ -179,6 +192,7 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
             approved,
             status,
             () => _open(context, const AgentPostVehicleScreen())),
+          _menuTile(context, Icons.chat_bubble_outline, 'Messages', () => _open(context, const MessagesScreen()), badge: _msgUnread),
           _menuTile(context, Icons.notifications_outlined, 'Notifications', () => _open(context, const NotificationsScreen()), badge: _unread),
           _menuTile(context, Icons.credit_card_outlined, 'Commission History', () => _open(context, const AgentPaymentsScreen())),
           _menuTile(context, Icons.settings_outlined, 'Settings', () => _open(context, const AgentSettingsScreen())),

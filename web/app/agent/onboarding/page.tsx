@@ -143,7 +143,6 @@ export default function OnboardingPage() {
   const [faydaFront, setFaydaFront] = useState<FileState | null>(null)
   const [faydaBack, setFaydaBack] = useState<FileState | null>(null)
   const [selfie, setSelfie] = useState<FileState | null>(null)
-  const [passport, setPassport] = useState<FileState | null>(null)
 
   // Step 4
   const [education, setEducation] = useState('')
@@ -204,12 +203,12 @@ export default function OnboardingPage() {
         if (!ethPhone.trim()) { setError('Ethiopian Telecom phone is required.'); setSaving(false); return }
         await saveStep({ ethPhone, safaricomPhone, region, city, woreda, kebele, fullAddress })
       } else if (step === 3) {
-        if (!faydaFront || !faydaBack || !selfie || !passport) {
-          setError('All 4 identity documents are required.')
+        if (!faydaFront || !faydaBack || !selfie) {
+          setError('Please upload all required identity documents.')
           setSaving(false)
           return
         }
-        await saveStep({ faydaFront: faydaFront.url, faydaBack: faydaBack.url, selfieFayda: selfie.url, passportPhoto: passport?.url || '' })
+        await saveStep({ faydaFront: faydaFront.url, faydaBack: faydaBack.url, selfieFayda: selfie.url })
       } else if (step === 4) {
         if (!education) { setError('Please select your highest education level.'); setSaving(false); return }
         await saveStep({ highestEducation: education, educationCertificate: eduCert?.url || '' })
@@ -236,9 +235,9 @@ export default function OnboardingPage() {
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <div className="mb-8 text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-orange-500">{t('agent_registration')}</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-orange-500">{user?.role === 'owner' ? t('owner_registration') : t('agent_registration')}</p>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">{t('complete_profile')}</h1>
-          <p className="mt-2 text-slate-500">{t('step_of')} {step}/{STEPS.length} â€” {({ Personal: t('personal'), Contact: t('contact'), Identity: t('identity'), Education: t('education'), Professional: t('professional'), Submit: t('submit') } as Record<string, string>)[STEPS[step - 1].label]}</p>
+          <p className="mt-2 text-slate-500">{t('step_of')} {step}/{STEPS.length} &mdash; {({ Personal: t('personal'), Contact: t('contact'), Identity: t('identity'), Education: t('education'), Professional: t('professional'), Submit: t('submit') } as Record<string, string>)[STEPS[step - 1].label]}</p>
         </div>
 
         {/* Step progress */}
@@ -356,7 +355,7 @@ export default function OnboardingPage() {
                 <FileUpload label={`${t('fayda_front')} *`} value={faydaFront} onChange={setFaydaFront} field="faydaFront" uploadFile={uploadFile} />
                 <FileUpload label={`${t('fayda_back')} *`} value={faydaBack} onChange={setFaydaBack} field="faydaBack" uploadFile={uploadFile} />
                 <FileUpload label={`${t('selfie_fayda')} *`} value={selfie} onChange={setSelfie} field="selfie" uploadFile={uploadFile} />
-                <FileUpload label={`${t('passport_photo')} *`} value={passport} onChange={setPassport} field="passport" uploadFile={uploadFile} />
+                <FileUpload label={t('selfie_fayda')} value={selfie} onChange={setSelfie} field="selfie" uploadFile={uploadFile} />
               </div>
             </div>
           )}

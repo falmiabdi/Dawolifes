@@ -141,10 +141,12 @@ class _SignupScreenState extends State<SignupScreen> {
       }
 
       Navigator.of(context).popUntil((route) => route.isFirst);
-      if (_role == SignupRole.agent) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
-        );
+      if (_role == SignupRole.agent || _role == SignupRole.owner) {
+        if (result.user?.needsOnboarding ?? true) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
+          );
+        }
       } else {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const CompleteProfileScreen()),
@@ -167,7 +169,9 @@ class _SignupScreenState extends State<SignupScreen> {
     final t = context.read<LanguageProvider>().t;
 
     return AuthShell(
-      title: t('create_free_account'),
+      title: t('create_your_account'),
+      centerTitle: true,
+      titleColor: const Color(0xFFEA580C),
       footer: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -198,21 +202,30 @@ class _SignupScreenState extends State<SignupScreen> {
                     initialValue: _role,
                     decoration: InputDecoration(
                       labelText: t('choose_account_type'),
+                      labelStyle: const TextStyle(
+                        color: Color(0xFFC2410C),
+                        fontWeight: FontWeight.w500,
+                      ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: const Color(0xFFFFF7ED),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: Color(0xFFFDBA74)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: Color(0xFFFDBA74)),
                       ),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: SignupRole.buyer, child: Text('Buyer / User')),
-                      DropdownMenuItem(value: SignupRole.owner, child: Text('Property Owner')),
-                      DropdownMenuItem(value: SignupRole.agent, child: Text('Seller / Agent')),
+                    style: const TextStyle(
+                      color: Color(0xFFC2410C),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFF97316)),
+                    items: [
+                      DropdownMenuItem(value: SignupRole.buyer, child: Text(t('buyer_user'), style: const TextStyle(color: Color(0xFFC2410C), fontWeight: FontWeight.w500))),
+                      DropdownMenuItem(value: SignupRole.owner, child: Text(t('property_owner'), style: const TextStyle(color: Color(0xFFC2410C), fontWeight: FontWeight.w500))),
+                      DropdownMenuItem(value: SignupRole.agent, child: Text(t('seller_agent'), style: const TextStyle(color: Color(0xFFC2410C), fontWeight: FontWeight.w500))),
                     ],
                     onChanged: (role) => setState(() {
                       _role = role!;
@@ -238,10 +251,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
                       _Field(
-                        label: '${t('phone_number')} (Optional)',
+                        label: t('phone'),
                         hint: '+251 91 234 5678',
                         controller: _phone,
                         keyboardType: TextInputType.phone,
+                        validator: (v) =>
+                            (v == null || v.trim().length < 6) ? 'Enter a valid phone number' : null,
                       ),
                       const SizedBox(height: 16),
                       _Field(
@@ -331,16 +346,28 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _role == SignupRole.agent
-                          ? 'Your application will be reviewed by our team after verification.'
-                          : 'We will email you a verification link to verify your account.',
+                      _role == SignupRole.agent ? t('application_reviewed') : t('registration_verified'),
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: const [
+                        Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('OR', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w500)),
+                        ),
+                        Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     GoogleSignInButton(
                       onPressed: _submitGoogle,
                       loading: _submittingGoogle,
+                      label: _role == SignupRole.agent
+                          ? 'Continue with Google as Agent'
+                          : 'Continue with Google',
                     ),
                   ],
                 ),

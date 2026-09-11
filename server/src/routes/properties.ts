@@ -3,6 +3,7 @@ import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } 
 import { propertySchema, isValidUuid } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
+import { assertListingPermissionAllowed } from './permissions.js'
 
 const router = Router()
 
@@ -25,18 +26,17 @@ router.get('/', async (req, res) => {
     if (req.query.agentId) where.agentId = req.query.agentId  // allow filtering by agent
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 100))
-    const [total, properties] = await withPrismaRetry(() =>
-      Promise.all([
-        prisma.property.count({ where }),
-        prisma.property.findMany({
-          where,
-          include: { agent: { select: agentSelect } },
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-      ]),
-    )
+    const [total, properties] = await withPrismaRetry(async () => {
+      const total = await prisma.property.count({ where })
+      const properties = await prisma.property.findMany({
+        where,
+        include: { agent: { select: agentSelect } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      })
+      return [total, properties] as const
+    })
     const sanitized = properties.map(({ floorNumber: _floor, houseNumber: _house, ...rest }) => rest)
     res.json({ properties: sanitized, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } })
   } catch (err: any) {
@@ -94,8 +94,10 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     const { name: _name, phone: _phone, ...propertyData } = parsed.data
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { username: true, phone: true, profilePhoto: true },
+      select: { username: true, phone: true, profilePhoto: true, role: true },
     })
+
+    const isAdmin = currentUser?.role === 'admin'
 
     // Centralized contact switching: default is the Admin (System Admin) number,
     // the poster may select Property Owner or Property Agent instead.
@@ -116,18 +118,24 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
         contactMode,
         agentId: req.user!.userId,
         agentName,
-        status: 'Pending',
+        status: isAdmin ? 'Approved' : 'Pending',
         displayPhone,
         displayPhoto,
+        // Messages route to this user: the poster advertises their own contact
+        // unless the System Admin fallback is shown, in which case there is no
+        // real user to reach (clients fall back to the agent).
+        contactUserId: contactMode === 'Admin' && !isAdmin ? null : req.user!.userId,
       },
     })
 
-    notifyAdmins(
-      'New Property Listing',
-      `A new property "${parsed.data.title}" has been posted and needs review.`,
-      'info',
-      { entityType: 'PROPERTY', entityId: property.id, type: 'property', id: property.id }
-    ).catch(() => {})
+    if (!isAdmin) {
+      notifyAdmins(
+        'New Property Listing',
+        `A new property "${parsed.data.title}" has been posted and needs review.`,
+        'info',
+        { entityType: 'PROPERTY', entityId: property.id, type: 'property', id: property.id }
+      ).catch(() => {})
+    }
 
     res.status(201).json({ message: 'Property created', property })
   } catch (err: any) {
@@ -151,6 +159,18 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       return res.status(403).json({ message: 'Not authorized' })
     }
 
+    const permission = await assertListingPermissionAllowed({
+      requesterId: req.user!.userId,
+      isAdmin: req.user!.role === 'admin',
+      entityType: 'PROPERTY',
+      entityId: property.id,
+      listingStatus: property.status,
+      type: 'EDIT',
+    })
+    if (!permission.allowed) {
+      return res.status(403).json({ code: 'PERMISSION_REQUIRED', message: 'Approved listings require admin permission to edit.' })
+    }
+
     const parsed = propertySchema.partial().safeParse(req.body)
     if (!parsed.success) {
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
@@ -170,11 +190,13 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
         updates.agentName = 'System Admin'
         updates.displayPhone = setting?.contactPhone1 || '+251947896869'
         updates.displayPhoto = null
+        updates.contactUserId = req.user!.role === 'admin' ? req.user!.userId : null
       } else {
         const contactName = parsed.data.name?.trim() || ''
         const contactPhone = parsed.data.phone?.trim() || ''
         if (contactName) updates.agentName = contactName
         if (contactPhone) updates.displayPhone = contactPhone
+        updates.contactUserId = req.user!.userId
       }
     }
 
@@ -203,6 +225,18 @@ router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async 
 
     if (property.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
+    }
+
+    const permission = await assertListingPermissionAllowed({
+      requesterId: req.user!.userId,
+      isAdmin: req.user!.role === 'admin',
+      entityType: 'PROPERTY',
+      entityId: property.id,
+      listingStatus: property.status,
+      type: 'DELETE',
+    })
+    if (!permission.allowed) {
+      return res.status(403).json({ code: 'PERMISSION_REQUIRED', message: 'Approved listings require admin permission to delete.' })
     }
 
     await prisma.property.delete({ where: { id: req.params.id } })

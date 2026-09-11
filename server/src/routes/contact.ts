@@ -1,15 +1,11 @@
 import { Router } from 'express'
-import { isSmtpConfigured, readSmtpConfig, sendMailViaSmtp } from '../services/mail.js'
 import { isResendConfigured, sendEmail } from '../services/email.js'
 
 // Public contact form endpoint.
 //
 // The form UI lives in the separate marketing web app; this server only
-// receives the POST and emails the message. The recipient defaults to the
-// SMTP sender address and can be overridden with SMTP_TO (or CONTACT_EMAIL).
-// When SMTP_* variables are absent the message is delivered through the
-// regular email transport (Resend primary) instead. The customer's address is
-// set as reply-to so the company can reply directly.
+// receives the POST and emails the message via Resend. The customer's
+// address is set as reply-to so the company can reply directly.
 
 const router = Router()
 
@@ -22,10 +18,8 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
-function emailTransport(): 'smtp' | 'resend' | null {
-  if (isSmtpConfigured()) return 'smtp'
-  if (isResendConfigured()) return 'resend'
-  return null
+function isEmailConfigured(): boolean {
+  return isResendConfigured()
 }
 
 router.post('/', async (req, res) => {
@@ -43,20 +37,14 @@ router.post('/', async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
     return res.status(400).json({ success: false, error: 'A valid email address is required.' })
   }
-  const transport = emailTransport()
-  if (!transport) {
+  if (!isEmailConfigured()) {
     return res.status(503).json({
       success: false,
       error: 'The contact email service is not configured. Please try again later.',
     })
   }
 
-  const to =
-    process.env.SMTP_TO ||
-    process.env.CONTACT_EMAIL ||
-    readSmtpConfig()?.fromEmail ||
-    process.env.RESEND_FROM_EMAIL ||
-    ''
+  const to = process.env.CONTACT_EMAIL || process.env.RESEND_FROM_EMAIL || 'support@dawolife.com'
 
   const subject = `New contact message from ${cleanName}${cleanService ? ` (${cleanService})` : ''}`
   const html = `
@@ -93,23 +81,13 @@ router.post('/', async (req, res) => {
   ].join('\n')
 
   try {
-    if (transport === 'smtp') {
-      await sendMailViaSmtp({
-        to,
-        subject,
-        html,
-        text,
-        replyTo: cleanEmail,
-      })
-    } else {
-      await sendEmail({
-        to: { email: to, name: process.env.SMTP_FROM_NAME || process.env.RESEND_FROM_NAME || 'DawoLife' },
-        subject,
-        htmlContent: html,
-        textContent: text,
-        replyTo: cleanEmail,
-      })
-    }
+    await sendEmail({
+      to: { email: to, name: process.env.RESEND_FROM_NAME || 'DawoLife' },
+      subject,
+      htmlContent: html,
+      textContent: text,
+      replyTo: cleanEmail,
+    })
     res.json({ success: true })
   } catch (err: any) {
     console.error(`[contact] send failed: ${err?.message || err}`)

@@ -1,10 +1,12 @@
 "use client"
 
 import { useI18n } from "@/lib/i18n"
+import { useAuth } from "@/components/auth/auth-guard"
 import { Scale } from "lucide-react"
 
 export default function AgentTermsConditionsPage() {
   const { t } = useI18n()
+  const { user } = useAuth()
   const content = t("terms_conditions_full")
 
   return (
@@ -14,7 +16,7 @@ export default function AgentTermsConditionsPage() {
           <Scale className="h-5 w-5" />
           <h1 className="text-2xl text-slate-900">{t("terms_conditions")}</h1>
         </div>
-        <p className="mt-1 text-sm text-slate-500">{t("agent_portal")}</p>
+        <p className="mt-1 text-sm text-slate-500">{user?.role === 'owner' ? t("owner_portal") : t("agent_portal")}</p>
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">

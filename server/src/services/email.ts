@@ -1,17 +1,10 @@
 import 'dotenv/config'
 
 import { Resend } from 'resend'
-import { isSmtpConfigured, sendMailViaSmtp } from './mail.js'
-
-const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
-const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
-const BREVO_CAMPAIGN_URL = 'https://api.brevo.com/v3/emailCampaigns'
-const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'jebugeneraltradingplc@gmail.com'
-const FROM_NAME = process.env.BREVO_FROM_NAME || 'DawoLife'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || ''
-const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || FROM_NAME
+const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || 'DawoLife'
 
 // Lazy singleton so the Resend SDK is only constructed when a key is present.
 let resendClient: Resend | null = null
@@ -23,6 +16,16 @@ function getResendClient(): Resend | null {
 
 export function isResendConfigured(): boolean {
   return Boolean(RESEND_API_KEY && RESEND_FROM_EMAIL)
+}
+
+/**
+ * Returns the production BASE_URL only when it is a real public HTTPS host.
+ * Localhost / http URLs are dropped: emails that link to "localhost" are a
+ * major spam signal for Gmail and get sent straight to the spam folder.
+ */
+function publicBaseUrl(): string {
+  const base = process.env.BASE_URL || ''
+  return /^https:\/\//.test(base) && !/localhost|127\.0\.0\.1/.test(base) ? base : ''
 }
 
 /** Sends a test email via Resend and returns a credential-free result. */
@@ -72,47 +75,16 @@ export async function sendEmail({ to, subject, htmlContent, textContent, replyTo
     return
   }
 
-  // 2) Brevo SMTP relay when SMTP_* variables are configured.
-  if (isSmtpConfigured()) {
-    return sendMailViaSmtp({
-      to: to.email,
-      subject,
-      html: htmlContent,
-      text: textContent,
-      replyTo,
-    })
-  }
-
-  // 3) Fallback: Brevo REST transactional API (BREVO_API_KEY only).
-  if (!BREVO_API_KEY) {
-    console.warn('Email transport not configured. Skipping email to', to.email)
-    return
-  }
-
-  const res = await fetch(BREVO_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': BREVO_API_KEY,
-    },
-    body: JSON.stringify({
-      sender: { email: FROM_EMAIL, name: FROM_NAME },
-      to: [to],
-      subject,
-      htmlContent,
-      textContent: textContent || subject,
-      ...(replyTo ? { replyTo: { email: replyTo } } : {}),
-    }),
-  })
-
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Brevo email failed (${res.status}): ${body}`)
-  }
+  console.warn('Resend not configured. Skipping email to', to.email)
 }
 
 export async function sendVerificationEmail(email: string, name: string, token: string) {
-  const link = `${process.env.BASE_URL || 'http://localhost:4000'}/api/auth/verify-email?token=${token}`
+  const base = publicBaseUrl()
+  if (!base) {
+    console.warn('[Email] Skipping verification link — BASE_URL is not a public HTTPS host.')
+    return
+  }
+  const link = `${base}/api/auth/verify-email?token=${encodeURIComponent(token)}`
   await sendEmail({
     to: { email, name },
     subject: 'Verify your DawoLife email address',
@@ -128,10 +100,15 @@ export async function sendVerificationEmail(email: string, name: string, token: 
         <p style="color:#64748b;font-size:14px;">This link expires in 24 hours.</p>
       </div>
     `,
+    textContent: `Welcome to DawoLife!\n\nHi ${name},\n\nVerify your email address by opening this link:\n${link}\n\nThis link expires in 24 hours.\n\nIf you did not create a DawoLife account, you can ignore this email.`,
   })
 }
 
 export async function sendOtpEmail(email: string, name: string, otp: string, verifyToken?: string) {
+  const base = publicBaseUrl()
+  const verifyLink = verifyToken && base
+    ? `${base}/api/auth/verify-email?token=${encodeURIComponent(verifyToken)}`
+    : ''
   await sendEmail({
     to: { email, name },
     subject: 'Your DawoLife verification code',
@@ -144,9 +121,17 @@ export async function sendOtpEmail(email: string, name: string, otp: string, ver
           ${otp}
         </p>
         <p style="color:#64748b;font-size:14px;">Enter this code on the verification page to confirm your email address. Please do not share it with anyone.</p>
-        <p style="color:#64748b;font-size:14px;">This code expires in 1 hour. If you did not create a DawoLife account, you can ignore this email.</p>
+        ${verifyLink ? `
+        <p style="color:#64748b;font-size:14px;">Or click the button below to verify instantly:</p>
+        <a href="${verifyLink}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 32px;border-radius:999px;text-decoration:none;margin:8px 0 16px;">
+          Verify Email
+        </a>
+        <p style="color:#64748b;font-size:14px;word-break:break-all;">${verifyLink}</p>
+        ` : ''}
+        <p style="color:#64748b;font-size:14px;">This code and link expire in 1 hour. If you did not create a DawoLife account, you can ignore this email.</p>
       </div>
     `,
+    textContent: `Welcome to DawoLife!\n\nHi ${name},\n\nTo finish creating your account, use this verification code:\n\n${otp}\n\nEnter this code on the verification page to confirm your email address. Please do not share it with anyone.\n\n${verifyLink ? `Or verify instantly by opening this link:\n${verifyLink}\n\n` : ''}This code expires in 1 hour. If you did not create a DawoLife account, you can ignore this email.`,
   })
 }
 
@@ -165,6 +150,7 @@ export async function sendResetPasswordEmail(email: string, name: string, otp: s
         <p style="color:#64748b;font-size:14px;">This code expires in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
       </div>
     `,
+    textContent: `Hi ${name},\n\nWe received a request to reset your DawoLife account password. Use this code to set a new one:\n\n${otp}\n\nThis code expires in 1 hour. If you did not request a password reset, you can safely ignore this email.`,
   })
 }
 
@@ -204,57 +190,4 @@ export async function sendRejectionEmail(email: string, name: string, reason: st
       </div>
     `,
   })
-}
-
-interface CreateCampaignParams {
-  name: string
-  subject: string
-  htmlContent: string
-  senderName?: string
-  senderEmail?: string
-  recipientEmails: string[]
-  scheduledAt?: string
-}
-
-export async function createEmailCampaign({
-  name,
-  subject,
-  htmlContent,
-  senderName = FROM_NAME,
-  senderEmail = FROM_EMAIL,
-  recipientEmails,
-  scheduledAt,
-}: CreateCampaignParams) {
-  if (!BREVO_API_KEY) {
-    throw new Error('BREVO_API_KEY not set � cannot create campaign')
-  }
-
-  const payload: any = {
-    name,
-    subject,
-    sender: { name: senderName, email: senderEmail },
-    type: 'classic',
-    htmlContent,
-    recipients: { listIds: [2, 7] },
-  }
-
-  if (scheduledAt) {
-    payload.scheduledAt = scheduledAt
-  }
-
-  const res = await fetch(BREVO_CAMPAIGN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': BREVO_API_KEY,
-    },
-    body: JSON.stringify(payload),
-  })
-
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Brevo campaign failed (${res.status}): ${body}`)
-  }
-
-  return res.json()
 }

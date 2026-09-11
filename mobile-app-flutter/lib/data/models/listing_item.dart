@@ -26,6 +26,7 @@ class ListingItem {
     this.agentName,
     this.displayPhone,
     this.displayPhoto,
+    this.contactUserId,
   });
 
   final String id;
@@ -48,6 +49,7 @@ class ListingItem {
   final String? agentName;
   final String? displayPhone;
   final String? displayPhoto;
+  final String? contactUserId;
 
   /// Name shown on the public listing: the stored override wins when present,
   /// otherwise falls back to the agent account name.
@@ -70,6 +72,15 @@ class ListingItem {
     final p = displayPhoto?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.avatar?.trim() ?? '';
+  }
+
+  /// User id the Message button routes to: follows the admin-switched contact
+  /// when one is set, otherwise the listing's original agent.
+  String? get messageRecipientId {
+    final c = contactUserId?.trim();
+    if (c != null && c.isNotEmpty) return c;
+    final a = agent?.id?.trim();
+    return (a != null && a.isNotEmpty) ? a : null;
   }
 
   bool get isRent {
@@ -95,6 +106,7 @@ class ListingItem {
         agentName: p.agentName,
         displayPhone: p.displayPhone,
         displayPhoto: p.displayPhoto,
+        contactUserId: p.contactUserId,
         isVehicle: false,
       );
 
@@ -114,6 +126,7 @@ class ListingItem {
         agentName: v.agentName,
         displayPhone: v.displayPhone,
         displayPhoto: v.displayPhoto,
+        contactUserId: v.contactUserId,
         isVehicle: true,
       );
 

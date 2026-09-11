@@ -21,6 +21,7 @@ import '../../providers/language_provider.dart';
 import '../../providers/saved_provider.dart';
 import '../auth/login_screen.dart';
 import '../messages/chat_screen.dart';
+import 'agent_rating_section.dart';
 
 /// Listing detail screen mirroring app/listings/view/page.tsx. Fetches the
 /// full record (all images, real description, video, documents) from the
@@ -135,13 +136,25 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       _pushLogin();
       return;
     }
+    // Route to the user id that currently owns the displayed contact (admin
+    // switch wins), so the chat follows the contact shown on the page.
+    final prop = _property;
+    final veh = _vehicle;
+    final recipientId = prop?.messageRecipientId ??
+        veh?.messageRecipientId ??
+        widget.item.messageRecipientId ??
+        '';
+    final recipientName = prop?.contactName ??
+        veh?.contactName ??
+        widget.item.contactName;
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           propertyId: widget.item.id,
           propertyTitle: widget.item.title,
-          recipientId: widget.item.agent?.id ?? '',
-          recipientName: widget.item.agent?.displayName ?? 'Agent',
+          recipientId: recipientId,
+          recipientName: recipientName,
         ),
       ),
     );
@@ -332,6 +345,13 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         ],
                         const SizedBox(height: 32),
                         _ContactCard(item: item, onCall: _call, onMessage: _openMessage),
+                        if ((item.agent?.id ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          AgentRatingButton(
+                            agentId: item.agent!.id!,
+                            agentName: item.contactName.isNotEmpty ? item.contactName : 'Agent',
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
                           onPressed: _share,

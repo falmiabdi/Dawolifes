@@ -1,9 +1,6 @@
 ﻿/** @type {import('next').NextConfig} */
-const isDev = process.env.NODE_ENV === 'development'
-
 const nextConfig = {
-  // Only use static export for production Capacitor builds — not in dev
-  ...(isDev ? {} : { output: 'export' }),
+  output: 'export',
 
   images: {
     unoptimized: true,

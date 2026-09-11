@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../agent/agent_onboarding_screen.dart';
 import '../agent/agent_post_property.dart';
 import '../agent/agent_post_vehicle.dart';
 import '../agent/agent_profile.dart';
@@ -46,14 +47,32 @@ class SellScreen extends StatelessWidget {
       );
     }
 
-    if (auth.user!.isAgent && auth.user!.status != 'Approved') {
+    if (auth.user!.canSell && auth.user!.status != 'Approved') {
+      final status = auth.user!.status ?? 'Pending';
+      final rejected = status == 'Rejected';
+      final suspended = status == 'Suspended';
+      final reason = auth.user!.rejectionReason;
       return _Gate(
-        icon: Icons.hourglass_top_outlined,
-        title: 'Verify Account Before Posting',
-        subtitle: 'Your agent account is pending admin approval. Please wait for verification before posting properties and vehicles.',
-        actionLabel: 'Go to Profile',
+        icon: rejected || suspended ? Icons.block_outlined : Icons.hourglass_top_outlined,
+        title: rejected
+            ? 'Account Rejected'
+            : suspended
+                ? 'Account Suspended'
+                : 'Verify Account Before Posting',
+        subtitle: rejected
+            ? (reason != null && reason.isNotEmpty
+                ? 'Your seller account was rejected ($reason). Update your application to resubmit.'
+                : 'Your seller account was rejected. Update your application to resubmit.')
+            : suspended
+                ? 'Your seller account is suspended. Contact support for assistance.'
+                : 'Your seller account is pending admin approval. Please wait for verification before posting properties and vehicles.',
+        actionLabel: rejected ? 'Update Application' : 'Go to Profile',
         onAction: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AgentProfileScreen()),
+          MaterialPageRoute(
+            builder: (_) => rejected
+                ? const AgentOnboardingScreen()
+                : const AgentProfileScreen(),
+          ),
         ),
       );
     }

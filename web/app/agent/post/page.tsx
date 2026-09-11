@@ -3,7 +3,7 @@
 import { getApiUrl } from '@/lib/get-api-url'
 import { useI18n } from '@/lib/i18n'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
@@ -37,7 +37,7 @@ export default function AgentPostPage() {
   // Form Fields
   const [title, setTitle] = useState('')
   const [posterType, setPosterType] = useState('Agent')
-  const [ownerType, setOwnerType] = useState('Farmer Owner')
+  const [ownerType, setOwnerType] = useState('Owner')
   const [contactMode, setContactMode] = useState('Admin')
   const [propertyType, setPropertyType] = useState('Condominium')
   const [listingType, setListingType] = useState('For Rent')
@@ -61,6 +61,11 @@ export default function AgentPostPage() {
   const [block, setBlock] = useState('')
   const [floorNumber, setFloorNumber] = useState('')
   const [houseNumber, setHouseNumber] = useState('')
+
+  const isOwner = user?.role === 'owner'
+  useEffect(() => {
+    if (isOwner) setContactMode('Owner')
+  }, [isOwner])
 
   // Images
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
@@ -309,13 +314,13 @@ export default function AgentPostPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>{t('owner_type')}</Label>
-                  <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    {['Farmer Owner', 'Saving Owner'].map(o => <option key={o}>{o}</option>)}
+                  <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} disabled={isOwner} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:bg-slate-50">
+                    {['Owner', 'Saving Owner'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <Label>{t('contact_mode')}</Label>
-                  <select value={contactMode} onChange={(e) => setContactMode(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                  <select value={contactMode} onChange={(e) => setContactMode(e.target.value)} disabled={isOwner} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:bg-slate-50">
                     {['Admin', 'Owner', 'Agent'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>

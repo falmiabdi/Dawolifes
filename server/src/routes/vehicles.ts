@@ -3,6 +3,7 @@ import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } 
 import { vehicleSchema, isValidUuid } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
+import { assertListingPermissionAllowed } from './permissions.js'
 
 const router = Router()
 
@@ -97,25 +98,30 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 
     const currentUser = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { username: true, phone: true, profilePhoto: true },
+      select: { username: true, phone: true, profilePhoto: true, role: true },
     })
+    const isAdmin = currentUser?.role === 'admin'
+
     const vehicle = await prisma.vehicle.create({
       data: {
         ...parsed.data,
         agentId: req.user!.userId,
         agentName: currentUser?.username || req.user!.email,
-        status: 'Pending',
+        status: isAdmin ? 'Approved' : 'Pending',
         displayPhone: currentUser?.phone || null,
         displayPhoto: currentUser?.profilePhoto || null,
+        contactUserId: req.user!.userId,
       },
     })
 
-    notifyAdmins(
-      'New Vehicle Listing',
-      `A new vehicle "${parsed.data.title}" has been posted and needs review.`,
-      'info',
-      { entityType: 'VEHICLE', entityId: vehicle.id, type: 'vehicle', id: vehicle.id }
-    ).catch(() => {})
+    if (!isAdmin) {
+      notifyAdmins(
+        'New Vehicle Listing',
+        `A new vehicle "${parsed.data.title}" has been posted and needs review.`,
+        'info',
+        { entityType: 'VEHICLE', entityId: vehicle.id, type: 'vehicle', id: vehicle.id }
+      ).catch(() => {})
+    }
 
     res.status(201).json({ message: 'Vehicle created', vehicle })
   } catch (err: any) {
@@ -136,6 +142,18 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
 
     if (vehicle.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
+    }
+
+    const permission = await assertListingPermissionAllowed({
+      requesterId: req.user!.userId,
+      isAdmin: req.user!.role === 'admin',
+      entityType: 'VEHICLE',
+      entityId: vehicle.id,
+      listingStatus: vehicle.status,
+      type: 'EDIT',
+    })
+    if (!permission.allowed) {
+      return res.status(403).json({ code: 'PERMISSION_REQUIRED', message: 'Approved listings require admin permission to edit.' })
     }
 
     const parsed = vehicleSchema.partial().safeParse(req.body)
@@ -175,6 +193,18 @@ router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async 
 
     if (vehicle.agentId !== req.user!.userId && req.user!.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized' })
+    }
+
+    const permission = await assertListingPermissionAllowed({
+      requesterId: req.user!.userId,
+      isAdmin: req.user!.role === 'admin',
+      entityType: 'VEHICLE',
+      entityId: vehicle.id,
+      listingStatus: vehicle.status,
+      type: 'DELETE',
+    })
+    if (!permission.allowed) {
+      return res.status(403).json({ code: 'PERMISSION_REQUIRED', message: 'Approved listings require admin permission to delete.' })
     }
 
     await prisma.vehicle.delete({ where: { id: req.params.id } })

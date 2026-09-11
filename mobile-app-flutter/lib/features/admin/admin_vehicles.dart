@@ -7,6 +7,7 @@ import '../../data/models/listing_item.dart';
 import '../../data/models/vehicle.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../providers/language_provider.dart';
+import '../agent/agent_post_vehicle.dart';
 import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
@@ -51,11 +52,23 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
     }
   }
 
+  Future<void> _openPost() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AgentPostVehicleScreen()),
+    );
+    _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tv = context.read<LanguageProvider>().tv;
     return Scaffold(
       appBar: AppBar(title: const Text('Vehicles')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openPost,
+        icon: const Icon(Icons.add),
+        label: const Text('Post Vehicle'),
+      ),
       body: Column(
         children: [
           SizedBox(
@@ -248,6 +261,12 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
             const SizedBox(height: 8),
           ],
           OutlinedButton.icon(
+            onPressed: _busy ? null : _edit,
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: const Text('Edit Vehicle'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => ListingDetailScreen(item: ListingItem.fromVehicle(v))),
             ),
@@ -264,6 +283,14 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _edit() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AgentPostVehicleScreen(edit: _v)),
+    );
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _review(bool approve) async {

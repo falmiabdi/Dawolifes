@@ -25,6 +25,7 @@ export default function AuthSignupPage() {
   return (
     <AuthShell
       title={t('create_free_account')}
+      titleClassName="text-2xl font-bold tracking-tight text-center text-orange-600"
       footer={
         <p className="text-center text-sm text-slate-500">
           {t('already_have_account')}{' '}

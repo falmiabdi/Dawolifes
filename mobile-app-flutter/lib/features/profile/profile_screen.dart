@@ -98,7 +98,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-          if (user.isAgent)
+          if (user.isAdmin || user.isAgent || user.isOwner)
             Card(
               margin: const EdgeInsets.only(bottom: 8),
               elevation: 0,
@@ -109,8 +109,8 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: ListTile(
                 leading: const Icon(Icons.work_outline, color: AppColors.primary),
-                title: const Text('Agent Portal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                subtitle: const Text('Post properties & vehicles, track commissions'),
+                title: Text(user.isOwner ? 'Owner Portal' : 'Agent Portal', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                subtitle: Text(user.isOwner ? 'Manage your properties & track requests' : 'Post properties & vehicles, track commissions'),
                 trailing: const Icon(Icons.chevron_right, color: AppColors.mutedForeground),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AgentPortalScreen()),

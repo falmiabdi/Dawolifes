@@ -120,7 +120,9 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       final current = context.read<AuthProvider>().user;
       if (current?.isOwner ?? false) {
         _posterType = 'Owner';
+        _contactMode = 'Owner';
       }
+      _prefillFromProfile();
     }
     if (p != null) {
       _posterType = p.posterType ?? _posterType;
@@ -134,6 +136,25 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       _features = p.features;
       _images = p.images;
     }
+  }
+
+  /// Auto-fills the location/contact fields from the poster's saved profile
+  /// (region, city, and the owner name/phone entered during onboarding).
+  Future<void> _prefillFromProfile() async {
+    try {
+      final profile = await context.read<AgentRepository>().fetchProfile();
+      if (!mounted) return;
+      final region = profile['region']?.toString() ?? '';
+      final city = profile['city']?.toString() ?? '';
+      final name = profile['username']?.toString() ?? '';
+      final phone = profile['phone']?.toString() ?? '';
+      setState(() {
+        if (_region.isEmpty && region.isNotEmpty) _region = region;
+        if (city.isNotEmpty) _city.text = city;
+        if (name.isNotEmpty) _name.text = name;
+        if (phone.isNotEmpty) _phone.text = phone;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -215,7 +236,6 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
   }
 
   void _next() {
-    final t = context.read<LanguageProvider>().t;
     switch (_step) {
       case 0:
         if (!(_basicFormKey.currentState?.validate() ?? false)) {
@@ -228,6 +248,10 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
           _scrollToFirstError();
           return;
         }
+        if (_region.trim().isEmpty) {
+          setState(() => _error = 'Please select a region.');
+          return;
+        }
         break;
       case 2:
         if (_images.length < 3) {
@@ -236,12 +260,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
         }
         break;
       case 3:
-        final lat = num.tryParse(_latitude.text.trim());
-        final lng = num.tryParse(_longitude.text.trim());
-        if (lat == null || lat == 0 || lng == null || lng == 0) {
-          setState(() => _error = t('select_location_map'));
-          return;
-        }
+        // Coordinates are optional; the map step may be skipped entirely.
         break;
     }
     setState(() {
@@ -270,11 +289,12 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       _submitting = true;
       _error = null;
     });
+    final isOwnerAcct = context.read<AuthProvider>().user?.isOwner ?? false;
     final payload = <String, dynamic>{
       'title': _title.text.trim(),
-      'posterType': _posterType,
+      'posterType': isOwnerAcct ? 'Owner' : _posterType,
       'ownerType': _ownerType,
-      'contactMode': _contactMode,
+      'contactMode': isOwnerAcct ? 'Owner' : _contactMode,
       'type': _propertyType,
       'listingType': _listingType,
       'price': num.tryParse(_price.text.trim()) ?? 0,
@@ -328,7 +348,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     }
   }
 
-  Widget _dropdown(String label, String value, List<String> options, ValueChanged<String> onChanged) {
+  Widget _dropdown(String label, String value, List<String> options, ValueChanged<String> onChanged,
+      {bool enabled = true}) {
     final tv = context.read<LanguageProvider>().tv;
     final hasMatch = options.contains(value);
     return Field(
@@ -342,7 +363,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
           value: o,
           child: Text(tv(o), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: AppColors.foreground), overflow: TextOverflow.ellipsis),
         )).toList(),
-        onChanged: (v) => onChanged(v ?? value),
+        onChanged: enabled ? (v) => onChanged(v ?? value) : null,
       ),
     );
   }
@@ -402,6 +423,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
 
   Widget _buildBasicInfo() {
     final t = context.read<LanguageProvider>().t;
+    // Owners post as owner with their own contact (mirrors the web post form).
+    final isOwnerAcct = context.read<AuthProvider>().user?.isOwner ?? false;
     return Form(
       key: _basicFormKey,
       child: FormSection(
@@ -411,9 +434,25 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
           children: [
             Row(
               children: [
-                Expanded(child: _dropdown(t('owner_type'), _ownerType, _ownerTypes, (v) => setState(() => _ownerType = v))),
+                Expanded(
+                  child: _dropdown(
+                    t('owner_type'),
+                    _ownerType,
+                    _ownerTypes,
+                    (v) => setState(() => _ownerType = v),
+                    enabled: !isOwnerAcct,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _dropdown(t('contact_mode'), _contactMode, const ['Admin', 'Owner', 'Agent'], (v) => setState(() => _contactMode = v))),
+                Expanded(
+                  child: _dropdown(
+                    t('contact_mode'),
+                    isOwnerAcct ? 'Owner' : _contactMode,
+                    isOwnerAcct ? const ['Owner'] : const ['Admin', 'Owner', 'Agent'],
+                    (v) => setState(() => _contactMode = v),
+                    enabled: !isOwnerAcct,
+                  ),
+                ),
               ],
             ),
             Field(
@@ -540,6 +579,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
             ),
             Row(
               children: [
+                Expanded(child: Field(label: t('kebele'), child: TextFormField(controller: _kebele, decoration: const InputDecoration(hintText: 'e.g. 01')))),
+                const SizedBox(width: 10),
                 Expanded(child: Field(label: t('parcel'), child: TextFormField(controller: _parcel, decoration: const InputDecoration(hintText: 'e.g. 1234')))),
               ],
             ),
@@ -588,7 +629,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Click on the map to select the exact location, or enter the coordinates manually below.',
+            'Coordinates are optional. Click on the map, use "My current location", or enter them manually.',
             style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
           ),
           const SizedBox(height: 12),

@@ -12,11 +12,15 @@ class AuthShell extends StatelessWidget {
     required this.title,
     required this.child,
     this.footer,
+    this.centerTitle = false,
+    this.titleColor,
   });
 
   final String title;
   final Widget child;
   final Widget? footer;
+  final bool centerTitle;
+  final Color? titleColor;
 
   @override
   Widget build(BuildContext context) {
@@ -61,8 +65,9 @@ class AuthShell extends StatelessWidget {
                           children: [
                             Text(
                               title,
-                              style: const TextStyle(
-                                color: Color(0xFF0F172A),
+                              textAlign: centerTitle ? TextAlign.center : TextAlign.start,
+                              style: TextStyle(
+                                color: titleColor ?? const Color(0xFF0F172A),
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),

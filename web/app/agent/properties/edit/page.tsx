@@ -94,7 +94,8 @@ function EditPropertyPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const router = useRouter()
-  const { getToken } = useAuth()
+  const { getToken, user } = useAuth()
+  const isOwner = user?.role === 'owner'
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState | null>(null)
   const [customFeature, setCustomFeature] = useState("")
@@ -165,7 +166,7 @@ function EditPropertyPage() {
         setForm({
           title: p.title || "",
           posterType: p.posterType || "Agent",
-          ownerType: p.ownerType || "Farmer Owner",
+          ownerType: p.ownerType || "Owner",
           contactMode: p.contactMode || "Admin",
           propertyType: p.type || "Condominium",
           listingType: p.listingType || "For Rent",
@@ -458,7 +459,8 @@ function EditPropertyPage() {
                         <SelectBox
                           value={form.ownerType}
                           onChange={(v) => set("ownerType", v)}
-                          options={["Farmer Owner", "Saving Owner"]}
+                          options={["Owner", "Saving Owner"]}
+                          disabled={isOwner}
                         />
                       </Field>
                       <Field label="Display Contact">
@@ -466,6 +468,7 @@ function EditPropertyPage() {
                           value={form.contactMode}
                           onChange={(v) => set("contactMode", v)}
                           options={["Admin", "Owner", "Agent"]}
+                          disabled={isOwner}
                         />
                       </Field>
                     </div>
@@ -981,13 +984,15 @@ function SelectBox({
   value,
   onChange,
   options,
+  disabled,
 }: {
   value: string
   onChange: (v: string) => void
   options: string[]
+  disabled?: boolean
 }) {
   return (
-    <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
+    <Select value={value} onValueChange={(v) => onChange(v ?? "")} disabled={disabled}>
       <SelectTrigger className="w-full">
         <SelectValue />
       </SelectTrigger>

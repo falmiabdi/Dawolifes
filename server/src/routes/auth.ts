@@ -219,6 +219,7 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
     const response: any = { message: 'Email verified successfully' }
 
     if (role === 'user' || role === 'agent' || role === 'owner') {
+      await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } }).catch(() => {})
       const accessToken = signAccessToken(payload)
       const refreshToken = signRefreshToken(payload)
       response.accessToken = accessToken
@@ -297,7 +298,7 @@ router.get('/verify-email', async (req, res) => {
       return res.status(404).send('User not found. Please register first.')
     }
     if (user.emailVerified) {
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verified=1`)
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/login?verified=1`)
     }
 
     await prisma.user.update({
@@ -314,7 +315,7 @@ router.get('/verify-email', async (req, res) => {
       ).catch(() => {})
     }
 
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verified=1`)
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/login?verified=1`)
   } catch (err: any) {
     res.status(500).send(err.message || 'Verification failed')
   }
@@ -340,7 +341,8 @@ router.post('/check-verification', otpLimiter, async (req, res) => {
     const { id: userId, email: emailVal, role } = user
     const response: any = { verified: true, message: 'Email verified successfully' }
 
-    if (role === 'user' || role === 'agent') {
+    if (role === 'user' || role === 'agent' || role === 'owner') {
+      await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } }).catch(() => {})
       const payload = { userId, email: emailVal, role }
       const accessToken = signAccessToken(payload)
       const refreshToken = signRefreshToken(payload)
@@ -409,6 +411,11 @@ router.post('/signin', authLimiter, async (req, res) => {
     const accessToken = signAccessToken({ userId, email: emailVal, role })
     const refreshToken = signRefreshToken({ userId, email: emailVal, role })
 
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+    }).catch(() => {})
+
     res.json({
       message: 'Login successful',
       user: {
@@ -450,7 +457,15 @@ router.post('/firebase', authLimiter, async (req, res) => {
       return res.status(401).json({ message: 'Invalid or expired Firebase token', error: tokenErr.message })
     }
 
-    const { uid, email, emailVerified, name, picture, phoneNumber } = verifiedFirebaseUser
+    const { uid, email, emailVerified, name, picture, phoneNumber, signInProvider } = verifiedFirebaseUser
+
+    // Google OAuth is an automatic sign-in + registration pipeline. A Google
+    // account has already passed Firebase email verification, so we never gate
+    // these users behind OTP or a manual password login.
+    const isGoogle = signInProvider === 'google.com'
+    const targetRole = requestedRole === 'agent' ? 'agent' : requestedRole === 'owner' ? 'owner' : 'user'
+    const finalName = providedName || name || email.split('@')[0]
+    const finalPhone = providedPhone || phoneNumber || null
 
     // 2. Look up existing user by firebaseUid or normalized email
     let user = await prisma.user.findFirst({
@@ -462,12 +477,9 @@ router.post('/firebase', authLimiter, async (req, res) => {
       },
     })
 
-    const targetRole = requestedRole === 'agent' ? 'agent' : requestedRole === 'owner' ? 'owner' : 'user'
-    const finalName = providedName || name || email.split('@')[0]
-    const finalPhone = providedPhone || phoneNumber || null
-
     if (!user) {
-      // 3. Create new user with verification strictly synced from Firebase token
+      // 3. New user — Google accounts are auto-verified + session issued.
+      //    Firebase email/password users come back unverified so OTP flow applies.
       user = await prisma.user.create({
         data: {
           firebaseUid: uid,
@@ -478,22 +490,55 @@ router.post('/firebase', authLimiter, async (req, res) => {
           role: targetRole,
           roles: [targetRole],
           status: targetRole === 'agent' || targetRole === 'owner' ? 'Pending' : 'Approved',
-          emailVerified,
-          emailVerifiedAt: emailVerified ? new Date() : null,
+          authProvider: isGoogle ? 'google' : 'firebase',
+          emailVerified: isGoogle && emailVerified,
+          emailVerifiedAt: isGoogle && emailVerified ? new Date() : null,
+          lastLoginAt: new Date(),
           onboardingComplete: targetRole !== 'agent' && targetRole !== 'owner',
         },
       })
     } else {
-      // 4. Update existing user details & synchronize verification status from Firebase
+      // 4. Existing user — sync profile + verification, never downgrade role
       const updates: any = {}
+
+      // A plain buyer may explicitly re-register as an agent/owner via Google
+      // sign-up. Honor that choice by upgrading the account to the requested
+      // seller role and re-running onboarding + admin review. Never downgrade
+      // an existing seller, and never upgrade an admin.
+      if (
+        (targetRole === 'agent' || targetRole === 'owner') &&
+        user.role === 'user' &&
+        !user.isRootAdmin
+      ) {
+        updates.role = targetRole
+        updates.roles = [
+          ...new Set([
+            ...(Array.isArray(user.roles) ? (user.roles as string[]) : []).filter(
+              (r) => r !== 'agent' && r !== 'owner',
+            ),
+            targetRole,
+          ]),
+        ]
+        updates.status = 'Pending'
+        updates.onboardingComplete = false
+        updates.rejectionReason = null
+      }
+
       if (!user.firebaseUid) {
         updates.firebaseUid = uid
       }
-      if (emailVerified && !user.emailVerified) {
-        updates.emailVerified = true
-        updates.emailVerifiedAt = user.emailVerifiedAt || new Date()
-        updates.otp = null
-        updates.otpExpiresAt = null
+      if (isGoogle) {
+        // Google is proof-of-email: mark verified so OTP is never required.
+        updates.authProvider = 'google'
+        updates.lastLoginAt = new Date()
+        if (!user.emailVerified) {
+          updates.emailVerified = true
+          updates.emailVerifiedAt = user.emailVerifiedAt || new Date()
+          updates.otp = null
+          updates.otpExpiresAt = null
+        }
+      } else {
+        updates.lastLoginAt = new Date()
       }
       if (!user.profilePhoto && picture) {
         updates.profilePhoto = picture
@@ -522,10 +567,12 @@ router.post('/firebase', authLimiter, async (req, res) => {
       return res.status(403).json({ message: 'Your account has been suspended' })
     }
 
-    // 6. If email is not yet verified in Firebase, return notice without issuing JWT session
-    if (!user.emailVerified) {
-      return res.status(200).json({
-        message: 'Email verification required. Please verify your email before continuing.',
+    // 6. Google = always verified; Firebase email/password = still needs OTP if email not yet verified
+    const isVerified = isGoogle || user.emailVerified
+
+    if (!isVerified) {
+      return res.json({
+        message: 'Account created — check your email for a verification code',
         requiresEmailVerification: true,
         emailVerified: false,
         user: {

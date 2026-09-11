@@ -22,6 +22,7 @@ import {
   Car,
   X,
   Megaphone,
+  ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -41,6 +42,7 @@ const agentNav = [
 const adminNav = [
   { href: "/admin", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/admin/agents", labelKey: "agent_management", icon: User },
+  { href: "/admin/permissions", labelKey: "listing_permissions", icon: ShieldCheck },
   { href: "/admin/properties", labelKey: "properties", icon: Building2 },
   { href: "/admin/vehicles", labelKey: "vehicles", icon: Car },
   { href: "/admin/users", labelKey: "users", icon: User },
@@ -51,7 +53,7 @@ const adminNav = [
 ]
 
 interface SidebarProps {
-  role: "agent" | "admin"
+  role: "agent" | "admin" | "owner"
   isOpen?: boolean
   onClose?: () => void
 }

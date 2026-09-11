@@ -5,22 +5,31 @@ function databaseUrl(): string {
   try {
     const urlObj = new URL(url)
     urlObj.searchParams.set('connect_timeout', '30')
-    if (urlObj.hostname.includes('-pooler') && !urlObj.searchParams.has('pgbouncer')) {
-      urlObj.searchParams.set('pgbouncer', 'true')
+    urlObj.searchParams.set('pool_timeout', '30')
+    if (urlObj.hostname.includes('-pooler')) {
+      if (!urlObj.searchParams.has('pgbouncer')) {
+        urlObj.searchParams.set('pgbouncer', 'true')
+      }
+      if (!urlObj.searchParams.has('connection_limit')) {
+        urlObj.searchParams.set('connection_limit', '10')
+      }
     }
     return urlObj.toString()
   } catch {
-    if (url.includes('-pooler') && !url.includes('pgbouncer=true')) {
+    if (url.includes('-pooler')) {
       const sep = url.includes('?') ? '&' : '?'
-      return `${url}${sep}connect_timeout=30&pgbouncer=true`
+      const pgbouncer = url.includes('pgbouncer=true') ? '' : `${sep}pgbouncer=true`
+      const limit = `${url.includes('?') || pgbouncer ? '&' : '?'}connection_limit=10`
+      return `${url}${pgbouncer || ''}${limit}&connect_timeout=30&pool_timeout=30`
     }
     const sep = url.includes('?') ? '&' : '?'
-    return url.includes('?') ? `${url}${sep}connect_timeout=30` : `${url}?connect_timeout=30`
+    return url.includes('?') ? `${url}${sep}connect_timeout=30&pool_timeout=30` : `${url}?connect_timeout=30&pool_timeout=30`
   }
 }
 
 export const prisma = new PrismaClient({
   datasources: { db: { url: databaseUrl() } },
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 })
 
 let _dbAvailable = false
@@ -31,7 +40,7 @@ export function isDbAvailable(): boolean {
 
 function isRetryableConnectionError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
-  return /server has closed the connection|connection.*closed|can't reach database server|P1001|P1002|P1017/i.test(message)
+  return /server has closed the connection|connection.*closed|can't reach database server|timed out fetching a new connection|connection pool|P1001|P1002|P1017/i.test(message)
 }
 
 const RETRY_BACKOFFS_MS = [500, 1000, 2000, 4000, 8000, 15000]

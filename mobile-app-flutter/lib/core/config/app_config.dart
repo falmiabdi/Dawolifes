@@ -1,13 +1,46 @@
 /// Central application configuration.
-abstract final class AppConfig {
-  /// Backend base URL (Render / Neon cloud). Must match the deployment the
-  /// website (fullstack/web) talks to — see web/.env.local's
-  /// NEXT_PUBLIC_API_URL. Both clients must share the same backend + database
-  /// to stay feature-parity.
-  static String apiBaseUrl = 'https://api.jebugeneraltrading.com';
+library;
 
-  /// WebSocket base URL derived from the API base URL.
-  static String get wsBaseUrl => apiBaseUrl.replaceFirst('http', 'ws');
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+abstract final class AppConfig {
+  /// Backend base URL. Must match the deployment the website (fullstack/web)
+  /// talks to — see web/.env.local's NEXT_PUBLIC_API_URL. Both clients must
+  /// share the same backend + database to stay feature-parity.
+  ///
+  /// Local E2E: the app probes [apiBaseCandidates] once at startup and uses the
+  /// first reachable host, so it works on every device without flags:
+  ///   - Android emulator     → http://10.0.2.2:4000 (emulator → host alias)
+  ///   - Physical phone (USB) → adb reverse tcp:4000 tcp:4000, then localhost
+  ///   - Web / Windows        → http://localhost:4000
+  /// On a phone on your Wi-Fi (no USB), pass your PC's LAN IP explicitly:
+  ///   flutter run --dart-define=API_BASE_URL=http://192.168.1.10:4000
+  /// (allow inbound port 4000 through the Windows firewall)
+  /// Restore the published URL before shipping:
+  ///   flutter run --dart-define=API_BASE_URL=https://api.jebugeneraltrading.com
+  /// Local dev backend checked first; your PC's LAN IP while testing on a
+  /// physical phone over Wi-Fi. Change this if your PC's IP changes.
+  static const String _devLanBase = 'http://172.29.2.7:4000';
+
+  static List<String> get apiBaseCandidates {
+    const override = String.fromEnvironment('API_BASE_URL');
+    final list = <String>[];
+    if (override.isNotEmpty) list.add(override);
+    list.add(_devLanBase);
+    if (!kIsWeb && Platform.isAndroid) {
+      list.add('http://10.0.2.2:4000');
+      list.add('http://localhost:4000');
+    } else {
+      list.add('http://localhost:4000');
+    }
+    return list.toSet().toList();
+  }
+
+  /// First reachable host is auto-detected by [ApiClient]; this is the
+  /// fallback used before the probe resolves.
+  static String get apiBaseUrl => apiBaseCandidates.first;
 
   /// Connection timeout for the initial TLS handshake. Render's free tier can
   /// take up to ~30s to wake from idle on the first request, so keep this

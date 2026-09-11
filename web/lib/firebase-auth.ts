@@ -41,11 +41,14 @@ export async function signInWithGoogle(): Promise<{ idToken: string; email: stri
     // Popup blockers (incognito, strict browsers) or hosting COOP headers can
     // prevent the popup. Falling back to the redirect flow is immune to both,
     // and the result is resolved on the next page load by auth-guard.
-    if (
-      err?.code === 'auth/operation-not-supported-in-this-environment' ||
-      err?.code === 'auth/popup-blocked' ||
-      err?.code === 'auth/popup-closed-by-user'
-    ) {
+    const popupBlockedCodes = [
+      'auth/operation-not-supported-in-this-environment',
+      'auth/popup-blocked',
+      'auth/popup-closed-by-user',
+      'auth/cancelled-popup-request',
+    ]
+    if (popupBlockedCodes.includes(err?.code)) {
+      console.warn('[Google Auth] Popup blocked, falling back to redirect:', err?.code)
       await signInWithRedirect(getAuthInstance(), provider)
       return null
     }

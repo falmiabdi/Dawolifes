@@ -8,6 +8,12 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Dawolife Mobile</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera is used to capture your identity selfie and listing photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo access is used to upload listing and identity images.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location is used to set listing coordinates on the map.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

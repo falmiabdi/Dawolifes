@@ -6,7 +6,7 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
 
 interface DashboardShellProps {
-  role: "agent" | "admin"
+  role: "agent" | "admin" | "owner"
   name: string
   email: string
   status?: string
@@ -44,6 +44,7 @@ export function DashboardShell({
           title={title}
           profilePhoto={profilePhoto}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          role={role}
         />
         <main className="flex-1 overflow-y-auto p-3 md:p-6">
           <ErrorBoundary>{children}</ErrorBoundary>

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/theme/app_colors.dart';
 
@@ -191,41 +193,79 @@ class MapPickerField extends StatefulWidget {
 }
 
 class _MapPickerFieldState extends State<MapPickerField> {
+  bool _locating = false;
+
+  Future<void> _useCurrentLocation() async {
+    setState(() => _locating = true);
+    try {
+      var status = await Permission.location.request();
+      if (!status.isGranted) {
+        status = await Permission.locationWhenInUse.request();
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      if (!mounted) return;
+      widget.latController.text = position.latitude.toStringAsFixed(5);
+      widget.lngController.text = position.longitude.toStringAsFixed(5);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not determine your location. Check location permissions.')),
+      );
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextFormField(
-            controller: widget.latController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: 'Latitude', isDense: true),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: widget.latController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(hintText: 'Latitude', isDense: true),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: widget.lngController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(hintText: 'Longitude', isDense: true),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              icon: const Icon(Icons.map_outlined, size: 20),
+              onPressed: () async {
+                final initial = LatLng(
+                  double.tryParse(widget.latController.text) ?? 9.0375,
+                  double.tryParse(widget.lngController.text) ?? 38.7612,
+                );
+                final result = await Navigator.of(context).push<LatLng>(
+                  MaterialPageRoute(builder: (_) => MapPickerScreen(initialPosition: initial)),
+                );
+                if (result != null && mounted) {
+                  widget.latController.text = result.latitude.toStringAsFixed(5);
+                  widget.lngController.text = result.longitude.toStringAsFixed(5);
+                }
+              },
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            controller: widget.lngController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: 'Longitude', isDense: true),
-          ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.filled(
-          icon: const Icon(Icons.map_outlined, size: 20),
-          onPressed: () async {
-            final initial = LatLng(
-              double.tryParse(widget.latController.text) ?? 9.0375,
-              double.tryParse(widget.lngController.text) ?? 38.7612,
-            );
-            final result = await Navigator.of(context).push<LatLng>(
-              MaterialPageRoute(builder: (_) => MapPickerScreen(initialPosition: initial)),
-            );
-            if (result != null && mounted) {
-              widget.latController.text = result.latitude.toStringAsFixed(5);
-              widget.lngController.text = result.longitude.toStringAsFixed(5);
-            }
-          },
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _locating ? null : _useCurrentLocation,
+          icon: _locating
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.my_location, size: 18),
+          label: Text(_locating ? 'Locating…' : 'Use my current location'),
         ),
       ],
     );

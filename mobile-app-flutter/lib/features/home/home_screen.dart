@@ -15,6 +15,8 @@ import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 import '../listings/listing_detail_screen.dart';
 import '../profile/profile_screen.dart';
+import '../agent/agent_portal.dart';
+import '../admin/admin_portal.dart';
 import 'about_screen.dart';
 import 'categories_screen.dart';
 import 'how_to_buy_screen.dart';
@@ -523,6 +525,21 @@ class _AccountButton extends StatelessWidget {
 
   void _openAccount(BuildContext context, AuthProvider auth) {
     if (auth.isLoggedIn) {
+      final user = auth.user;
+      // Header account entry routes by role, matching the web header: agents,
+      // owners and admins land on their portal instead of the buyer profile.
+      if (user != null && (user.isAgent || user.isOwner)) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AgentPortalScreen()),
+        );
+        return;
+      }
+      if (user != null && user.isAdmin) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
+        );
+        return;
+      }
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ProfileScreen()),
       );

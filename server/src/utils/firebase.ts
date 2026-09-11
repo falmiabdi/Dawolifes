@@ -65,6 +65,7 @@ export interface VerifiedFirebaseUser {
   name?: string
   picture?: string
   phoneNumber?: string
+  signInProvider?: string
 }
 
 /**
@@ -87,5 +88,6 @@ export async function verifyFirebaseIdToken(idToken: string): Promise<VerifiedFi
     name: (decoded.name || decoded.displayName) as string | undefined,
     picture: (decoded.picture || decoded.photoURL) as string | undefined,
     phoneNumber: decoded.phone_number as string | undefined,
+    signInProvider: (decoded.firebase?.sign_in_provider || decoded.firebase?.sign_in_provider) as string | undefined,
   }
 }

@@ -107,7 +107,7 @@ export function BottomNav() {
 
   if (hidden) return null
 
-  const profileHref = !user ? "/auth/login" : user.role === "admin" ? "/admin" : user.role === "agent" ? "/agent" : "/verify"
+  const profileHref = !user ? "/auth/login" : user.role === "admin" ? "/admin" : user.role === "agent" || user.role === "owner" ? "/agent" : "/verify"
 
   const items: NavItem[] = [
     { label: "Home", href: "/", icon: Home, match: (p) => p === "/" },

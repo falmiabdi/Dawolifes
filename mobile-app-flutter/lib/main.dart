@@ -16,6 +16,7 @@ import 'data/repositories/auth_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/message_repository.dart';
 import 'data/repositories/notification_repository.dart';
+import 'data/repositories/review_repository.dart';
 import 'features/onboarding/splash_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/home_provider.dart';
@@ -74,6 +75,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => SavedProvider(listingRepo)),
         Provider.value(value: listingRepo),
         Provider.value(value: MessageRepository(api)),
+        Provider.value(value: ReviewRepository(api)),
         Provider.value(value: AgentRepository(api)),
         Provider.value(value: AdminRepository(api)),
         Provider.value(value: AnnouncementRepository(api)),

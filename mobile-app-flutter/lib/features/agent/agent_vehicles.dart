@@ -24,6 +24,7 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
   bool _loading = true;
   String? _error;
   List<Vehicle> _items = [];
+  List<Map<String, dynamic>> _permissions = [];
 
   @override
   void initState() {
@@ -38,9 +39,11 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
     });
     try {
       final items = await context.read<AgentRepository>().fetchMyVehicles();
+      final permissions = await context.read<AgentRepository>().fetchMyPermissions();
       if (!mounted) return;
       setState(() {
         _items = items;
+        _permissions = permissions;
         _loading = false;
       });
     } catch (e) {
@@ -52,7 +55,53 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
     }
   }
 
+  bool _granted(String id, String type) =>
+      _permissions.any((r) => r['entityId'] == id && r['type'] == type && r['status'] == 'Approved' && r['used'] != true);
+
+  bool _pending(String id, String type) =>
+      _permissions.any((r) => r['entityId'] == id && r['type'] == type && r['status'] == 'Pending');
+
+  Future<void> _requestPermission(Vehicle v, String type) async {
+    final label = type == 'EDIT' ? 'edit' : 'delete';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Send $label permission request?'),
+        content: Text(
+          '"${v.title}" is already approved. This will send the admin a request to allow you to ${label} it.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Send Permission'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final repo = context.read<AgentRepository>();
+    try {
+      await repo.requestPermission(entityType: 'VEHICLE', entityId: v.id, type: type);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permission request sent. The admin will review it shortly.')),
+      );
+      final permissions = await repo.fetchMyPermissions();
+      if (!mounted) return;
+      setState(() => _permissions = permissions);
+    } on Exception catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   Future<void> _delete(Vehicle v) async {
+    if (!_granted(v.id, 'DELETE') && (v.status ?? '') == 'Approved') {
+      await _requestPermission(v, 'DELETE');
+      return;
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -196,7 +245,18 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
                                             icon: const Icon(Icons.visibility_outlined, size: 15),
                                             label: const Text('View'),
                                           ),
-                                          if (v.status == 'Rejected')
+                                          if (v.status == 'Approved' && !_granted(v.id, 'EDIT'))
+                                            OutlinedButton.icon(
+                                              onPressed: _pending(v.id, 'EDIT')
+                                                  ? null
+                                                  : () => _requestPermission(v, 'EDIT'),
+                                              icon: Icon(
+                                                _pending(v.id, 'EDIT') ? Icons.hourglass_empty : Icons.edit_outlined,
+                                                size: 15,
+                                              ),
+                                              label: Text(_pending(v.id, 'EDIT') ? 'Permission Pending' : 'Send Edit Permission'),
+                                            )
+                                          else
                                             OutlinedButton.icon(
                                               onPressed: () async {
                                                 await Navigator.of(context).push(MaterialPageRoute(
@@ -207,12 +267,25 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
                                               icon: const Icon(Icons.edit_outlined, size: 15),
                                               label: const Text('Edit'),
                                             ),
-                                          OutlinedButton.icon(
-                                            onPressed: () => _delete(v),
-                                            style: OutlinedButton.styleFrom(foregroundColor: AppColors.destructive),
-                                            icon: const Icon(Icons.delete_outline, size: 15),
-                                            label: const Text('Delete'),
-                                          ),
+                                          if (v.status == 'Approved' && !_granted(v.id, 'DELETE'))
+                                            OutlinedButton.icon(
+                                              onPressed: _pending(v.id, 'DELETE')
+                                                  ? null
+                                                  : () => _requestPermission(v, 'DELETE'),
+                                              style: OutlinedButton.styleFrom(foregroundColor: AppColors.destructive),
+                                              icon: Icon(
+                                                _pending(v.id, 'DELETE') ? Icons.hourglass_empty : Icons.lock_outline,
+                                                size: 15,
+                                              ),
+                                              label: Text(_pending(v.id, 'DELETE') ? 'Pending' : 'Send Delete Permission'),
+                                            )
+                                          else
+                                            OutlinedButton.icon(
+                                              onPressed: () => _delete(v),
+                                              style: OutlinedButton.styleFrom(foregroundColor: AppColors.destructive),
+                                              icon: const Icon(Icons.delete_outline, size: 15),
+                                              label: const Text('Delete'),
+                                            ),
                                         ],
                                       ),
                                     ],

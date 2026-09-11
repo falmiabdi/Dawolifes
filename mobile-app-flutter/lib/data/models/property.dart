@@ -33,6 +33,7 @@ class Property {
     this.agentName,
     this.displayPhone,
     this.displayPhoto,
+    this.contactUserId,
     this.posterType,
     this.ownerType,
     this.contactMode,
@@ -74,6 +75,7 @@ class Property {
   final String? agentName;
   final String? displayPhone;
   final String? displayPhoto;
+  final String? contactUserId;
   final String? posterType;
   final String? ownerType;
   final String? contactMode;
@@ -114,11 +116,21 @@ class Property {
     return agent?.avatar?.trim() ?? '';
   }
 
+  /// User id the Message button routes to: follows the admin-switched contact
+  /// when one is set, otherwise the listing's original agent.
+  String? get messageRecipientId {
+    final c = contactUserId?.trim();
+    if (c != null && c.isNotEmpty) return c;
+    final a = agent?.id?.trim();
+    return (a != null && a.isNotEmpty) ? a : null;
+  }
+
   /// Copy of this property with the contact override replaced.
   Property withContact({
     String? agentName,
     String? displayPhone,
     String? displayPhoto,
+    String? contactUserId,
     String? contactMode,
   }) {
     return Property(
@@ -152,6 +164,7 @@ class Property {
       agentName: agentName ?? this.agentName,
       displayPhone: displayPhone ?? this.displayPhone,
       displayPhoto: displayPhoto ?? this.displayPhoto,
+      contactUserId: contactUserId ?? this.contactUserId,
       posterType: posterType,
       ownerType: ownerType,
       contactMode: contactMode ?? this.contactMode,
@@ -195,6 +208,7 @@ class Property {
       agentName: json['agentName'] as String?,
       displayPhone: json['displayPhone'] as String?,
       displayPhoto: json['displayPhoto'] as String?,
+      contactUserId: json['contactUserId'] as String?,
       posterType: json['posterType'] as String?,
       ownerType: json['ownerType'] as String?,
       contactMode: json['contactMode'] as String?,

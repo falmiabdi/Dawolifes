@@ -96,8 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   // Remembers the page the Google redirect flow started from, so the return
   // navigation (which reloads the app) lands on the right route. Defaults to
-  // '/saved' (buyer dashboard) when the origin page was an auth page.
-  const redirectPathRef = useRef<string>('/saved')
+  // '/' (home) when the origin page was an auth page.
+  const redirectPathRef = useRef<string>('/')
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ) {
         redirectPathRef.current = pathname + search
       } else {
-        redirectPathRef.current = '/saved'
+        redirectPathRef.current = '/'
       }
     }
 
@@ -150,13 +150,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) setUserAndCache(data.user)
 
       // Route by role exactly like googleSignIn (redirect flow loses the
-      // register-page role, so default to buyer /saved).
+      // register-page role, so default to buyer /).
       const target =
         data.user?.role === 'admin'
           ? '/admin'
-          : data.user?.role === 'agent'
-            ? '/agent'
-            : redirectPathRef.current || '/saved'
+          : data.user?.role === 'agent' || data.user?.role === 'owner'
+            ? data.user?.onboardingComplete
+              ? '/agent'
+              : '/agent/onboarding'
+            : redirectPathRef.current || '/'
       router.replace(target)
     } catch {
       // Silently fail — user can retry from the sign-in UI.
@@ -176,18 +178,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      const response = await fetch(`${await getApiUrlAsync()}/api/auth/session`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-      })
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 5000)
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data?.session?.user) {
-          setUserAndCache(data.session.user)
+      try {
+        const response = await fetch(`${await getApiUrlAsync()}/api/auth/session`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: 'include',
+          signal: controller.signal,
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data?.session?.user) {
+            setUserAndCache(data.session.user)
+          }
         }
+      } finally {
+        clearTimeout(timer)
       }
     } catch {
       // Silently fail
@@ -226,6 +236,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await persistToken(data.accessToken)
     setUserAndCache(data.user)
+    
+    // Auto-redirect admin to admin portal
+    if (data.user?.role === 'admin') {
+      router.replace('/admin')
+    }
     return data
   }
 
@@ -397,20 +412,25 @@ export function AuthGuard({
   useEffect(() => {
     if (loading) return
 
-    if (!user) {
-      setRedirecting(true)
-      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
-      return
-    }
+    const needsRedirect =
+      !user ||
+      (requiredRole === 'admin' &&
+        !(user.role === 'admin' || user.roles?.includes('admin')))
 
-    if (requiredRole === 'admin') {
-      const isAdmin = user.role === 'admin' || user.roles?.includes('admin')
-      if (!isAdmin) {
-        setRedirecting(true)
+    if (needsRedirect) {
+      setRedirecting(true)
+      if (requiredRole === 'admin') {
         router.replace('/login')
+      } else {
+        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
       }
+    } else if (redirecting) {
+      // Clear the flag once the redirect is no longer needed so client-side
+      // transitions (which never remount this component) don't stay stuck
+      // showing the loading bar.
+      setRedirecting(false)
     }
-  }, [user, loading, requiredRole, router, pathname])
+  }, [user, loading, requiredRole, router, pathname, redirecting])
 
   if (loading || redirecting) {
     return (

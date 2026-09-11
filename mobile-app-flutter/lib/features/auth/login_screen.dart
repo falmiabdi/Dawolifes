@@ -11,7 +11,6 @@ import 'auth_routing.dart';
 import 'auth_shell.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
-import 'verify_email_screen.dart';
 
 /// Login screen mirroring app/auth/login/page.tsx.
 ///
@@ -196,16 +195,41 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _emailNotFound ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                  color: _needsVerification
+                      ? const Color(0xFFFFFBEB)
+                      : _emailNotFound
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFEF2F2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _emailNotFound ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA)),
-                ),
-                child: Text(
-                  _error!,
-                  style: TextStyle(
-                    color: _emailNotFound ? const Color(0xFF15803D) : const Color(0xFFDC2626),
-                    fontSize: 14,
+                  border: Border.all(
+                    color: _needsVerification
+                        ? const Color(0xFFFDE68A)
+                        : _emailNotFound
+                            ? const Color(0xFFBBF7D0)
+                            : const Color(0xFFFECACA),
                   ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_needsVerification) ...[
+                      const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFB45309)),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: _needsVerification
+                              ? const Color(0xFF92400E)
+                              : _emailNotFound
+                                  ? const Color(0xFF15803D)
+                                  : const Color(0xFFDC2626),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (_emailNotFound) ...[
@@ -218,23 +242,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: const Text(
                       'Create Account',
-                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
-                  ),
-                ),
-              ],
-              if (_needsVerification) ...[
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => VerifyEmailScreen(email: _email.text.trim()),
-                      ),
-                    ),
-                    child: const Text(
-                      'Resend verification code',
                       style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ),

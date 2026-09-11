@@ -7,6 +7,7 @@ import '../../data/models/property.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../../core/utils/formatters.dart';
 import '../../providers/language_provider.dart';
+import '../agent/agent_post_property.dart';
 import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
@@ -51,11 +52,23 @@ class _AdminPropertiesScreenState extends State<AdminPropertiesScreen> {
     }
   }
 
+  Future<void> _openPost() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AgentPostPropertyScreen()),
+    );
+    _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tv = context.read<LanguageProvider>().tv;
     return Scaffold(
       appBar: AppBar(title: const Text('Properties')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openPost,
+        icon: const Icon(Icons.add),
+        label: const Text('Post Property'),
+      ),
       body: Column(
         children: [
           SizedBox(
@@ -263,6 +276,12 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
             const SizedBox(height: 8),
           ],
           OutlinedButton.icon(
+            onPressed: _busy ? null : _edit,
+            icon: const Icon(Icons.edit_outlined, size: 16),
+            label: const Text('Edit Property'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => ListingDetailScreen(item: ListingItem.fromProperty(p))),
             ),
@@ -279,6 +298,14 @@ class _AdminPropertyDetailScreenState extends State<AdminPropertyDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _edit() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AgentPostPropertyScreen(edit: _p)),
+    );
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _review(bool approve) async {

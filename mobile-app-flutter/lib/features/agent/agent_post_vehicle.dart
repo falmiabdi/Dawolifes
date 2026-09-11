@@ -221,7 +221,23 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
       _transmission = v.transmission ?? _transmission;
       _images = v.images;
       _region = v.region ?? '';
+    } else {
+      _prefillFromProfile();
     }
+  }
+
+  /// Auto-fills region/city from the poster's saved profile.
+  Future<void> _prefillFromProfile() async {
+    try {
+      final profile = await context.read<AgentRepository>().fetchProfile();
+      if (!mounted) return;
+      final region = profile['region']?.toString() ?? '';
+      final city = profile['city']?.toString() ?? '';
+      setState(() {
+        if (_region.isEmpty && region.isNotEmpty) _region = region;
+        if (city.isNotEmpty) _city.text = city;
+      });
+    } catch (_) {}
   }
 
   @override

@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:937308603015:android:41c0298d7b95099d9a6e22",
+        "mobilesdk_app_id": "1:937308603015:android:e8abfe900413e8159a6e22",
         "android_client_info": {
-          "package_name": "com.dawolife.dawolife_mobile"
+          "package_name": "com.dawolife.mobile"
         }
       },
       "oauth_client": [
@@ -17,39 +17,18 @@
           "client_id": "937308603015-pqutkin6pi821b44bg1p631ke2eru1gi.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.dawolife.dawolife_mobile",
-            "certificate_hash": "78fadc6f02f58b4b0c6dcfde8f6b840a1a6701a6"
+            "package_name": "com.dawolife.mobile",
+            "certificate_hash": "728d245f740d0ee0e0d4fca8d37700255c01ea02b6"
           }
         },
         {
-          "client_id": "937308603015-5jvo7vhdjksvkiaaj3ta4hno0jso7s9n.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBk10Jj3G7sycgt7JrCsS1OZ-plMC53068"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "937308603015-5jvo7vhdjksvkiaaj3ta4hno0jso7s9n.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:937308603015:android:e8abfe900413e8159a6e22",
-        "android_client_info": {
-          "package_name": "com.dawolife.mobile"
-        }
-      },
-      "oauth_client": [
+          "client_id": "937308603015-pqutkin6pi821b44bg1p631ke2eru1gi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dawolife.mobile",
+            "certificate_hash": "78fadc6f02f58b4b0c6dcfde8f6b840a1a6701a6"
+          }
+        },
         {
           "client_id": "937308603015-5jvo7vhdjksvkiaaj3ta4hno0jso7s9n.apps.googleusercontent.com",
           "client_type": 3
