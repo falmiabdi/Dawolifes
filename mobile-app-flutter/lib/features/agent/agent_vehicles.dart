@@ -38,8 +38,9 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
       _error = null;
     });
     try {
-      final items = await context.read<AgentRepository>().fetchMyVehicles();
-      final permissions = await context.read<AgentRepository>().fetchMyPermissions();
+      final repo = context.read<AgentRepository>();
+      final items = await repo.fetchMyVehicles();
+      final permissions = await repo.fetchMyPermissions();
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -68,7 +69,7 @@ class _AgentVehiclesScreenState extends State<AgentVehiclesScreen> {
       builder: (ctx) => AlertDialog(
         title: Text('Send $label permission request?'),
         content: Text(
-          '"${v.title}" is already approved. This will send the admin a request to allow you to ${label} it.',
+          '"${v.title}" is already approved. This will send the admin a request to allow you to $label it.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),

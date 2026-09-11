@@ -228,12 +228,13 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                 if (uploading) return;
                 Navigator.of(dialogContext).pop();
                 try {
+                  final auth = context.read<AuthProvider>();
                   await context.read<AgentRepository>().updateProfileInfo(
                         name: nameController.text,
                         phone: phoneController.text,
                         profilePhoto: photo,
                       );
-                  await context.read<AuthProvider>().refreshUser();
+                  await auth.refreshUser();
                   if (!mounted) return;
                   await _load();
                   if (!mounted) return;

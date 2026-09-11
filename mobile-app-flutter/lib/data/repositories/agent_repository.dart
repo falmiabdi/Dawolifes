@@ -82,7 +82,7 @@ class AgentRepository {
     await _api.patch('/api/auth/profile', {
       if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
       if (phone != null) 'phone': phone.trim(),
-      if (profilePhoto != null) 'profilePhoto': profilePhoto,
+      'profilePhoto': ?profilePhoto,
     });
   }
 
