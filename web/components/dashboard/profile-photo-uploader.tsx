@@ -12,13 +12,20 @@ import toast from 'react-hot-toast'
 interface ProfilePhotoUploaderProps {
   currentPhoto: string
   initials: string
+  onChange?: (url: string) => void
 }
 
-export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUploaderProps) {
+/**
+ * Shared profile-picture uploader for every role (user, agent, owner, admin).
+ * Mirrors the working buyer profile flow: upload to /api/upload, save the URL
+ * to /api/auth/profile (any authenticated role), then refresh the session so
+ * the dashboard header and profile pages all show the new photo immediately.
+ */
+export function ProfilePhotoUploader({ currentPhoto, initials, onChange }: ProfilePhotoUploaderProps) {
   const [photoUrl, setPhotoUrl] = useState(currentPhoto)
   const [uploading, setUploading] = useState(false)
   const router = useRouter()
-  const { getToken } = useAuth()
+  const { getToken, refreshUser } = useAuth()
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -44,8 +51,8 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       const formData = new FormData()
       formData.append('file', file)
 
-      // 1. Upload to Cloudinary via server-side /api/agent/upload
-      const uploadRes = await fetch(`${getApiUrl()}/api/agent/upload`, {
+      // 1. Upload to Cloudinary via the shared /api/upload endpoint.
+      const uploadRes = await fetch(`${getApiUrl()}/api/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -72,6 +79,8 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
       }
 
       setPhotoUrl(newUrl)
+      onChange?.(newUrl)
+      await refreshUser()
       toast.success('Profile photo updated successfully')
       router.refresh()
     } catch (err: any) {
@@ -87,7 +96,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials }: ProfilePhotoUpl
         <img
           src={photoUrl}
           alt="Profile Avatar"
-          className="h-20 w-20 rounded-2xl object-cover border border-slate-200 shadow-sm"
+          className="h-20 w-20 rounded-2xl object-contain border border-slate-200 shadow-sm"
         />
       ) : (
         <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-orange-100 text-2xl font-bold text-orange-600 border border-orange-200 shadow-sm">

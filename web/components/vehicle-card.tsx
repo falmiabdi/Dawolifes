@@ -24,13 +24,23 @@ export function VehicleCard({
           sizes="(max-width: 768px) 100vw, 400px"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span
-          className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-xs font-semibold text-white ${
-            vehicle.listingType === "For Sale" ? "bg-primary" : vehicle.listingType === "Both" ? "bg-purple-500" : "bg-accent"
-          }`}
-        >
-          {vehicle.listingType}
-        </span>
+        {(vehicle.status === 'Sold' || vehicle.status === 'Rented') ? (
+          <span
+            className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-xs font-semibold text-white ${
+              vehicle.status === 'Sold' ? 'bg-blue-600' : 'bg-purple-600'
+            }`}
+          >
+            {vehicle.status}
+          </span>
+        ) : (
+          <span
+            className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-xs font-semibold text-white ${
+              vehicle.listingType === "For Sale" ? "bg-primary" : vehicle.listingType === "Both" ? "bg-purple-500" : "bg-accent"
+            }`}
+          >
+            {vehicle.listingType}
+          </span>
+        )}
         {vehicle.condition && (
           <span className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {vehicle.condition}

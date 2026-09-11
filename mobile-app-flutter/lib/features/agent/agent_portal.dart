@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +11,7 @@ import '../../data/repositories/message_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../admin/admin_portal.dart';
 import '../messages/messages_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../portal/widgets.dart';
@@ -100,6 +102,20 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
     final l10n = context.watch<LanguageProvider>();
     final t = l10n.t;
 
+    // Defense-in-depth: an admin should never render inside the agent portal.
+    // All normal entry points (role routing, home account button, More tab)
+    // already send admins to the admin portal; this catches any future
+    // unguarded deep link and bounces the admin back to their own shell.
+    if (user?.isAdmin == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
+        );
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final status = user?.status ?? 'Pending';
     final approved = status == 'Approved';
 
@@ -127,10 +143,15 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: AppColors.primary,
-                  child: Text(
-                    user != null && user.name.isNotEmpty ? user.name[0].toUpperCase() : 'A',
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  backgroundImage: (user?.profilePhoto?.isNotEmpty ?? false)
+                      ? CachedNetworkImageProvider(user!.profilePhoto!)
+                      : null,
+                  child: (user?.profilePhoto?.isNotEmpty ?? false)
+                      ? null
+                      : Text(
+                          user != null && user.name.isNotEmpty ? user.name[0].toUpperCase() : 'A',
+                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

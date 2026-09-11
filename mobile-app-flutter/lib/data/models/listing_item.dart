@@ -22,6 +22,7 @@ class ListingItem {
     this.year,
     this.mileage,
     this.features = const [],
+    this.status,
     this.agent,
     this.agentName,
     this.displayPhone,
@@ -45,6 +46,7 @@ class ListingItem {
   final int? year;
   final num? mileage;
   final List<String> features;
+  final String? status;
   final ListingAgent? agent;
   final String? agentName;
   final String? displayPhone;
@@ -102,6 +104,7 @@ class ListingItem {
         area: p.area,
         condition: p.condition,
         features: p.features,
+        status: p.status,
         agent: p.agent,
         agentName: p.agentName,
         displayPhone: p.displayPhone,
@@ -122,6 +125,7 @@ class ListingItem {
         year: v.manufacturingYear,
         mileage: v.mileage,
         features: v.features,
+        status: v.status,
         agent: v.agent,
         agentName: v.agentName,
         displayPhone: v.displayPhone,

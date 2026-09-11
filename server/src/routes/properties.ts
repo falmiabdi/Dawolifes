@@ -3,6 +3,7 @@ import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } 
 import { propertySchema, isValidUuid } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
+import { resolveSystemAdmin } from '../utils/admin-contact.js'
 import { assertListingPermissionAllowed } from './permissions.js'
 
 const router = Router()
@@ -20,7 +21,7 @@ const agentSelect = { id: true, username: true, email: true, phone: true, profil
 // Get all properties (public)
 router.get('/', async (req, res) => {
   try {
-    const where: any = { status: 'Approved' }
+    const where: any = { status: { in: ['Approved', 'Sold', 'Rented'] } }
     if (req.query.city) where.city = req.query.city
     if (req.query.type) where.type = req.query.type
     if (req.query.agentId) where.agentId = req.query.agentId  // allow filtering by agent
@@ -64,7 +65,7 @@ router.get('/:id', async (req, res) => {
     // drafts/pending/rejected listings via their own dashboards.
     const caller = getRequestUserId(req)
     const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === property.agentId)
-    if (property.status !== 'Approved' && !isOwnerOrAdmin) {
+    if (property.status !== 'Approved' && property.status !== 'Sold' && property.status !== 'Rented' && !isOwnerOrAdmin) {
       return res.status(404).json({ message: 'Property not found' })
     }
 
@@ -100,16 +101,19 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     const isAdmin = currentUser?.role === 'admin'
 
     // Centralized contact switching: default is the Admin (System Admin) number,
-    // the poster may select Property Owner or Property Agent instead.
+    // the poster may select Property Owner or Property Agent instead. Buyer
+    // messages always route to the real recipient behind the displayed identity.
     const contactMode = parsed.data.contactMode || 'Admin'
     let agentName = contactName || currentUser?.username || req.user!.email
     let displayPhone: string | null = contactPhone || currentUser?.phone || null
     let displayPhoto = currentUser?.profilePhoto || null
+    let contactUserId: string | null = req.user!.userId
     if (contactMode === 'Admin') {
-      const setting = await prisma.setting.findUnique({ where: { id: 'default' } })
-      agentName = 'System Admin'
-      displayPhone = setting?.contactPhone1 || '+251947896869'
-      displayPhoto = null
+      const admin = await resolveSystemAdmin()
+      agentName = admin.name
+      displayPhone = admin.phone
+      displayPhoto = admin.photo || null
+      contactUserId = admin.id ?? req.user!.userId
     }
 
     const property = await prisma.property.create({
@@ -121,10 +125,7 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
         status: isAdmin ? 'Approved' : 'Pending',
         displayPhone,
         displayPhoto,
-        // Messages route to this user: the poster advertises their own contact
-        // unless the System Admin fallback is shown, in which case there is no
-        // real user to reach (clients fall back to the agent).
-        contactUserId: contactMode === 'Admin' && !isAdmin ? null : req.user!.userId,
+        contactUserId,
       },
     })
 
@@ -186,11 +187,11 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
     // Recalculate the displayed contact when the poster (or admin) switches modes.
     if (parsed.data.contactMode) {
       if (parsed.data.contactMode === 'Admin') {
-        const setting = await prisma.setting.findUnique({ where: { id: 'default' } })
-        updates.agentName = 'System Admin'
-        updates.displayPhone = setting?.contactPhone1 || '+251947896869'
-        updates.displayPhoto = null
-        updates.contactUserId = req.user!.role === 'admin' ? req.user!.userId : null
+        const admin = await resolveSystemAdmin()
+        updates.agentName = admin.name
+        updates.displayPhone = admin.phone
+        updates.displayPhoto = admin.photo || null
+        updates.contactUserId = admin.id ?? req.user!.userId
       } else {
         const contactName = parsed.data.name?.trim() || ''
         const contactPhone = parsed.data.phone?.trim() || ''

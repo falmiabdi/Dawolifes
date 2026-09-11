@@ -8,6 +8,8 @@ const variants: Record<string, string> = {
   Approved: 'bg-green-100 text-green-700 border-green-200',
   Rejected: 'bg-red-100 text-red-700 border-red-200',
   Suspended: 'bg-slate-200 text-slate-600 border-slate-300',
+  Sold: 'bg-blue-100 text-blue-700 border-blue-200',
+  Rented: 'bg-purple-100 text-purple-700 border-purple-200',
 }
 
 export function StatusBadge({ status }: { status: string }) {

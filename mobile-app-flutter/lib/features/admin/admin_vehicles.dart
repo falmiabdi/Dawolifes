@@ -76,7 +76,7 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              children: ['all', 'Pending', 'Approved', 'Rejected'].map((s) {
+              children: ['all', 'Pending', 'Approved', 'Rejected', 'Sold', 'Rented'].map((s) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
@@ -253,6 +253,42 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
             ),
           ],
           if (v.status == 'Approved') ...[
+            const SectionHeader(title: 'Availability'),
+            Row(
+              children: [
+                if (v.listingType.toLowerCase().contains('sale'))
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : () => _setStatus('Sold'),
+                      style: FilledButton.styleFrom(backgroundColor: Colors.blue.shade700),
+                      icon: const Icon(Icons.check_circle_outline, size: 16),
+                      label: const Text('Mark Sold'),
+                    ),
+                  ),
+                if (v.listingType.toLowerCase().contains('rent')) ...[
+                  if (v.listingType.toLowerCase().contains('sale')) const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : () => _setStatus('Rented'),
+                      style: FilledButton.styleFrom(backgroundColor: Colors.purple.shade600),
+                      icon: const Icon(Icons.check_circle_outline, size: 16),
+                      label: const Text('Mark Rented'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (v.status == 'Sold' || v.status == 'Rented') ...[
+            OutlinedButton.icon(
+              onPressed: _busy ? null : () => _setStatus('Approved'),
+              icon: const Icon(Icons.restore_outlined, size: 16),
+              label: const Text('Mark Available'),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (v.status == 'Approved') ...[
             OutlinedButton.icon(
               onPressed: _busy ? null : _switchContact,
               icon: const Icon(Icons.swap_horiz_outlined, size: 16),
@@ -342,6 +378,24 @@ class _AdminVehicleDetailScreenState extends State<AdminVehicleDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vehicle deleted')));
       Navigator.of(context).pop(true);
+    } on Exception catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _setStatus(String status) async {
+    setState(() => _busy = true);
+    try {
+      final repo = context.read<AdminRepository>();
+      await repo.setVehicleStatus(_v.id, status);
+      if (!mounted) return;
+      setState(() => _v = _v.withStatus(status));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(status == 'Approved' ? 'Vehicle marked as available' : 'Vehicle marked as $status')),
+      );
     } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

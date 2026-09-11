@@ -1,9 +1,10 @@
 ﻿import { Router } from 'express'
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { PropertyStatus, VehicleStatus } from '@prisma/client'
 import { createAndBroadcastNotification } from '../utils/notifications.js'
+import { resolveSystemAdmin } from '../utils/admin-contact.js'
 import { hashPassword } from '../utils/password.js'
-import { ADMIN_PHONES } from '../config/constants.js'
 import { isResendConfigured, testResendConnection } from '../services/email.js'
 import { initializeFirebaseAdmin } from '../utils/firebase.js'
 import { getAuth } from 'firebase-admin/auth'
@@ -199,6 +200,7 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
         displayPhone: admin.phone,
         displayPhoto: admin.photo || null,
         contactMode: 'Admin',
+        contactUserId: admin.id ?? actingAdminId,
       },
     })
   }
@@ -211,6 +213,7 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
         agentName: admin.name,
         displayPhone: admin.phone,
         displayPhoto: admin.photo || null,
+        contactUserId: admin.id ?? actingAdminId,
       },
     })
   }
@@ -246,16 +249,8 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
 
 // Resolve the admin's own profile contact (name, phone, photo). Falling back
 // to the configured numbers when the profile phone is unset.
-async function resolveAdminContact(userId: string) {
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { username: true, phone: true, profilePhoto: true },
-  })
-  return {
-    name: admin?.username?.trim() || 'DawoLife',
-    phone: admin?.phone?.trim() || ADMIN_PHONES[0],
-    photo: admin?.profilePhoto?.trim() || '',
-  }
+async function resolveAdminContact(_userId: string) {
+  return resolveSystemAdmin()
 }
 
 // Toggle the full contact identity (name + phone + photo) shown on a listing
@@ -287,7 +282,7 @@ router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (
         displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
         displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
         contactMode: nextAdmin ? 'Admin' : 'Owner',
-        contactUserId: nextAdmin ? req.user!.userId : agent?.id || null,
+        contactUserId: nextAdmin ? admin.id ?? req.user!.userId : agent?.id || null,
       },
     })
     const updated = await prisma.property.findUnique({
@@ -326,7 +321,7 @@ router.patch('/vehicles/:id/contact', authMiddleware, adminMiddleware, async (re
         agentName: nextAdmin ? admin.name : agent?.username?.trim() || admin.name,
         displayPhone: nextAdmin ? admin.phone : agent?.phone?.trim() || admin.phone,
         displayPhoto: nextAdmin ? admin.photo : agent?.profilePhoto?.trim() || '',
-        contactUserId: nextAdmin ? req.user!.userId : agent?.id || null,
+        contactUserId: nextAdmin ? admin.id ?? req.user!.userId : agent?.id || null,
       },
     })
     const updated = await prisma.vehicle.findUnique({
@@ -423,6 +418,42 @@ router.patch('/properties/:id/reject', authMiddleware, adminMiddleware, async (r
   }
 })
 
+// Set listing lifecycle status on a property (Sold/Rented, or back to Approved)
+router.patch('/properties/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const status = req.body?.status as string
+    const allowed = ['Approved', 'Sold', 'Rented']
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Allowed: Approved, Sold, Rented.' })
+    }
+    const property = await prisma.property.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+    })
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' })
+    }
+    if (property.status === status) {
+      return res.json({ message: 'Property status unchanged', property: { ...property, status } })
+    }
+    const updated = await prisma.property.update({
+      where: { id: req.params.id },
+      data: { status: status as PropertyStatus, rejectionReason: status === 'Rejected' ? property.rejectionReason : null },
+    })
+    const actionLabel = status === 'Sold' ? 'sold' : status === 'Rented' ? 'rented' : 'back on the market'
+    createAndBroadcastNotification(
+      property.agentId,
+      'Property Status Updated',
+      `Your property "${property.title}" was marked as ${actionLabel}.`,
+      status === 'Approved' ? 'success' : 'info',
+      { type: 'property', id: property.id }
+    ).catch(() => {})
+    res.json({ message: `Property marked as ${actionLabel}`, property: updated })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to update property status' })
+  }
+})
+
 // Get all vehicles (admin)
 router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -497,6 +528,42 @@ router.patch('/vehicles/:id/reject', authMiddleware, adminMiddleware, async (req
     res.json({ message: 'Vehicle rejected', vehicle: updated })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to reject vehicle' })
+  }
+})
+
+// Set listing lifecycle status on a vehicle (Sold/Rented, or back to Approved)
+router.patch('/vehicles/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const status = req.body?.status as string
+    const allowed = ['Approved', 'Sold', 'Rented']
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Allowed: Approved, Sold, Rented.' })
+    }
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { id: req.params.id },
+      include: { agent: { select: { id: true, username: true, email: true, phone: true, profilePhoto: true } } },
+    })
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' })
+    }
+    if (vehicle.status === status) {
+      return res.json({ message: 'Vehicle status unchanged', vehicle: { ...vehicle, status } })
+    }
+    const updated = await prisma.vehicle.update({
+      where: { id: req.params.id },
+      data: { status: status as VehicleStatus, rejectionReason: status === 'Rejected' ? vehicle.rejectionReason : null },
+    })
+    const actionLabel = status === 'Sold' ? 'sold' : status === 'Rented' ? 'rented' : 'back on the market'
+    createAndBroadcastNotification(
+      vehicle.agentId,
+      'Vehicle Status Updated',
+      `Your vehicle "${vehicle.title}" was marked as ${actionLabel}.`,
+      status === 'Approved' ? 'success' : 'info',
+      { type: 'vehicle', id: vehicle.id }
+    ).catch(() => {})
+    res.json({ message: `Vehicle marked as ${actionLabel}`, vehicle: updated })
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to update vehicle status' })
   }
 })
 

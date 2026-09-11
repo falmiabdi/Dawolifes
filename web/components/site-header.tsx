@@ -197,7 +197,7 @@ export function SiteHeader() {
             <Link href={user.role === "admin" ? "/admin" : user.role === "agent" || user.role === "owner" ? "/agent" : "/verify"} className="flex items-center gap-2 hover:opacity-80 transition">
               {photoUrl ? (
                 <div className="h-5 w-5 rounded-full overflow-hidden bg-primary/10 ring-2 ring-primary/30">
-                  <Image src={photoUrl} alt={user.name || "Profile"} width={20} height={20} className="h-full w-full object-cover" />
+                  <Image src={photoUrl} alt={user.name || "Profile"} width={20} height={20} className="h-full w-full object-contain" />
                 </div>
               ) : (
                 <div className="h-5 w-5 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[9px] ring-2 ring-primary/30">
@@ -276,7 +276,7 @@ export function SiteHeader() {
               <Link href={user.role === "admin" ? "/admin" : user.role === "agent" || user.role === "owner" ? "/agent" : "/verify"} className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition text-sm font-medium text-primary">
                 {photoUrl ? (
                   <div className="h-7 w-7 rounded-full overflow-hidden bg-primary/10">
-                    <Image src={photoUrl} alt={user.name || "Profile"} width={28} height={28} className="h-full w-full object-cover" />
+                    <Image src={photoUrl} alt={user.name || "Profile"} width={28} height={28} className="h-full w-full object-contain" />
                   </div>
                 ) : (
                   <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center font-bold text-xs">
@@ -328,7 +328,7 @@ export function SiteHeader() {
                   >
                     {photoUrl ? (
                       <div className="h-6 w-6 rounded-full overflow-hidden bg-primary/10">
-                        <Image src={photoUrl} alt={user.name || "Profile"} width={24} height={24} className="h-full w-full object-cover" />
+                        <Image src={photoUrl} alt={user.name || "Profile"} width={24} height={24} className="h-full w-full object-contain" />
                       </div>
                     ) : (
                       <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center font-bold text-[10px]">

@@ -58,6 +58,9 @@ type FormState = {
   city: string
   subCity: string
   woreda: string
+  kebele: string
+  parcel: string
+  block: string
   floorNumber: string
   houseNumber: string
   images: string[]
@@ -96,6 +99,8 @@ function EditPropertyPage() {
   const router = useRouter()
   const { getToken, user } = useAuth()
   const isOwner = user?.role === 'owner'
+  const isAdmin = user?.role === 'admin' || user?.roles?.includes?.('admin') || false
+  const homePath = isAdmin ? '/admin/properties' : '/agent/properties'
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState | null>(null)
   const [customFeature, setCustomFeature] = useState("")
@@ -147,7 +152,7 @@ function EditPropertyPage() {
   useEffect(() => {
     if (!id) {
       toast.error("No property ID provided.")
-      router.push("/agent/properties")
+      router.push(homePath)
       return
     }
 
@@ -157,7 +162,7 @@ function EditPropertyPage() {
         const res = await fetch(`${getApiUrl()}/api/properties/${id}`, { headers: authHeaders })
         if (!res.ok) {
           toast.error("Failed to load property.")
-          router.push("/agent/properties")
+          router.push(homePath)
           return
         }
         const data = await res.json()
@@ -183,6 +188,9 @@ function EditPropertyPage() {
           city: p.city || "",
           subCity: p.subCity || "",
           woreda: p.woreda || "",
+          kebele: p.kebele || "",
+          parcel: p.parcel || "",
+          block: p.block || "",
           floorNumber: p.floorNumber || "",
           houseNumber: p.houseNumber || "",
           images: p.images || [],
@@ -193,7 +201,7 @@ function EditPropertyPage() {
         })
       } catch {
         toast.error("Error loading property.")
-        router.push("/agent/properties")
+        router.push(homePath)
       } finally {
         setLoading(false)
       }
@@ -327,6 +335,9 @@ function EditPropertyPage() {
           city: form.city,
           subCity: form.subCity,
           woreda: form.woreda,
+          kebele: form.kebele,
+          parcel: form.parcel,
+          block: form.block,
           floorNumber: form.floorNumber,
           houseNumber: form.houseNumber,
           images: form.images,
@@ -343,7 +354,7 @@ function EditPropertyPage() {
       }
 
       toast.success("Property updated successfully! It will be re-reviewed.")
-      router.push("/agent/properties")
+      router.push(homePath)
     } catch (err: any) {
       setError(err.message || "Something went wrong while updating the property.")
     } finally {
@@ -382,7 +393,7 @@ function EditPropertyPage() {
         <div className="px-4 sm:px-6">
           <div className="mx-auto max-w-4xl">
             <Link
-              href="/agent/properties"
+              href={homePath}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-orange-600 transition mb-6"
             >
               <ChevronLeft className="h-4 w-4" /> Back to My Properties
@@ -740,6 +751,27 @@ function EditPropertyPage() {
                           value={form.woreda}
                           onChange={(e) => set("woreda", e.target.value)}
                           placeholder="e.g. Waddessa"
+                        />
+                      </Field>
+                      <Field label="Kebele">
+                        <Input
+                          value={form.kebele}
+                          onChange={(e) => set("kebele", e.target.value)}
+                          placeholder="e.g. Kebele 03"
+                        />
+                      </Field>
+                      <Field label="Parcel">
+                        <Input
+                          value={form.parcel}
+                          onChange={(e) => set("parcel", e.target.value)}
+                          placeholder="e.g. 0123"
+                        />
+                      </Field>
+                      <Field label="Block">
+                        <Input
+                          value={form.block}
+                          onChange={(e) => set("block", e.target.value)}
+                          placeholder="e.g. B-01"
                         />
                       </Field>
                     </div>

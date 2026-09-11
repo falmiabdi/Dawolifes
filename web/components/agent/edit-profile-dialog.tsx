@@ -18,7 +18,7 @@ interface EditProfileDialogProps {
 
 export function EditProfileDialog({ open, onClose, onSaved, name, phone, email }: EditProfileDialogProps) {
   const { t } = useI18n()
-  const { getToken } = useAuth()
+  const { getToken, refreshUser } = useAuth()
   const [fullName, setFullName] = useState(name)
   const [phoneNumber, setPhoneNumber] = useState(phone)
   const [saving, setSaving] = useState(false)
@@ -58,6 +58,7 @@ export function EditProfileDialog({ open, onClose, onSaved, name, phone, email }
         throw new Error(data.message || "Failed to update profile")
       }
       toast.success(t("save_profile"))
+      await refreshUser()
       onSaved()
       onClose()
     } catch (err: any) {

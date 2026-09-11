@@ -24,13 +24,23 @@ export function PropertyCard({
           sizes="(max-width: 768px) 100vw, 400px"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span
-          className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-xs font-semibold text-white ${
-            isRent ? "bg-accent" : "bg-primary"
-          }`}
-        >
-          {property.listingType}
-        </span>
+        {(property.status === 'Sold' || property.status === 'Rented') ? (
+          <span
+            className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-xs font-semibold text-white ${
+              property.status === 'Sold' ? 'bg-blue-600' : 'bg-purple-600'
+            }`}
+          >
+            {property.status}
+          </span>
+        ) : (
+          <span
+            className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-xs font-semibold text-white ${
+              isRent ? "bg-accent" : "bg-primary"
+            }`}
+          >
+            {property.listingType}
+          </span>
+        )}
         <SaveButton
           itemType="property"
           itemId={property.id}

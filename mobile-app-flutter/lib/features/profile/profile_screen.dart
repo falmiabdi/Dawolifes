@@ -6,8 +6,6 @@ import '../../core/theme/app_colors.dart';
 import '../../data/models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import '../admin/admin_portal.dart';
-import '../agent/agent_portal.dart';
 import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 import 'edit_profile_screen.dart';
@@ -56,7 +54,25 @@ class ProfileScreen extends StatelessWidget {
     final user = auth.user!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t('account'))),
+      appBar: AppBar(
+        title: Text(t('account')),
+        actions: [
+          IconButton(
+            tooltip: 'Edit Profile',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: t('logout'),
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await context.read<AuthProvider>().logout();
+            },
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -78,62 +94,6 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           _InfoTile(icon: Icons.phone_outlined, label: t('phone'), value: user.phone ?? 'Not provided'),
-          const SizedBox(height: 24),
-          if (user.isAdmin)
-            Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              elevation: 0,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              child: ListTile(
-                leading: const Icon(Icons.admin_panel_settings_outlined, color: AppColors.primary),
-                title: const Text('Admin Portal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                subtitle: const Text('Manage agents, listings, payments & users'),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.mutedForeground),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
-                ),
-              ),
-            ),
-          if (user.isAdmin || user.isAgent || user.isOwner)
-            Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              elevation: 0,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              child: ListTile(
-                leading: const Icon(Icons.work_outline, color: AppColors.primary),
-                title: Text(user.isOwner ? 'Owner Portal' : 'Agent Portal', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                subtitle: Text(user.isOwner ? 'Manage your properties & track requests' : 'Post properties & vehicles, track commissions'),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.mutedForeground),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AgentPortalScreen()),
-                ),
-              ),
-            ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-            ),
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            label: const Text('Edit Profile'),
-          ),
-          const SizedBox(height: 10),
-          FilledButton.icon(
-            onPressed: () async {
-              await context.read<AuthProvider>().logout();
-            },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.destructive),
-            icon: const Icon(Icons.logout, size: 18),
-            label: Text(t('logout')),
-          ),
         ],
       ),
     );

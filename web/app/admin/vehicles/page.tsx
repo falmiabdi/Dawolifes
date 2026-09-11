@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
 import {
-  Car, Check, X, Search, Loader2, Trash2, Phone, Plus, Edit
+  Car, Check, X, Search, Loader2, Trash2, Phone, Plus, Edit, Eye, BadgeCheck, RotateCcw
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
@@ -121,6 +121,31 @@ export default function AdminVehiclesPage() {
     }
   }
 
+  const handleListingStatus = async (id: string, status: 'Sold' | 'Rented' | 'Approved') => {
+    setSubmittingAction(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${getApiUrl()}/api/admin/vehicles/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ status }),
+      })
+      if (res.ok) {
+        const label = status === 'Sold' ? 'Sold' : status === 'Rented' ? 'Rented' : 'back on the market'
+        toast.success(`Vehicle marked as ${label}`)
+        setSelectedVehicle(prev => prev ? { ...prev, status } : null)
+        fetchVehicles()
+      } else {
+        const data = await res.json()
+        toast.error(data.message || 'Action failed')
+      }
+    } catch {
+      toast.error('Something went wrong')
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
   const handleSwitchContact = async (id: string) => {
     setSubmittingAction(true)
     try {
@@ -202,6 +227,8 @@ export default function AdminVehiclesPage() {
           <option value="Pending">Pending</option>
           <option value="Approved">Approved</option>
           <option value="Rejected">Rejected</option>
+          <option value="Sold">Sold</option>
+          <option value="Rented">Rented</option>
         </select>
       </div>
 
@@ -309,8 +336,15 @@ export default function AdminVehiclesPage() {
 
               <div className="space-y-3 border-t border-b border-slate-100 py-3">
                 {selectedVehicle.agent?.role === 'admin' ? (
-                  // Admin-posted: only Edit and Delete
+                  // Admin-posted: only View, Edit and Delete
                   <div className="flex gap-2">
+                    <Button
+                      onClick={() => window.open(`/listings/vehicle?id=${selectedVehicle.id}`, '_blank')}
+                      disabled={submittingAction}
+                      className="flex-1 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-xl font-bold py-1.5 text-xs"
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" /> View
+                    </Button>
                     <Button
                       onClick={() => router.push(`/agent/vehicles/edit?id=${selectedVehicle.id}`)}
                       disabled={submittingAction}
@@ -328,7 +362,7 @@ export default function AdminVehiclesPage() {
                     </Button>
                   </div>
                 ) : (
-                  // Agent/owner-posted: Approve/Reject + Switch Contact + Delete
+                  // Agent/owner-posted: Approve/Reject + Switch Contact + View/Delete
                   <>
                     {(selectedVehicle.status === 'Pending' || selectedVehicle.status === 'Rejected' || selectedVehicle.status === 'Approved') && (
                       <>
@@ -365,7 +399,44 @@ export default function AdminVehiclesPage() {
                         />
                       </>
                     )}
+                    {(selectedVehicle.status === 'Approved' || selectedVehicle.status === 'Sold' || selectedVehicle.status === 'Rented') && (
+                      <div className="flex gap-2">
+                        {selectedVehicle.status === 'Approved' ? (
+                          <>
+                            <Button
+                              onClick={() => handleListingStatus(selectedVehicle.id, 'Sold')}
+                              disabled={submittingAction}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold py-1.5 text-xs"
+                            >
+                              <BadgeCheck className="h-3.5 w-3.5 mr-1" /> Mark Sold
+                            </Button>
+                            <Button
+                              onClick={() => handleListingStatus(selectedVehicle.id, 'Rented')}
+                              disabled={submittingAction}
+                              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold py-1.5 text-xs"
+                            >
+                              <BadgeCheck className="h-3.5 w-3.5 mr-1" /> Mark Rented
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            onClick={() => handleListingStatus(selectedVehicle.id, 'Approved')}
+                            disabled={submittingAction}
+                            className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl font-bold py-1.5 text-xs"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Mark Available
+                          </Button>
+                        )}
+                      </div>
+                    )}
                     <div className="flex gap-2">
+                      <Button
+                        onClick={() => window.open(`/listings/vehicle?id=${selectedVehicle.id}`, '_blank')}
+                        disabled={submittingAction}
+                        className="flex-1 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-xl font-bold py-1.5 text-xs"
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1" /> View
+                      </Button>
                       <Button
                         onClick={() => handleSwitchContact(selectedVehicle.id)}
                         disabled={submittingAction}

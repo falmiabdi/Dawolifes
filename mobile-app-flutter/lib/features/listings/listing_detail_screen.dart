@@ -164,6 +164,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     return widget.item.contactPhone;
   }
 
+  /// Sold/Rented listings stay publicly visible but hide contact actions.
+  bool get _isClosed {
+    final s = _property?.status ?? _vehicle?.status ?? widget.item.status;
+    return s == 'Sold' || s == 'Rented';
+  }
+
   /// The fetched property record, when this listing is a property.
   Property? get _property =>
       _detail is Property ? _detail as Property : null;
@@ -344,7 +350,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           ),
                         ],
                         const SizedBox(height: 32),
-                        _ContactCard(item: item, onCall: _call, onMessage: _openMessage),
+                        if (_isClosed) ...[
+                          _StatusBanner(
+                            isRent: widget.item.isRent,
+                            status: _property?.status ?? _vehicle?.status ?? widget.item.status ?? 'Sold',
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        _ContactCard(item: item, isClosed: _isClosed, onCall: _call, onMessage: _openMessage),
                         if ((item.agent?.id ?? '').isNotEmpty) ...[
                           const SizedBox(height: 12),
                           AgentRatingButton(
@@ -1255,9 +1268,10 @@ class _LocationCard extends StatelessWidget {
 }
 
 class _ContactCard extends StatelessWidget {
-  const _ContactCard({required this.item, required this.onCall, required this.onMessage});
+  const _ContactCard({required this.item, required this.isClosed, required this.onCall, required this.onMessage});
 
   final ListingItem item;
+  final bool isClosed;
   final VoidCallback onCall;
   final VoidCallback onMessage;
 
@@ -1314,7 +1328,14 @@ class _ContactCard extends StatelessWidget {
               ),
             ],
           ),
-          if (phone.isNotEmpty) ...[
+          if (isClosed) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Contact information is hidden for this listing.',
+              style: TextStyle(fontSize: 13, color: AppColors.mutedForeground),
+            ),
+          ],
+          if (!isClosed && phone.isNotEmpty) ...[
             const SizedBox(height: 12),
             Row(
               children: [
@@ -1326,25 +1347,77 @@ class _ContactCard extends StatelessWidget {
               ],
             ),
           ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: phone.isEmpty ? null : onCall,
-                  icon: const Icon(Icons.phone, size: 18),
-                  label: const Text('Call Now'),
+          if (!isClosed) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: phone.isEmpty ? null : onCall,
+                    icon: const Icon(Icons.phone, size: 18),
+                    label: const Text('Call Now'),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onMessage,
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Message'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onMessage,
+                    icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                    label: const Text('Message'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.isRent, required this.status});
+
+  final bool isRent;
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final sold = status == 'Sold';
+    final color = sold ? const Color(0xFF2563EB) : const Color(0xFF9333EA);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(sold ? Icons.check_circle_outline : Icons.verified_user_outlined, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isRent
+                      ? 'This listing is no longer available for rent.'
+                      : 'This listing is no longer available for sale.',
+                  style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground),
+                ),
+              ],
+            ),
           ),
         ],
       ),

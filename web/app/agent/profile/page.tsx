@@ -58,6 +58,7 @@ export default function AgentProfilePage() {
               const name = displayUser.fullName || displayUser.username || displayUser.name || ''
               return name ? name.charAt(0).toUpperCase() : '?'
             })()}
+            onChange={loadProfile}
           />
           <div>
             <div className="flex items-center gap-2">

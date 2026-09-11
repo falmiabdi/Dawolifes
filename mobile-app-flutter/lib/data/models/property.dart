@@ -177,6 +177,52 @@ class Property {
     );
   }
 
+  /// Copy of this property with a new listing status (Sold/Rented/Approved...).
+  Property withStatus(String status) {
+    return Property(
+      id: id,
+      title: title,
+      type: type,
+      listingType: listingType,
+      price: price,
+      priceType: priceType,
+      region: region,
+      city: city,
+      subCity: subCity,
+      woreda: woreda,
+      kebele: kebele,
+      parcel: parcel,
+      block: block,
+      floorNumber: floorNumber,
+      houseNumber: houseNumber,
+      area: area,
+      bedrooms: bedrooms,
+      bathrooms: bathrooms,
+      condition: condition,
+      legalizedYear: legalizedYear,
+      description: description,
+      features: features,
+      images: images,
+      videoUrl: videoUrl,
+      featured: featured,
+      status: status,
+      agent: agent,
+      agentName: agentName,
+      displayPhone: displayPhone,
+      displayPhoto: displayPhoto,
+      contactUserId: contactUserId,
+      posterType: posterType,
+      ownerType: ownerType,
+      contactMode: contactMode,
+      latitude: latitude,
+      longitude: longitude,
+      locationDocument: locationDocument,
+      rejectionReason: rejectionReason,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+
   factory Property.fromJson(Map<String, dynamic> json) {
     return Property(
       id: '${json['id']}',

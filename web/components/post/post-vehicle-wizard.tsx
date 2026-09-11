@@ -3,9 +3,11 @@
 import { getApiUrl } from '@/lib/get-api-url'
 import { useI18n } from '@/lib/i18n'
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth/auth-guard"
 import Link from "next/link"
+import toast from "react-hot-toast"
 
 import {
   ArrowLeft,
@@ -225,8 +227,12 @@ const initialState: VehicleFormState = {
   longitude: 0,
 }
 
-export function PostVehicleWizard() {
-  const { getToken } = useAuth()
+export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
+  const { getToken, user } = useAuth()
+  const router = useRouter()
+  const isAdmin = user?.role === 'admin' || user?.roles?.includes?.('admin') || false
+  const homePath = isAdmin ? '/admin/vehicles' : '/agent/vehicles'
+  const [loading, setLoading] = useState(!!vehicleId)
   const { t, tv } = useI18n()
   const stepLabels: Record<string, string> = {
     'Basic Info': t('basic_info'),
@@ -247,6 +253,7 @@ export function PostVehicleWizard() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [rejectionReason, setRejectionReason] = useState("")
 
   const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const token = await getToken()
@@ -275,6 +282,114 @@ export function PostVehicleWizard() {
     }
     setter("")
   }
+
+  // Edit mode: prefill the whole form from the existing vehicle so every field
+  // comes back exactly as saved (same behaviour as the mobile edit form).
+  const mapVehicleToForm = (v: Record<string, any>): VehicleFormState => ({
+    title: v.title || "",
+    listingType: v.listingType || "For Sale",
+    vehicleCategory: v.vehicleCategory || "Sedan",
+    make: v.make || "",
+    model: v.vehicleModel || v.model || "",
+    trimVersion: v.trimVersion || "",
+    manufacturingYear: v.manufacturingYear ? String(v.manufacturingYear) : "",
+    registrationYear: v.registrationYear ? String(v.registrationYear) : "",
+    color: v.color || "",
+    countryOfOrigin: v.countryOfOrigin || "",
+    condition: v.condition || "Used",
+    fuelType: v.fuelType || "",
+    engineSize: v.engineSize ? String(v.engineSize) : "",
+    horsepower: v.horsepower ? String(v.horsepower) : "",
+    transmission: v.transmission || "",
+    drivetrain: v.drivetrain || "",
+    cylinders: v.cylinders ? String(v.cylinders) : "",
+    seatingCapacity: v.seatingCapacity ? String(v.seatingCapacity) : "",
+    doors: v.doors ? String(v.doors) : "",
+    mileage: v.mileage ? String(v.mileage) : "",
+    fuelConsumption: v.fuelConsumption || "",
+    fuelTankCapacity: v.fuelTankCapacity ? String(v.fuelTankCapacity) : "",
+    groundClearance: v.groundClearance ? String(v.groundClearance) : "",
+    weight: v.weight ? String(v.weight) : "",
+    tireSize: v.tireSize || "",
+    accidentFree: !!v.accidentFree,
+    accidentHistory: v.accidentHistory || "",
+    serviceHistoryAvailable: !!v.serviceHistoryAvailable,
+    ownershipCount: v.ownershipCount ? String(v.ownershipCount) : "",
+    imported: !!v.imported,
+    locallyAssembled: !!v.locallyAssembled,
+    safetyFeatures: Array.isArray(v.safetyFeatures) ? v.safetyFeatures : [],
+    interiorFeatures: Array.isArray(v.interiorFeatures) ? v.interiorFeatures : [],
+    exteriorFeatures: Array.isArray(v.exteriorFeatures) ? v.exteriorFeatures : [],
+    price: v.price ? String(v.price) : "",
+    priceType: v.priceType || "Fixed Price",
+    sellingPrice: v.sellingPrice ? String(v.sellingPrice) : "",
+    negotiable: !!v.negotiable,
+    financingAvailable: !!v.financingAvailable,
+    exchangeAccepted: !!v.exchangeAccepted,
+    bankLoanAccepted: !!v.bankLoanAccepted,
+    dailyRate: v.dailyRate ? String(v.dailyRate) : "",
+    weeklyRate: v.weeklyRate ? String(v.weeklyRate) : "",
+    monthlyRate: v.monthlyRate ? String(v.monthlyRate) : "",
+    securityDeposit: v.securityDeposit ? String(v.securityDeposit) : "",
+    minRentalDays: v.minRentalDays ? String(v.minRentalDays) : "",
+    maxRentalDays: v.maxRentalDays ? String(v.maxRentalDays) : "",
+    driverIncluded: !!v.driverIncluded,
+    selfDrive: !!v.selfDrive,
+    fuelPolicy: v.fuelPolicy || "",
+    mileageLimit: v.mileageLimit ? String(v.mileageLimit) : "",
+    extraKmCharge: v.extraKmCharge ? String(v.extraKmCharge) : "",
+    deliveryAvailable: !!v.deliveryAvailable,
+    airportPickup: !!v.airportPickup,
+    region: v.region || "",
+    city: v.city || "",
+    subCity: v.subCity || "",
+    woreda: v.woreda || "",
+    pickupAddress: v.pickupAddress || "",
+    regionRegistration: v.regionRegistration || "",
+    ownershipCertificate: !!v.ownershipCertificate,
+    roadFundPaid: !!v.roadFundPaid,
+    insuranceValid: !!v.insuranceValid,
+    inspectionCertificate: !!v.inspectionCertificate,
+    customsClearance: !!v.customsClearance,
+    dutyPaid: !!v.dutyPaid,
+    plateType: v.plateType || "",
+    plateNumber: v.plateNumber || "",
+    description: v.description || "",
+    images: Array.isArray(v.images) ? v.images : [],
+    videoUrl: v.videoUrl || "",
+    latitude: v.latitude || 0,
+    longitude: v.longitude || 0,
+  })
+
+  useEffect(() => {
+    if (!vehicleId) return
+    let cancelled = false
+
+    const loadVehicle = async () => {
+      const headers = await getAuthHeaders()
+      try {
+        const res = await fetch(`${getApiUrl()}/api/vehicles/${vehicleId}`, { headers })
+        if (!res.ok) throw new Error('Failed to load vehicle')
+        const data = await res.json()
+        if (data?.vehicle && !cancelled) {
+          setForm(mapVehicleToForm(data.vehicle))
+          setRejectionReason(data.vehicle.rejectionReason || "")
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err.message || 'Failed to load vehicle')
+          toast.error(err.message || 'Failed to load vehicle')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    loadVehicle()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicleId])
 
   const next = () => {
     if (step === 5 && form.images.length < 3) {
@@ -348,7 +463,6 @@ export function PostVehicleWizard() {
       const authHeaders = await getAuthHeaders()
       const body: Record<string, any> = {
         title: form.title,
-        vehicleId: `${form.make}-${form.model}-${Date.now()}`,
         listingType: form.listingType,
         vehicleCategory: form.vehicleCategory,
         make: form.make,
@@ -422,11 +536,22 @@ export function PostVehicleWizard() {
       if (form.videoUrl) body.videoUrl = form.videoUrl
       if (form.latitude) body.latitude = form.latitude
       if (form.longitude) body.longitude = form.longitude
-      const res = await fetch(`${getApiUrl()}/api/vehicles`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify(body),
-      })
+
+      const isEditing = !!vehicleId
+      const res = await fetch(
+        isEditing ? `${getApiUrl()}/api/vehicles/${vehicleId}` : `${getApiUrl()}/api/vehicles`,
+        isEditing
+          ? {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json", ...authHeaders },
+              body: JSON.stringify(body),
+            }
+          : {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...authHeaders },
+              body: JSON.stringify(body),
+            },
+      )
 
       const data = await res.json()
       if (!res.ok) {
@@ -439,11 +564,25 @@ export function PostVehicleWizard() {
       }
 
       setSubmitted(true)
+      if (isEditing) {
+        setSubmitted(false)
+        toast.success("Vehicle updated successfully")
+        router.push(homePath)
+      }
     } catch (err: any) {
       setError(err.message || t('submit_vehicle_error'))
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-4xl flex-col items-center justify-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <span className="text-sm text-slate-500">{t('loading_vehicle')}</span>
+      </div>
+    )
   }
 
   if (submitted) {
@@ -465,7 +604,7 @@ export function PostVehicleWizard() {
           {t('post_another_vehicle')}
         </Button>
         <Link
-          href="/agent/vehicles"
+          href={homePath}
           className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           {t('my_vehicles')}
@@ -477,9 +616,23 @@ export function PostVehicleWizard() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground">{t('post_vehicle')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('list_vehicle_note')}</p>
+        <h1 className="text-2xl font-bold text-foreground">
+          {vehicleId ? t('edit_vehicle') : t('post_vehicle')}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {vehicleId ? t('edit_vehicle_note') : t('list_vehicle_note')}
+        </p>
       </div>
+
+      {rejectionReason && (
+        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-red-700 uppercase tracking-wider">Why was this listing rejected?</p>
+            <p className="mt-1 text-sm text-red-600">{rejectionReason}</p>
+          </div>
+        </div>
+      )}
 
       {/* Stepper */}
       <div className="mt-8 flex items-center justify-between">

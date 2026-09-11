@@ -46,6 +46,7 @@ const adminNav = [
   { href: "/admin/properties", labelKey: "properties", icon: Building2 },
   { href: "/admin/vehicles", labelKey: "vehicles", icon: Car },
   { href: "/admin/users", labelKey: "users", icon: User },
+  { href: "/admin/messages", labelKey: "messages", icon: MessageSquare },
   { href: "/admin/notifications", labelKey: "notifications", icon: Bell },
   { href: "/admin/announcements", labelKey: "announcements", icon: Megaphone },
   { href: "/admin/payments", labelKey: "payments", icon: CreditCard },
@@ -65,25 +66,45 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
   const { t } = useI18n()
   const nav = role === "admin" ? adminNav : agentNav
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
-  const fetchUnreadCount = useCallback(async () => {
+  const fetchUnread = async (
+    path: string,
+    setter: (n: number) => void,
+  ) => {
     const token = await getToken()
     if (!token) return
-    fetch(`${getApiUrl()}/api/notifications/count`, {
+    fetch(`${getApiUrl()}/api${path}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
       .then((data) => {
-        if (typeof data.count === "number") setUnreadCount(data.count)
+        if (typeof data.count === "number") setter(data.count)
       })
       .catch(() => {})
-  }, [getToken])
+  }
+
+  const fetchUnreadCount = useCallback(
+    () => fetchUnread("/notifications/count", setUnreadCount),
+    [getToken],
+  )
+
+  const fetchUnreadMessages = useCallback(
+    () => fetchUnread("/messages/unread", setUnreadMessages),
+    [getToken],
+  )
 
   useEffect(() => {
     fetchUnreadCount()
     const interval = setInterval(fetchUnreadCount, 30000)
     return () => clearInterval(interval)
   }, [fetchUnreadCount])
+
+  useEffect(() => {
+    fetchUnreadMessages()
+    const interval = setInterval(fetchUnreadMessages, 30000)
+    return () => clearInterval(interval)
+  }, [fetchUnreadMessages])
 
   const isActive = useCallback(
     (path: string) => {
@@ -130,6 +151,12 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
           const Icon = item.icon
           const active = isActive(item.href)
           const showBadge = (item.href === "/agent/notifications" || item.href === "/admin/notifications") && unreadCount > 0
+          const showMessageBadge = (item.href === "/agent/messages" || item.href === "/admin/messages") && unreadMessages > 0
+          const badge = showBadge
+            ? unreadCount
+            : showMessageBadge
+              ? unreadMessages
+              : 0
           return (
             <Link
               key={item.href}
@@ -144,9 +171,9 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{t(item.labelKey)}</span>
-              {showBadge && (
+              {badge > 0 && (
                 <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[18px]">
-                  {unreadCount > 99 ? "99+" : unreadCount}
+                  {badge > 99 ? "99+" : badge}
                 </span>
               )}
             </Link>

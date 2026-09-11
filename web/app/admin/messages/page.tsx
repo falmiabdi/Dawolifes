@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageSquare, Send, Phone, Mail, ChevronLeft, Loader2 } from 'lucide-react'
+import { MessageSquare, Send, Phone, ChevronLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/components/auth/auth-guard'
@@ -36,7 +36,7 @@ interface Message {
 
 const POLL_INTERVAL = 4000
 
-export default function AgentMessagesPage() {
+export default function AdminMessagesPage() {
   const { user, getToken } = useAuth()
   const { t } = useI18n()
   const [threads, setThreads] = useState<Thread[]>([])

@@ -15,7 +15,10 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const { t } = useI18n()
   const [redirecting, setRedirecting] = useState(false)
+  const [adminRedirecting, setAdminRedirecting] = useState(false)
 
+  const isAdmin =
+    user?.role === 'admin' || (Array.isArray(user?.roles) && user!.roles!.includes('admin'))
   const onboardingDone = !!user?.onboardingComplete
   const approved = user?.status === 'Approved'
 
@@ -23,8 +26,23 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
   // "/agent/onboarding/" so strip the trailing slash for comparisons.
   const path = pathname.replace(/\/+$/, '') || '/'
 
+  // The admin dashboard links its Edit buttons here (standalone forms), so
+  // those two routes are the only /agent/* pages an admin may land on.
+  const adminAllowedEditPath =
+    path === '/agent/properties/edit' || path === '/agent/vehicles/edit'
+
   useEffect(() => {
     if (!user) return
+
+    if (isAdmin) {
+      // Admins never see the agent shell — bounce every /agent/* page (except
+      // the admin-linked edit forms) straight to the admin shell.
+      if (!adminAllowedEditPath) {
+        setAdminRedirecting(true)
+        router.replace('/admin')
+      }
+      return
+    }
 
     // Every agent must complete their profile first.
     if (!onboardingDone && path !== '/agent/onboarding') {
@@ -36,14 +54,21 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
       // spinner would spin forever until a manual refresh.
       setRedirecting(false)
     }
-  }, [user, onboardingDone, approved, path, router, redirecting])
+  }, [user, isAdmin, onboardingDone, approved, path, adminAllowedEditPath, router, redirecting])
 
-  if (redirecting) {
+  if (redirecting || adminRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
+  }
+
+  // Admin landing here = the admin dashboard Edit link: render the form
+  // standalone (it has its own back link that routes to /admin/*) with no
+  // agent navigation anywhere. The four roles stay separated.
+  if (isAdmin) {
+    return <>{children}</>
   }
 
   // Onboarding screen has its own full-page layout.

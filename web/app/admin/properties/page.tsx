@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/auth-guard'
 
 import {
-  Building2, Check, X, Search, Loader2, Trash2, Phone, PhoneCall, Plus, Edit
+  Building2, Check, X, Search, Loader2, Trash2, Phone, PhoneCall, Plus, Edit, Eye, BadgeCheck, RotateCcw
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Button } from '@/components/ui/button'
@@ -129,6 +129,31 @@ export default function AdminPropertiesPage() {
     }
   }
 
+  async function handleListingStatus(propertyId: string, status: 'Sold' | 'Rented' | 'Approved') {
+    setSubmittingAction(true)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${getApiUrl()}/api/admin/properties/${propertyId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ status }),
+      })
+      if (res.ok) {
+        const label = status === 'Sold' ? 'Sold' : status === 'Rented' ? 'Rented' : 'back on the market'
+        toast.success(`Property marked as ${label}`)
+        setSelectedProperty(prev => prev ? { ...prev, status } : null)
+        fetchProperties()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.message || 'Failed to update listing status.')
+      }
+    } catch (err) {
+      toast.error('An error occurred.')
+    } finally {
+      setSubmittingAction(false)
+    }
+  }
+
   // Whether the listing is currently showing the admin's contact.
   const isAdminContact = (p: Property) => {
     if (p.contactMode) return p.contactMode === 'Admin'
@@ -207,7 +232,7 @@ export default function AdminPropertiesPage() {
 
         <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
           <div className="flex gap-2">
-            {['all', 'Pending', 'Approved', 'Rejected'].map((status) => (
+            {['all', 'Pending', 'Approved', 'Rejected', 'Sold', 'Rented'].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
@@ -323,8 +348,16 @@ export default function AdminPropertiesPage() {
               {/* Action Buttons */}
               <div className="space-y-3 border-t border-b border-slate-100 py-3">
                 {selectedProperty.agent?.role === 'admin' ? (
-                  // Admin-posted: only Edit and Delete
+                  // Admin-posted: View + Edit + Delete
                   <div className="flex gap-2">
+                    <Button
+                      onClick={() => window.open(`/listings/view?id=${selectedProperty.id}`, '_blank')}
+                      disabled={submittingAction}
+                      className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl font-bold py-1.5"
+                      title="View public listing"
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" /> View
+                    </Button>
                     <Button
                       onClick={() => router.push(`/agent/properties/edit?id=${selectedProperty.id}`)}
                       disabled={submittingAction}
@@ -379,6 +412,54 @@ export default function AdminPropertiesPage() {
                         />
                       </>
                     )}
+                    {(selectedProperty.status === 'Approved' || selectedProperty.status === 'Sold' || selectedProperty.status === 'Rented') && (
+                      <div className="flex gap-2">
+                        {selectedProperty.status === 'Approved' ? (
+                          <>
+                            <Button
+                              onClick={() => handleListingStatus(selectedProperty.id, 'Sold')}
+                              disabled={submittingAction}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold py-1.5"
+                            >
+                              <BadgeCheck className="h-3.5 w-3.5 mr-1" /> Mark Sold
+                            </Button>
+                            <Button
+                              onClick={() => handleListingStatus(selectedProperty.id, 'Rented')}
+                              disabled={submittingAction}
+                              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold py-1.5"
+                            >
+                              <BadgeCheck className="h-3.5 w-3.5 mr-1" /> Mark Rented
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            onClick={() => handleListingStatus(selectedProperty.id, 'Approved')}
+                            disabled={submittingAction}
+                            className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl font-bold py-1.5"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Mark Available
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => window.open(`/listings/view?id=${selectedProperty.id}`, '_blank')}
+                        disabled={submittingAction}
+                        className="flex-1 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl font-bold py-1.5 text-xs"
+                        title="View public listing"
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1" /> View
+                      </Button>
+                      <Button
+                        onClick={() => router.push(`/agent/properties/edit?id=${selectedProperty.id}`)}
+                        disabled={submittingAction}
+                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold py-1.5 text-xs"
+                        title="Edit property"
+                      >
+                        <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                      </Button>
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         onClick={async () => {

@@ -225,6 +225,7 @@ function VehicleListingPage() {
   }
 
   const isRent = vehicle.listingType === "For Rent" || vehicle.listingType === "Both"
+  const isClosed = vehicle.status === "Sold" || vehicle.status === "Rented"
   const isSale = vehicle.listingType === "For Sale" || vehicle.listingType === "Both"
   const embedUrl = vehicle.videoUrl ? getYouTubeEmbedUrl(vehicle.videoUrl) : ""
 
@@ -334,6 +335,22 @@ function VehicleListingPage() {
                   </span>
                 )}
               </div>
+
+              {isClosed && (
+                <div className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                  <BadgeCheck className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      {vehicle.status === 'Sold' ? 'Sold' : 'Rented'}
+                    </p>
+                    <p className="mt-1 text-sm text-blue-600">
+                      {isRent
+                        ? 'This vehicle is no longer available for rent.'
+                        : 'This vehicle is no longer available for sale.'}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {vehicle.status === "Rejected" && (vehicle as any).rejectionReason && (
                 <div className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
@@ -593,51 +610,64 @@ function VehicleListingPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-3 text-sm">
-                  <p className="flex items-center gap-2 text-foreground">
-                    <Phone className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.phone}
-                  </p>
-                  {vehicle.agent.secondaryPhone && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Phone className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.secondaryPhone}
+                {isClosed ? (
+                  <div className="mt-4 rounded-xl bg-muted/60 border border-border p-4 text-center">
+                    <p className="text-sm font-semibold text-foreground">
+                      {vehicle.status === 'Sold' ? 'This vehicle is Sold' : 'This vehicle is Rented'}
                     </p>
-                  )}
-                  {vehicle.agent.email && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Mail className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.email}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Contact information is hidden for this listing. Explore our other available vehicles.
                     </p>
-                  )}
-                  {vehicle.agent.companyName && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Building2 className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.companyName}
-                    </p>
-                  )}
-                  {vehicle.agent.officeAddress && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <MapPinned className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.officeAddress}
-                    </p>
-                  )}
-                  {vehicle.agent.licenseNumber && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Hash className="h-4 w-4 text-primary shrink-0" /> License: {vehicle.agent.licenseNumber}
-                    </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-4 space-y-3 text-sm">
+                      <p className="flex items-center gap-2 text-foreground">
+                        <Phone className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.phone}
+                      </p>
+                      {vehicle.agent.secondaryPhone && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Phone className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.secondaryPhone}
+                        </p>
+                      )}
+                      {vehicle.agent.email && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Mail className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.email}
+                        </p>
+                      )}
+                      {vehicle.agent.companyName && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Building2 className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.companyName}
+                        </p>
+                      )}
+                      {vehicle.agent.officeAddress && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <MapPinned className="h-4 w-4 text-primary shrink-0" /> {vehicle.agent.officeAddress}
+                        </p>
+                      )}
+                      {vehicle.agent.licenseNumber && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Hash className="h-4 w-4 text-primary shrink-0" /> License: {vehicle.agent.licenseNumber}
+                        </p>
+                      )}
+                    </div>
 
-                <a
-                  href={`tel:${vehicle.agent.phone}`}
-                  className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold min-h-[44px]" })}
-                >
-                  <Phone className="h-4 w-4" /> Call Now
-                </a>
-                <AgentRating agentId={vehicle.agent.id} agentName={vehicle.agent.name} />
-                <MessageAgent
-                  propertyId={vehicle.id}
-                  agentId={vehicle.agent.contactUserId || vehicle.agent.id}
-                  agentName={vehicle.agent.name}
-                  propertyTitle={vehicle.title}
-                />
-                <p className="mt-2 text-center text-xs text-muted-foreground">Call or message the agent directly</p>
+                    <a
+                      href={`tel:${vehicle.agent.phone}`}
+                      className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold min-h-[44px]" })}
+                    >
+                      <Phone className="h-4 w-4" /> Call Now
+                    </a>
+                    <AgentRating agentId={vehicle.agent.id} agentName={vehicle.agent.name} />
+                    <MessageAgent
+                      propertyId={vehicle.id}
+                      agentId={vehicle.agent.contactUserId || vehicle.agent.id}
+                      agentName={vehicle.agent.name}
+                      propertyTitle={vehicle.title}
+                    />
+                    <p className="mt-2 text-center text-xs text-muted-foreground">Call or message the agent directly</p>
+                  </>
+                )}
               </div>
 
               <div className="rounded-2xl border border-border bg-card p-5">

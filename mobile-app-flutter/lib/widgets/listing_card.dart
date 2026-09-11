@@ -103,17 +103,29 @@ class _Thumbnail extends StatelessWidget {
             Positioned(
               left: 8,
               top: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isRent ? AppColors.accent : AppColors.primary,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  item.listingType,
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-              ),
+              child: (item.status == 'Sold' || item.status == 'Rented')
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: item.status == 'Sold' ? const Color(0xFF2563EB) : const Color(0xFF9333EA),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        item.status!,
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isRent ? AppColors.accent : AppColors.primary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        item.listingType,
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                    ),
             ),
           ],
         ),

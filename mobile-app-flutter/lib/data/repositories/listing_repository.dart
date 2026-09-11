@@ -10,7 +10,7 @@ class ListingRepository {
   final ApiClient _api;
 
   Future<List<ListingItem>> fetchProperties({int page = 1, int limit = 8}) async {
-    final data = await _api.get('/api/properties?status=Approved&page=$page&limit=$limit');
+    final data = await _api.get('/api/properties?page=$page&limit=$limit');
     final docs = (data as Map<String, dynamic>?)?['properties'] as List? ?? [];
     final items = docs
         .whereType<Map<String, dynamic>>()

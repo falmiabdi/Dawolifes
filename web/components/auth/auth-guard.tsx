@@ -46,11 +46,14 @@ export interface SessionUser {
   onboardingComplete?: boolean
 }
 
-export type UserRole = 'buyer' | 'seller' | 'agent'
+export type UserRole = 'buyer' | 'seller' | 'agent' | 'owner' | 'admin'
 
+// Maps the four distinct account roles to a stable UI-facing role value.
+// Admin must NEVER collapse into agent — the dashboards are role-separated.
 export function mapUserRole(role?: string): UserRole {
+  if (role === 'admin') return 'admin'
+  if (role === 'owner') return 'owner'
   if (role === 'agent') return 'seller'
-  if (role === 'admin') return 'agent'
   return 'buyer'
 }
 
@@ -365,12 +368,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function logout() {
+    // Clear the JWT everywhere it can be stored.
     if (Capacitor.isNativePlatform()) {
-      const { Preferences } = require('@capacitor/preferences')
-      Preferences.remove({ key: 'auth_token' })
-    } else {
-      document.cookie = 'token=; path=/; max-age=0'
+      try {
+        const { Preferences } = require('@capacitor/preferences')
+        Preferences.remove({ key: 'auth_token' })
+      } catch {}
     }
+    document.cookie = 'token=; path=/; max-age=0'
+    // Drop the cached session from both storages so a later login (or another
+    // role's account) never hydrates from a stale session.
+    try {
+      authStorage().removeItem('auth_user')
+      window.sessionStorage.removeItem('auth_user')
+      window.localStorage.removeItem('auth_user')
+    } catch {}
     setUserAndCache(null)
   }
 

@@ -8,7 +8,7 @@ import { useAuth } from '@/components/auth/auth-guard'
 import Link from 'next/link'
 
 
-export function NotificationBell() {
+export function NotificationBell({ dark = false }: { dark?: boolean }) {
   const { getToken } = useAuth()
   const [unreadCount, setUnreadCount] = useState(0)
   const [userId, setUserId] = useState<string | null>(null)
@@ -142,7 +142,11 @@ export function NotificationBell() {
   return (
     <Link
       href={userId ? `/${role}/notifications` : '#'}
-      className="relative rounded-full p-2 text-slate-500 hover:bg-slate-100 transition"
+      className={
+        dark
+          ? "relative rounded-full border border-slate-700 bg-slate-800 p-2 text-slate-400 hover:bg-slate-700 hover:text-white transition"
+          : "relative rounded-full border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-100 transition"
+      }
     >
       <Bell className="h-5 w-5" />
       {unreadCount > 0 ? (

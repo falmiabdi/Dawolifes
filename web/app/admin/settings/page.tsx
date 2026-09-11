@@ -2,9 +2,10 @@
 
 import { getApiUrl } from '@/lib/get-api-url'
 import { useState, useCallback, useEffect } from 'react'
-import { Camera, Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2, Phone, Mail, Share2 } from 'lucide-react'
+import { Lock, ShieldAlert, UserPlus, CheckCircle2, Loader2, Phone, Mail, Share2, Camera } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import { useI18n } from '@/lib/i18n'
+import { ProfilePhotoUploader } from '@/components/dashboard/profile-photo-uploader'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
 
 export default function AdminSettingsPage() {
-  const { user, getToken } = useAuth()
+  const { user, getToken, refreshUser } = useAuth()
   const { t } = useI18n()
   const [saving, setSaving] = useState(false)
 
@@ -20,7 +21,6 @@ export default function AdminSettingsPage() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [profilePhoto, setProfilePhoto] = useState('')
-  const [uploading, setUploading] = useState(false)
 
   // Password
   const [currentPassword, setCurrentPassword] = useState('')
@@ -81,29 +81,6 @@ export default function AdminSettingsPage() {
     }
   }, [user])
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch(`${getApiUrl()}/api/upload`, {
-        method: 'POST',
-        body: fd,
-      })
-      const data = await res.json()
-      if (data.url) {
-        setProfilePhoto(data.url)
-        toast.success('Photo uploaded')
-      }
-    } catch {
-      toast.error('Failed to upload photo')
-    } finally {
-      setUploading(false)
-    }
-  }
-
   const saveProfile = async () => {
     setSaving(true)
     try {
@@ -114,6 +91,7 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({ phone, email, profilePhoto }),
       })
       if (res.ok) {
+        await refreshUser()
         toast.success('Profile updated')
       } else {
         const data = await res.json()
@@ -235,20 +213,11 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="flex items-center gap-5">
-          <div className="relative">
-            {profilePhoto ? (
-              <img src={profilePhoto} alt="Profile" className="h-20 w-20 rounded-full object-cover border-2 border-slate-200" />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 border-2 border-slate-200">
-                <Camera className="h-6 w-6 text-slate-400" />
-              </div>
-            )}
-            <label className="absolute bottom-0 right-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-orange-500 text-white hover:bg-orange-600">
-              <Camera className="h-3.5 w-3.5" />
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-            </label>
-            {uploading && <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-orange-500" />}
-          </div>
+          <ProfilePhotoUploader
+            currentPhoto={profilePhoto}
+            initials={((user as any)?.name || 'A').charAt(0).toUpperCase()}
+            onChange={(url) => setProfilePhoto(url)}
+          />
           <div className="text-sm">
             <p className="font-bold text-slate-900">{(user as any)?.name || 'Admin'}</p>
             <p className="text-slate-400">{email}</p>

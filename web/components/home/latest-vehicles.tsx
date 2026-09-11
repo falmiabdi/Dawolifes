@@ -53,6 +53,7 @@ export function LatestVehicles() {
             condition: v.condition || 'Used',
             accidentFree: v.accidentFree || false,
             imported: v.imported || false,
+            status: v.status || '',
             safetyFeatures: v.safetyFeatures || [],
             interiorFeatures: v.interiorFeatures || [],
             exteriorFeatures: v.exteriorFeatures || [],

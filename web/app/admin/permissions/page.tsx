@@ -50,6 +50,10 @@ export default function AdminPermissionsPage() {
 
   const decide = async (id: string, approve: boolean) => {
     const token = await getToken()
+    if (!token) {
+      toast.error('Session expired — please sign in again.')
+      return
+    }
     setBusyId(id)
     try {
       const res = await fetch(`${getApiUrl()}/api/permissions/${id}/decide`, {
@@ -57,11 +61,20 @@ export default function AdminPermissionsPage() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ approve }),
       })
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) {
+        let message = 'Could not update permission request'
+        try {
+          const data = await res.json()
+          if (data?.message) message = data.message
+        } catch {
+          // non-JSON error body — keep the generic message
+        }
+        throw new Error(message)
+      }
       toast.success(approve ? 'Permission approved' : 'Permission rejected')
-      fetchRequests()
-    } catch {
-      toast.error('Could not update permission request')
+      await fetchRequests()
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not update permission request')
     } finally {
       setBusyId(null)
     }

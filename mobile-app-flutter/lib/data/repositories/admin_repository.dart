@@ -56,6 +56,10 @@ class AdminRepository {
     await _api.patch('/api/admin/properties/$id/reject', {'reason': reason ?? ''});
   }
 
+  Future<void> setPropertyStatus(String id, String status) async {
+    await _api.patch('/api/admin/properties/$id/status', {'status': status});
+  }
+
   Future<ListingContact> switchPropertyContact(String id) async {
     final data = await _api.patch('/api/admin/properties/$id/contact') as Map<String, dynamic>;
     return ListingContact.fromJson(data);
@@ -83,13 +87,17 @@ class AdminRepository {
     await _api.patch('/api/admin/vehicles/$id/reject', {'rejectionReason': reason ?? ''});
   }
 
+  Future<void> setVehicleStatus(String id, String status) async {
+    await _api.patch('/api/admin/vehicles/$id/status', {'status': status});
+  }
+
   Future<void> deleteVehicle(String id) async {
     await _api.delete('/api/vehicles/$id');
   }
 
 Future<ListingContact> switchVehicleContact(String id) async {
     final data = await _api.patch('/api/admin/vehicles/$id/contact') as Map<String, dynamic>;
-    return ListingContact.fromJson(data['contact'] as Map<String, dynamic>);
+    return ListingContact.fromJson(data);
   }
 
   Future<List<Map<String, dynamic>>> fetchPermissionRequests() async {

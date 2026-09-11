@@ -24,6 +24,10 @@ class StatusChip extends StatelessWidget {
         return AppColors.destructive;
       case 'Suspended':
         return AppColors.mutedForeground;
+      case 'Sold':
+        return Colors.blue.shade700;
+      case 'Rented':
+        return Colors.purple.shade600;
       default:
         return AppColors.mutedForeground;
     }

@@ -18,6 +18,7 @@ import {
   MapPinned,
   Hash,
   AlertCircle,
+  BadgeCheck,
   FileText,
   Loader2
 } from "lucide-react"
@@ -180,6 +181,7 @@ function ListingPage() {
   }
 
   const isRent = property.listingType === "For Rent"
+  const isClosed = property.status === "Sold" || property.status === "Rented"
   const info: [string, string][] = [
     ["Type", property.type],
     ["Status", property.listingType],
@@ -278,6 +280,22 @@ function ListingPage() {
                 />
               </div>
 
+              {isClosed && (
+                <div className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                  <BadgeCheck className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      {property.status === 'Sold' ? 'Sold' : 'Rented'}
+                    </p>
+                    <p className="mt-1 text-sm text-blue-600">
+                      {isRent
+                        ? 'This property is no longer available for rent.'
+                        : 'This property is no longer available for sale.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {property.status === 'Rejected' && property.rejectionReason && (
                 <div className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
                   <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
@@ -374,51 +392,64 @@ function ListingPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-3 text-sm">
-                  <p className="flex items-center gap-2 text-foreground">
-                    <Phone className="h-4 w-4 text-primary shrink-0" /> {property.agent.phone}
-                  </p>
-                  {property.agent.secondaryPhone && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Phone className="h-4 w-4 text-primary shrink-0" /> {property.agent.secondaryPhone}
+                {isClosed ? (
+                  <div className="mt-4 rounded-xl bg-muted/60 border border-border p-4 text-center">
+                    <p className="text-sm font-semibold text-foreground">
+                      {property.status === 'Sold' ? 'This property is Sold' : 'This property is Rented'}
                     </p>
-                  )}
-                  {property.agent.email && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Mail className="h-4 w-4 text-primary shrink-0" /> {property.agent.email}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Contact information is hidden for this listing. Explore our other available properties.
                     </p>
-                  )}
-                  {property.agent.companyName && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Building2 className="h-4 w-4 text-primary shrink-0" /> {property.agent.companyName}
-                    </p>
-                  )}
-                  {property.agent.officeAddress && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <MapPinned className="h-4 w-4 text-primary shrink-0" /> {property.agent.officeAddress}
-                    </p>
-                  )}
-                  {property.agent.licenseNumber && (
-                    <p className="flex items-center gap-2 text-foreground">
-                      <Hash className="h-4 w-4 text-primary shrink-0" /> License: {property.agent.licenseNumber}
-                    </p>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-4 space-y-3 text-sm">
+                      <p className="flex items-center gap-2 text-foreground">
+                        <Phone className="h-4 w-4 text-primary shrink-0" /> {property.agent.phone}
+                      </p>
+                      {property.agent.secondaryPhone && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Phone className="h-4 w-4 text-primary shrink-0" /> {property.agent.secondaryPhone}
+                        </p>
+                      )}
+                      {property.agent.email && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Mail className="h-4 w-4 text-primary shrink-0" /> {property.agent.email}
+                        </p>
+                      )}
+                      {property.agent.companyName && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Building2 className="h-4 w-4 text-primary shrink-0" /> {property.agent.companyName}
+                        </p>
+                      )}
+                      {property.agent.officeAddress && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <MapPinned className="h-4 w-4 text-primary shrink-0" /> {property.agent.officeAddress}
+                        </p>
+                      )}
+                      {property.agent.licenseNumber && (
+                        <p className="flex items-center gap-2 text-foreground">
+                          <Hash className="h-4 w-4 text-primary shrink-0" /> License: {property.agent.licenseNumber}
+                        </p>
+                      )}
+                    </div>
 
-                <a
-                  href={`tel:${property.agent.phone}`}
-                  className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold min-h-[44px]" })}
-                >
-                  <Phone className="h-4 w-4" /> Call Now
-                </a>
-                <AgentRating agentId={property.agent.id} agentName={property.agent.name} />
-                <MessageAgent
-                  propertyId={property.id}
-                  agentId={property.agent.contactUserId || property.agent.id}
-                  agentName={property.agent.name}
-                  propertyTitle={property.title}
-                />
-                <p className="mt-2 text-center text-xs text-muted-foreground">Call or message the agent directly</p>
+                    <a
+                      href={`tel:${property.agent.phone}`}
+                      className={buttonVariants({ className: "mt-4 w-full rounded-xl font-semibold min-h-[44px]" })}
+                    >
+                      <Phone className="h-4 w-4" /> Call Now
+                    </a>
+                    <AgentRating agentId={property.agent.id} agentName={property.agent.name} />
+                    <MessageAgent
+                      propertyId={property.id}
+                      agentId={property.agent.contactUserId || property.agent.id}
+                      agentName={property.agent.name}
+                      propertyTitle={property.title}
+                    />
+                    <p className="mt-2 text-center text-xs text-muted-foreground">Call or message the agent directly</p>
+                  </>
+                )}
               </div>
 
               <div className="rounded-2xl border border-border bg-card p-5">

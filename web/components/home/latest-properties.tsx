@@ -48,6 +48,7 @@ export function LatestProperties() {
           bathrooms: p.bathrooms || 0,
           condition: p.condition || 'Finished',
           legalizedYear: p.legalizedYear || 2024,
+          status: p.status || '',
           description: p.description || '',
           features: p.features || [],
           images: p.images && p.images.length > 0 ? p.images.map((img: string) => getImageUrl(img)) : ["/placeholder.svg"],

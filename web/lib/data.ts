@@ -27,6 +27,8 @@ export type Property = {
   videoUrl?: string
   featured?: boolean
   agent: Agent
+  status?: string
+  rejectionReason?: string
 }
 
 export type Vehicle = {

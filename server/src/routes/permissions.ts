@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { authMiddleware, agentMiddleware, adminMiddleware } from '../middleware/auth.js'
-import { prisma } from '../lib/prisma.js'
+import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins, createAndBroadcastNotification } from '../utils/notifications.js'
 import { isValidUuid } from '../utils/validation.js'
 
@@ -29,21 +29,26 @@ export async function assertListingPermissionAllowed(opts: {
   if (opts.isAdmin || opts.listingStatus !== 'Approved') {
     return { allowed: true }
   }
-  const request = await prisma.permissionRequest.findFirst({
-    where: {
-      entityType: opts.entityType,
-      entityId: opts.entityId,
-      requesterId: opts.requesterId,
-      type: opts.type,
-      status: 'Approved',
-      used: false,
-    },
+  // Reads + one-time consumer update in a single retry unit: if Neon drops the
+  // pooled connection mid-flight the whole gate retries (safe — deciding the
+  // same request twice only ever yields one "used" flip thanks to the filter).
+  return withPrismaRetry(async () => {
+    const request = await prisma.permissionRequest.findFirst({
+      where: {
+        entityType: opts.entityType,
+        entityId: opts.entityId,
+        requesterId: opts.requesterId,
+        type: opts.type,
+        status: 'Approved',
+        used: false,
+      },
+    })
+    if (!request) {
+      return { allowed: false, code: 'PERMISSION_REQUIRED' } as const
+    }
+    await prisma.permissionRequest.update({ where: { id: request.id }, data: { used: true } })
+    return { allowed: true } as const
   })
-  if (!request) {
-    return { allowed: false, code: 'PERMISSION_REQUIRED' }
-  }
-  await prisma.permissionRequest.update({ where: { id: request.id }, data: { used: true } })
-  return { allowed: true }
 }
 
 const createSchema = z.object({
@@ -66,38 +71,42 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
 
     const listing =
       entityType === 'PROPERTY'
-        ? await prisma.property.findUnique({ where: { id: entityId } })
-        : await prisma.vehicle.findUnique({ where: { id: entityId } })
+        ? await withPrismaRetry(() => prisma.property.findUnique({ where: { id: entityId } }))
+        : await withPrismaRetry(() => prisma.vehicle.findUnique({ where: { id: entityId } }))
     if (!listing || listing.agentId !== requesterId) {
       return res.status(403).json({ message: 'Not authorized' })
     }
 
-    const existing = await prisma.permissionRequest.findFirst({
-      where: {
-        entityType,
-        entityId,
-        type,
-        requesterId,
-        status: { in: ['Pending', 'Approved'] },
-        used: false,
-      },
+    const request = await withPrismaRetry(async () => {
+      const existing = await prisma.permissionRequest.findFirst({
+        where: {
+          entityType,
+          entityId,
+          type,
+          requesterId,
+          status: { in: ['Pending', 'Approved'] },
+          used: false,
+        },
+      })
+      if (existing) {
+        return { existing }
+      }
+      return { created: await prisma.permissionRequest.create({
+        data: { entityType, entityId, type, requesterId, reason: reason || null },
+      }) }
     })
-    if (existing) {
-      return res.status(200).json({ message: 'Permission already requested', request: existing })
+    if (request.existing) {
+      return res.status(200).json({ message: 'Permission already requested', request: request.existing })
     }
-
-    const request = await prisma.permissionRequest.create({
-      data: { entityType, entityId, type, requesterId, reason: reason || null },
-    })
 
     notifyAdmins(
       'Permission Request',
       `A seller requests permission to ${type === 'EDIT' ? 'edit' : 'delete'} a ${entityType === 'PROPERTY' ? 'property' : 'vehicle'}.`,
       'info',
-      { entityType: 'PERMISSION', entityId: request.id, permissionId: request.id, listingType: entityType, listingId: entityId, requestType: type }
+      { entityType: 'PERMISSION', entityId: request.created!.id, permissionId: request.created!.id, listingType: entityType, listingId: entityId, requestType: type }
     ).catch(() => {})
 
-    res.status(201).json({ message: 'Permission requested', request })
+    res.status(201).json({ message: 'Permission requested', request: request.created })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to request permission' })
   }
@@ -106,12 +115,15 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
 // Admin list of all permission requests (with requester details for the badge).
 router.get('/admin', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const requests = await prisma.permissionRequest.findMany({
-      where: req.query.status ? { status: String(req.query.status) as any } : undefined,
-      include: { requester: { select: { id: true, username: true, email: true, profilePhoto: true } } },
-      orderBy: { createdAt: 'desc' },
+    const { requests, pendingCount } = await withPrismaRetry(async () => {
+      const requests = await prisma.permissionRequest.findMany({
+        where: req.query.status ? { status: String(req.query.status) as any } : undefined,
+        include: { requester: { select: { id: true, username: true, email: true, profilePhoto: true } } },
+        orderBy: { createdAt: 'desc' },
+      })
+      const pendingCount = await prisma.permissionRequest.count({ where: { status: 'Pending' } })
+      return { requests, pendingCount }
     })
-    const pendingCount = await prisma.permissionRequest.count({ where: { status: 'Pending' } })
     res.json({ requests, pendingCount })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch permission requests' })
@@ -122,13 +134,15 @@ router.get('/admin', authMiddleware, adminMiddleware, async (req, res) => {
 router.get('/mine', authMiddleware, async (req, res) => {
   try {
     const { entityId, entityType, type } = req.query
-    const where: any = { requesterId: req.user!.userId }
-    if (entityId) where.entityId = String(entityId)
-    if (entityType) where.entityType = String(entityType)
-    if (type) where.type = String(type)
-    const requests = await prisma.permissionRequest.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
+    const requests = await withPrismaRetry(async () => {
+      const where: any = { requesterId: req.user!.userId }
+      if (entityId) where.entityId = String(entityId)
+      if (entityType) where.entityType = String(entityType)
+      if (type) where.type = String(type)
+      return prisma.permissionRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+      })
     })
     res.json({ requests })
   } catch (err: any) {
@@ -142,25 +156,32 @@ router.patch('/:id/decide', authMiddleware, adminMiddleware, async (req, res) =>
     if (!isValidUuid(req.params.id)) {
       return res.status(404).json({ message: 'Request not found' })
     }
-    const request = await prisma.permissionRequest.findUnique({ where: { id: req.params.id } })
-    if (!request) {
+    const approve = req.body.approve === true
+    // Find + update in a single retry unit so a dropped Neon pooled connection
+    // (the symptom behind "Could not update permission request") is retried
+    // with backoff instead of surfacing as a 500. Decide is idempotent per id.
+    const updated = await withPrismaRetry(async () => {
+      const request = await prisma.permissionRequest.findUnique({ where: { id: req.params.id } })
+      if (!request) {
+        return null
+      }
+      return prisma.permissionRequest.update({
+        where: { id: request.id },
+        data: { status: approve ? 'Approved' : 'Rejected', decidedAt: new Date(), decidedById: req.user!.userId },
+      })
+    })
+    if (!updated) {
       return res.status(404).json({ message: 'Request not found' })
     }
 
-    const approve = req.body.approve === true
-    const updated = await prisma.permissionRequest.update({
-      where: { id: request.id },
-      data: { status: approve ? 'Approved' : 'Rejected', decidedAt: new Date(), decidedById: req.user!.userId },
-    })
-
     createAndBroadcastNotification(
-      request.requesterId,
+      updated.requesterId,
       approve ? 'Permission Approved' : 'Permission Rejected',
       approve
-        ? `Your request to ${request.type === 'EDIT' ? 'edit' : 'delete'} has been approved.`
-        : `Your request to ${request.type === 'EDIT' ? 'edit' : 'delete'} was rejected.`,
+        ? `Your request to ${updated.type === 'EDIT' ? 'edit' : 'delete'} has been approved.`
+        : `Your request to ${updated.type === 'EDIT' ? 'edit' : 'delete'} was rejected.`,
       approve ? 'success' : 'error',
-      { entityType: 'PERMISSION', permissionId: request.id, approved: approve }
+      { entityType: 'PERMISSION', permissionId: updated.id, approved: approve }
     ).catch(() => {})
 
     res.json({ message: approve ? 'Permission approved' : 'Permission rejected', request: updated })

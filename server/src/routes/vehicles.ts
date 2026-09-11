@@ -3,6 +3,7 @@ import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } 
 import { vehicleSchema, isValidUuid } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
+import { resolveSystemAdmin } from '../utils/admin-contact.js'
 import { assertListingPermissionAllowed } from './permissions.js'
 
 const router = Router()
@@ -32,7 +33,7 @@ const agentSelect = { id: true, username: true, email: true, phone: true, profil
 // Get all vehicles (public)
 router.get('/', async (req, res) => {
   try {
-    const where: any = { status: 'Approved' }
+    const where: any = { status: { in: ['Approved', 'Sold', 'Rented'] } }
     if (req.query.city) where.city = req.query.city
     if (req.query.category) where.vehicleCategory = req.query.category
     if (req.query.make) where.make = req.query.make
@@ -73,7 +74,7 @@ router.get('/:id', async (req, res) => {
 
     // Only expose approved listings publicly; owner and admins may preview
     // drafts/pending/rejected listings via their own dashboards.
-    if (vehicle.status !== 'Approved') {
+    if (vehicle.status !== 'Approved' && vehicle.status !== 'Sold' && vehicle.status !== 'Rented') {
       const caller = getRequestUserId(req)
       const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === vehicle.agentId)
       if (!isOwnerOrAdmin) {
@@ -102,15 +103,34 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     })
     const isAdmin = currentUser?.role === 'admin'
 
+    // Same contact model as properties: default is the System Admin number and
+    // buyer messages route to the admin account until the admin toggles the
+    // listing over to the agent/owner who published it.
+    const contactName = parsed.data.name?.trim() || ''
+    const contactPhone = parsed.data.phone?.trim() || ''
+    const { name: _name, phone: _phone, contactMode, ...vehicleData } = parsed.data
+    const mode = contactMode || 'Admin'
+    let agentName = contactName || currentUser?.username || req.user!.email
+    let displayPhone: string | null = contactPhone || currentUser?.phone || null
+    let displayPhoto = currentUser?.profilePhoto || null
+    let contactUserId: string | null = req.user!.userId
+    if (mode === 'Admin') {
+      const admin = await resolveSystemAdmin()
+      agentName = admin.name
+      displayPhone = admin.phone
+      displayPhoto = admin.photo || null
+      contactUserId = admin.id ?? req.user!.userId
+    }
+
     const vehicle = await prisma.vehicle.create({
       data: {
-        ...parsed.data,
+        ...vehicleData,
         agentId: req.user!.userId,
-        agentName: currentUser?.username || req.user!.email,
+        agentName,
         status: isAdmin ? 'Approved' : 'Pending',
-        displayPhone: currentUser?.phone || null,
-        displayPhoto: currentUser?.profilePhoto || null,
-        contactUserId: req.user!.userId,
+        displayPhone,
+        displayPhoto,
+        contactUserId,
       },
     })
 
@@ -165,6 +185,23 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
     for (const field of ALLOWED_UPDATE_FIELDS) {
       if (parsed.data[field as keyof typeof parsed.data] !== undefined) {
         updates[field] = parsed.data[field as keyof typeof parsed.data]
+      }
+    }
+
+    // Recalculate the displayed contact when the poster (or admin) switches modes.
+    if (parsed.data.contactMode) {
+      if (parsed.data.contactMode === 'Admin') {
+        const admin = await resolveSystemAdmin()
+        updates.agentName = admin.name
+        updates.displayPhone = admin.phone
+        updates.displayPhoto = admin.photo || null
+        updates.contactUserId = admin.id ?? req.user!.userId
+      } else {
+        const contactName = parsed.data.name?.trim() || ''
+        const contactPhone = parsed.data.phone?.trim() || ''
+        if (contactName) updates.agentName = contactName
+        if (contactPhone) updates.displayPhone = contactPhone
+        updates.contactUserId = req.user!.userId
       }
     }
 
