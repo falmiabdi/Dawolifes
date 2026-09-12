@@ -121,6 +121,9 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       if (current?.isOwner ?? false) {
         _posterType = 'Owner';
         _contactMode = 'Owner';
+      } else if (current?.isAgent ?? false) {
+        _posterType = 'Agent';
+        _contactMode = 'Agent';
       }
       _prefillFromProfile();
     }

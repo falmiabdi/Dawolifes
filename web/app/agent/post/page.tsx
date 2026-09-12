@@ -39,7 +39,7 @@ export default function AgentPostPage() {
   const [title, setTitle] = useState('')
   const [posterType, setPosterType] = useState('Agent')
   const [ownerType, setOwnerType] = useState('Farmer Owner')
-  const [contactMode, setContactMode] = useState('Admin')
+  const [contactMode, setContactMode] = useState(() => user?.role === 'owner' ? 'Owner' : user?.role === 'agent' ? 'Agent' : 'Admin')
   const [contactName, setContactName] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [propertyType, setPropertyType] = useState('Condominium')
@@ -70,6 +70,8 @@ export default function AgentPostPage() {
     if (isOwner) {
       setContactMode('Owner')
       setPosterType('Owner')
+    } else if (user?.role === 'agent') {
+      setContactMode('Agent')
     }
   }, [isOwner])
 

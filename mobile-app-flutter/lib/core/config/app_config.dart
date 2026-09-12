@@ -20,14 +20,17 @@ abstract final class AppConfig {
   /// (allow inbound port 4000 through the Windows firewall)
   /// Restore the published URL before shipping:
   ///   flutter run --dart-define=API_BASE_URL=https://api.jebugeneraltrading.com
-  /// Local dev backend checked first; your PC's LAN IP while testing on a
-  /// physical phone over Wi-Fi. Change this if your PC's IP changes.
+  /// Real production backend — probes this first (cPanel box on
+  /// api.jebugeneraltrading.com, connected to the current Neon DB). The LAN IP
+  /// and emulator aliases are only fallbacks for local testing.
   static const String _devLanBase = 'http://172.29.2.7:4000';
+  static const String _realApiBase = 'https://api.jebugeneraltrading.com';
 
   static List<String> get apiBaseCandidates {
     const override = String.fromEnvironment('API_BASE_URL');
     final list = <String>[];
     if (override.isNotEmpty) list.add(override);
+    list.add(_realApiBase);
     list.add(_devLanBase);
     if (!kIsWeb && Platform.isAndroid) {
       list.add('http://10.0.2.2:4000');
