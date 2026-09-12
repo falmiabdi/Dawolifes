@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth/auth-guard'
 import { formatPrice } from '@/lib/data'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { useListingPermissions } from '@/components/agent/use-listing-permissions'
+import { ConfirmDialog } from '@/components/agent/confirm-dialog'
 import { useI18n } from '@/lib/i18n'
 
 
@@ -20,6 +21,7 @@ export default function AgentVehiclesPage() {
   const [error, setError] = useState("")
   const permissions = useListingPermissions(getToken)
   const [requesting, setRequesting] = useState<string | null>(null)
+  const [confirmRequest, setConfirmRequest] = useState<{ type: 'EDIT' | 'DELETE'; id: string; title: string } | null>(null)
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true)
@@ -185,11 +187,11 @@ export default function AgentVehiclesPage() {
                            {t('permission_requested')}
                          </span>
                        ) : (
-                         <button
-                           onClick={() => sendRequest('EDIT', v.id.toString())}
-                           disabled={requesting === `EDIT:${v.id.toString()}`}
-                           className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100 disabled:opacity-60"
-                         >
+<button
+                          onClick={() => setConfirmRequest({ type: 'EDIT', id: v.id.toString(), title: v.title })}
+                          disabled={requesting === `EDIT:${v.id.toString()}`}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 px-3 text-xs font-bold text-orange-700 transition hover:bg-orange-100 disabled:opacity-60"
+                        >
                            {requesting === `EDIT:${v.id.toString()}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />} {t('request_edit')}
                          </button>
                        )
@@ -208,7 +210,7 @@ export default function AgentVehiclesPage() {
                         </span>
                       ) : (
                         <button
-                          onClick={() => sendRequest('DELETE', v.id.toString())}
+                          onClick={() => setConfirmRequest({ type: 'DELETE', id: v.id.toString(), title: v.title })}
                           disabled={requesting === `DELETE:${v.id.toString()}`}
                           className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 py-2 px-3 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-60"
                         >
@@ -230,6 +232,20 @@ export default function AgentVehiclesPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmRequest !== null}
+        title={t(confirmRequest?.type === 'EDIT' ? 'send_edit_permission_request' : 'send_delete_permission_request')}
+        body={confirmRequest ? `"${confirmRequest.title}" is already approved. This will send the admin a request to allow you to ${confirmRequest.type === 'EDIT' ? 'edit' : 'delete'} it.` : ''}
+        confirmLabel={t('send_permission')}
+        onCancel={() => setConfirmRequest(null)}
+        onConfirm={() => {
+          if (confirmRequest) {
+            sendRequest(confirmRequest.type, confirmRequest.id)
+            setConfirmRequest(null)
+          }
+        }}
+      />
     </div>
   )
 }

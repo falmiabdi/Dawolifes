@@ -23,6 +23,20 @@ export const isValidUuid = (value: unknown): boolean =>
 // Strip empty/null so blank optional fields (Flutter sends null) are dropped
 // rather than rejected, while still validating anything that is present.
 const strip = (value: unknown) => (value === undefined || value === null || value === '' ? undefined : value)
+
+// Removes keys whose value is `undefined`, `null`, or `''` from an object so
+// Prisma never receives explicit undefined/empty values (which otherwise
+// surface as "Invalid `prisma.xxx.create()` invocation" errors). Arrays and
+// nested objects are preserved as-is; empty arrays are kept. The return type
+// mirrors the input so spread-ing into a Prisma create() stays type-safe.
+export function cleanPayload<T extends object>(input: T): T {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(input)) {
+    if (value === undefined || value === null || value === '') continue
+    out[key] = value
+  }
+  return out as T
+}
 export const optStr = z.preprocess(strip, z.string().optional())
 export const optBool = z.preprocess(strip, z.boolean().optional())
 export const optArr = z.preprocess(strip, z.array(z.string()).optional())

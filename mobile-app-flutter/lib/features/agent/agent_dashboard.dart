@@ -100,6 +100,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     final status = user?.status ?? 'Pending';
+    final isOwner = user?.role == 'owner';
     final l10n = context.watch<LanguageProvider>();
     final t = l10n.t;
 
@@ -123,9 +124,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'AGENT WORKSPACE',
-                              style: TextStyle(
+                            Text(
+                              isOwner ? 'OWNER WORKSPACE' : 'AGENT WORKSPACE',
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5,
@@ -137,7 +138,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                                 style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 6),
                             Text(
-                              'Your central hub for managing properties, tracking performance, and growing your real estate business.',
+                              isOwner
+                                  ? 'Your central hub for managing your property listings and tracking your portfolio.'
+                                  : 'Your central hub for managing properties, tracking performance, and growing your real estate business.',
                               style: TextStyle(color: Colors.grey[400], fontSize: 12, height: 1.4),
                             ),
                           ],

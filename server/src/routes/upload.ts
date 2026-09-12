@@ -1,6 +1,6 @@
 ﻿import { Router } from 'express'
 import multer from 'multer'
-import cloudinary from '../utils/cloudinary.js'
+import { uploadFile } from '../utils/storage.js'
 import { authMiddleware } from '../middleware/auth.js'
 
 const upload = multer({
@@ -25,22 +25,19 @@ router.post('/', authMiddleware, upload.single('file'), async (_req, res) => {
     if (!_req.file) {
       return res.status(400).json({ message: 'No file uploaded' })
     }
-    const result = await cloudinary.uploader.upload_stream(
-      { resource_type: 'auto', folder: 'delaharme' },
-      (error, result) => {
-        if (error) {
-          return res.status(500).json({ message: error.message || 'Cloudinary upload failed' })
-        }
-        res.json({
-          message: 'Upload successful',
-          url: result?.secure_url || '',
-          publicId: result?.public_id || '',
-          filename: _req.file!.originalname,
-          size: _req.file!.size,
-        })
-      }
-    )
-    result.end(_req.file.buffer)
+    const { url, publicId } = await uploadFile({
+      buffer: _req.file.buffer,
+      mime: _req.file.mimetype,
+      originalname: _req.file.originalname,
+      folder: 'delaharme',
+    })
+    res.json({
+      message: 'Upload successful',
+      url,
+      publicId,
+      filename: _req.file.originalname,
+      size: _req.file.size,
+    })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Upload failed' })
   }
@@ -51,23 +48,17 @@ router.post('/multiple', authMiddleware, upload.array('files', 10), async (_req,
     if (!_req.files || _req.files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded' })
     }
-    const uploadPromises = (_req.files as Express.Multer.File[]).map((file) => {
-      return new Promise<{ url: string; publicId: string; filename: string; size: number }>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { resource_type: 'auto', folder: 'delaharme' },
-          (error, result) => {
-            if (error) return reject(error)
-            resolve({
-              url: result?.secure_url || '',
-              publicId: result?.public_id || '',
-              filename: file.originalname,
-              size: file.size,
-            })
-          }
-        ).end(file.buffer)
+    const files = await Promise.all(
+      (_req.files as Express.Multer.File[]).map(async (file) => {
+        const { url, publicId } = await uploadFile({
+          buffer: file.buffer,
+          mime: file.mimetype,
+          originalname: file.originalname,
+          folder: 'delaharme',
+        })
+        return { url, publicId, filename: file.originalname, size: file.size }
       })
-    })
-    const files = await Promise.all(uploadPromises)
+    )
     res.json({ message: 'Upload successful', files })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Upload failed' })

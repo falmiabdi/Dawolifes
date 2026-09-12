@@ -1,6 +1,6 @@
 ﻿import { Router } from 'express'
 import { authMiddleware, agentMiddleware, requireActiveUser, getRequestUserId } from '../middleware/auth.js'
-import { propertySchema, isValidUuid } from '../utils/validation.js'
+import { propertySchema, isValidUuid, cleanPayload } from '../utils/validation.js'
 import { prisma, withPrismaRetry } from '../lib/prisma.js'
 import { notifyAdmins } from '../utils/notifications.js'
 import { resolveSystemAdmin } from '../utils/admin-contact.js'
@@ -90,6 +90,13 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
+    // Both web and mobile require at least 3 photos to list — enforce the same
+    // rule server-side so the check cannot be bypassed by a direct API call.
+    const photos = Array.isArray(parsed.data.images) ? parsed.data.images.filter((u: string) => u && u.trim()) : []
+    if (photos.length < 3) {
+      return res.status(400).json({ message: 'At least 3 photos are required to list a property.' })
+    }
+
     const contactName = parsed.data.name?.trim() || ''
     const contactPhone = parsed.data.phone?.trim() || ''
     const { name: _name, phone: _phone, ...propertyData } = parsed.data
@@ -118,7 +125,8 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 
     const property = await prisma.property.create({
       data: {
-        ...propertyData,
+        ...cleanPayload(propertyData),
+        images: photos,
         contactMode,
         agentId: req.user!.userId,
         agentName,

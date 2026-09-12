@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/data'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { PropertyDeleteButton } from './delete-button'
 import { useListingPermissions } from '@/components/agent/use-listing-permissions'
+import { ConfirmDialog } from '@/components/agent/confirm-dialog'
 import { useI18n } from '@/lib/i18n'
 
 
@@ -19,6 +20,7 @@ export default function AgentPropertiesPage() {
   const [properties, setProperties] = useState<any[]>([])
   const permissions = useListingPermissions(getToken)
   const [requesting, setRequesting] = useState<string | null>(null)
+  const [confirmRequest, setConfirmRequest] = useState<{ type: 'EDIT' | 'DELETE'; id: string; title: string } | null>(null)
 
   const fetchProperties = useCallback(async () => {
     try {
@@ -143,7 +145,7 @@ export default function AgentPropertiesPage() {
                         </span>
                       ) : (
                         <button
-                          onClick={() => sendRequest('EDIT', p.id.toString())}
+                          onClick={() => setConfirmRequest({ type: 'EDIT', id: p.id.toString(), title: p.title })}
                           disabled={requesting === `EDIT:${p.id.toString()}`}
                           className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 py-2 text-xs font-bold text-orange-700 transition hover:bg-orange-100 disabled:opacity-60"
                         >
@@ -165,7 +167,7 @@ export default function AgentPropertiesPage() {
                         </span>
                       ) : (
                         <button
-                          onClick={() => sendRequest('DELETE', p.id.toString())}
+                          onClick={() => setConfirmRequest({ type: 'DELETE', id: p.id.toString(), title: p.title })}
                           disabled={requesting === `DELETE:${p.id.toString()}`}
                           className="inline-flex items-center justify-center gap-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
                         >
@@ -182,6 +184,20 @@ export default function AgentPropertiesPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmRequest !== null}
+        title={t(confirmRequest?.type === 'EDIT' ? 'send_edit_permission_request' : 'send_delete_permission_request')}
+        body={confirmRequest ? `"${confirmRequest.title}" is already approved. This will send the admin a request to allow you to ${confirmRequest.type === 'EDIT' ? 'edit' : 'delete'} it.` : ''}
+        confirmLabel={t('send_permission')}
+        onCancel={() => setConfirmRequest(null)}
+        onConfirm={() => {
+          if (confirmRequest) {
+            sendRequest(confirmRequest.type, confirmRequest.id)
+            setConfirmRequest(null)
+          }
+        }}
+      />
     </div>
   )
 }

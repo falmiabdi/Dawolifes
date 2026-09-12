@@ -9,7 +9,8 @@ import { useAuth } from '@/components/auth/auth-guard'
 
 import {
   ArrowLeft, ArrowRight, Building2, Check, CheckCircle2,
-  Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info, FileText
+  Home as HomeIcon, MapPin, Plus, Send, Upload, X, Loader2, Info, FileText,
+  Phone as PhoneIcon
 } from 'lucide-react'
 import { amenityOptions, formatPrice, houseSafetyFeatureOptions, houseInteriorFeatureOptions, houseExteriorFeatureOptions } from '@/lib/data'
 import { Button } from '@/components/ui/button'
@@ -37,8 +38,10 @@ export default function AgentPostPage() {
   // Form Fields
   const [title, setTitle] = useState('')
   const [posterType, setPosterType] = useState('Agent')
-  const [ownerType, setOwnerType] = useState('Owner')
+  const [ownerType, setOwnerType] = useState('Farmer Owner')
   const [contactMode, setContactMode] = useState('Admin')
+  const [contactName, setContactName] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
   const [propertyType, setPropertyType] = useState('Condominium')
   const [listingType, setListingType] = useState('For Rent')
   const [price, setPrice] = useState('')
@@ -64,8 +67,20 @@ export default function AgentPostPage() {
 
   const isOwner = user?.role === 'owner'
   useEffect(() => {
-    if (isOwner) setContactMode('Owner')
+    if (isOwner) {
+      setContactMode('Owner')
+      setPosterType('Owner')
+    }
   }, [isOwner])
+
+  useEffect(() => {
+    if (user) {
+      const name = user.name || ''
+      const phone = user.phone || ''
+      if (name) setContactName((prev) => prev || name)
+      if (phone) setContactPhone((prev) => prev || phone)
+    }
+  }, [user])
 
   // Images
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
@@ -184,6 +199,9 @@ export default function AgentPostPage() {
 
   async function handleSubmit() {
     setError('')
+    if (!contactName.trim()) { setError(t('contact_name_required')); return }
+    const phoneDigits = contactPhone.replace(/\D/g, '')
+    if (phoneDigits.length < 9) { setError(t('contact_phone_required')); return }
     setSaving(true)
     try {
       const authHeaders = await getAuthHeaders()
@@ -199,6 +217,8 @@ export default function AgentPostPage() {
           description, features, region, city, subCity,
           woreda, kebele, parcel, block, floorNumber, houseNumber,
           images: uploadedImages,
+          name: contactName.trim(),
+          phone: contactPhone.trim(),
           ...(videoUrl ? { videoUrl } : {}),
           ...(latitude ? { latitude } : {}),
           ...(longitude ? { longitude } : {}),
@@ -315,7 +335,7 @@ export default function AgentPostPage() {
                 <div className="space-y-2">
                   <Label>{t('owner_type')}</Label>
                   <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} disabled={isOwner} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:bg-slate-50">
-                    {['Owner', 'Saving Owner'].map(o => <option key={o}>{o}</option>)}
+                    {['Farmer Owner', 'Saving Owner', 'Private Owner', 'Government', 'Company'].map(o => <option key={o}>{o}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -701,6 +721,8 @@ export default function AgentPostPage() {
                   <p><span className="font-semibold">{t('beds_baths_label')}</span> {bedrooms} / {bathrooms}</p>
                   <p><span className="font-semibold">{t('area_label')}</span> {area} mÂ²</p>
                   <p><span className="font-semibold">{t('condition_label')}</span> {tv(condition)}</p>
+                  <p><span className="font-semibold">{t('photos')}</span> {uploadedImages.length} {t('uploaded')}</p>
+                  <p><span className="font-semibold">{t('features')}</span> {features.length} {t('selected')}</p>
                 </div>
                 {description && (
                   <div className="mt-3 border-t border-slate-200 pt-3">
@@ -708,6 +730,23 @@ export default function AgentPostPage() {
                     <p className="text-slate-600 line-clamp-3">{description}</p>
                   </div>
                 )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className="flex items-center gap-2 text-orange-600 font-bold mb-4">
+                  <PhoneIcon className="h-5 w-5" />
+                  <h3>{t('contact_info_title')}</h3>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>{t('your_name')} *</Label>
+                    <Input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder={t('your_name')} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('phone_number_label')} *</Label>
+                    <Input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+251 911 000 000" />
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2 rounded-xl bg-orange-50 p-4 border border-orange-100 text-xs text-orange-800">

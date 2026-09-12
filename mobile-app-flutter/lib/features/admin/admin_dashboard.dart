@@ -210,6 +210,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                       ),
+                const SizedBox(height: 8),
+                const SectionHeader(title: 'Recent Properties'),
+                if (properties.isEmpty)
+                  const EmptyState(message: 'No property listings yet.')
+                else
+                  ...properties.take(5).map(
+                        (p) => ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.house_outlined, color: AppColors.mutedForeground),
+                          title: Text(p.title, style: const TextStyle(fontSize: 14)),
+                          subtitle: Text(p.city ?? '', style: const TextStyle(fontSize: 12)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('ETB ${_fmt(p.price)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              const SizedBox(width: 8),
+                              StatusChip(status: p.status ?? ''),
+                            ],
+                          ),
+                        ),
+                      ),
+                const SizedBox(height: 8),
+                const SectionHeader(title: 'Recent Vehicles'),
+                if (vehicles.isEmpty)
+                  const EmptyState(message: 'No vehicle listings yet.')
+                else
+                  ...vehicles.take(5).map(
+                        (v) => ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.directions_car_outlined, color: AppColors.mutedForeground),
+                          title: Text(
+                            '${v.make ?? ''} ${v.model ?? ''} ${v.manufacturingYear ?? ''}'.trim(),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          subtitle: Text(v.title ?? '', style: const TextStyle(fontSize: 12)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('ETB ${_fmt(v.price)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              const SizedBox(width: 8),
+                              StatusChip(status: v.status ?? ''),
+                            ],
+                          ),
+                        ),
+                      ),
                 const SizedBox(height: 24),
               ],
             ),

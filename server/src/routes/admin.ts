@@ -726,7 +726,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (_req, res) => {
       else if (row.status === 'Failed') { paymentStats.failedCount = count }
     }
 
-    const [recentAgents, recentPayments] = await Promise.all([
+    const [recentAgents, recentPayments, recentProperties, recentVehicles] = await Promise.all([
       prisma.user.findMany({
         where: { role: 'agent' },
         orderBy: { createdAt: 'desc' },
@@ -737,6 +737,23 @@ router.get('/overview', authMiddleware, adminMiddleware, async (_req, res) => {
         orderBy: { createdAt: 'desc' },
         take: 5,
         select: { id: true, propertyTitle: true, method: true, paymentType: true, status: true, amount: true },
+      }),
+      prisma.property.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true, title: true, city: true, price: true, status: true, createdAt: true,
+          agent: { select: { username: true, email: true } },
+        },
+      }),
+      prisma.vehicle.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true, title: true, make: true, vehicleModel: true, manufacturingYear: true,
+          price: true, status: true, createdAt: true,
+          agent: { select: { username: true, email: true } },
+        },
       }),
     ])
 
@@ -749,6 +766,8 @@ router.get('/overview', authMiddleware, adminMiddleware, async (_req, res) => {
       paymentStats,
       recentAgents,
       recentPayments,
+      recentProperties,
+      recentVehicles,
     })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Failed to fetch overview' })

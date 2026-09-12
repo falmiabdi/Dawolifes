@@ -40,8 +40,8 @@ export default function AdminDashboardPage() {
       setStats(overview.paymentStats || {})
       setAgents(overview.recentAgents || [])
       setPayments(overview.recentPayments || [])
-      setProperties([])
-      setVehicles([])
+      setProperties(overview.recentProperties || [])
+      setVehicles(overview.recentVehicles || [])
     })().catch(() => {})
   }, [user, getAuthHeaders])
 
@@ -57,6 +57,8 @@ export default function AdminDashboardPage() {
   const ps = stats
   const recentAgents = agents.slice(0, 5)
   const recentPayments = payments.slice(0, 5)
+  const recentProperties = properties.slice(0, 5)
+  const recentVehicles = vehicles.slice(0, 5)
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -210,6 +212,64 @@ export default function AdminDashboardPage() {
                     <p className="font-bold text-green-600 mt-1">+ETB {p.amount.toLocaleString()}</p>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-slate-900">Recent Properties</h3>
+            <Link href="/admin/properties" className="text-xs font-bold text-orange-500 hover:underline">View All</Link>
+          </div>
+          {recentProperties.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">No property listings yet.</p>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {recentProperties.map((p: any) => (
+                <Link key={p.id} href={`/admin/properties`} className="py-3 flex items-center justify-between gap-3 text-xs group">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-slate-900 truncate group-hover:text-orange-500">{p.title}</p>
+                    <p className="text-slate-400 truncate mt-0.5">
+                      {p.city} · {p.agent?.username || p.agent?.email || 'unknown'}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <StatusBadge status={p.status || 'Pending'} />
+                    <p className="font-bold text-slate-700 mt-1">ETB {Number(p.price).toLocaleString()}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-slate-900">Recent Vehicles</h3>
+            <Link href="/admin/vehicles" className="text-xs font-bold text-orange-500 hover:underline">View All</Link>
+          </div>
+          {recentVehicles.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">No vehicle listings yet.</p>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {recentVehicles.map((v: any) => (
+                <Link key={v.id} href={`/admin/vehicles`} className="py-3 flex items-center justify-between gap-3 text-xs group">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-slate-900 truncate group-hover:text-orange-500">
+                      {[v.make, v.vehicleModel, v.manufacturingYear].filter(Boolean).join(' ')}
+                    </p>
+                    <p className="text-slate-400 truncate mt-0.5">
+                      {v.agent?.username || v.agent?.email || 'unknown'}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <StatusBadge status={v.status || 'Pending'} />
+                    <p className="font-bold text-slate-700 mt-1">ETB {Number(v.price).toLocaleString()}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           )}

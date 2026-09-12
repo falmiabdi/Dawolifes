@@ -4,7 +4,7 @@ import { getApiUrl } from '@/lib/get-api-url'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Building2, PlusCircle, TrendingUp, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRight, BarChart3, CreditCard, Car } from 'lucide-react'
+import { Building2, PlusCircle, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRight, BarChart3, Car, CreditCard, Megaphone } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-guard'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { useI18n } from '@/lib/i18n'
@@ -15,6 +15,7 @@ export default function AgentDashboardPage() {
   const { t } = useI18n()
   const [properties, setProperties] = useState<any[]>([])
   const [vehicles, setVehicles] = useState<any[]>([])
+  const [announcements, setAnnouncements] = useState<any[]>([])
 
   useEffect(() => {
     if (!user?.id) return
@@ -29,6 +30,11 @@ export default function AgentDashboardPage() {
       .then((res) => res.json())
       .then((data) => setVehicles(data.vehicles || []))
       .catch(() => {})
+    // Announcements are public (mirrors the mobile dashboard section)
+    fetch(`${getApiUrl()}/api/announcements`)
+      .then((res) => res.json())
+      .then((data) => setAnnouncements((data.announcements || []).slice(0, 3)))
+      .catch(() => {})
   }, [user?.id])
 
   if (!user) return null
@@ -38,8 +44,6 @@ export default function AgentDashboardPage() {
   const pendingProperties = properties.filter((p: any) => p.status === 'Pending').length
   const totalVehicles = vehicles.length
   const pendingVehicles = vehicles.filter((v: any) => v.status === 'Pending').length
-  const totalViews = 0
-  const commissionEarned = 0
 
   const statusConfig = {
     Pending: { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200', msg: t('status_pending_msg') },
@@ -50,6 +54,17 @@ export default function AgentDashboardPage() {
 
   const cfg = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending
   const StatusIcon = cfg.icon
+
+  // Merge recent listings into a single activity feed (mirrors mobile: top 5).
+  const recentActivity = [
+    ...properties.map((p: any) => ({
+      key: `p:${p.id}`, kind: t('property'), title: p.title || '', status: p.status, createdAt: new Date(p.createdAt).getTime(),
+    })),
+    ...vehicles.map((v: any) => ({
+      key: `v:${v.id}`, kind: t('vehicle'), title: [v.make, v.vehicleModel, v.manufacturingYear].filter(Boolean).join(' '),
+      status: v.status, createdAt: new Date(v.createdAt).getTime(),
+    })),
+  ].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5)
 
   return (
     <div className="space-y-5 md:space-y-6">
@@ -85,8 +100,6 @@ export default function AgentDashboardPage() {
           { label: t('pending_properties'), value: String(pendingProperties), icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
           { label: t('total_vehicles'), value: String(totalVehicles), icon: Car, color: 'text-purple-500', bg: 'bg-purple-50' },
           { label: t('pending_vehicles'), value: String(pendingVehicles), icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: t('total_views'), value: String(totalViews), icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50' },
-          { label: t('commission_earned'), value: `ETB ${commissionEarned}`, icon: CreditCard, color: 'text-orange-500', bg: 'bg-orange-50' },
         ].map((stat) => {
           const Icon = stat.icon
           return (
@@ -130,12 +143,61 @@ export default function AgentDashboardPage() {
         })}
       </div>
 
+      {announcements.length > 0 && (
+        <div className="rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="flex items-center gap-2 font-semibold text-slate-800">
+              <Megaphone className="h-5 w-5 text-orange-500" /> {t('announcements')}
+            </h2>
+            <Link href="/agent/news" className="text-xs font-bold text-orange-600 hover:underline">
+              {t('view_all')}
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {announcements.map((a: any) => (
+              <Link
+                key={a.id}
+                href="/agent/news"
+                className="flex items-start gap-3 rounded-2xl border border-orange-100 bg-white/80 p-4 transition hover:bg-white"
+              >
+                <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-900">{a.title}</p>
+                  <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{a.content}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 font-semibold text-slate-800">{t('recent_activity')}</h2>
-        <div className="flex flex-col items-center justify-center gap-3 py-10 text-slate-400">
-          <BarChart3 className="h-10 w-10 opacity-30" />
-          <p className="text-sm">{t('no_activity')}</p>
-        </div>
+        {recentActivity.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-10 text-slate-400">
+            <BarChart3 className="h-10 w-10 opacity-30" />
+            <p className="text-sm">{t('no_activity')}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {recentActivity.map((item) => (
+              <div key={item.key} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.kind === t('property') ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                    {item.kind === t('property') ? <Building2 className="h-4 w-4" /> : <Car className="h-4 w-4" />}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-800">{item.title}</p>
+                    <p className="text-xs text-slate-400">{item.kind}</p>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  <StatusBadge status={item.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

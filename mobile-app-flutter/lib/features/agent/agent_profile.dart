@@ -62,87 +62,97 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
     final t = context.read<LanguageProvider>().t;
     final name = _s('fullName').isNotEmpty ? _s('fullName') : _s('username');
     final email = _s('email').isNotEmpty ? _s('email') : (user?.email ?? '');
-    final status = _s('status').isNotEmpty ? _s('status') : (user?.status ?? 'Pending');
+    final status = _s('status').isNotEmpty
+        ? _s('status')
+        : (user?.status ?? 'Pending');
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Profile')),
       body: _loading
           ? const LoadingState()
           : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                    children: [
-                      _bannerCard(name, email, status),
-                      const SizedBox(height: 14),
-                      Center(
-                        child: FilledButton.icon(
-                          onPressed: _editPersonal,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                          ),
-                          icon: const Icon(Icons.person_outline, size: 18),
-                          label: const Text('Edit Name & Photo'),
+          ? ErrorState(message: _error!, onRetry: _load)
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                children: [
+                  _bannerCard(name, email, status),
+                  const SizedBox(height: 14),
+                  Center(
+                    child: FilledButton.icon(
+                      onPressed: _editPersonal,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 12,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
-                            );
-                            if (mounted) _load();
-                          },
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          label: Text(t('edit_profile')),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (status == 'Rejected') _rejectionBanner(),
-                      if (status == 'Approved') _approvedBanner(),
-                      if (status == 'Pending') _pendingBanner(),
-                      const SizedBox(height: 16),
-                      _section('Personal & Identity', [
-                        ('Full Name', _s('fullName')),
-                        ('Gender', _s('gender')),
-                        ('Date of Birth', _s('dateOfBirth')),
-                        ('Nationality', _s('nationality')),
-                        ('Preferred Language', _s('preferredLanguage')),
-                      ]),
-                      const SizedBox(height: 12),
-                      _section('Contact', [
-                        ('Phone', _s('phone').isNotEmpty ? _s('phone') : _s('ethPhone')),
-                        ('Safaricom Phone', _s('safaricomPhone')),
-                        ('Region', _s('region')),
-                        ('City', _s('city')),
-                        ('Woreda', _s('woreda')),
-                        ('Kebele', _s('kebele')),
-                        ('Full Address', _s('fullAddress')),
-                      ]),
-                      const SizedBox(height: 12),
-                      _section('Education & Professional', [
-                        ('Highest Education', _s('highestEducation')),
-                        ('Experience', _s('agentExperience')),
-                        ('Company', _s('companyName')),
-                        ('Office Address', _s('officeAddress')),
-                        ('TIN Number', _s('tinNumber')),
-                        ('License Number', _s('businessLicenseNumber')),
-                      ]),
-                      const SizedBox(height: 12),
-                      const SectionHeader(title: 'Uploaded Documents'),
-                      _docLink('Fayda Front', _s('faydaFront')),
-                      _docLink('Fayda Back', _s('faydaBack')),
-                      _docLink('Selfie with Fayda', _s('selfieFayda')),
-                      _docLink('Passport Photo', _s('passportPhoto')),
-                      _docLink('Education Certificate', _s('educationCertificate')),
-                      _docLink('Business License', _s('businessLicenseFile')),
-                      const SizedBox(height: 24),
-                    ],
+                      icon: const Icon(Icons.person_outline, size: 18),
+                      label: const Text('Edit Name & Photo'),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => const AgentOnboardingScreen(),
+                          ),
+                        );
+                        if (mounted) _load();
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: Text(t('edit_profile')),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (status == 'Rejected') _rejectionBanner(),
+                  if (status == 'Approved') _approvedBanner(),
+                  if (status == 'Pending') _pendingBanner(),
+                  const SizedBox(height: 16),
+                  _section('Personal & Identity', [
+                    ('Full Name', _s('fullName')),
+                    ('Gender', _s('gender')),
+                    ('Date of Birth', _s('dateOfBirth')),
+                    ('Nationality', _s('nationality')),
+                    ('Preferred Language', _s('preferredLanguage')),
+                  ]),
+                  const SizedBox(height: 12),
+                  _section('Contact', [
+                    (
+                      'Phone',
+                      _s('phone').isNotEmpty ? _s('phone') : _s('ethPhone'),
+                    ),
+                    ('Safaricom Phone', _s('safaricomPhone')),
+                    ('Region', _s('region')),
+                    ('City', _s('city')),
+                    ('Woreda', _s('woreda')),
+                    ('Kebele', _s('kebele')),
+                    ('Full Address', _s('fullAddress')),
+                  ]),
+                  const SizedBox(height: 12),
+                  _section('Education & Professional', [
+                    ('Highest Education', _s('highestEducation')),
+                    ('Experience', _s('agentExperience')),
+                    ('Company', _s('companyName')),
+                    ('Office Address', _s('officeAddress')),
+                    ('TIN Number', _s('tinNumber')),
+                    ('License Number', _s('businessLicenseNumber')),
+                  ]),
+                  const SizedBox(height: 12),
+                  const SectionHeader(title: 'Uploaded Documents'),
+                  _docLink('Fayda Front', _s('faydaFront')),
+                  _docLink('Fayda Back', _s('faydaBack')),
+                  _docLink('Selfie with Fayda', _s('selfieFayda')),
+                  _docLink('Passport Photo', _s('passportPhoto')),
+                  _docLink('Education Certificate', _s('educationCertificate')),
+                  _docLink('Business License', _s('businessLicenseFile')),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
     );
   }
 
@@ -170,35 +180,67 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 40,
-                      backgroundImage: photo.isNotEmpty ? CachedNetworkImageProvider(photo) : null,
-                      child: photo.isEmpty ? const Icon(Icons.person, size: 40) : null,
+                      backgroundImage: photo.isNotEmpty
+                          ? CachedNetworkImageProvider(photo)
+                          : null,
+                      child: photo.isEmpty
+                          ? const Icon(Icons.person, size: 40)
+                          : null,
                     ),
                     Positioned(
                       right: -2,
                       bottom: -2,
                       child: uploading
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : IconButton.filledTonal(
                               onPressed: () async {
                                 try {
                                   final api = context.read<ApiClient>();
-                                  final file = await ImagePicker()
-                                      .pickImage(source: ImageSource.gallery, imageQuality: 70);
+                                  final file = await ImagePicker().pickImage(
+                                    source: ImageSource.gallery,
+                                    imageQuality: 70,
+                                  );
                                   if (file == null) return;
                                   setDialogState(() => uploading = true);
                                   final bytes = await file.readAsBytes();
-                                  final mime = file.mimeType?.isNotEmpty == true ? file.mimeType! : 'image/jpeg';
-                                  final url = await api.uploadFile('/api/upload',
-                                      bytes: bytes, filename: file.name, contentType: mime);
+                                  final mime = file.mimeType?.isNotEmpty == true
+                                      ? file.mimeType!
+                                      : 'image/jpeg';
+                                  final data = await api.uploadFile(
+                                    '/api/upload',
+                                    bytes: bytes,
+                                    filename: file.name,
+                                    contentType: mime,
+                                  );
+                                  final uploadedUrl =
+                                      data is Map<String, dynamic>
+                                      ? data['url'] as String?
+                                      : null;
+                                  if (uploadedUrl == null) {
+                                    throw Exception(
+                                      'Upload did not return a URL',
+                                    );
+                                  }
                                   setDialogState(() {
-                                    photo = url;
+                                    photo = uploadedUrl;
                                     uploading = false;
                                   });
                                 } catch (e) {
                                   setDialogState(() => uploading = false);
                                   if (dialogContext.mounted) {
-                                    ScaffoldMessenger.of(dialogContext)
-                                        .showSnackBar(SnackBar(content: Text('Photo upload failed: $e')));
+                                    ScaffoldMessenger.of(
+                                      dialogContext,
+                                    ).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Photo upload failed: $e',
+                                        ),
+                                      ),
+                                    );
                                   }
                                 }
                               },
@@ -210,19 +252,28 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: 'Phone',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () async {
                 if (uploading) return;
@@ -230,18 +281,22 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                 try {
                   final auth = context.read<AuthProvider>();
                   await context.read<AgentRepository>().updateProfileInfo(
-                        name: nameController.text,
-                        phone: phoneController.text,
-                        profilePhoto: photo,
-                      );
+                    name: nameController.text,
+                    phone: phoneController.text,
+                    profilePhoto: photo,
+                  );
                   await auth.refreshUser();
                   if (!mounted) return;
                   await _load();
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile updated')),
+                  );
                 } catch (e) {
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to update profile: $e')),
+                  );
                 }
               },
               child: const Text('Save'),
@@ -278,11 +333,19 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                 child: CircleAvatar(
                   radius: 40,
                   backgroundColor: Colors.white.withValues(alpha: 0.25),
-                  backgroundImage: photo.isNotEmpty ? CachedNetworkImageProvider(photo) : null,
+                  backgroundImage: photo.isNotEmpty
+                      ? CachedNetworkImageProvider(photo)
+                      : null,
                   child: photo.isNotEmpty
                       ? null
-                      : Text(name.isNotEmpty ? name[0].toUpperCase() : 'A',
-                          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                      : Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               if (status == 'Approved')
@@ -291,16 +354,36 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
                   bottom: 0,
                   child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: const Icon(Icons.verified, color: AppColors.success, size: 22),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.verified,
+                      color: AppColors.success,
+                      size: 22,
+                    ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(name, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+          Text(
+            name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(email, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
+          Text(
+            email,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 12,
+            ),
+          ),
           const SizedBox(height: 10),
           StatusChip(status: status),
         ],
@@ -324,16 +407,32 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
             children: [
               const Icon(Icons.cancel, color: Colors.red, size: 20),
               const SizedBox(width: 8),
-              Text('Application Rejected', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(
+                'Application Rejected',
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
           if (reason.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(reason, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+            Text(
+              reason,
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
           ],
           const SizedBox(height: 8),
-          Text('Edit and resubmit your onboarding to update your information.',
-              style: TextStyle(fontSize: 12, color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+          Text(
+            'Edit and resubmit your onboarding to update your information.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.red.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -352,8 +451,14 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
           const Icon(Icons.verified, color: Colors.green, size: 20),
           const SizedBox(width: 8),
           Expanded(
-            child: Text('Verified agent. Your profile is read-only.',
-                style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600, fontSize: 13)),
+            child: Text(
+              'Verified agent. Your profile is read-only.',
+              style: TextStyle(
+                color: Colors.green.shade700,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),
@@ -373,8 +478,14 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
           const Icon(Icons.access_time, color: Colors.amber, size: 20),
           const SizedBox(width: 8),
           Expanded(
-            child: Text('Under review. Your profile is being reviewed by our team.',
-                style: TextStyle(color: Colors.amber.shade800, fontWeight: FontWeight.w600, fontSize: 13)),
+            child: Text(
+              'Under review. Your profile is being reviewed by our team.',
+              style: TextStyle(
+                color: Colors.amber.shade800,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),
@@ -386,7 +497,9 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: title),
-        ...rows.where((r) => r.$2.isNotEmpty).map((r) => InfoRow(label: r.$1, value: r.$2)),
+        ...rows
+            .where((r) => r.$2.isNotEmpty)
+            .map((r) => InfoRow(label: r.$1, value: r.$2)),
       ],
     );
   }
@@ -400,7 +513,11 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
       dense: true,
       leading: const Icon(Icons.description_outlined, color: AppColors.primary),
       title: Text(label, style: const TextStyle(fontSize: 13)),
-      trailing: const Icon(Icons.open_in_new, size: 16, color: AppColors.mutedForeground),
+      trailing: const Icon(
+        Icons.open_in_new,
+        size: 16,
+        color: AppColors.mutedForeground,
+      ),
       onTap: () => showDialog<void>(
         context: context,
         builder: (_) => Dialog(
@@ -408,8 +525,10 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
             child: CachedNetworkImage(
               imageUrl: url,
               fit: BoxFit.contain,
-              errorWidget: (_, _, _) =>
-                  const Padding(padding: EdgeInsets.all(24), child: Icon(Icons.broken_image_outlined)),
+              errorWidget: (_, _, _) => const Padding(
+                padding: EdgeInsets.all(24),
+                child: Icon(Icons.broken_image_outlined),
+              ),
             ),
           ),
         ),

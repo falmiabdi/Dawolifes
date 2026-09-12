@@ -27,11 +27,20 @@ import { startNotificationCleanup } from './routes/notifications.js'
 import { setupWebSocket } from './ws/server.js'
 import { errorHandler, notFoundHandler } from './middleware/error.js'
 import { isResendConfigured } from './services/email.js'
+import { isLocalStorage, ensureUploadDir, uploadDirPath } from './utils/storage.js'
 
 dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 4000
+
+// Self-hosted (cPanel) installs store uploads on local disk and serve them
+// back from /uploads. Cloudinary stays the default for Render/Railway.
+ensureUploadDir()
+if (isLocalStorage()) {
+  app.use('/uploads', express.static(uploadDirPath()))
+  console.log('📁 Serving uploaded files from disk at /uploads')
+}
 
 // Request logging middleware (path only — never log query strings which can
 // contain payment references or verification codes).

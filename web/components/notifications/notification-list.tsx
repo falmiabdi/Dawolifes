@@ -27,7 +27,7 @@ const iconConfig: Record<string, { icon: any; color: string }> = {
 }
 
 export function NotificationList() {
-  const { getToken } = useAuth()
+  const { user, getToken } = useAuth()
   const { t } = useI18n()
   const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
@@ -155,12 +155,13 @@ export function NotificationList() {
     const data = notif.data
     const target = (data?.entityType ?? data?.type) as string | undefined
     const entityId = (data?.entityId ?? data?.id) as string | undefined
+    const isAdmin = user?.role === 'admin' || (user as any)?.isRootAdmin
     if (target === 'agent' || target === 'USER') {
-      router.push(`/admin/agents${entityId ? `?highlight=${entityId}` : ''}`)
+      router.push(isAdmin ? `/admin/agents${entityId ? `?highlight=${entityId}` : ''}` : '/agent/profile')
     } else if (target === 'property' || target === 'PROPERTY') {
-      router.push(`/admin/properties${entityId ? `?highlight=${entityId}` : ''}`)
+      router.push(isAdmin ? `/admin/properties${entityId ? `?highlight=${entityId}` : ''}` : '/agent/properties')
     } else if (target === 'vehicle' || target === 'VEHICLE') {
-      router.push(`/admin/vehicles${entityId ? `?highlight=${entityId}` : ''}`)
+      router.push(isAdmin ? `/admin/vehicles${entityId ? `?highlight=${entityId}` : ''}` : '/agent/vehicles')
     } else if (target === 'message' || target === 'MESSAGE') {
       router.push('/messages')
     }

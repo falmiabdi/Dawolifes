@@ -74,8 +74,14 @@ export default function AgentProfilePage() {
             onClick={() => setEditOpen(true)}
             className="mb-2 inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            <PencilLine className="h-4 w-4" /> {t('edit_profile')}
+            <PencilLine className="h-4 w-4" /> {t('edit_name_photo')}
           </button>
+          <Link
+            href="/agent/onboarding"
+            className="mb-2 inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            <PencilLine className="h-4 w-4" /> {t('edit_profile')}
+          </Link>
           {displayUser.status === 'Pending' && (
             <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800 border border-amber-100">
               <Clock className="h-4 w-4" /> {t('under_review')}
@@ -96,7 +102,7 @@ export default function AgentProfilePage() {
                 href="/agent/onboarding"
                 className="flex items-center gap-1.5 text-xs font-semibold text-orange-600 hover:underline mt-2"
               >
-                {t('edit_resubmit')} â†’
+                {t('edit_resubmit')} →
               </Link>
             </div>
           )}
@@ -110,6 +116,10 @@ export default function AgentProfilePage() {
             <h2 className="font-bold text-slate-800">{t('personal_identity')}</h2>
           </div>
           <div className="divide-y divide-slate-100 text-sm">
+            <div className="py-3 flex justify-between">
+              <span className="text-slate-500">{t('full_name')}</span>
+              <span className="font-semibold text-slate-800">{displayUser.fullName || t('not_specified')}</span>
+            </div>
             <div className="py-3 flex justify-between">
               <span className="text-slate-500">{t('gender')}</span>
               <span className="font-semibold text-slate-800">{tv(displayUser.gender || '') || t('not_specified')}</span>
@@ -155,6 +165,10 @@ export default function AgentProfilePage() {
                 {displayUser.woreda ? `Woreda ${displayUser.woreda}, Kebele ${displayUser.kebele || ''}` : 'Not Specified'}
               </span>
             </div>
+            <div className="py-3 flex justify-between">
+              <span className="text-slate-500">{t('full_address')}</span>
+              <span className="font-semibold text-slate-800">{displayUser.fullAddress || t('not_specified')}</span>
+            </div>
           </div>
         </div>
 
@@ -177,8 +191,16 @@ export default function AgentProfilePage() {
               <span className="font-semibold text-slate-800">{displayUser.companyName || t('none')}</span>
             </div>
             <div className="py-3 flex justify-between">
+              <span className="text-slate-500">{t('office_address')}</span>
+              <span className="font-semibold text-slate-800">{displayUser.officeAddress || t('not_specified')}</span>
+            </div>
+            <div className="py-3 flex justify-between">
               <span className="text-slate-500">{t('tin_number')}</span>
               <span className="font-semibold text-slate-800">{displayUser.tinNumber || t('none')}</span>
+            </div>
+            <div className="py-3 flex justify-between">
+              <span className="text-slate-500">{t('business_license_number')}</span>
+              <span className="font-semibold text-slate-800">{displayUser.businessLicenseNumber || t('not_specified')}</span>
             </div>
           </div>
         </div>
@@ -206,7 +228,7 @@ export default function AgentProfilePage() {
                     rel="noreferrer"
                     className="text-xs font-semibold text-orange-600 hover:underline"
                   >
-                    {t('view_document')} â†’
+                    {t('view_document')} →
                   </a>
                 ) : (
                   <span className="text-xs text-slate-400">{t('not_uploaded')}</span>

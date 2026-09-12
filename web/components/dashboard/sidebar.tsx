@@ -35,7 +35,7 @@ const agentNav = [
   { href: "/agent/post/vehicle", labelKey: "post_vehicle", icon: PlusCircle },
   { href: "/agent/messages", labelKey: "messages", icon: MessageSquare },
   { href: "/agent/notifications", labelKey: "notifications", icon: Bell },
-  { href: "/agent/payments", labelKey: "payments", icon: CreditCard },
+  { href: "/agent/payments", labelKey: "commission_history", icon: CreditCard },
   { href: "/agent/settings", labelKey: "settings", icon: Settings },
 ]
 

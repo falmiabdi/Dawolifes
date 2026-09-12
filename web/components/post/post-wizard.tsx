@@ -414,19 +414,27 @@ export function PostWizard() {
                   <SelectBox
                     value={form.ownerType}
                     onChange={(v) => set("ownerType", v)}
-                    options={["Owner", "Saving Owner"]}
-                    disabled={isOwner}
+                    options={["Farmer Owner", "Saving Owner", "Private Owner", "Government", "Company"]}
+                    disabled={isOwner || form.posterType !== "Owner"}
                   />
                 </Field>
-                <Field label={t('contact_mode')}>
+                <Field label={t('posting_as')} required>
                   <SelectBox
-                    value={form.contactMode}
-                    onChange={(v) => set("contactMode", v)}
-                    options={["Admin", "Owner", "Agent"]}
+                    value={form.posterType}
+                    onChange={(v) => {
+                      set("posterType", v)
+                      set("contactMode", v)
+                    }}
+                    options={isOwner ? ["Owner"] : ["Agent", "Owner"]}
                     disabled={isOwner}
                   />
                 </Field>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {form.posterType === "Owner"
+                  ? "The owner type and the contact you enter below will be shown on the listing."
+                  : "The agent's contact name and phone you enter below will be shown on the listing."}
+              </p>
               <Field label={t('property_title')} required>
                 <Input
                   value={form.title}

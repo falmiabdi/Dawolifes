@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import multer from 'multer'
 import { authMiddleware, agentMiddleware } from '../middleware/auth.js'
-import cloudinary from '../utils/cloudinary.js'
+import { uploadFile } from '../utils/storage.js'
 import { prisma } from '../lib/prisma.js'
 
 const upload = multer({
@@ -29,16 +29,13 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
     }
     const field = req.body.field || 'document'
     const folder = `dawolife/agents/${req.user!.userId}/${field}`
-    const result = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { resource_type: 'auto', folder },
-        (error, result) => {
-          if (error) reject(new Error(error.message))
-          else resolve(result)
-        }
-      ).end(req.file!.buffer)
+    const { url, publicId } = await uploadFile({
+      buffer: req.file!.buffer,
+      mime: req.file!.mimetype,
+      originalname: req.file!.originalname,
+      folder,
     })
-    res.json({ url: result.secure_url, publicId: result.public_id })
+    res.json({ url, publicId })
   } catch (err: any) {
     res.status(500).json({ message: err.message || 'Upload failed' })
   }
@@ -141,6 +138,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
     }
     const profile: any = user.profile || {}
     const documents: any[] = (user.documents as any[]) || []
+    const docUrl = (type: string) => documents.find((d: any) => d.type === type)?.url || ''
     const education: any = user.education || {}
     const professionalInfo: any = user.professionalInfo || {}
 
@@ -148,15 +146,21 @@ router.get('/profile', authMiddleware, async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
+        fullName: user.username,
         email: user.email,
         role: user.role,
         status: user.status,
         rejectionReason: user.rejectionReason,
         profilePhoto: user.profilePhoto,
         phone: user.phone,
+        ethPhone: user.phone,
         onboardingComplete: user.onboardingComplete,
         ...profile,
         documents,
+        faydaFront: docUrl('faydaFront'),
+        faydaBack: docUrl('faydaBack'),
+        selfieFayda: docUrl('selfieFayda'),
+        passportPhoto: docUrl('passportPhoto'),
         highestEducation: education.level || '',
         educationCertificate: education.certificate || '',
         agentExperience: professionalInfo.experience || '',

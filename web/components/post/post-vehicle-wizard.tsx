@@ -28,8 +28,6 @@ import {
   DollarSign,
   FileCheck,
   Image,
-  MapIcon,
-  ClipboardCheck,
 } from "lucide-react"
 import {
   vehicleCategories,
@@ -71,8 +69,6 @@ const steps = [
   { label: "Pricing", icon: DollarSign },
   { label: "Location & Legal", icon: FileCheck },
   { label: "Photos", icon: Image },
-  { label: "Map", icon: MapIcon },
-  { label: "Review", icon: ClipboardCheck },
 ]
 
 type VehicleFormState = {
@@ -241,8 +237,6 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
     'Pricing': t('pricing'),
     'Location & Legal': t('location_legal'),
     'Photos': t('photos_step'),
-    'Map': t('map_step'),
-    'Review': t('review'),
   }
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<VehicleFormState>(initialState)
@@ -392,11 +386,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
   }, [vehicleId])
 
   const next = () => {
-    if (step === 5 && form.images.length < 3) {
-      setError(t('at_least_3_continue_vehicle'))
-      return
-    }
-    if (step === 6 && (form.latitude === 0 || form.longitude === 0)) {
+    if (step === 4 && (form.latitude === 0 || form.longitude === 0)) {
       setError(t('select_location_map_continue_vehicle'))
       return
     }
@@ -1270,6 +1260,46 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
                   placeholder={t('ph_plate_number')}
                 />
               </Field>
+
+              <div className="border-t border-border pt-5">
+                <p className="mb-3 text-sm font-semibold text-foreground">{t('vehicle_location_map')}</p>
+                <div className="flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>
+                    Click on the map to select the exact location, or enter the coordinates manually below.
+                  </p>
+                </div>
+
+                <MapPicker
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  onLocationChange={(lat, lng) => {
+                    set("latitude", lat)
+                    set("longitude", lng)
+                  }}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label={t('latitude')}>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={form.latitude || ""}
+                      onChange={(e) => set("latitude", parseFloat(e.target.value) || 0)}
+                      placeholder={t('ph_latitude')}
+                    />
+                  </Field>
+                  <Field label={t('longitude')}>
+                    <Input
+                      type="number"
+                      step="any"
+                      value={form.longitude || ""}
+                      onChange={(e) => set("longitude", parseFloat(e.target.value) || 0)}
+                      placeholder={t('ph_longitude')}
+                    />
+                  </Field>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1342,137 +1372,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
             </div>
           )}
 
-          {step === 6 && (
-            <div className="space-y-5">
-              <SectionTitle icon={<MapIcon className="h-5 w-5" />} title={t('vehicle_location_map')} />
-              <div className="flex items-start gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>
-                  Click on the map to select the exact location, or enter the coordinates manually below.
-                </p>
-              </div>
-
-              <MapPicker
-                latitude={form.latitude}
-                longitude={form.longitude}
-                onLocationChange={(lat, lng) => {
-                  set("latitude", lat)
-                  set("longitude", lng)
-                }}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label={t('latitude')}>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={form.latitude || ""}
-                    onChange={(e) => set("latitude", parseFloat(e.target.value) || 0)}
-                    placeholder={t('ph_latitude')}
-                  />
-                </Field>
-                <Field label={t('longitude')}>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={form.longitude || ""}
-                    onChange={(e) => set("longitude", parseFloat(e.target.value) || 0)}
-                    placeholder={t('ph_longitude')}
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
-
-          {step === 7 && (
-            <div className="space-y-5">
-              <SectionTitle icon={<ClipboardCheck className="h-5 w-5" />} title={t('review_submit_title')} />
-              <p className="text-sm text-muted-foreground">{t('review_vehicle_note')}</p>
-
-              <ReviewGroup title={t('basic_info')}>
-                <ReviewRow label={t('vehicle_title')} value={form.title || t('no_title_set')} />
-                <ReviewRow label={t('listing_type')} value={tv(form.listingType)} />
-                <ReviewRow label={t('vehicle_category')} value={tv(form.vehicleCategory)} />
-                <ReviewRow label={t('make_model')} value={`${form.make} ${form.model}`.trim()} />
-                <ReviewRow label={t('trim_version')} value={form.trimVersion} />
-                <ReviewRow label={t('manufacturing_year')} value={form.manufacturingYear} />
-                <ReviewRow label={t('registration_year')} value={form.registrationYear} />
-                <ReviewRow label={t('color')} value={form.color} />
-                <ReviewRow label={t('country_of_origin')} value={form.countryOfOrigin} />
-                <ReviewRow label={t('vehicle_condition')} value={tv(form.condition)} />
-              </ReviewGroup>
-
-              <ReviewGroup title={t('technical_specs')}>
-                <ReviewRow label={t('fuel_type')} value={form.fuelType} />
-                <ReviewRow label={t('engine_size')} value={form.engineSize ? `${form.engineSize} L` : undefined} />
-                <ReviewRow label={t('horsepower')} value={form.horsepower ? `${form.horsepower} hp` : undefined} />
-                <ReviewRow label={t('transmission')} value={form.transmission} />
-                <ReviewRow label={t('drivetrain')} value={form.drivetrain} />
-                <ReviewRow label={t('cylinders')} value={form.cylinders} />
-                <ReviewRow label={t('seating_capacity')} value={form.seatingCapacity} />
-                <ReviewRow label={t('doors')} value={form.doors} />
-                <ReviewRow label={t('mileage')} value={form.mileage ? `${Number(form.mileage).toLocaleString()} km` : undefined} />
-                <ReviewRow label={t('fuel_consumption')} value={form.fuelConsumption ? `${form.fuelConsumption} L/100km` : undefined} />
-                <ReviewRow label={t('fuel_tank_capacity')} value={form.fuelTankCapacity ? `${form.fuelTankCapacity} L` : undefined} />
-                <ReviewRow label={t('ground_clearance')} value={form.groundClearance ? `${form.groundClearance} mm` : undefined} />
-                <ReviewRow label={t('weight')} value={form.weight ? `${form.weight} kg` : undefined} />
-                <ReviewRow label={t('tire_size')} value={form.tireSize} />
-              </ReviewGroup>
-
-              <ReviewGroup title={t('vehicle_condition_features')}>
-                <ReviewRow label={t('accident_free')} value={form.accidentFree ? t('yes') : t('no')} />
-                <ReviewRow label={t('service_history')} value={form.serviceHistoryAvailable ? t('yes') : t('no')} />
-                <ReviewRow label={t('ownership_count')} value={form.ownershipCount} />
-                <ReviewRow label={t('imported')} value={form.imported ? t('yes') : t('no')} />
-                <ReviewRow label={t('locally_assembled')} value={form.locallyAssembled ? t('yes') : t('no')} />
-                <ReviewRow label={t('accident_history')} value={form.accidentHistory} />
-              </ReviewGroup>
-
-              {[
-                { label: t('safety_features'), items: form.safetyFeatures },
-                { label: t('interior_features'), items: form.interiorFeatures },
-                { label: t('exterior_features'), items: form.exteriorFeatures },
-              ].map((grp) => (
-                <ReviewGroup key={grp.label} title={grp.label}>
-                  {grp.items.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {grp.items.map((f) => (
-                        <span key={f} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground">
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t('not_specified')}</p>
-                  )}
-                </ReviewGroup>
-              ))}
-
-              <ReviewGroup title={t('pricing_info')}>
-                <ReviewRow label={t('price_etb')} value={form.price ? `${formatPrice(Number(form.price))} ETB` : t('price_not_set')} />
-                <ReviewRow label={t('price_type')} value={tv(form.priceType)} />
-                <ReviewRow label={t('selling_price')} value={form.sellingPrice ? `${formatPrice(Number(form.sellingPrice))} ETB` : undefined} />
-                <ReviewRow label={t('negotiable')} value={form.negotiable ? t('yes') : t('no')} />
-              </ReviewGroup>
-
-              <ReviewGroup title={t('location_legal_info')}>
-                <ReviewRow label={t('region')} value={form.region} />
-                <ReviewRow label={t('city')} value={form.city} />
-                <ReviewRow label={t('sub_city')} value={form.subCity} />
-                <ReviewRow label={t('woreda')} value={form.woreda} />
-                <ReviewRow label={t('plate_type')} value={form.plateType} />
-                <ReviewRow label={t('plate_number')} value={form.plateNumber} />
-              </ReviewGroup>
-
-              <ReviewGroup title={t('photos_media_title')}>
-                <p className="text-sm text-muted-foreground">
-                  {form.images.length} {t('photos_plural')} · {form.videoUrl ? t('video_attached') : t('no_video')}
-                </p>
-              </ReviewGroup>
-            </div>
-          )}
-
-          {/* Nav buttons */}
+{/* Nav buttons */}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
             <Button variant="outline" onClick={back} disabled={step === 0 || submitting} className="rounded-xl">
               <ArrowLeft className="h-4 w-4" /> {t('back')}
@@ -1480,7 +1380,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
             {step < steps.length - 1 ? (
               <Button
                 onClick={next}
-                disabled={(step === 5 && form.images.length < 3) || (step === 6 && (form.latitude === 0 || form.longitude === 0))}
+                disabled={step === 4 && (form.latitude === 0 || form.longitude === 0)}
                 className="rounded-xl font-semibold"
               >
                 {t('next')} <ArrowRight className="h-4 w-4" />
@@ -1537,27 +1437,6 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
           </dl>
         </aside>
       </div>
-    </div>
-  )
-}
-
-// A collapsible label/value row used in the review step. Blank values are
-// skipped so only information the user actually entered is shown.
-function ReviewRow({ label, value }: { label: string; value?: string }) {
-  if (!value) return null
-  return (
-    <div className="flex items-start justify-between gap-3 py-1">
-      <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
-      <span className="text-right text-sm font-medium text-foreground">{value}</span>
-    </div>
-  )
-}
-
-function ReviewGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-muted/50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-      <div className="mt-2 space-y-1">{children}</div>
     </div>
   )
 }
