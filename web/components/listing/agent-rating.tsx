@@ -94,7 +94,7 @@ export function AgentRating({ agentId, agentName }: AgentRatingProps) {
                   <LogIn className="h-7 w-7 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">Sign in to rate {agentName}.</p>
                   <Link
-                    href={`/login?redirect=${encodeURIComponent(window.location.pathname)}`}
+                    href={`/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`}
                     className={buttonVariants({ className: "w-full rounded-xl font-semibold min-h-[44px]" })}
                   >
                     <LogIn className="h-4 w-4" /> Sign in

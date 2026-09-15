@@ -77,7 +77,7 @@ function ResetPasswordForm() {
         showMessage(data.message || 'Failed to reset the password. Try again.', true)
         return
       }
-      router.push('/login?reset=1')
+      router.push('/auth/login?reset=1')
     } catch {
       showMessage('Cannot reach the server. Check your connection.', true)
     } finally {
@@ -208,7 +208,7 @@ export default function ResetPasswordPage() {
       title={t('reset_password_title')}
       footer={
         <p className="text-center text-sm text-slate-500">
-          <Link href="/login" className="font-semibold text-orange-600 hover:text-orange-700">
+          <Link href="/auth/login" className="font-semibold text-orange-600 hover:text-orange-700">
             {t('sign_in_link')}
           </Link>
         </p>

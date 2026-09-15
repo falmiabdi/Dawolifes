@@ -101,8 +101,8 @@ const navLinks = [
 const moreLinks = [
   { label: "News", href: "/news", icon: Newspaper },
   { label: "Sell", href: "/sell", icon: Plus },
-  { label: "Login", href: "/login", icon: User },
-  { label: "Register", href: "/register", icon: User },
+  { label: "Login", href: "/auth/login", icon: User },
+  { label: "Register", href: "/auth/signup", icon: User },
 ]
 
 export function SiteHeader() {
@@ -208,9 +208,9 @@ export function SiteHeader() {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="hover:text-primary">{t('login')}</Link>
+              <Link href="/auth/login" className="hover:text-primary">{t('login')}</Link>
               <span className="text-secondary-foreground/30">|</span>
-              <Link href="/register" className="hover:text-primary">{t('register')}</Link>
+              <Link href="/auth/signup" className="hover:text-primary">{t('register')}</Link>
             </>
           )}
         </div>
@@ -340,14 +340,14 @@ export function SiteHeader() {
                 ) : (
                   <>
                     <Link
-                      href="/login"
+href="/auth/login"
                       onClick={() => setOpen(false)}
                       className="rounded-lg px-3 py-3 text-sm font-semibold text-foreground/80 hover:bg-muted min-h-[44px] flex items-center"
                     >
                     {t('login')}
                     </Link>
                     <Link
-                      href="/register"
+href="/auth/signup"
                       onClick={() => setOpen(false)}
                       className="rounded-lg px-3 py-3 text-sm font-semibold text-primary hover:bg-muted min-h-[44px] flex items-center"
                     >

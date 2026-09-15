@@ -22,6 +22,7 @@ tsconfig.tsbuildinfo
 *.log
 .DS_Store
 package-lock.json
+!server/package-lock.json
 !web/pnpm-lock.yaml
 
 # Firebase service account credentials (private keys) — never commit

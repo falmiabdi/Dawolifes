@@ -78,7 +78,7 @@ const quickLinks = [
   { label: "Map View", href: "/#map" },
   { label: "Our Services", href: "/#services" },
   { label: "News", href: "/news" },
-  { label: "Register", href: "/register" },
+  { label: "Register", href: "/auth/signup" },
 ]
 
 interface Settings {

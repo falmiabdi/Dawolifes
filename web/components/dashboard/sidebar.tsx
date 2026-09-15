@@ -186,7 +186,7 @@ export function Sidebar({ role, isOpen = false, onClose }: SidebarProps) {
         <button
           onClick={() => {
             logout()
-            router.push("/login")
+            router.push("/auth/login")
           }}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-red-900/30 hover:text-red-400"
         >

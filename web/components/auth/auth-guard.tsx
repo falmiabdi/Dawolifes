@@ -111,9 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         redirectPathRef.current = redirect
       } else if (
         pathname !== '/auth/login' &&
-        pathname !== '/auth/signup' &&
-        pathname !== '/login' &&
-        pathname !== '/register'
+        pathname !== '/auth/signup'
       ) {
         redirectPathRef.current = pathname + search
       } else {
@@ -432,9 +430,9 @@ export function AuthGuard({
     if (needsRedirect) {
       setRedirecting(true)
       if (requiredRole === 'admin') {
-        router.replace('/login')
+        router.replace('/auth/login')
       } else {
-        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
+        router.replace(`/auth/login?redirect=${encodeURIComponent(pathname)}`)
       }
     } else if (redirecting) {
       // Clear the flag once the redirect is no longer needed so client-side

@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
       title={t('forgot_password_title')}
       footer={
         <p className="text-center text-sm text-slate-500">
-          <Link href="/login" className="font-semibold text-orange-600 hover:text-orange-700">
+          <Link href="/auth/login" className="font-semibold text-orange-600 hover:text-orange-700">
             {t('sign_in_link')}
           </Link>
         </p>

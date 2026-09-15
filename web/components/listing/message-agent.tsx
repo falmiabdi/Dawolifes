@@ -157,7 +157,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
                   Sign in to message {agentName} about this listing.
                 </p>
                 <Link
-                  href={`/login?redirect=${encodeURIComponent(window.location.pathname)}`}
+                  href={`/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`}
                   className={buttonVariants({ className: "w-full rounded-xl font-semibold min-h-[44px]" })}
                 >
                   <LogIn className="h-4 w-4" /> Sign in to message

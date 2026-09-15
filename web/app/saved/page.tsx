@@ -170,7 +170,7 @@ export default function SavedPage() {
               <p className="mt-4 text-lg font-semibold text-foreground">Sign in to see your saved items</p>
               <p className="mt-1 text-sm text-muted-foreground">Bookmark homes and cars to compare them later.</p>
               <Link
-                href={`/login?redirect=${encodeURIComponent("/saved")}`}
+                href={`/auth/login?redirect=${encodeURIComponent("/saved")}`}
                 className="mt-6 inline-flex min-h-[44px] items-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
               >
                 Sign in
