@@ -15,12 +15,12 @@ interface ProfilePhotoUploaderProps {
   onChange?: (url: string) => void
 }
 
-/**
- * Shared profile-picture uploader for every role (user, agent, owner, admin).
- * Mirrors the working buyer profile flow: upload to /api/upload, save the URL
- * to /api/auth/profile (any authenticated role), then refresh the session so
- * the dashboard header and profile pages all show the new photo immediately.
- */
+
+
+
+
+
+
 export function ProfilePhotoUploader({ currentPhoto, initials, onChange }: ProfilePhotoUploaderProps) {
   const [photoUrl, setPhotoUrl] = useState(currentPhoto)
   const [uploading, setUploading] = useState(false)
@@ -51,7 +51,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials, onChange }: Profi
       const formData = new FormData()
       formData.append('file', file)
 
-      // 1. Upload to Cloudinary via the shared /api/upload endpoint.
+      
       const uploadRes = await fetch(`${getApiUrl()}/api/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -64,7 +64,7 @@ export function ProfilePhotoUploader({ currentPhoto, initials, onChange }: Profi
       }
       const newUrl = uploadData.url
 
-      // 2. Save the returned URL to the authenticated user's profile.
+      
       const saveRes = await fetch(`${getApiUrl()}/api/auth/profile`, {
         method: 'PATCH',
         headers: {

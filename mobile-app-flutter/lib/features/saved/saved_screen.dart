@@ -9,7 +9,7 @@ import '../../widgets/listing_card.dart';
 import '../auth/signup_screen.dart';
 import '../listings/listing_detail_screen.dart';
 
-/// Saved items tab, mirroring app/saved/page.tsx.
+
 class SavedScreen extends StatefulWidget {
   const SavedScreen({super.key});
 

@@ -6,7 +6,7 @@ import { broadcastToAll } from '../ws/server.js'
 
 const router = Router()
 
-// Public: list announcements (no auth required so the /news page works for everyone)
+
 router.get('/', async (_req, res) => {
   try {
     const announcements = await prisma.announcement.findMany({
@@ -19,7 +19,7 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// Admin: create an announcement
+
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { title, content } = req.body
@@ -40,7 +40,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Admin: update an announcement
+
 router.patch('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
@@ -64,7 +64,7 @@ router.patch('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Admin: delete an announcement
+
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

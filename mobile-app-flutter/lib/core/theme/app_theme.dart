@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Material theme matching the DawoLife design system.
+
 abstract final class AppTheme {
   static ThemeData get light {
     final base = ThemeData(

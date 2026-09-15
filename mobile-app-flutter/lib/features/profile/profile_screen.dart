@@ -10,7 +10,7 @@ import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 import 'edit_profile_screen.dart';
 
-/// Profile tab, mirroring the profileHref destinations (verify/account).
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 

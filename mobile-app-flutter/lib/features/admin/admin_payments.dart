@@ -8,7 +8,7 @@ import '../../data/repositories/admin_repository.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 
-/// Admin payments mirroring app/admin/payments/page.tsx.
+
 class AdminPaymentsScreen extends StatefulWidget {
   const AdminPaymentsScreen({super.key});
 

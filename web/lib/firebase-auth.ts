@@ -20,16 +20,16 @@ function getAuthInstance(): Auth {
   return auth
 }
 
-/**
- * Opens the Google sign-in sheet and returns the Firebase ID token (plus
- * email) for exchanging against the DawoLife backend. Returns `null` when the
- * user closes the sheet without choosing an account.
- *
- * Note: `Cross-Origin-Opener-Policy` from hosting (e.g. Render) can block the
- * popup flow. We try popup first, and if it fails fall back to the redirect
- * flow (which is immune to COOP). Redirect results are resolved on the next
- * page load.
- */
+
+
+
+
+
+
+
+
+
+
 export async function signInWithGoogle(): Promise<{ idToken: string; email: string | null } | null> {
   const provider = new GoogleAuthProvider()
 
@@ -38,9 +38,9 @@ export async function signInWithGoogle(): Promise<{ idToken: string; email: stri
     const idToken = await credential.user.getIdToken()
     return { idToken, email: credential.user.email }
   } catch (err: any) {
-    // Popup blockers (incognito, strict browsers) or hosting COOP headers can
-    // prevent the popup. Falling back to the redirect flow is immune to both,
-    // and the result is resolved on the next page load by auth-guard.
+    
+    
+    
     const popupBlockedCodes = [
       'auth/operation-not-supported-in-this-environment',
       'auth/popup-blocked',
@@ -56,10 +56,10 @@ export async function signInWithGoogle(): Promise<{ idToken: string; email: stri
   }
 }
 
-/**
- * Resolves a redirected Google sign-in result (chosen in the Firebase
- * popup/redirect flow). Returns `null` when there is no pending redirect.
- */
+
+
+
+
 export async function getGoogleRedirectResult(): Promise<{ idToken: string; email: string | null } | null> {
   const result = await getRedirectResult(getAuthInstance())
   if (!result) return null
@@ -67,11 +67,11 @@ export async function getGoogleRedirectResult(): Promise<{ idToken: string; emai
   return { idToken, email: result.user.email }
 }
 
-/**
- * Creates a Firebase account (if it does not exist) and sends a verification
- * email. Non-fatal failures (e.g. account already exists) are swallowed by the
- * caller; the backend OTP flow remains the fallback.
- */
+
+
+
+
+
 export async function createFirebaseUser(
   email: string,
   password: string
@@ -85,14 +85,14 @@ export async function createFirebaseUser(
   return credential.user
 }
 
-/** Resends the verification email to the currently signed-in user. */
+
 export async function resendFirebaseVerification(): Promise<void> {
   const current = getAuthInstance().currentUser
   if (!current) return
   await sendEmailVerification(current)
 }
 
-/** Reloads the current user and reports whether the email is verified. */
+
 export async function isFirebaseEmailVerified(): Promise<boolean> {
   const current = getAuthInstance().currentUser
   if (!current) return false
@@ -100,10 +100,10 @@ export async function isFirebaseEmailVerified(): Promise<boolean> {
   return current.emailVerified
 }
 
-/**
- * Signs into Firebase so a later verification check works even after a page
- * reload (the firebase user session persists in localStorage/IndexedDB).
- */
+
+
+
+
 export async function signInFirebaseUser(
   email: string,
   password: string
@@ -116,7 +116,7 @@ export async function signInFirebaseUser(
   }
 }
 
-/** Signs out of Firebase only (does not clear the backend session). */
+
 export async function signOutFirebase(): Promise<void> {
   await getAuthInstance().signOut()
 }

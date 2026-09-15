@@ -61,7 +61,7 @@ function VerifyEmailForm() {
         router.push('/auth/login?verified=1')
         return
       }
-      // verifyOtp() already calls setUserAndCache() + persistToken().
+      
       const u = data.user
       if (u.role === 'admin') router.push('/admin')
       else if (u.role === 'agent' || u.role === 'owner') router.push(u.onboardingComplete ? '/agent' : '/agent/onboarding')
@@ -103,7 +103,7 @@ function VerifyEmailForm() {
 
   return (
     <div className="space-y-5">
-      {/* Primary: enter the 6-digit code */}
+      {}
       <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
         <div className="flex items-start gap-3 text-sm text-orange-800">
           <KeyRound className="mt-0.5 h-4 w-4 shrink-0" />

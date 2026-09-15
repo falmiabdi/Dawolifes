@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
 
-// Values mirror android/app/google-services.json (project: dawolife-797b5).
+
 const firebaseConfig = {
   apiKey: 'AIzaSyBk10Jj3G7sycgt7JrCsS1OZ-plMC53068',
   projectId: 'dawolife-797b5',

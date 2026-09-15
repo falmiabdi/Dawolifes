@@ -1,4 +1,4 @@
-/// Payment record, matching the Payment interface from the web app.
+
 class Payment {
   const Payment({
     required this.id,
@@ -43,7 +43,7 @@ class Payment {
   }
 }
 
-/// Aggregated payment statistics from `/api/payments`.
+
 class PaymentStats {
   const PaymentStats({
     this.totalRevenue = 0,

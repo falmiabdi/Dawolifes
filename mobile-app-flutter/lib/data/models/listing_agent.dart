@@ -1,4 +1,4 @@
-/// Minimal agent info attached to listings.
+
 class ListingAgent {
   const ListingAgent({this.id, this.name, this.phone, this.email, this.avatar});
 

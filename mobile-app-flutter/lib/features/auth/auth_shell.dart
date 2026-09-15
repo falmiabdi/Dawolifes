@@ -5,7 +5,7 @@ import '../../core/i18n/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/language_provider.dart';
 
-/// Shared auth layout mirroring AuthShell from auth-shell.tsx.
+
 class AuthShell extends StatelessWidget {
   const AuthShell({
     super.key,

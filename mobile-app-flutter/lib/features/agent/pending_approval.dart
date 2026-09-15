@@ -6,12 +6,12 @@ import '../../providers/auth_provider.dart';
 import '../auth/auth_routing.dart';
 import 'agent_onboarding_screen.dart';
 
-/// Full-page pending/rejected/suspended state for agents & owners, mirroring
-/// web/components/agent/pending-approval.tsx.
-///
-/// Shown right after onboarding is submitted (the account stays Pending until
-/// an admin approves it) so the seller knows exactly where they stand. Once
-/// status becomes 'Approved', the user is returned to the app shell.
+
+
+
+
+
+
 class PendingApprovalScreen extends StatefulWidget {
   const PendingApprovalScreen({super.key});
 

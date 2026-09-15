@@ -1,7 +1,7 @@
 import '../../core/network/api_client.dart';
 import '../models/notification.dart';
 
-/// Notifications API calls, mirroring components/notifications/notification-list.tsx.
+
 class NotificationRepository {
   NotificationRepository(this._api);
 
@@ -28,7 +28,7 @@ class NotificationRepository {
     await _api.patch('/api/notifications/$id/read');
   }
 
-  /// Registers this device's FCM token for push notifications.
+  
   Future<void> registerPushToken(String token, {String platform = 'android'}) async {
     await _api.post('/api/push-tokens/register', {
       'token': token,
@@ -36,7 +36,7 @@ class NotificationRepository {
     });
   }
 
-  /// Removes this device's FCM token (e.g. on logout).
+  
   Future<void> unregisterPushToken(String token) async {
     await _api.delete('/api/push-tokens/$token');
   }

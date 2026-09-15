@@ -6,19 +6,19 @@ import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
-// Notifications are auto-deleted 24h after being read. The cron-style cleanup
-// below removes them on a schedule; the query filter is a defensive safety net
-// so expired notifications can never leak into a fetch even if the cleanup is
-// late (e.g. server was down during a tick).
+
+
+
+
 const READ_NOTIFICATION_TTL_MS = 24 * 60 * 60 * 1000
 
 export const notificationsRetentionCutoff = () => new Date(Date.now() - READ_NOTIFICATION_TTL_MS)
 
-/**
- * Deletes notifications whose `readAt` is older than 24 hours. Called by the
- * server on a background interval (see index.ts). Re-entrant safe: concurrent
- * runs simply delete fewer rows.
- */
+
+
+
+
+
 export async function cleanupExpiredNotifications(): Promise<number> {
   try {
     const result = await prisma.notification.deleteMany({
@@ -34,7 +34,7 @@ export async function cleanupExpiredNotifications(): Promise<number> {
   }
 }
 
-/** Recompute and broadcast a user's unread count so every open client stays in sync. */
+
 async function broadcastUnreadCount(userId: string) {
   try {
     const count = await prisma.notification.count({ where: { userId, read: false } })
@@ -47,7 +47,7 @@ async function broadcastUnreadCount(userId: string) {
 const CLEANUP_INTERVAL_MS = 60 * 60 * 1000
 let cleanupStarted = false
 
-/** Starts the periodic 24h-expiry cleanup. Safe to call multiple times. */
+
 export function startNotificationCleanup() {
   if (cleanupStarted) return
   cleanupStarted = true
@@ -57,7 +57,7 @@ export function startNotificationCleanup() {
   timer.unref()
 }
 
-// Get notifications for current user (excluding those expired past the 24h TTL)
+
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const notifications = await prisma.notification.findMany({
@@ -74,7 +74,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Get unread notification count
+
 router.get('/count', authMiddleware, async (req, res) => {
   try {
     const count = await prisma.notification.count({
@@ -86,7 +86,7 @@ router.get('/count', authMiddleware, async (req, res) => {
   }
 })
 
-// Create notification
+
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { title, body, type, data } = req.body
@@ -110,7 +110,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Mark all notifications as read
+
 router.patch('/read-all', authMiddleware, async (req, res) => {
   try {
     await prisma.notification.updateMany({
@@ -124,7 +124,7 @@ router.patch('/read-all', authMiddleware, async (req, res) => {
   }
 })
 
-// Mark single notification as read (owner only)
+
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
@@ -145,7 +145,7 @@ router.patch('/:id/read', authMiddleware, async (req, res) => {
   }
 })
 
-// Admin: list all notifications (any user)
+
 router.get('/admin', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
     const notifications = await prisma.notification.findMany({
@@ -158,7 +158,7 @@ router.get('/admin', authMiddleware, adminMiddleware, async (_req, res) => {
   }
 })
 
-// Admin: send a notification to all users (optionally filtered by role)
+
 router.post('/admin', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { title, body, type = 'system', role } = req.body
@@ -186,7 +186,7 @@ router.post('/admin', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Admin: delete any notification
+
 router.delete('/admin/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

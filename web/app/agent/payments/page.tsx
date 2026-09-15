@@ -59,7 +59,7 @@ export default function AgentPaymentsPage() {
       const dataRes = await fetch(`${getApiUrl()}/api/payments`, { headers })
       const data = await dataRes.json()
       setPayments(data.payments || [])
-      // stats is now a normalized object from the backend
+      
       setStats(data.stats || { totalRevenue: 0, completedCount: 0, pendingCount: 0, failedCount: 0, totalCount: 0 })
     } catch {
       setPayments([])
@@ -84,7 +84,7 @@ export default function AgentPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page title */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
@@ -103,7 +103,7 @@ export default function AgentPaymentsPage() {
         </button>
       </div>
 
-      {/* Success message */}
+      {}
       {statusMsg && (
         <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-800 flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
@@ -111,9 +111,9 @@ export default function AgentPaymentsPage() {
         </div>
       )}
 
-      {/* â”€â”€ Wallet Cards â”€â”€ */}
+      {}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Wallet Balance */}
+        {}
         <div className="rounded-3xl bg-slate-900 p-5 text-white shadow-xl flex flex-col justify-between relative overflow-hidden md:p-6">
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 h-32 w-32 rounded-full bg-orange-500/10" />
           <div className="flex justify-between items-start mb-4">
@@ -130,7 +130,7 @@ export default function AgentPaymentsPage() {
           </div>
         </div>
 
-        {/* Current Plan */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between sm:col-span-2 lg:col-span-1 md:p-6">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -147,9 +147,9 @@ export default function AgentPaymentsPage() {
         </div>
       </div>
 
-      {/* â”€â”€ Withdraw + Upgrade â”€â”€ */}
+      {}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Withdraw Form */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 md:p-6">
           <h3 className="font-bold text-slate-900">{t('withdraw_funds')}</h3>
           <form onSubmit={handleWithdraw} className="space-y-4">
@@ -198,7 +198,7 @@ export default function AgentPaymentsPage() {
           </form>
         </div>
 
-        {/* Premium Upgrade */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between md:p-6">
           <div>
             <h3 className="font-bold text-slate-900 mb-2">
@@ -234,7 +234,7 @@ export default function AgentPaymentsPage() {
         </div>
       </div>
 
-      {/* â”€â”€ Transaction History â”€â”€ */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <h3 className="font-bold text-slate-900 mb-4">Transaction History</h3>
 
@@ -251,7 +251,7 @@ export default function AgentPaymentsPage() {
           </div>
         ) : (
           <>
-            {/* Mobile: card list */}
+            {}
             <div className="space-y-3 md:hidden">
               {payments.map((tx) => (
                 <div
@@ -294,7 +294,7 @@ export default function AgentPaymentsPage() {
               ))}
             </div>
 
-            {/* Desktop: table */}
+            {}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm divide-y divide-slate-100">
                 <thead>

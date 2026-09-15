@@ -1,8 +1,4 @@
 ﻿import { z } from 'zod'
-
-// Coerce numeric strings and strip empty/null values so both the web form
-// (which submits strings) and the Flutter app (which submits numbers or
-// null for blank optional fields) satisfy the same schema.
 function toNumber(value: unknown): unknown {
   if (value === undefined || value === null || value === '') return undefined
   if (typeof value === 'string') {
@@ -11,7 +7,6 @@ function toNumber(value: unknown): unknown {
   }
   return value
 }
-
 export const num = (schema: z.ZodNumber) => z.preprocess(toNumber, schema)
 export const optNum = (schema: z.ZodNumber) => z.preprocess(toNumber, schema.optional())
 export const requiredStr = z.string().min(1)
@@ -20,15 +15,15 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export const isValidUuid = (value: unknown): boolean =>
   typeof value === 'string' && UUID_RE.test(value)
 
-// Strip empty/null so blank optional fields (Flutter sends null) are dropped
-// rather than rejected, while still validating anything that is present.
+
+
 const strip = (value: unknown) => (value === undefined || value === null || value === '' ? undefined : value)
 
-// Removes keys whose value is `undefined`, `null`, or `''` from an object so
-// Prisma never receives explicit undefined/empty values (which otherwise
-// surface as "Invalid `prisma.xxx.create()` invocation" errors). Arrays and
-// nested objects are preserved as-is; empty arrays are kept. The return type
-// mirrors the input so spread-ing into a Prisma create() stays type-safe.
+
+
+
+
+
 export function cleanPayload<T extends object>(input: T): T {
   const out: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(input)) {

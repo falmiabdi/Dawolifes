@@ -51,7 +51,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Check whether a specific item is saved
+
 router.get('/status', authMiddleware, async (req, res) => {
   try {
     const { itemType, itemId } = req.query
@@ -73,7 +73,7 @@ router.get('/status', authMiddleware, async (req, res) => {
   }
 })
 
-// Save an item
+
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { itemType, itemId } = req.body
@@ -122,7 +122,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Remove a saved item
+
 router.delete('/', authMiddleware, async (req, res) => {
   try {
     const { itemType, itemId } = req.body

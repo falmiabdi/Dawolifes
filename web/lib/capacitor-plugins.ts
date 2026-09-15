@@ -14,19 +14,19 @@ export function initializeCapacitorPlugins() {
     return
   }
 
-  // Hide splash screen after app is fully ready
+  
   setTimeout(() => {
     SplashScreen.hide().catch((error) => {
       console.warn('[Capacitor] SplashScreen.hide failed:', error)
     })
   }, 800)
 
-  // Set status bar style
+  
   StatusBar.setStyle({ style: Style.Light })
   StatusBar.setBackgroundColor({ color: '#F97316' })
 
-  // Configure keyboard resize (iOS-only runtime API; on Android it is
-  // configured statically via the "Keyboard" entry in capacitor.config.ts)
+  
+  
   if (Capacitor.getPlatform() === 'ios') {
     Keyboard.setResizeMode({ mode: KeyboardResize.Body }).catch((error) => {
       console.warn('[Capacitor] Keyboard.setResizeMode unavailable:', error)

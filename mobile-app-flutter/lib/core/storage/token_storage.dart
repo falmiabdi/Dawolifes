@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Persists the JWT token and cached user across app restarts,
-/// mirroring the Capacitor app's Preferences storage.
+
+
 class TokenStorage {
   TokenStorage(this._prefs);
 

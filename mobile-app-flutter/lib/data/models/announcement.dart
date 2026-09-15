@@ -1,4 +1,4 @@
-/// Announcement record returned by `/api/announcements` (the public News feed).
+
 class Announcement {
   const Announcement({
     required this.id,

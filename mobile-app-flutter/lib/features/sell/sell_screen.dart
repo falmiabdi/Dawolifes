@@ -11,7 +11,7 @@ import '../agent/agent_profile.dart';
 import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 
-/// Sell tab gate, mirroring the bottom-nav Sell action + app/sell/page.tsx.
+
 class SellScreen extends StatelessWidget {
   const SellScreen({super.key});
 

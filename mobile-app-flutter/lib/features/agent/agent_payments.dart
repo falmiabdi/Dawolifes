@@ -8,7 +8,7 @@ import '../../data/repositories/admin_repository.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 
-/// Agent commission history mirroring app/agent/payments/page.tsx.
+
 class AgentPaymentsScreen extends StatefulWidget {
   const AgentPaymentsScreen({super.key});
 

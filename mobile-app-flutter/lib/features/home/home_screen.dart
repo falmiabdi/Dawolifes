@@ -23,7 +23,7 @@ import 'how_to_buy_screen.dart';
 import 'how_to_sell_screen.dart';
 import 'services_screen.dart';
 
-/// Main home screen mirroring mobile-home.tsx + mobile-header.tsx.
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -504,9 +504,9 @@ class _FooterLink extends StatelessWidget {
   }
 }
 
-/// Account entry point in the header, replacing the old bottom-nav person icon.
-/// Logged-in users are taken to their Account page; guests get a choice between
-/// creating an account (with the buyer/agent role picker) and signing in.
+
+
+
 class _AccountButton extends StatelessWidget {
   const _AccountButton();
 
@@ -526,8 +526,8 @@ class _AccountButton extends StatelessWidget {
   void _openAccount(BuildContext context, AuthProvider auth) {
     if (auth.isLoggedIn) {
       final user = auth.user;
-      // Header account entry routes by role, matching the web header: agents,
-      // owners and admins land on their portal instead of the buyer profile.
+      
+      
       if (user != null && (user.isAgent || user.isOwner)) {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const AgentPortalScreen()),

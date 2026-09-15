@@ -5,7 +5,7 @@ import '../models/payment.dart';
 import '../models/property.dart';
 import '../models/vehicle.dart';
 
-/// Admin panel API calls, mirroring the app/admin pages of the web app.
+
 class AdminRepository {
   AdminRepository(this._api);
 
@@ -178,7 +178,7 @@ Future<ListingContact> switchVehicleContact(String id) async {
     });
   }
 
-  /// Admin: list notifications for every user (management view).
+  
   Future<List<AppNotification>> fetchAdminNotifications() async {
     final data = await _api.get('/api/notifications/admin') as Map<String, dynamic>;
     return (data['notifications'] as List?)
@@ -187,7 +187,7 @@ Future<ListingContact> switchVehicleContact(String id) async {
         const [];
   }
 
-  /// Admin: send a notification to all users (optionally filtered by role).
+  
   Future<int> sendNotificationToAll({
     required String title,
     required String body,
@@ -203,13 +203,13 @@ Future<ListingContact> switchVehicleContact(String id) async {
     return (data['sent'] as num?)?.toInt() ?? 0;
   }
 
-  /// Admin: delete any notification.
+  
   Future<void> deleteAdminNotification(String id) async {
     await _api.delete('/api/notifications/admin/$id');
   }
 }
 
-/// The contact identity currently shown on a listing after an admin toggle.
+
 class ListingContact {
   const ListingContact({this.agentName, this.displayPhone, this.displayPhoto, this.role = ''});
 

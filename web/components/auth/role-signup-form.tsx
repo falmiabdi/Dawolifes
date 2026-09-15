@@ -30,15 +30,15 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
   const router = useRouter()
   const { registerBuyer, googleSignIn, user } = useAuth()
 
-  // When the Google redirect flow (popup blocked fallback) completes, the
-  // AuthProvider sets `user` after returning to this page. Route the buyer to
-  // their dashboard exactly as the direct/popup path does.
+  
+  
+  
   useEffect(() => {
     if (!user) return
     if (user.role === 'admin') router.push('/admin')
     else if (user.role === 'agent' || user.role === 'owner') router.push(user.onboardingComplete ? '/agent' : '/agent/onboarding')
     else router.push(redirectParam || '/')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [user])
   const { t } = useI18n()
   const [role, setRole] = useState<Role>('buyer')
@@ -93,12 +93,12 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
       }
 
       if (registeredEmail) {
-        // Best-effort Firebase account creation + verification email.
-        // Failures are non-fatal; the backend OTP flow still works.
+        
+        
         try {
           await createFirebaseUser(values.email, values.password)
         } catch {
-          // Ignored — OTP verification is the fallback.
+          
         }
         router.push(`/verify-email?email=${encodeURIComponent(registeredEmail)}`)
       }
@@ -119,13 +119,13 @@ export function RoleSignupForm({ redirectParam }: { redirectParam?: string }) {
     setGoogleLoading(true)
     try {
       const result = await googleSignIn(role === 'buyer' ? 'user' : role)
-      if (!result) return // canceled the Google sheet
+      if (!result) return 
       if (result.requiresEmailVerification) {
         router.push(`/verify-email?email=${encodeURIComponent(result.user?.email || '')}`)
         return
       }
-      // googleSignIn() already calls setUserAndCache() + persistToken().
-      // Routing is handled by the useEffect watching `user`.
+      
+      
     } catch (err: any) {
       const msg = err?.message || ''
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) {

@@ -5,9 +5,9 @@ import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
-// Get payments with stats.
-// Admin sees every transaction; agents see payments tied to their own
-// listings (via property ownership) plus their own purchases.
+
+
+
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId
@@ -72,7 +72,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Get payment by ID
+
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

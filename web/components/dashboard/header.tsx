@@ -25,12 +25,12 @@ export function DashboardHeader({
   onToggleSidebar,
   role,
 }: DashboardHeaderProps) {
-  // Contact info (could come from env/settings)
+  
   const supportPhone = "+251 911 000 001"
 
   return (
     <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900 text-white">
-      {/* Top bar: Support + Language (visible on lg+). Matches the sidebar's dark theme. */}
+      {}
       <div className="hidden lg:flex lg:items-center lg:justify-between lg:px-6 lg:py-2 border-b border-slate-800 text-xs text-slate-400">
         <div className="flex items-center gap-4">
           <a href={`tel:${supportPhone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 hover:text-orange-400 transition">
@@ -43,10 +43,10 @@ export function DashboardHeader({
         </div>
       </div>
 
-      {/* Main header row */}
+      {}
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center gap-3 min-w-0">
-          {/* Hamburger — only visible on mobile (< lg) */}
+          {}
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
@@ -62,13 +62,13 @@ export function DashboardHeader({
         </div>
 
         <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          {/* Language selector (mobile/tablet only, lg+ uses top bar). Shares the pill style below. */}
+          {}
           <LanguageDropdown dark className="lg:hidden" />
 
           <NotificationBell dark />
 
-          {/* Profile summary — matches the language selector pill style.
-              Profile/Settings/Sign Out live in the sidebar, so the header stays clean. */}
+          {
+}
           <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5">
             {profilePhoto ? (
               <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-slate-700 ring-2 ring-orange-400/60">

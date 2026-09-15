@@ -1,4 +1,4 @@
-/// Flattened agent record returned by `/api/admin/agents`.
+
 class AdminAgent {
   const AdminAgent({
     required this.id,
@@ -156,7 +156,7 @@ class AdminAgent {
   }
 }
 
-/// User record returned by `/api/admin/users`.
+
 class AdminUser {
   const AdminUser({
     required this.id,

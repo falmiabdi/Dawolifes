@@ -74,16 +74,16 @@ export type Vehicle = {
   videoUrl?: string
   featured?: boolean
   agent: Agent
-  // Rental
+  
   dailyRate?: number
   weeklyRate?: number
   monthlyRate?: number
   selfDrive?: boolean
   driverIncluded?: boolean
-  // Sale
+  
   negotiable?: boolean
   financingAvailable?: boolean
-  // Legal
+  
   plateNumber?: string
   plateType?: string
   insuranceValid?: boolean
@@ -105,8 +105,8 @@ export type Agent = {
   companyName?: string
   officeAddress?: string
   licenseNumber?: string
-  // User id of the currently displayed contact (set when the admin toggled the
-  // contact to a real account). Clients message this id instead of `id`.
+  
+  
   contactUserId?: string
 }
 
@@ -120,12 +120,12 @@ export const categories = [
 
 ] as const
 
-/**
- * Builds the public-facing agent for a raw listing row. Stored contact
- * overrides (agentName / displayPhone / displayPhoto, set by the admin
- * contact toggle) win over the agent account; the fallback name is ignored
- * when it is just the account email, so old listings don't leak emails.
- */
+
+
+
+
+
+
 export function resolveListingAgent(raw: any, opts?: { role?: string; section?: string }): Agent {
   const overrideName = (raw.agentName || "").trim()
   const relEmail = (raw.agent?.email || "").trim()

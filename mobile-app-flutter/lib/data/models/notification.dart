@@ -1,4 +1,4 @@
-/// Notification record returned by `/api/notifications`.
+
 class AppNotification {
   const AppNotification({
     required this.id,

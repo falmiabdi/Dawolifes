@@ -148,10 +148,10 @@ model Property {
   agentName        String
   displayPhone     String?
   displayPhoto     String?
-  // User id of the currently displayed contact (admin or agent). Null for
-  // "System Admin" fallback contacts that have no real user. Public clients
-  // route their Message button to this id so the chat follows the contact
-  // that the admin switched to.
+  
+  
+  
+  
   contactUserId    String?        @db.Uuid
   status           PropertyStatus @default(Draft)
   rejectionReason  String?
@@ -264,7 +264,7 @@ model Vehicle {
   agentName               String
   displayPhone            String?
   displayPhoto            String?
-  // See Property.contactUserId — same purpose for vehicles.
+  
   contactUserId           String?       @db.Uuid
   status                  VehicleStatus @default(Draft)
   rejectionReason         String?
@@ -424,9 +424,9 @@ enum PermissionEntityType {
   VEHICLE
 }
 
-/// Admin grants sellers permission to edit/delete an already-approved listing.
-/// Before a listing is approved, sellers edit/delete freely; once approved, an
-/// approved (unused) PermissionRequest is required for any further change.
+
+
+
 model PermissionRequest {
   id          String               @id @default(uuid()) @db.Uuid
   type        PermissionType

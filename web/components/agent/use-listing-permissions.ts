@@ -15,10 +15,10 @@ export interface PermissionRequest {
   createdAt: string
 }
 
-/**
- * Loads the current user's listing-permission requests and exposes helpers to
- * gate edit/delete on approved listings (see server /api/permissions).
- */
+
+
+
+
 export function useListingPermissions(getToken: () => Promise<string | null>) {
   const [requests, setRequests] = useState<PermissionRequest[]>([])
   const hydrated = useRef(false)

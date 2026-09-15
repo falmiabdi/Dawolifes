@@ -21,7 +21,7 @@ import 'agent_post_vehicle.dart';
 import 'agent_properties.dart';
 import 'agent_vehicles.dart';
 
-/// Agent dashboard mirroring app/agent/page.tsx.
+
 class AgentDashboardScreen extends StatefulWidget {
   const AgentDashboardScreen({super.key});
 
@@ -64,7 +64,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         _error = null;
       });
     } catch (_) {
-      // Announcements are secondary; keep the dashboard usable if they fail.
+  // Announcements are secondary; keep the dashboard usable if they fail.
+  
+      
     }
   }
 

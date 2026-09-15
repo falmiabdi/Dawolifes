@@ -11,7 +11,7 @@ import '../agent/agent_post_vehicle.dart';
 import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
-/// Admin vehicle moderation mirroring app/admin/vehicles/page.tsx.
+
 class AdminVehiclesScreen extends StatefulWidget {
   const AdminVehiclesScreen({super.key});
 
@@ -140,7 +140,7 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
   }
 }
 
-/// Detail review panel for a single vehicle.
+
 class AdminVehicleDetailScreen extends StatefulWidget {
   const AdminVehicleDetailScreen({super.key, required this.vehicle});
 

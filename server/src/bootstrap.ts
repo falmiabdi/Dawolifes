@@ -12,10 +12,10 @@ const ROOT_ADMIN = {
 
 const ROOT_ADMIN_PASSWORD = 'SecurePass@123'
 
-/**
- * Ensures the hardcoded root admin account exists. Runs on server startup —
- * idempotent (upserts by email) so it is safe to call on every boot.
- */
+
+
+
+
 export async function ensureRootAdmin(): Promise<void> {
   const password = await hashPassword(ROOT_ADMIN_PASSWORD)
   const existing = await prisma.user.findFirst({ where: { email: ROOT_ADMIN.email } })

@@ -5,15 +5,15 @@ import '../../core/i18n/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/language_provider.dart';
 
-/// DawoLife onboarding brand palette (mirrors the reference design).
+
 const Color kBrandOrange = Color(0xFFF38121);
 const Color kBrandBlack = Color(0xFF000000);
 const Color kBrandWhite = Color(0xFFFFFFFF);
 const Color kOnboardingBackground = Color(0xFFFAFAFA);
 const Color kInactiveDot = Color(0xFFE0E0E0);
 
-/// Data for one onboarding page. Each page is a localized version of the
-/// welcome message (Oromo, English, Amharic).
+
+
 class _OnboardingPage {
   const _OnboardingPage({
     required this.headline,
@@ -30,13 +30,13 @@ class _OnboardingPage {
   final AppLanguage language;
 }
 
-/// Polished, brand-first onboarding flow. Shows the DawoLife logo, the
-/// insurance illustration and a welcome message in three languages, with an
-/// animated pagination indicator, orange CTA and language picker.
+
+
+
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key, required this.onDone});
 
-  /// Called when the user completes the flow (taps the CTA on the last page).
+  
   final VoidCallback onDone;
 
   @override
@@ -380,7 +380,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 }
 
-/// Subtle press/scale animation for the primary CTA.
+
 class _PressScale extends StatefulWidget {
   const _PressScale({required this.onTap, required this.child});
 

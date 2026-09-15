@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/admin_repository.dart';
 
-/// Admin listing-permission moderation (mirror of web /admin/permissions).
+
 class AdminPermissionsScreen extends StatefulWidget {
   const AdminPermissionsScreen({super.key});
 

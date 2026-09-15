@@ -42,7 +42,7 @@ export function initializeFirebaseAdmin(): App {
       return app
     }
 
-    // Default initialization (projectId)
+    
     app = initializeApp({
       projectId,
     })
@@ -50,7 +50,7 @@ export function initializeFirebaseAdmin(): App {
     return app
   } catch (err: any) {
     console.warn(`[Firebase Admin] Warning during initialization: ${err.message}`)
-    // Return existing if created in another tick or re-throw if needed
+    
     const apps = getApps()
     if (apps.length > 0) return apps[0]
     app = initializeApp({ projectId: 'dawolife-797b5' })
@@ -68,9 +68,9 @@ export interface VerifiedFirebaseUser {
   signInProvider?: string
 }
 
-/**
- * Verifies a Firebase ID token.
- */
+
+
+
 export async function verifyFirebaseIdToken(idToken: string): Promise<VerifiedFirebaseUser> {
   const adminApp = initializeFirebaseAdmin()
   const auth = getAuth(adminApp)

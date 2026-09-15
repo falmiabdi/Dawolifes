@@ -6,8 +6,8 @@ import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 
-/// Change password screen shared by the admin and agent portals,
-/// mirroring app/{admin,agent}/settings/page.tsx.
+
+
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 

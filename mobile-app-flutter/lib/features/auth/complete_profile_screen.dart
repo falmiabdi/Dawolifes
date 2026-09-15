@@ -7,11 +7,11 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../auth/auth_shell.dart';
 
-/// Simple profile completion screen shown after Google signup as a buyer.
-///
-/// Google already verifies the email, so no email verification is needed.
-/// The user just needs to add a username and phone number so agents/owners
-/// can message them.
+
+
+
+
+
 class CompleteProfileScreen extends StatefulWidget {
   const CompleteProfileScreen({super.key});
 

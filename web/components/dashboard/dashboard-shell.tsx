@@ -27,7 +27,7 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    // Mobile: stacked layout; Desktop (lg+): side-by-side with fixed sidebar
+    
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar
         role={role}
@@ -35,7 +35,7 @@ export function DashboardShell({
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main content column */}
+      {}
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <DashboardHeader
           name={name}

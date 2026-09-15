@@ -44,7 +44,7 @@ export interface EmailVerifyTokenPayload {
   exp?: number
 }
 
-// Stateless email-link verification token (signed JWT, no DB column needed).
+
 export function signEmailVerifyToken(email: string): string {
   return jwt.sign({ email, purpose: 'verify-email' }, JWT_SECRET, { expiresIn: '24h' })
 }

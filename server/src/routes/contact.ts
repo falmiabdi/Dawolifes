@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import { isResendConfigured, sendEmail } from '../services/email.js'
 
-// Public contact form endpoint.
-//
-// The form UI lives in the separate marketing web app; this server only
-// receives the POST and emails the message via Resend. The customer's
-// address is set as reply-to so the company can reply directly.
+
+
+
+
+
 
 const router = Router()
 

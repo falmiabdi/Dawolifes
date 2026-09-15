@@ -8,7 +8,7 @@ import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 import 'overview_chart.dart';
 
-/// Admin dashboard mirroring app/admin/page.tsx.
+
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 

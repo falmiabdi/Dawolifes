@@ -5,8 +5,8 @@ import '../../core/theme/app_colors.dart';
 import '../../providers/language_provider.dart';
 import '../portal/change_password_screen.dart';
 
-/// Agent settings mirroring app/agent/settings/page.tsx:
-/// change password + notification preferences.
+
+
 class AgentSettingsScreen extends StatelessWidget {
   const AgentSettingsScreen({super.key});
 

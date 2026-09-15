@@ -9,9 +9,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// Full-screen map picker mirroring components/maps/map-picker.tsx. Allows
-/// searching an address via OSM Nominatim and tapping the map to select a
-/// lat/lng coordinate. Returns the result via [Navigator.pop] as [LatLng].
+
+
+
 class MapPickerScreen extends StatefulWidget {
   const MapPickerScreen({super.key, this.initialPosition, this.initialQuery});
 
@@ -176,8 +176,8 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 }
 
-/// Convenience widget: a text field + "Pick on map" button that opens
-/// [MapPickerScreen] and stores the clicked lat/lng in the two controllers.
+
+
 class MapPickerField extends StatefulWidget {
   const MapPickerField({
     super.key,

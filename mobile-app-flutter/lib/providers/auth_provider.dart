@@ -8,7 +8,7 @@ import '../core/storage/token_storage.dart';
 import '../data/models/user.dart';
 import '../data/repositories/auth_repository.dart';
 
-/// Auth state mirroring AuthProvider from auth-guard.tsx with Firebase support.
+
 class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required this.repository,
@@ -29,7 +29,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
   bool get isVerified => _user?.emailVerified ?? false;
 
-  /// Restores the cached user immediately, then refreshes from the server.
+  
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
@@ -50,11 +50,11 @@ class AuthProvider extends ChangeNotifier {
     _setUser(user);
   }
 
-  /// Signs in or registers via Google using Firebase Auth + backend sync.
-  ///
-  /// Returns `null` if the user canceled the Google sign-in sheet (no session
-  /// change, no error state). Otherwise exchanges the Firebase ID token for a
-  /// DawoLife session and returns the server result for the UI to react to.
+  
+  
+  
+  
+  
   Future<VerifyOtpResult?> loginWithGoogle({String role = 'user'}) async {
     final idToken = await FirebaseAuthService().getGoogleIdToken();
     if (idToken == null) return null;
@@ -70,8 +70,8 @@ class AuthProvider extends ChangeNotifier {
     return result;
   }
 
-  /// Signs up with email/password via Firebase, sends verification email,
-  /// and registers user on backend.
+  
+  
   Future<VerifyOtpResult> signUpWithFirebase({
     required String email,
     required String password,
@@ -102,7 +102,7 @@ class AuthProvider extends ChangeNotifier {
     return result;
   }
 
-  /// Signs in with Firebase email & password and exchanges token with backend.
+  
   Future<VerifyOtpResult> signInWithFirebase({
     required String email,
     required String password,
@@ -112,7 +112,7 @@ class AuthProvider extends ChangeNotifier {
       password: password,
     );
 
-    // Refresh user state to verify if email link was clicked
+    
     await userCredential.user?.reload();
     final freshUser = FirebaseAuth.instance.currentUser;
     final idToken = await freshUser?.getIdToken(true);
@@ -133,7 +133,7 @@ class AuthProvider extends ChangeNotifier {
     return result;
   }
 
-  /// Checks if current Firebase user has verified their email, and syncs with backend.
+  
   Future<VerifyOtpResult?> checkFirebaseEmailVerified() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser == null) return null;
@@ -152,8 +152,8 @@ class AuthProvider extends ChangeNotifier {
     return result;
   }
 
-  /// Buyer registration. Account is pending until the OTP is verified; no session
-  /// is established here. Returns the server result (incl. dev OTP in dev mode).
+  
+  
   Future<RegistrationResult> registerBuyer({
     required String name,
     required String email,
@@ -168,8 +168,8 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  /// Agent / owner registration. Agents are Pending + admin approval even after
-  /// OTP verification; owners are approved immediately after verifying.
+  
+  
   Future<RegistrationResult> registerAgent({
     required String username,
     required String email,
@@ -179,9 +179,9 @@ class AuthProvider extends ChangeNotifier {
     return repository.registerAgent(username: username, email: email, password: password, role: role);
   }
 
-  /// Verifies the OTP emailed to [email]. For buyer accounts the server issues a
-  /// session, which is applied immediately. Returns the verify outcome so the
-  /// caller can route agents to login (no session) and buyers to the app shell.
+  
+  
+  
   Future<VerifyOtpResult> verifyOtp({required String email, required String otp}) async {
     final result = await repository.verifyOtp(email: email, otp: otp);
     if (result.user != null) _setUser(result.user);
@@ -192,9 +192,9 @@ class AuthProvider extends ChangeNotifier {
     return repository.resendOtp(email: email);
   }
 
-  /// Checks whether the account for [email] was verified by clicking the email
-  /// link. For buyers the server issues a session, which is applied immediately;
-  /// agents get no session and are routed to the login screen by the caller.
+  
+  
+  
   Future<VerifyOtpResult> checkVerification({required String email}) async {
     final result = await repository.checkVerification(email: email);
     if (result.user != null) _setUser(result.user);
@@ -209,7 +209,9 @@ class AuthProvider extends ChangeNotifier {
       final user = await repository.fetchSession();
       if (user != null) _setUser(user);
     } catch (_) {
-      // Silently fail, same as the web app.
+  // Silently fail, same as the web app.
+  
+      
     }
   }
 
@@ -218,7 +220,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       await FirebaseAuthService().signOut();
     } catch (_) {
-      // Firebase/Google sign-out is best-effort; never block logout on it.
+  // Firebase/Google sign-out is best-effort; never block logout on it.
+  
+      
     }
     await webSocket?.disconnect();
     _user = null;
@@ -247,7 +251,7 @@ class AuthProvider extends ChangeNotifier {
     return repository.resetPassword(email: email, otp: otp, newPassword: newPassword);
   }
 
-  /// Updates the profile (name/phone/photo) and refreshes the cached session.
+  
   Future<SessionUser> updateProfile({
     String? name,
     String? phone,

@@ -30,7 +30,9 @@ class _AboutScreenState extends State<AboutScreen> {
       final data = await repo.fetchSettings();
       if (mounted) setState(() => _settings = data);
     } catch (_) {
-      // keep defaults
+  // keep defaults
+  
+      
     }
   }
 

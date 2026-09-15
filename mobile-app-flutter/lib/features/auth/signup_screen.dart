@@ -13,14 +13,14 @@ import 'complete_profile_screen.dart';
 import 'login_screen.dart';
 import 'verify_email_screen.dart';
 
-/// Signup flow mirroring app/auth/signup/page.tsx + role-signup-form.tsx:
-/// 1. Choose account type (Buyer/User or Seller/Agent).
-/// 2. Buyer: full name, email, phone, password, confirm password (immediate
-///    verification, returns to the app shell).
-/// 3. Agent: username, email, password (submitted for review, then sign in).
-///
-/// Pass [initialRole] to skip the role picker (e.g. "Register as Agent" from
-/// the Sell tab).
+
+
+
+
+
+
+
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key, this.initialRole});
 

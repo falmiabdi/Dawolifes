@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../data/models/listing_item.dart';
 import '../data/repositories/listing_repository.dart';
 
-/// Saved items state for the Saved tab.
+
 class SavedProvider extends ChangeNotifier {
   SavedProvider(this._repository);
 

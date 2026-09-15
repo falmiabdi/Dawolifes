@@ -1,5 +1,5 @@
-/// Ethiopian regional states, matching the web app's agent post/onboarding
-/// forms (14 regions as of the 2023 SNNPR/Sidama/South Ethiopia reorganization).
+
+
 const ethiopianRegions = [
   'Addis Ababa',
   'Afar',
@@ -17,7 +17,7 @@ const ethiopianRegions = [
   'Tigray',
 ];
 
-/// Property amenity/feature groups matching web/lib/data.ts.
+
 const propertyAmenities = [
   'Parking', 'Garden', 'Security', 'Swimming Pool', 'Elevator', 'Balcony',
   'Solar Power', 'Generator', 'Compound', 'Borehole', 'CCTV', 'Air Conditioning',

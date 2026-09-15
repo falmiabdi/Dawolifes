@@ -22,12 +22,12 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
   const onboardingDone = !!user?.onboardingComplete
   const approved = user?.status === 'Approved'
 
-  // Normalize pathname — trailingSlash:true means usePathname() returns
-  // "/agent/onboarding/" so strip the trailing slash for comparisons.
+  
+  
   const path = pathname.replace(/\/+$/, '') || '/'
 
-  // The admin dashboard links its Edit buttons here (standalone forms), so
-  // those two routes are the only /agent/* pages an admin may land on.
+  
+  
   const adminAllowedEditPath =
     path === '/agent/properties/edit' || path === '/agent/vehicles/edit'
 
@@ -35,8 +35,8 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
     if (!user) return
 
     if (isAdmin) {
-      // Admins never see the agent shell — bounce every /agent/* page (except
-      // the admin-linked edit forms) straight to the admin shell.
+      
+      
       if (!adminAllowedEditPath) {
         setAdminRedirecting(true)
         router.replace('/admin')
@@ -44,14 +44,14 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Every agent must complete their profile first.
+    
     if (!onboardingDone && path !== '/agent/onboarding') {
       setRedirecting(true)
       router.replace('/agent/onboarding')
     } else if (redirecting) {
-      // Client-side navigation stays inside this layout (no remount), so once
-      // we arrive at the destination we must clear the redirect flag or the
-      // spinner would spin forever until a manual refresh.
+      
+      
+      
       setRedirecting(false)
     }
   }, [user, isAdmin, onboardingDone, approved, path, adminAllowedEditPath, router, redirecting])
@@ -64,19 +64,19 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Admin landing here = the admin dashboard Edit link: render the form
-  // standalone (it has its own back link that routes to /admin/*) with no
-  // agent navigation anywhere. The four roles stay separated.
+  
+  
+  
   if (isAdmin) {
     return <>{children}</>
   }
 
-  // Onboarding screen has its own full-page layout.
+  
   if (!onboardingDone) {
     return <>{children}</>
   }
 
-  // Not yet approved: nothing may be used except resubmitting a rejected profile.
+  
   if (!approved) {
     const canResubmit =
       user?.status === 'Rejected' && (path === '/agent/onboarding' || path === '/agent/profile')

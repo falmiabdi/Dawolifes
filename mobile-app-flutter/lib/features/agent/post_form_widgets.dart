@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 
-/// Section card used inside the post forms.
+
 class FormSection extends StatelessWidget {
   const FormSection({super.key, required this.title, required this.child});
 
@@ -35,7 +35,7 @@ class FormSection extends StatelessWidget {
   }
 }
 
-/// Horizontal label + control row used by the post forms.
+
 class Field extends StatelessWidget {
   const Field({super.key, required this.label, required this.child, this.expanded = true});
 
@@ -59,12 +59,12 @@ class Field extends StatelessWidget {
   }
 }
 
-/// Picks a single image from the gallery and uploads it, returning the URL.
-///
-/// Agent screens use [endpoint] `/api/agent/upload` (matching the web app's
-/// agent post flow); the public post wizard uses `/api/upload`. The filename
-/// is normalized to carry the correct extension so the server's multer
-/// fileFilter (which checks both extension and mimetype) accepts the upload.
+
+
+
+
+
+
 Future<String> pickAndUploadImage(ApiClient api, {String endpoint = '/api/agent/upload', String field = 'image'}) async {
   final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 75, maxWidth: 1600);
   if (file == null) throw ImagePickCancelled();
@@ -85,10 +85,10 @@ Future<String> pickAndUploadImage(ApiClient api, {String endpoint = '/api/agent/
   return '$url';
 }
 
-/// Captures a photo with the device camera and uploads it, returning the URL.
-///
-/// Used for identity validation (selfie) where a fresh camera capture is
-/// required rather than a gallery pick.
+
+
+
+
 Future<String> captureAndUploadImage(ApiClient api, {String endpoint = '/api/agent/upload', String field = 'image'}) async {
   final file = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 80, maxWidth: 1600);
   if (file == null) throw ImagePickCancelled();
@@ -109,10 +109,10 @@ Future<String> captureAndUploadImage(ApiClient api, {String endpoint = '/api/age
   return '$url';
 }
 
-/// Picks a location document (image or PDF) and uploads it, returning the URL.
-///
-/// Presents a source picker so users can attach either a JPG/PNG photo or a
-/// PDF file, mirroring the web app's document upload (which accepts PDF/JPG/PNG).
+
+
+
+
 Future<String> pickAndUploadDocument(BuildContext context, ApiClient api) async {
   final kind = await showModalBottomSheet<_DocKind>(
     context: context,
@@ -171,12 +171,12 @@ Future<String> _uploadDocument(ApiClient api, List<int> bytes, String filename, 
   return '$url';
 }
 
-/// Guarantees [name] ends with an extension matching [mime] so multer's
-/// fileFilter (which tests both extension and mimetype) doesn't reject it.
+
+
 String _ensureExtension(String name, String mime) {
   final ext = _extensionFromMime(mime);
   if (name.toLowerCase().endsWith('.$ext')) return name;
-  if (name.contains('.')) return name; // keep existing extension if present
+  if (name.contains('.')) return name; 
   return '$name.$ext';
 }
 
@@ -205,10 +205,10 @@ String _mimeFromExtension(String name) {
   };
 }
 
-/// Thrown when the user cancels the gallery picker.
+
 class ImagePickCancelled implements Exception {}
 
-/// Grid of uploaded images with add/remove controls.
+
 class ImageGridPicker extends StatelessWidget {
   const ImageGridPicker({
     super.key,

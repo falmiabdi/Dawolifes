@@ -1,4 +1,4 @@
-/// Parsed agent review row returned by `GET /api/reviews/agent/:id`.
+
 class AgentReview {
   const AgentReview({
     required this.id,
@@ -35,7 +35,7 @@ class AgentReview {
   }
 }
 
-/// Aggregate rating + review list for a single agent.
+
 class AgentReviews {
   const AgentReviews({
     required this.average,

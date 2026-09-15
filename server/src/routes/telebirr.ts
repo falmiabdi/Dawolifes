@@ -18,7 +18,7 @@ function isNotifyAuthorized(req: any): boolean {
   return header === secret
 }
 
-// Create a TeleBirr order
+
 router.post('/create-order', async (req, res) => {
   try {
     const { title, amount, propertyId, propertyTitle, paymentType } = req.body
@@ -29,7 +29,7 @@ router.post('/create-order', async (req, res) => {
 
     const paymentTypeVal = paymentType || 'service_charge'
 
-    // Prevent duplicate payments for the same item.
+    
     const completed = await prisma.payment.findFirst({
       where: { propertyId: propertyId || null, status: 'Completed', method: 'telebirr' },
     })
@@ -52,7 +52,7 @@ router.post('/create-order', async (req, res) => {
     const orderId = uuidv4()
     const toPayUrl = `https://app.ethiotelebirr.et/payment/h5/?merch_order_id=${merchOrderId}`
 
-    // Record payment in DB
+    
     await prisma.payment.create({
       data: {
         id: orderId,
@@ -79,7 +79,7 @@ router.post('/create-order', async (req, res) => {
   }
 })
 
-// Check TeleBirr payment status
+
 router.get('/status', async (req, res) => {
   try {
     const { merchOrderId } = req.query
@@ -99,7 +99,7 @@ router.get('/status', async (req, res) => {
   }
 })
 
-// TeleBirr webhook callback
+
 router.post('/notify', async (req, res) => {
   try {
     const { merch_order_id, status } = req.body

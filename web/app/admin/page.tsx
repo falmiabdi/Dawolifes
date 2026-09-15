@@ -32,9 +32,9 @@ export default function AdminDashboardPage() {
     ;(async () => {
       const authHeaders = await getAuthHeaders()
       const headers = { ...authHeaders }
-      // Single lightweight request instead of 5 heavy list endpoints. The
-      // dashboard shell renders immediately; the stats cards populate when the
-      // response arrives.
+      
+      
+      
       const overview = await fetch(`${getApiUrl()}/api/admin/overview`, { headers }).then(r => r.json())
       setCounts(overview.counts || {})
       setStats(overview.paymentStats || {})

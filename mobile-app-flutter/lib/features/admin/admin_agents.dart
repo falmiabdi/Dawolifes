@@ -10,7 +10,7 @@ import '../../data/repositories/admin_repository.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 
-/// Admin agent management mirroring app/admin/agents/page.tsx.
+
 class AdminAgentsScreen extends StatefulWidget {
   const AdminAgentsScreen({super.key});
 
@@ -152,7 +152,7 @@ class _AdminAgentsScreenState extends State<AdminAgentsScreen> {
   }
 }
 
-/// Detail + verification panel for a single agent.
+
 class AgentDetailScreen extends StatefulWidget {
   const AgentDetailScreen({super.key, required this.agent});
 

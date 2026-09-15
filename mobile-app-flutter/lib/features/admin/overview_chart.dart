@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// Growth & revenue analytics area chart mirroring the web app's
-/// `OverviewChart` (recharts AreaChart) on the admin dashboard.
+
+
 class OverviewChart extends StatelessWidget {
   const OverviewChart({super.key, this.height = 320});
 

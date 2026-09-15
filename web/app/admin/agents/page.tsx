@@ -139,7 +139,7 @@ export default function AdminAgentsPage() {
         </div>
       </div>
 
-      {/* Filters and search */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white border border-slate-200 p-4 rounded-3xl shadow-sm">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -164,9 +164,9 @@ export default function AdminAgentsPage() {
         </div>
       </div>
 
-      {/* Main content grid */}
+      {}
       <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
-        {/* Agent List */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-h-[400px]">
           <h2 className="font-bold text-slate-900 mb-4">Agent Catalog</h2>
           {loading ? (
@@ -206,12 +206,12 @@ export default function AdminAgentsPage() {
           )}
         </div>
 
-        {/* Agent Verification Detail Panel */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-h-[400px] lg:sticky lg:top-24">
           <h2 className="font-bold text-slate-900 mb-4">Verification Panel</h2>
           {selectedAgent ? (
             <div className="space-y-6">
-              {/* Header profile info */}
+              {}
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">{selectedAgent.fullName || selectedAgent.username}</h3>
@@ -225,7 +225,7 @@ export default function AdminAgentsPage() {
                 </div>
               </div>
 
-              {/* Action buttons */}
+              {}
               <div className="flex flex-wrap gap-2 border-t border-b border-slate-100 py-4">
                 {selectedAgent.status === 'Pending' && (
                   <>
@@ -277,7 +277,7 @@ export default function AdminAgentsPage() {
                 )}
               </div>
 
-              {/* Rejection input box */}
+              {}
               {showRejectForm && (
                 <div className="space-y-3 p-4 rounded-2xl border border-red-100 bg-red-50/50 text-xs">
                   <Label className="font-bold text-slate-800 text-xs">Provide Reason for Rejection</Label>
@@ -306,7 +306,7 @@ export default function AdminAgentsPage() {
                 </div>
               )}
 
-              {/* Submitted Details Fields */}
+              {}
               <div className="space-y-4 text-xs">
                 <div>
                   <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Onboarding Information</h4>
@@ -337,7 +337,7 @@ export default function AdminAgentsPage() {
                   </div>
                 </div>
 
-                {/* Uploaded Documents with Image Previews */}
+                {}
                 <div>
                   <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Uploaded Verification Files</h4>
                   <div className="grid grid-cols-2 gap-3">

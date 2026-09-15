@@ -30,7 +30,7 @@ const ALLOWED_UPDATE_FIELDS = [
 
 const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true, role: true, status: true }
 
-// Get all vehicles (public)
+
 router.get('/', async (req, res) => {
   try {
     const where: any = { status: { in: ['Approved', 'Sold', 'Rented'] } }
@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Get vehicle by ID
+
 router.get('/:id', async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
@@ -72,8 +72,8 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Vehicle not found' })
     }
 
-    // Only expose approved listings publicly; owner and admins may preview
-    // drafts/pending/rejected listings via their own dashboards.
+    
+    
     if (vehicle.status !== 'Approved' && vehicle.status !== 'Sold' && vehicle.status !== 'Rented') {
       const caller = getRequestUserId(req)
       const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === vehicle.agentId)
@@ -88,7 +88,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Create vehicle (agent only)
+
 router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const parsed = vehicleSchema.safeParse(req.body)
@@ -97,8 +97,8 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
-    // Both web and mobile require at least 3 photos to list — enforce the same
-    // rule server-side so the check cannot be bypassed by a direct API call.
+    
+    
     const photos = Array.isArray(parsed.data.images) ? parsed.data.images.filter((u: string) => u && u.trim()) : []
     if (photos.length < 3) {
       return res.status(400).json({ message: 'At least 3 photos are required to list a vehicle.' })
@@ -110,9 +110,9 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
     })
     const isAdmin = currentUser?.role === 'admin'
 
-    // Same contact model as properties: default is the System Admin number and
-    // buyer messages route to the admin account until the admin toggles the
-    // listing over to the agent/owner who published it.
+    
+    
+    
     const contactName = parsed.data.name?.trim() || ''
     const contactPhone = parsed.data.phone?.trim() || ''
     const { name: _name, phone: _phone, contactMode, ...vehicleData } = parsed.data
@@ -157,7 +157,7 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
   }
 })
 
-// Update vehicle
+
 router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
@@ -196,7 +196,7 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       }
     }
 
-    // Recalculate the displayed contact when the poster (or admin) switches modes.
+    
     if (parsed.data.contactMode) {
       if (parsed.data.contactMode === 'Admin') {
         const admin = await resolveSystemAdmin()
@@ -225,7 +225,7 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
   }
 })
 
-// Delete vehicle
+
 router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

@@ -6,8 +6,8 @@ import '../../data/models/notification.dart';
 import '../../data/repositories/admin_repository.dart';
 import '../portal/widgets.dart';
 
-/// Admin notification management mirroring the web admin notifications page:
-/// list all notifications, send one to every user, and delete any.
+
+
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
 

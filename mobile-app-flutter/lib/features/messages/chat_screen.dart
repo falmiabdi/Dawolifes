@@ -7,7 +7,7 @@ import '../../data/models/message.dart';
 import '../../data/repositories/message_repository.dart';
 import '../../providers/auth_provider.dart';
 
-/// Chat thread with the listing's agent, mirroring MessageAgent + messages.ts.
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
@@ -54,12 +54,14 @@ class _ChatScreenState extends State<ChatScreen> {
           _messages = messages;
           _loading = false;
         });
-        // Mark unread messages as read after loading
+        
         if (!_markedRead) {
           _markUnreadAsRead();
         }
       }
     } catch (_) {
+  // Ignore individual failures
+  
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -78,10 +80,10 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         await repo.markRead(msg.id);
       } catch (_) {
-        // Ignore individual failures
+        
       }
     }
-    // Update local state to show messages as read
+    
     if (mounted) {
       setState(() {
         _messages = _messages.map((m) {

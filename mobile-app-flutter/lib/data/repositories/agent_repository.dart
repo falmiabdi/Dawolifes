@@ -2,13 +2,13 @@ import '../../core/network/api_client.dart';
 import '../models/property.dart';
 import '../models/vehicle.dart';
 
-/// Agent portal API calls, mirroring the app/agent pages of the web app.
+
 class AgentRepository {
   AgentRepository(this._api);
 
   final ApiClient _api;
 
-  /// Uploads an image/document to Cloudinary via the server and returns the URL.
+  
   Future<String> uploadFile({
     required List<int> bytes,
     required String filename,
@@ -66,8 +66,8 @@ class AgentRepository {
     return (data['user'] as Map<String, dynamic>?) ?? {};
   }
 
-  /// Saves one step of the agent/owner onboarding form (POST /api/agent/onboarding),
-  /// mirroring the web app's app/agent/onboarding page.
+  
+  
   Future<void> saveOnboarding(Map<String, dynamic> payload) async {
     await _api.post('/api/agent/onboarding', payload);
   }
@@ -77,7 +77,7 @@ class AgentRepository {
     return (data['requests'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
   }
 
-  /// Updates the poster's public profile (name/phone/photo) via /api/auth/profile.
+  
   Future<void> updateProfileInfo({String? name, String? phone, String? profilePhoto}) async {
     await _api.patch('/api/auth/profile', {
       if (name != null && name.trim().isNotEmpty) 'name': name.trim(),

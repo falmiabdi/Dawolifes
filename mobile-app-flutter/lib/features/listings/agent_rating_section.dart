@@ -10,10 +10,10 @@ import '../../data/repositories/review_repository.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 
-/// "Reviews" pill on the listing detail, mirroring web's AgentRating widget.
-/// Shows the agent's average rating + count and opens a bottom sheet with the
-/// rating form and the full review list. Rendering nothing when there is no
-/// agent id so listings without agent info stay clean.
+
+
+
+
 class AgentRatingButton extends StatefulWidget {
   const AgentRatingButton({super.key, required this.agentId, required this.agentName});
 
@@ -43,7 +43,7 @@ class _AgentRatingButtonState extends State<AgentRatingButton> {
         _loading = false;
       });
     } catch (_) {
-      // Rating badge is decorative; fail silently like the web.
+      
       if (!mounted) return;
       setState(() => _loading = false);
     }
@@ -102,7 +102,7 @@ class _AgentRatingButtonState extends State<AgentRatingButton> {
   }
 }
 
-/// Row of small star icons, [filled] of the 5 are filled amber.
+
 class _RatingStars extends StatelessWidget {
   const _RatingStars({required this.size, required this.filled});
 
@@ -125,8 +125,8 @@ class _RatingStars extends StatelessWidget {
   }
 }
 
-/// Bottom sheet with the agent's rating summary, the rate form (sign-in / own
-/// listing guards) and the full review list, mirroring agent-rating.tsx.
+
+
 class AgentReviewsSheet extends StatefulWidget {
   const AgentReviewsSheet({super.key, required this.agentId, required this.agentName});
 

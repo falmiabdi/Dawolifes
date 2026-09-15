@@ -47,8 +47,8 @@ Future<void> main() async {
 
   await Future.wait([auth.init(), language.init()]);
 
-  // Push notifications: request permission + register this device's FCM token
-  // when signed in; unregister on logout.
+  
+  
   final push = PushNotificationService.instance;
   await push.initialize();
   final notifRepo = NotificationRepository(api);
@@ -100,8 +100,8 @@ class _DawoLifeAppState extends State<DawoLifeApp> {
   @override
   void initState() {
     super.initState();
-    // Handle taps on push notifications received while the app was
-    // terminated (cold start) once the navigator is ready.
+    
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PushNotificationService.instance.maybeOpenPending();
     });

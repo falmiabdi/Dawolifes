@@ -200,8 +200,8 @@ function ListingPage() {
   const embedUrl = property.videoUrl ? getYouTubeEmbedUrl(property.videoUrl) : ''
 
   const handleShare = async () => {
-    // Always share the production page (custom domain) rather than whatever
-    // host is in the address bar (e.g. a Vercel preview URL).
+    
+    
     const url = `${getSiteUrl()}/listings/view?id=${property.id}`
     const shareData = {
       title: property.title,

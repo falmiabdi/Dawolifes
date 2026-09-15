@@ -56,7 +56,7 @@ export default function AgentMessagesPage() {
       : { 'Content-Type': 'application/json' }
   }, [getToken])
 
-  // Fetch inbox and group into per-property threads
+  
   const fetchInbox = useCallback(async () => {
     try {
       const headers = await authHeaders()
@@ -67,7 +67,7 @@ export default function AgentMessagesPage() {
       const usersMap: Record<string, any> = data.users || {}
       const userId = user?.id
 
-      // Group messages by propertyId + other party
+      
       const threadMap = new Map<string, Thread>()
       for (const m of msgs) {
         const otherId = m.senderId === userId ? m.recipientId : m.senderId
@@ -107,7 +107,7 @@ export default function AgentMessagesPage() {
     return () => clearInterval(interval)
   }, [fetchInbox])
 
-  // Fetch messages for active thread
+  
   const fetchMessages = useCallback(async () => {
     if (!activeThread) return
     try {
@@ -115,7 +115,7 @@ export default function AgentMessagesPage() {
       const res = await fetch(`${getApiUrl()}/api/messages/${activeThread.propertyId}`, { headers, cache: 'no-store' })
       if (!res.ok) return
       const data = await res.json()
-      // Only show messages between this user and the other party
+      
       const filtered = (data.messages || []).filter((m: Message) =>
         (m.senderId === user?.id && m.recipientId === activeThread.otherUserId) ||
         (m.senderId === activeThread.otherUserId && m.recipientId === user?.id)
@@ -129,7 +129,7 @@ export default function AgentMessagesPage() {
   useEffect(() => {
     if (!activeThread) return
     fetchMessages()
-    // Mark messages as read
+    
     ;(async () => {
       const headers = await authHeaders()
       const res = await fetch(`${getApiUrl()}/api/messages/${activeThread.propertyId}`, { headers, cache: 'no-store' })
@@ -147,7 +147,7 @@ export default function AgentMessagesPage() {
     return () => clearInterval(interval)
   }, [activeThread, fetchMessages, authHeaders, user?.id])
 
-  // Auto-scroll
+  
   useEffect(() => {
     if (messages.length > lastMsgCount.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -193,7 +193,7 @@ export default function AgentMessagesPage() {
 
   return (
     <div className="flex h-[calc(100vh-140px)] gap-6 overflow-hidden">
-      {/* Threads list */}
+      {}
       <div className={`w-full md:w-80 flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden ${showChatMobile ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-slate-100">
           <h1 className="text-lg font-bold text-slate-900">{t('conversations')}</h1>
@@ -244,7 +244,7 @@ export default function AgentMessagesPage() {
         </div>
       </div>
 
-      {/* Chat window */}
+      {}
       {activeThread ? (
         <div className={`flex-1 flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden ${showChatMobile ? 'flex' : 'hidden md:flex'}`}>
           <div className="flex justify-between items-center px-4 py-4 md:px-6 border-b border-slate-100">

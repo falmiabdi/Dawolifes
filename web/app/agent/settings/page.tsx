@@ -78,7 +78,7 @@ export default function AgentSettingsPage() {
         </div>
       )}
 
-      {/* Security settings */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Lock className="h-5 w-5" />
@@ -120,7 +120,7 @@ export default function AgentSettingsPage() {
         </form>
       </div>
 
-      {/* Notification preferences */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Bell className="h-5 w-5" />
@@ -143,7 +143,7 @@ export default function AgentSettingsPage() {
         </div>
       </div>
 
-      {/* Legal */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <FileText className="h-5 w-5" />

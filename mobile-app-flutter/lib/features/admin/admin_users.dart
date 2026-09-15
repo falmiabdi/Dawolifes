@@ -7,7 +7,7 @@ import '../../data/repositories/admin_repository.dart';
 import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 
-/// Admin user management mirroring app/admin/users/page.tsx.
+
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
 

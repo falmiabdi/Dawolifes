@@ -12,10 +12,10 @@ import 'auth_shell.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
-/// Login screen mirroring app/auth/login/page.tsx.
-///
-/// Pass [verified] true when arriving from a successful email verification to
-/// show the confirmation banner (?verified=1 in the web app).
+
+
+
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.verified = false});
 

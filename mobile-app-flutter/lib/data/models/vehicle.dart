@@ -1,6 +1,6 @@
 import 'listing_agent.dart';
 
-/// Vehicle listing matching the Vehicle type in lib/data.ts.
+
 class Vehicle {
   const Vehicle({
     required this.id,
@@ -211,8 +211,8 @@ class Vehicle {
 
   String get location => [subCity, city, region].where((e) => e != null && e.isNotEmpty).join(', ');
 
-  /// Name shown on the public listing: the stored override wins when present,
-  /// otherwise falls back to the agent account name.
+  
+  
   String get contactName {
     final n = agentName?.trim() ?? '';
     final email = agent?.email?.trim() ?? '';
@@ -220,22 +220,22 @@ class Vehicle {
     return agent?.displayName ?? 'Agent';
   }
 
-  /// Phone shown on the public listing: stored override wins over agent phone.
+  
   String get contactPhone {
     final p = displayPhone?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.phone?.trim() ?? '';
   }
 
-  /// Profile photo shown on the public listing: stored override wins.
+  
   String get contactPhoto {
     final p = displayPhoto?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.avatar?.trim() ?? '';
   }
 
-  /// User id the Message button routes to: follows the admin-switched contact
-  /// when one is set, otherwise the listing's original agent.
+  
+  
   String? get messageRecipientId {
     final c = contactUserId?.trim();
     if (c != null && c.isNotEmpty) return c;
@@ -243,7 +243,7 @@ class Vehicle {
     return (a != null && a.isNotEmpty) ? a : null;
   }
 
-  /// Copy of this vehicle with the contact override replaced.
+  
   Vehicle withContact({
     String? agentName,
     String? displayPhone,
@@ -353,7 +353,7 @@ class Vehicle {
     );
   }
 
-  /// Copy of this vehicle with a new listing status (Sold/Rented/Approved...).
+  
   Vehicle withStatus(String status) {
     return Vehicle(
       id: id,

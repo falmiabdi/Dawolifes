@@ -55,7 +55,7 @@ export default function AuthLoginPage() {
     if (user.role === 'admin') router.replace('/admin')
     else if (user.role === 'agent' || user.role === 'owner') router.replace(user.onboardingComplete ? '/agent' : '/agent/onboarding')
     else router.replace('/')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [user])
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -64,8 +64,8 @@ export default function AuthLoginPage() {
     setUnverifiedWarning('')
     try {
       await login(values.email, values.password)
-      // Non-blocking: if a Firebase account exists for this email and it has
-      // not been verified, surface a reminder without blocking the session.
+      
+      
       try {
         await signInFirebaseUser(values.email, values.password)
         const verified = await isFirebaseEmailVerified()
@@ -75,7 +75,7 @@ export default function AuthLoginPage() {
           )
         }
       } catch {
-        // No Firebase account for this email — ignore.
+        
       }
     } catch (err: any) {
       const msg = err?.message || ''
@@ -120,8 +120,8 @@ export default function AuthLoginPage() {
         setMessage('Please verify your email address to continue.')
         return
       }
-      // googleSignIn() already calls setUserAndCache() + persistToken().
-      // Routing is handled by the useEffect watching `user`.
+      
+      
     } catch (err: any) {
       setMessage(err?.message || 'Google sign in failed. Please try again.')
     } finally {

@@ -23,9 +23,9 @@ import '../auth/login_screen.dart';
 import '../messages/chat_screen.dart';
 import 'agent_rating_section.dart';
 
-/// Listing detail screen mirroring app/listings/view/page.tsx. Fetches the
-/// full record (all images, real description, video, documents) from the
-/// backend by id and shows a loader until the data arrives.
+
+
+
 class ListingDetailScreen extends StatefulWidget {
   const ListingDetailScreen({super.key, required this.item});
 
@@ -40,7 +40,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   late bool _saved = false;
   bool _loadingSaved = true;
 
-  /// Full record fetched from the backend.
+  
   dynamic _detail;
   bool _loadingDetail = true;
   String? _detailError;
@@ -64,6 +64,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         _loadingDetail = false;
       });
     } catch (e) {
+  // Image attachment is best-effort; share the rich text even if it fails.
+  
       if (!mounted) return;
       setState(() {
         _detailError = '$e';
@@ -136,8 +138,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       _pushLogin();
       return;
     }
-    // Route to the user id that currently owns the displayed contact (admin
-    // switch wins), so the chat follows the contact shown on the page.
+    
+    
     final prop = _property;
     final veh = _vehicle;
     final recipientId = prop?.messageRecipientId ??
@@ -164,17 +166,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     return widget.item.contactPhone;
   }
 
-  /// Sold/Rented listings stay publicly visible but hide contact actions.
+  
   bool get _isClosed {
     final s = _property?.status ?? _vehicle?.status ?? widget.item.status;
     return s == 'Sold' || s == 'Rented';
   }
 
-  /// The fetched property record, when this listing is a property.
+  
   Property? get _property =>
       _detail is Property ? _detail as Property : null;
 
-  /// The fetched vehicle record, when this listing is a vehicle.
+  
   Vehicle? get _vehicle => _detail is Vehicle ? _detail as Vehicle : null;
 
   String? get _videoUrl => _property?.videoUrl ?? _vehicle?.videoUrl;
@@ -204,8 +206,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       if (video?.isNotEmpty == true) video!,
     ].where((e) => e.isNotEmpty).join('\n');
 
-    // Download the first gallery image so it attaches (as a preview) on
-    // WhatsApp, Telegram, Instagram etc. instead of just plain text.
+    
+    
     XFile? image;
     try {
       final src = _allImages.isNotEmpty ? Formatters.imageUrl(_allImages.first) : null;
@@ -220,7 +222,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         }
       }
     } catch (_) {
-      // Image attachment is best-effort; share the rich text even if it fails.
+      
     }
 
     await SharePlus.instance.share(
@@ -381,7 +383,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 }
 
-/// Skeleton/spinner shown while the full listing is fetched from the backend.
+
 class _LoadingView extends StatelessWidget {
   const _LoadingView({required this.images});
 
@@ -410,7 +412,7 @@ class _LoadingView extends StatelessWidget {
   }
 }
 
-/// Error state shown if the detail fetch fails; allows retry.
+
 class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, required this.onRetry, required this.images});
 
@@ -442,9 +444,9 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-/// Shared shell for the loading/error placeholder views: shows the first
-/// image in the app bar area (so the screen isn't a blank flash) and centers
-/// [child] below.
+
+
+
 class _PlaceholderShell extends StatelessWidget {
   const _PlaceholderShell({required this.images, required this.child});
 
@@ -687,8 +689,8 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-/// Card showing the property's address identifiers (parcel, block)
-/// and full location details fetched from the database.
+
+
 class _PropertyInfoCard extends StatelessWidget {
   const _PropertyInfoCard({required this.property});
 
@@ -765,9 +767,9 @@ class _PropertyInfoCard extends StatelessWidget {
   String _num(num value) => value == value.roundToDouble() ? '${value.round()}' : '$value';
 }
 
-/// Renders the full vehicle record fetched from the database, mirroring the
-/// web detail page: key facts, interior/exterior/safety features, technical
-/// specifications, condition, sale info and Ethiopian legal info.
+
+
+
 class _VehicleDetails extends StatelessWidget {
   const _VehicleDetails({required this.vehicle});
 
@@ -922,8 +924,8 @@ class _VehicleDetails extends StatelessWidget {
       rows.where((r) => r.$2.isNotEmpty).toList();
 }
 
-/// A titled card that prints a list of label/value rows (values that are
-/// empty are dropped by the caller).
+
+
 class _DetailCard extends StatelessWidget {
   const _DetailCard({
     required this.title,
@@ -987,7 +989,7 @@ class _DetailCard extends StatelessWidget {
   }
 }
 
-/// A titled wrap of pill chips (used for interior / exterior / safety lists).
+
 class _DetailChips extends StatelessWidget {
   const _DetailChips({required this.title, required this.values});
 
@@ -1035,8 +1037,8 @@ class _DetailChips extends StatelessWidget {
   }
 }
 
-/// Extracts a YouTube video ID from common share/embed URL formats, or
-/// returns the original URL for non-YouTube hosts (e.g. Vimeo).
+
+
 String _videoIdFromUrl(String url) {
   final trimmed = url.trim();
   final uri = Uri.tryParse(trimmed);
@@ -1056,14 +1058,14 @@ String _videoIdFromUrl(String url) {
   return (id == null || id.isEmpty) ? trimmed : id;
 }
 
-/// Card showing the house image thumbnail with a play button that
-/// opens the video in the YouTube app/browser.
+
+
 class _VideoTourCard extends StatefulWidget {
   const _VideoTourCard({required this.videoUrl, this.thumbnailUrl});
 
   final String videoUrl;
 
-  /// The first property image used as the video thumbnail, if available.
+  
   final String? thumbnailUrl;
 
   @override
@@ -1182,7 +1184,7 @@ class _VideoTourCardState extends State<_VideoTourCard> {
   }
 }
 
-/// Interactive map of the property location fetched from the database.
+
 class _LocationCard extends StatelessWidget {
   const _LocationCard({
     required this.latitude,

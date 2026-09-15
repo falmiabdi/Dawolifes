@@ -35,7 +35,7 @@ export default function AgentPostPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Form Fields
+  
   const [title, setTitle] = useState('')
   const [posterType, setPosterType] = useState('Agent')
   const [ownerType, setOwnerType] = useState('Farmer Owner')
@@ -54,7 +54,7 @@ export default function AgentPostPage() {
   const [description, setDescription] = useState('')
   const [features, setFeatures] = useState<string[]>([])
   
-  // Location
+  
   const [region, setRegion] = useState('')
   const [city, setCity] = useState('')
   const [subCity, setSubCity] = useState('')
@@ -84,14 +84,14 @@ export default function AgentPostPage() {
     }
   }, [user])
 
-  // Images
+  
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
   
-  // Video
+  
   const [videoUrl, setVideoUrl] = useState('')
   
-  // Map
+  
   const [latitude, setLatitude] = useState(0)
   const [longitude, setLongitude] = useState(0)
   const [locationDocument, setLocationDocument] = useState('')
@@ -158,7 +158,7 @@ export default function AgentPostPage() {
       setError(err.message || t('failed_upload_images'))
     } finally {
       setUploadingImage(false)
-      // Reset file input so the same file can be re-selected
+      
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -293,7 +293,7 @@ export default function AgentPostPage() {
         <p className="mt-1 text-sm text-slate-500">{t('post_property_note')}</p>
       </div>
 
-      {/* Stepper */}
+      {}
       <div className="flex items-center justify-between">
         {steps.map((s, i) => {
           const Icon = s.icon
@@ -320,13 +320,13 @@ export default function AgentPostPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        {/* Main Panel */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           {error && (
             <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
           )}
 
-          {/* STEP 1: Basic Info */}
+          {}
           {step === 1 && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
@@ -512,7 +512,7 @@ export default function AgentPostPage() {
             </div>
           )}
 
-          {/* STEP 2: Location */}
+          {}
           {step === 2 && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
@@ -555,7 +555,7 @@ export default function AgentPostPage() {
             </div>
           )}
 
-          {/* STEP 3: Media Upload */}
+          {}
           {step === 3 && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
@@ -619,7 +619,7 @@ export default function AgentPostPage() {
             </div>
           )}
 
-          {/* STEP 4: Location Map */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
@@ -707,7 +707,7 @@ export default function AgentPostPage() {
             </div>
           )}
 
-          {/* STEP 5: Review */}
+          {}
           {step === 5 && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-orange-600 font-bold">
@@ -758,7 +758,7 @@ export default function AgentPostPage() {
             </div>
           )}
 
-          {/* Form Actions */}
+          {}
           <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-5">
             <Button
               type="button"
@@ -782,7 +782,7 @@ export default function AgentPostPage() {
           </div>
         </div>
 
-        {/* Sidebar Summary */}
+        {}
         <aside className="rounded-3xl border border-slate-200 bg-white p-5 lg:sticky lg:top-24 lg:self-start space-y-4 shadow-sm">
           <p className="flex items-center gap-2 text-sm font-bold text-slate-800">
             <Building2 className="h-4 w-4 text-orange-500" />

@@ -20,7 +20,7 @@ function isWebhookAuthorized(req: any): boolean {
 
 async function verifyChapaTransaction(txRef: string): Promise<boolean | null> {
   const key = process.env.CHAPA_SECRET_KEY
-  if (!key) return null // not configured — fall back to webhook-provided status
+  if (!key) return null 
   const res = await fetch(`https://api.chapa.co/v1/transaction/verify/${txRef}`, {
     headers: { Authorization: `Bearer ${key}` },
   })
@@ -29,7 +29,7 @@ async function verifyChapaTransaction(txRef: string): Promise<boolean | null> {
   return data?.data?.status === 'success'
 }
 
-// Initialize a Chapa transaction
+
 router.post('/initialize', async (req, res) => {
   try {
     const { title, amount, propertyId, propertyTitle, paymentType, email, firstName, lastName, phoneNumber } = req.body
@@ -40,7 +40,7 @@ router.post('/initialize', async (req, res) => {
 
     const paymentTypeVal = paymentType || 'service_charge'
 
-    // Prevent duplicate payments for the same item + buyer.
+    
     const completed = await prisma.payment.findFirst({
       where: { propertyId: propertyId || null, buyerEmail: email, status: 'Completed', method: 'chapa' },
     })
@@ -69,7 +69,7 @@ router.post('/initialize', async (req, res) => {
     const orderId = uuidv4()
     const checkoutUrl = `https://checkout.chapa.co/checkout/payment/${txRef}`
 
-    // Record payment in DB
+    
     await prisma.payment.create({
       data: {
         id: orderId,
@@ -96,7 +96,7 @@ router.post('/initialize', async (req, res) => {
   }
 })
 
-// Verify a Chapa transaction (webhook / polling)
+
 router.get('/verify', async (req, res) => {
   try {
     const { txRef } = req.query
@@ -116,7 +116,7 @@ router.get('/verify', async (req, res) => {
   }
 })
 
-// Chapa webhook callback
+
 router.post('/webhook', async (req, res) => {
   try {
     const { trx_ref, status } = req.body

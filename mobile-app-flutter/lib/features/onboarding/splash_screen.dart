@@ -3,9 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'onboarding_gate.dart';
 
-/// Launch splash shown on every app open. Displays the DawoLife brand icon
-/// (large icon1 on top and centered) before handing off to the onboarding gate,
-/// so the splash is always visible even when onboarding was already completed.
+
+
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key, required this.storage});
 

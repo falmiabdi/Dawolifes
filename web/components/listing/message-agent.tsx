@@ -73,7 +73,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
     return () => clearInterval(interval)
   }, [open, user, isOwnListing, fetchMessages])
 
-  // Auto-scroll
+  
   useEffect(() => {
     if (messages.length > lastCount.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -139,7 +139,7 @@ export function MessageAgent({ propertyId, agentId, agentName, propertyTitle }: 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 sm:p-4">
           <div className="w-full sm:max-w-md h-[85vh] sm:h-auto sm:max-h-[80vh] flex flex-col rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-xl overflow-hidden">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div>
                 <h3 className="text-sm font-bold text-foreground">{agentName}</h3>

@@ -5,7 +5,7 @@ import '../core/theme/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../data/models/listing_item.dart';
 
-/// Property/vehicle card from image-section.tsx.
+
 class ListingCard extends StatelessWidget {
   const ListingCard({super.key, required this.item, this.onTap});
 

@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/language_provider.dart';
 
-/// Shared widgets for the admin/agent portals.
 
-/// Color-coded status pill matching status-badge.tsx.
+
+
 class StatusChip extends StatelessWidget {
   const StatusChip({super.key, required this.status});
 
@@ -51,7 +51,7 @@ class StatusChip extends StatelessWidget {
   }
 }
 
-/// Metric card used on dashboards and the payments page.
+
 class StatCard extends StatelessWidget {
   const StatCard({
     super.key,
@@ -190,7 +190,7 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-/// Renders a network image with an initial fallback.
+
 class PortalThumb extends StatelessWidget {
   const PortalThumb({super.key, this.url, this.width = 64, this.height = 48, this.icon = Icons.image});
 
@@ -226,7 +226,7 @@ class PortalThumb extends StatelessWidget {
   }
 }
 
-/// Simple info row (label / value).
+
 class InfoRow extends StatelessWidget {
   const InfoRow({super.key, required this.label, required this.value});
 

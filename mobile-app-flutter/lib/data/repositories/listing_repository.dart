@@ -3,7 +3,7 @@ import '../models/listing_item.dart';
 import '../models/property.dart';
 import '../models/vehicle.dart';
 
-/// Listing + favorites API calls, mirroring mobile-home.tsx and favorites.ts.
+
 class ListingRepository {
   ListingRepository(this._api);
 

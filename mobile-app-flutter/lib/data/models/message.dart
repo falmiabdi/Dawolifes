@@ -1,4 +1,4 @@
-/// Conversation entry returned by GET /api/messages/inbox.
+
 class Conversation {
   const Conversation({
     required this.id,
@@ -38,7 +38,7 @@ class Conversation {
       );
 }
 
-/// Chat message model.
+
 class ChatMessage {
   const ChatMessage({
     required this.id,

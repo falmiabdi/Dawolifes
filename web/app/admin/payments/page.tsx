@@ -104,7 +104,7 @@ export default function AdminPaymentsPage() {
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           label="Total Revenue"
@@ -140,7 +140,7 @@ export default function AdminPaymentsPage() {
         />
       </div>
 
-      {/* Filters */}
+      {}
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-slate-400" />
         {["", "Completed", "Pending", "Failed"].map((f) => (
@@ -158,7 +158,7 @@ export default function AdminPaymentsPage() {
         ))}
       </div>
 
-      {/* Transaction Log Table */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-slate-900">All Transactions</h3>
@@ -231,7 +231,7 @@ export default function AdminPaymentsPage() {
               </table>
             </div>
 
-            {/* Pagination */}
+            {}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-4">
                 <button

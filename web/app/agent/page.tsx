@@ -21,7 +21,7 @@ export default function AgentDashboardPage() {
     if (!user?.id) return
     const token = document.cookie.split('; ').find(r => r.startsWith('token='))?.split('=')[1]
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-    // Use /api/agent/properties and /api/agent/vehicles — these return ALL statuses for the agent
+    
     fetch(`${getApiUrl()}/api/agent/properties`, { credentials: 'include', headers })
       .then((res) => res.json())
       .then((data) => setProperties(data.properties || []))
@@ -30,7 +30,7 @@ export default function AgentDashboardPage() {
       .then((res) => res.json())
       .then((data) => setVehicles(data.vehicles || []))
       .catch(() => {})
-    // Announcements are public (mirrors the mobile dashboard section)
+    
     fetch(`${getApiUrl()}/api/announcements`)
       .then((res) => res.json())
       .then((data) => setAnnouncements((data.announcements || []).slice(0, 3)))
@@ -55,7 +55,7 @@ export default function AgentDashboardPage() {
   const cfg = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending
   const StatusIcon = cfg.icon
 
-  // Merge recent listings into a single activity feed (mirrors mobile: top 5).
+  
   const recentActivity = [
     ...properties.map((p: any) => ({
       key: `p:${p.id}`, kind: t('property'), title: p.title || '', status: p.status, createdAt: new Date(p.createdAt).getTime(),

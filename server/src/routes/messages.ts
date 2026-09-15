@@ -6,7 +6,7 @@ import { isValidUuid } from '../utils/validation.js'
 
 const router = Router()
 
-// Unread message count for the current user (must be before /:propertyId)
+
 router.get('/unread', authMiddleware, async (req, res) => {
   try {
     const count = await prisma.message.count({
@@ -18,7 +18,7 @@ router.get('/unread', authMiddleware, async (req, res) => {
   }
 })
 
-// Inbox for the current user
+
 router.get('/inbox', authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId
@@ -81,7 +81,7 @@ router.get('/inbox', authMiddleware, async (req, res) => {
   }
 })
 
-// Get messages for a property (participants only)
+
 router.get('/:propertyId', authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.userId
@@ -98,7 +98,7 @@ router.get('/:propertyId', authMiddleware, async (req, res) => {
   }
 })
 
-// Send a message
+
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { propertyId, recipientId, content } = req.body
@@ -144,7 +144,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Mark message as read (recipient only)
+
 router.patch('/:id/read', authMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

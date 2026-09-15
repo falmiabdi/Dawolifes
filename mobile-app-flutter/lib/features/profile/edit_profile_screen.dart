@@ -8,9 +8,9 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../agent/post_form_widgets.dart';
 
-/// Edit profile screen mirroring the web app's profile-photo uploader +
-/// `PATCH /api/auth/profile`. Lets the user update their name, phone and
-/// profile photo (uploaded via `/api/agent/upload` then saved to the session).
+
+
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -50,7 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final url = await pickAndUploadImage(api, endpoint: '/api/agent/upload', field: 'image');
       if (!mounted) return;
       setState(() => _photoUrl = url);
-    } on ImagePickCancelled {
+} on ImagePickCancelled {
       // user backed out
     } on ApiException catch (e) {
       if (!mounted) return;

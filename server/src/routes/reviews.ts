@@ -13,8 +13,8 @@ const agentPublicSelect = {
   role: true,
 }
 
-// Buyer is only allowed to rate an agent after a conversation/inquiry exists
-// (a message exchanged between the two on any listing).
+
+
 async function hasContactedAgent(reviewerId: string, agentId: string): Promise<boolean> {
   const lead = await prisma.message.findFirst({
     where: {
@@ -28,7 +28,7 @@ async function hasContactedAgent(reviewerId: string, agentId: string): Promise<b
   return !!lead
 }
 
-// Create or update a review for an agent (buyers only, requires prior contact)
+
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { agentId, rating, comment } = req.body
@@ -82,7 +82,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 })
 
-// Reviews for an agent with aggregate rating
+
 router.get('/agent/:agentId', async (req, res) => {
   try {
     if (!isValidUuid(req.params.agentId)) {
@@ -112,7 +112,7 @@ router.get('/agent/:agentId', async (req, res) => {
   }
 })
 
-// Delete a review (only by its author)
+
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

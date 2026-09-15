@@ -1,14 +1,14 @@
 import '../../core/network/api_client.dart';
 import '../models/user.dart';
 
-/// Outcome of a registration request.
-///
-/// Mirrors the web flow: both `/api/auth/register-buyer` and `/api/auth/register`
-/// only persist a pending registration + send an OTP. The actual account is
-/// created when the OTP is verified via [verifyOtp].
-///
-/// `devOtp` is only present in non-production responses and is auto-filled by
-/// the web app's verify-email page; the Flutter app does the same.
+
+
+
+
+
+
+
+
 class RegistrationResult {
   const RegistrationResult({required this.message, this.devOtp});
 
@@ -16,11 +16,11 @@ class RegistrationResult {
   final String? devOtp;
 }
 
-/// Outcome of an OTP verification request.
-///
-/// The backend returns `{ message }` for agents, and additionally
-/// `{ accessToken, refreshToken, user }` for buyers (role === 'user'), which
-/// logs them in immediately. Agents remain `Pending` and must sign in.
+
+
+
+
+
 class VerifyOtpResult {
   const VerifyOtpResult({required this.message, this.user});
 
@@ -28,7 +28,7 @@ class VerifyOtpResult {
   final SessionUser? user;
 }
 
-/// Auth API calls, mirroring auth-guard.tsx + verify-email/page.tsx.
+
 class AuthRepository {
   AuthRepository(this._api);
 
@@ -52,11 +52,11 @@ class AuthRepository {
     return SessionUser.fromJson((data['user'] as Map<String, dynamic>?) ?? {});
   }
 
-  /// Authenticates using a Firebase ID token (Google or Email/Password).
-  ///
-  /// The server verifies the token signature, audience, and expiration.
-  /// If the token has `email_verified: true`, session tokens are returned and saved.
-  /// If `email_verified: false`, the user is returned without session tokens.
+  
+  
+  
+  
+  
   Future<VerifyOtpResult> signInWithFirebase({
     required String idToken,
     String role = 'user',
@@ -85,7 +85,7 @@ class AuthRepository {
     );
   }
 
-  /// Buyer / user registration. Pending until [verifyOtp] is confirmed.
+  
   Future<RegistrationResult> registerBuyer({
     required String name,
     required String email,
@@ -101,8 +101,8 @@ class AuthRepository {
     return _registration(data);
   }
 
-  /// Seller / agent / owner registration. Pending + awaiting admin approval
-  /// after verify only for agents; owners are approved immediately.
+  
+  
   Future<RegistrationResult> registerAgent({
     required String username,
     required String email,
@@ -118,8 +118,8 @@ class AuthRepository {
     return _registration(data);
   }
 
-  /// Confirms the 6-digit OTP sent to [email]. For buyer accounts the server
-  /// returns an access token + session, which is persisted for immediate login.
+  
+  
   Future<VerifyOtpResult> verifyOtp({
     required String email,
     required String otp,
@@ -141,15 +141,15 @@ class AuthRepository {
     return VerifyOtpResult(message: '${data['message'] ?? ''}', user: user);
   }
 
-  /// Regenerates + resends the OTP for [email] (60s cooldown enforced client-side).
+  
   Future<RegistrationResult> resendOtp({required String email}) async {
     final data = await _api.post('/api/auth/resend-otp', {'email': email}) as Map<String, dynamic>;
     return _registration(data);
   }
 
-  /// Checks whether [email] was verified via the emailed link (or OTP). For
-  /// buyers the server returns an access token + session, mirroring [verifyOtp],
-  /// so the user can go straight to the dashboard after clicking the link.
+  
+  
+  
   Future<VerifyOtpResult> checkVerification({required String email}) async {
     final data = await _api.post('/api/auth/check-verification', {
       'email': email,
@@ -177,8 +177,8 @@ class AuthRepository {
     });
   }
 
-  /// Requests a password reset code for [email]. Returns the server message
-  /// (identical whether or not the account exists) plus any dev OTP.
+  
+  
   Future<RegistrationResult> forgotPassword({required String email}) async {
     final data = await _api.post('/api/auth/forgot-password', {
       'email': email,
@@ -186,7 +186,7 @@ class AuthRepository {
     return _registration(data);
   }
 
-  /// Resets the password with the emailed [otp] and the new password.
+  
   Future<String> resetPassword({
     required String email,
     required String otp,
@@ -200,8 +200,8 @@ class AuthRepository {
     return '${data['message'] ?? ''}';
   }
 
-  /// Updates the authenticated user's profile (name, phone, profile photo)
-  /// via `PATCH /api/auth/profile`, returning the updated [SessionUser].
+  
+  
   Future<SessionUser> updateProfile({
     String? name,
     String? phone,

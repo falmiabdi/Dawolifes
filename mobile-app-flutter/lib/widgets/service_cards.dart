@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/language_provider.dart';
 
-/// Three informational cards matching the website sections.
+
 class ServiceCards extends StatelessWidget {
   const ServiceCards({
     super.key,

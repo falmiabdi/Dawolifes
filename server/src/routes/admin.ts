@@ -61,10 +61,7 @@ function flattenAgent(user: any) {
     tinNumber: professionalInfo.tinNumber || '',
   }
 }
-
 const router = Router()
-
-// Get all agents (with search and status filter)
 router.get('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const where: any = { role: { in: ['agent', 'owner'] } }
@@ -93,7 +90,6 @@ router.get('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Unified agent action handler
 router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { action, id, rejectionReason } = req.body
@@ -161,14 +157,14 @@ router.post('/agents', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Delete a user along with all records that reference them (messages, saved
-// items, notifications) to avoid foreign-key failures.
-//
-// Successfully posted listings are PRESERVED for agents/owners: requirements
-// state posted listings may only be edited, never removed. They are reassigned
-// to the acting admin so they stay live. Only unposted (Draft/Pending/Rejected)
-// listings are hard-deleted. The Firebase Authentication account is also
-// deleted so the login no longer exists.
+
+
+
+
+
+
+
+
 async function deleteUserCascade(userId: string, actingAdminId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) throw new Error('User not found')
@@ -189,7 +185,7 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
   const postedVehicleIds = vehicles.filter((v) => POSTED.includes(v.status)).map((v) => v.id)
   const deleteVehicleIds = vehicles.filter((v) => !POSTED.includes(v.status)).map((v) => v.id)
 
-  // Preserve posted listings by handing them to the acting admin.
+  
   if (postedPropertyIds.length > 0) {
     const admin = await resolveAdminContact(actingAdminId)
     await prisma.property.updateMany({
@@ -218,7 +214,7 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
     })
   }
 
-  // Hard-delete only the listings that were never successfully posted.
+  
   if (deletePropertyIds.length > 0) {
     await prisma.property.deleteMany({ where: { id: { in: deletePropertyIds } } })
   }
@@ -234,8 +230,8 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
   await prisma.savedItem.deleteMany({ where: { userId } })
   await prisma.notification.deleteMany({ where: { userId } })
 
-  // Remove the Firebase Authentication account (best-effort; a missing Firebase
-  // setup must not block the DB deletion).
+  
+  
   if (user.firebaseUid) {
     try {
       await getAuth(initializeFirebaseAdmin()).deleteUser(user.firebaseUid)
@@ -247,15 +243,15 @@ async function deleteUserCascade(userId: string, actingAdminId: string) {
   await prisma.user.delete({ where: { id: userId } })
 }
 
-// Resolve the admin's own profile contact (name, phone, photo). Falling back
-// to the configured numbers when the profile phone is unset.
+
+
 async function resolveAdminContact(_userId: string) {
   return resolveSystemAdmin()
 }
 
-// Toggle the full contact identity (name + phone + photo) shown on a listing
-// between the admin account and the agent's account. The identity that is
-// currently displayed determines the next one: admin ⇄ agent.
+
+
+
 router.patch('/properties/:id/contact', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const property = await prisma.property.findUnique({
@@ -335,7 +331,7 @@ router.patch('/vehicles/:id/contact', authMiddleware, adminMiddleware, async (re
   }
 })
 
-// Get all properties (admin)
+
 router.get('/properties', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const where: any = {}
@@ -363,7 +359,7 @@ router.get('/properties', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Approve property
+
 router.patch('/properties/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const property = await prisma.property.findUnique({
@@ -390,7 +386,7 @@ router.patch('/properties/:id/approve', authMiddleware, adminMiddleware, async (
   }
 })
 
-// Reject property
+
 router.patch('/properties/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const property = await prisma.property.findUnique({
@@ -418,7 +414,7 @@ router.patch('/properties/:id/reject', authMiddleware, adminMiddleware, async (r
   }
 })
 
-// Set listing lifecycle status on a property (Sold/Rented, or back to Approved)
+
 router.patch('/properties/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const status = req.body?.status as string
@@ -454,7 +450,7 @@ router.patch('/properties/:id/status', authMiddleware, adminMiddleware, async (r
   }
 })
 
-// Get all vehicles (admin)
+
 router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const where: any = {}
@@ -482,7 +478,7 @@ router.get('/vehicles', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Approve vehicle
+
 router.patch('/vehicles/:id/approve', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
@@ -506,7 +502,7 @@ router.patch('/vehicles/:id/approve', authMiddleware, adminMiddleware, async (re
   }
 })
 
-// Reject vehicle
+
 router.patch('/vehicles/:id/reject', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id } })
@@ -531,7 +527,7 @@ router.patch('/vehicles/:id/reject', authMiddleware, adminMiddleware, async (req
   }
 })
 
-// Set listing lifecycle status on a vehicle (Sold/Rented, or back to Approved)
+
 router.patch('/vehicles/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const status = req.body?.status as string
@@ -567,7 +563,7 @@ router.patch('/vehicles/:id/status', authMiddleware, adminMiddleware, async (req
   }
 })
 
-// Get all users
+
 router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
@@ -601,7 +597,7 @@ router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Unified user action handler
+
 router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { action, id } = req.body
@@ -639,7 +635,7 @@ router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Update admin's own profile
+
 router.put('/profile', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { phone, profilePhoto, email } = req.body
@@ -664,7 +660,7 @@ router.put('/profile', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Create a new admin (root admin only)
+
 router.post('/create', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const currentUser = await prisma.user.findUnique({ where: { id: req.user!.userId } })
@@ -696,10 +692,6 @@ router.post('/create', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// Lightweight single-request overview for the admin dashboard home page.
-// Returns counts, payment stats, and the 5 most recent agents + payments — all
-// in one round trip and with heavy fields (images, documents, profile JSON)
-// explicitly omitted so the payload stays small.
 router.get('/overview', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
     const [agentCount, pendingAgentCount, propertyCount, pendingPropertyCount, vehicleCount, pendingVehicleCount] =
@@ -774,7 +766,7 @@ router.get('/overview', authMiddleware, adminMiddleware, async (_req, res) => {
   }
 })
 
-// Get admin stats
+
 router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
   try {
     const [userCount, propertyCount, paymentCount] = await Promise.all([
@@ -819,8 +811,8 @@ router.get('/stats', authMiddleware, adminMiddleware, async (_req, res) => {
   }
 })
 
-// ─── Resend test ─────────────────────────────────────────────────────────────
-// Admin-only. Sends a test email via Resend to verify the configuration.
+
+
 
 router.post('/resend-test', authMiddleware, async (_req, res) => {
   try {

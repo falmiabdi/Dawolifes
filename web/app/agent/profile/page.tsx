@@ -28,7 +28,7 @@ export default function AgentProfilePage() {
       const data = await res.json()
       setUser(data.user)
     } catch {
-      // Fall back to auth user data if profile endpoint fails
+      
       setUser(authUser)
     }
   }, [authUser, getToken])

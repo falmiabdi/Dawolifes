@@ -16,7 +16,7 @@ import '../features/saved/saved_screen.dart';
 import '../features/sell/sell_screen.dart';
 import '../providers/auth_provider.dart';
 
-/// Root shell with the bottom navigation, mirroring bottom-nav.tsx.
+
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -35,9 +35,9 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadUnread());
-    // Mirror the web bottom nav: poll the unread message count every 30s.
+    
     _unreadTimer = Timer.periodic(const Duration(seconds: 30), (_) => _loadUnread());
-    // Real-time: reconnect on login, and refresh the badge on socket events.
+    
     _wsSub = context.read<WebSocketService>().messages.listen((msg) {
       if (!mounted) return;
       switch (msg.type) {
@@ -70,7 +70,9 @@ class _AppShellState extends State<AppShell> {
       final count = await context.read<MessageRepository>().fetchUnreadCount();
       if (mounted && count != _unread) setState(() => _unread = count);
     } catch (_) {
-      // Ignore polling failures.
+  // Ignore polling failures.
+  
+      
     }
   }
 
@@ -132,12 +134,12 @@ class _AppShellState extends State<AppShell> {
 
   void _onTap(BuildContext context, int index, AuthProvider auth) {
     switch (index) {
-      case 1: // Saved
+      case 1: 
         if (!auth.isLoggedIn) {
           _push(context, const SignupScreen());
           return;
         }
-      case 3: // Messages
+      case 3: 
         if (!auth.isLoggedIn) {
           _pushLogin(context);
           return;

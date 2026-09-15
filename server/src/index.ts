@@ -34,16 +34,16 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 4000
 
-// Self-hosted (cPanel) installs store uploads on local disk and serve them
-// back from /uploads. Cloudinary stays the default for Render/Railway.
+
+
 ensureUploadDir()
 if (isLocalStorage()) {
   app.use('/uploads', express.static(uploadDirPath()))
   console.log('📁 Serving uploaded files from disk at /uploads')
 }
 
-// Request logging middleware (path only — never log query strings which can
-// contain payment references or verification codes).
+
+
 app.use((req, res, next) => {
   const start = Date.now()
   const path = (req.originalUrl || req.url || '/').split('?')[0]
@@ -53,7 +53,7 @@ app.use((req, res, next) => {
   next()
 })
 
-// Middleware
+
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:4000',
@@ -91,7 +91,7 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// API Routes
+
 app.use('/api/auth', authRoutes)
 app.use('/api/properties', propertyRoutes)
 app.use('/api/payments', paymentRoutes)
@@ -112,7 +112,7 @@ app.use('/api/reviews', reviewRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/permissions', permissionRoutes)
 
-// Root route
+
 app.get('/', (_req, res) => {
   res.json({
     name: 'DawoLife API',
@@ -141,7 +141,7 @@ app.get('/', (_req, res) => {
   })
 })
 
-// Health check
+
 app.get(['/api/health', '/health'], async (_req, res) => {
   let dbState = 'disconnected'
   try {
@@ -157,7 +157,7 @@ app.get(['/api/health', '/health'], async (_req, res) => {
   })
 })
 
-// Start server
+
 async function start() {
   const db = await connectDB()
   if (db) {
@@ -171,8 +171,8 @@ async function start() {
     console.error('⚠️ Failed to ensure root admin:', e?.message || e)
   }
 
-  // DEBUG: reveals which email transport will be used + what BASE_URL is set.
-  // No secrets exposed — only boolean flags + the masked key prefix.
+  
+  
   app.get('/api/debug/email', (_req, res) => {
     const mask = (v: string | undefined) => (v ? `${v.slice(0, 6)}…${v.slice(-4)} (len ${v.length})` : '(unset)')
     res.json({
@@ -188,7 +188,7 @@ async function start() {
     })
   })
 
-  // 404 + error handlers must be LAST after all routes
+  
   app.use(notFoundHandler)
   app.use(errorHandler)
 
@@ -201,8 +201,8 @@ async function start() {
       console.log('Email transport: NOT CONFIGURED — emails will be skipped (set RESEND_API_KEY + RESEND_FROM_EMAIL)')
     }
 
-    // Prevent Render free-tier from spinning down the web server after 15 min
-    // of inactivity. A self-ping every 5 min keeps the instance warm.
+    
+    
     const selfUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`
     setInterval(() => {
       fetch(`${selfUrl}/api/health`).catch(() => {})

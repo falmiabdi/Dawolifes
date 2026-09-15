@@ -263,8 +263,8 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
       [field]: f[field].includes(item) ? f[field].filter((x) => x !== item) : [...f[field], item],
     }))
 
-  // Same custom-feature pattern as the house/property wizard: type a value,
-  // press Enter or "Add", and it is appended to the selected features.
+  
+  
   const addCustomFeatureValue = (
     field: "safetyFeatures" | "interiorFeatures" | "exteriorFeatures",
     value: string,
@@ -277,8 +277,8 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
     setter("")
   }
 
-  // Edit mode: prefill the whole form from the existing vehicle so every field
-  // comes back exactly as saved (same behaviour as the mobile edit form).
+  
+  
   const mapVehicleToForm = (v: Record<string, any>): VehicleFormState => ({
     title: v.title || "",
     listingType: v.listingType || "For Sale",
@@ -382,7 +382,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [vehicleId])
 
   const next = () => {
@@ -624,7 +624,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
         </div>
       )}
 
-      {/* Stepper */}
+      {}
       <div className="mt-8 flex items-center justify-between">
         {steps.map((s, i) => {
           const Icon = s.icon
@@ -668,7 +668,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-        {/* Form panel */}
+        {}
         <div className="rounded-2xl border border-border bg-card p-6">
           {step === 0 && (
             <div className="space-y-5">
@@ -1372,7 +1372,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
             </div>
           )}
 
-{/* Nav buttons */}
+{}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
             <Button variant="outline" onClick={back} disabled={step === 0 || submitting} className="rounded-xl">
               <ArrowLeft className="h-4 w-4" /> {t('back')}
@@ -1405,7 +1405,7 @@ export function PostVehicleWizard({ vehicleId }: { vehicleId?: string } = {}) {
           </div>
         </div>
 
-        {/* Live summary */}
+        {}
         <aside className="rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24 lg:self-start">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Car className="h-4 w-4 text-primary" /> {t('vehicle_summary')}
@@ -1449,9 +1449,9 @@ function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string })
   )
 }
 
-// Feature chips with an "Add Custom Feature" input — the same UX pattern the
-// house/property wizard uses. Custom values are shown as selected chips and
-// can be removed by clicking them again.
+
+
+
 function FeatureGroup({
   title,
   options,

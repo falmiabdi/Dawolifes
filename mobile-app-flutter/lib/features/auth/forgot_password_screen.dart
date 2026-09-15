@@ -9,11 +9,11 @@ import 'auth_shell.dart';
 import 'login_screen.dart';
 import 'reset_password_screen.dart';
 
-/// Forgot password screen mirroring a standard reset flow.
-///
-/// The user enters their email; the backend mails a 6-digit reset code (in
-/// development it also echoes a `devOtp` which is auto-filled, matching the
-/// verify-email screen). On success the user advances to [ResetPasswordScreen].
+
+
+
+
+
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 

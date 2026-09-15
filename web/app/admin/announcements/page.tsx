@@ -141,7 +141,7 @@ export default function AdminAnnouncementsPage() {
         </p>
       </div>
 
-      {/* Create / edit form */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         {creating ? (
           <div className="space-y-4">
@@ -201,7 +201,7 @@ export default function AdminAnnouncementsPage() {
         )}
       </div>
 
-      {/* List */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-slate-900">Published Announcements</h2>

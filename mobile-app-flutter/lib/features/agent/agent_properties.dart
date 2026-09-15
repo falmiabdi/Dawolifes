@@ -12,7 +12,7 @@ import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 import 'agent_post_property.dart';
 
-/// My properties mirroring app/agent/properties/page.tsx.
+
 class AgentPropertiesScreen extends StatefulWidget {
   const AgentPropertiesScreen({super.key});
 

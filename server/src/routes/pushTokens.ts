@@ -4,8 +4,8 @@ import { prisma } from '../lib/prisma.js'
 
 const router = Router()
 
-// Register (upsert) the caller's FCM device token so they can receive push
-// notifications. Sending the same token again just updates the platform.
+
+
 router.post('/register', authMiddleware, async (req, res) => {
   try {
     const { token, platform = 'android' } = req.body ?? {}
@@ -32,7 +32,7 @@ router.post('/register', authMiddleware, async (req, res) => {
   }
 })
 
-// Remove a device token (e.g. on logout or when the token is invalidated).
+
 router.delete('/:token', authMiddleware, async (req, res) => {
   try {
     await prisma.deviceToken.deleteMany({

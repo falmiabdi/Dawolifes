@@ -19,7 +19,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
     return token ? { Authorization: `Bearer ${token}` } : {}
   }, [getToken])
 
-  // Fetch userId from session
+  
   useEffect(() => {
     let cancelled = false
 
@@ -45,7 +45,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
     }
   }, [getAuthHeaders])
 
-  // Poll unread count
+  
   useEffect(() => {
     if (!userId) return
     let cancelled = false
@@ -82,7 +82,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
     }
   }, [userId, getAuthHeaders])
 
-  // WebSocket live updates
+  
   useEffect(() => {
     if (!userId) return
 

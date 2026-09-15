@@ -8,7 +8,6 @@ async function broadcastUnreadCount(userId: string) {
     broadcastToUser(userId, { type: 'unread_count', count })
   } catch {}
 }
-
 export async function createAndBroadcastNotification(
   userId: string,
   title: string,
@@ -40,14 +39,10 @@ export async function createAndBroadcastNotification(
     },
   })
 
-  // Fire-and-forget: FCM failures must never break the caller.
   await sendPushToUser(userId, title, body, type, data)
-
   broadcastUnreadCount(userId).catch(() => {})
-
   return notification
 }
-
 export async function notifyAdmins(
   title: string,
   body: string,

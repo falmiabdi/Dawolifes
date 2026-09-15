@@ -9,11 +9,11 @@ import '../../providers/language_provider.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 
-/// Reset password screen.
-///
-/// The user enters the 6-digit code emailed by the backend (in development a
-/// `devOtp` is auto-filled) plus a new password, then resets it via
-/// `/api/auth/reset-password`. On success they are returned to the login screen.
+
+
+
+
+
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key, required this.email, this.devOtp});
 

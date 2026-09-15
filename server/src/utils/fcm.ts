@@ -2,15 +2,15 @@ import { getMessaging } from 'firebase-admin/messaging'
 import { prisma } from '../lib/prisma.js'
 import { initializeFirebaseAdmin } from './firebase.js'
 
-/**
- * Sends an FCM push notification to every device registered to [userId].
- *
- * Failures are intentionally swallowed: push delivery is best-effort on top of
- * the in-app notification (WebSocket + DB). A missing/expired token simply
- * means that device misses this push; stale tokens are removed so the table
- * doesn't accumulate junk. If the Firebase Admin app has no service-account
- * credentials configured, `getMessaging()` throws and we log once and bail.
- */
+
+
+
+
+
+
+
+
+
 export async function sendPushToUser(
   userId: string,
   title: string,
@@ -59,7 +59,7 @@ export async function sendPushToUser(
       }
     }
   } catch (err: any) {
-    // No credentials / network error / FCM ApiUsageError: don't break the app.
+    
     console.warn(`[FCM] Push send skipped for user ${userId}: ${err.message}`)
   }
 }

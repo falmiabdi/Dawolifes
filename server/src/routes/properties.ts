@@ -18,13 +18,13 @@ const ALLOWED_UPDATE_FIELDS = [
 
 const agentSelect = { id: true, username: true, email: true, phone: true, profilePhoto: true }
 
-// Get all properties (public)
+
 router.get('/', async (req, res) => {
   try {
     const where: any = { status: { in: ['Approved', 'Sold', 'Rented'] } }
     if (req.query.city) where.city = req.query.city
     if (req.query.type) where.type = req.query.type
-    if (req.query.agentId) where.agentId = req.query.agentId  // allow filtering by agent
+    if (req.query.agentId) where.agentId = req.query.agentId  
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 100))
     const [total, properties] = await withPrismaRetry(async () => {
@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Get property by ID
+
 router.get('/:id', async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
@@ -61,16 +61,16 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Property not found' })
     }
 
-    // Only expose approved listings publicly; owner and admins may preview
-    // drafts/pending/rejected listings via their own dashboards.
+    
+    
     const caller = getRequestUserId(req)
     const isOwnerOrAdmin = caller && (caller.role === 'admin' || caller.userId === property.agentId)
     if (property.status !== 'Approved' && property.status !== 'Sold' && property.status !== 'Rented' && !isOwnerOrAdmin) {
       return res.status(404).json({ message: 'Property not found' })
     }
 
-    // Floor/house number are private address details: only the seller and
-    // admins may see them. Public users must never receive these fields.
+    
+    
     if (!isOwnerOrAdmin) {
       const { floorNumber: _floor, houseNumber: _house, ...publicProperty } = property
       return res.json({ property: publicProperty })
@@ -82,7 +82,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Create property (agent only)
+
 router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     const parsed = propertySchema.safeParse(req.body)
@@ -90,8 +90,8 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
       return res.status(400).json({ message: 'Validation error', errors: parsed.error.flatten() })
     }
 
-    // Both web and mobile require at least 3 photos to list — enforce the same
-    // rule server-side so the check cannot be bypassed by a direct API call.
+    
+    
     const photos = Array.isArray(parsed.data.images) ? parsed.data.images.filter((u: string) => u && u.trim()) : []
     if (photos.length < 3) {
       return res.status(400).json({ message: 'At least 3 photos are required to list a property.' })
@@ -107,9 +107,9 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
 
     const isAdmin = currentUser?.role === 'admin'
 
-    // Centralized contact switching: default is the Admin (System Admin) number,
-    // the poster may select Property Owner or Property Agent instead. Buyer
-    // messages always route to the real recipient behind the displayed identity.
+    
+    
+    
     const contactMode = parsed.data.contactMode || 'Admin'
     let agentName = contactName || currentUser?.username || req.user!.email
     let displayPhone: string | null = contactPhone || currentUser?.phone || null
@@ -153,7 +153,7 @@ router.post('/', authMiddleware, agentMiddleware, requireActiveUser, async (req,
   }
 })
 
-// Update property
+
 router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
@@ -192,7 +192,7 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
       }
     }
 
-    // Recalculate the displayed contact when the poster (or admin) switches modes.
+    
     if (parsed.data.contactMode) {
       if (parsed.data.contactMode === 'Admin') {
         const admin = await resolveSystemAdmin()
@@ -221,7 +221,7 @@ router.patch('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (
   }
 })
 
-// Delete property
+
 router.delete('/:id', authMiddleware, agentMiddleware, requireActiveUser, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {

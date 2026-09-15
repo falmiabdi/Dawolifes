@@ -61,7 +61,7 @@ const _stepLabels = [
   'photos_description',
 ];
 
-/// Post/edit vehicle wizard (6-step) mirroring components/post/post-vehicle-wizard.tsx.
+
 class AgentPostVehicleScreen extends StatefulWidget {
   const AgentPostVehicleScreen({super.key, this.edit});
 
@@ -226,7 +226,7 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
     }
   }
 
-  /// Auto-fills region/city from the poster's saved profile.
+  
   Future<void> _prefillFromProfile() async {
     try {
       final profile = await context.read<AgentRepository>().fetchProfile();
@@ -298,7 +298,7 @@ class _AgentPostVehicleScreenState extends State<AgentPostVehicleScreen> {
       final url = await pickAndUploadImage(context.read<ApiClient>(), endpoint: '/api/agent/upload');
       if (!mounted) return;
       setState(() => _images = [..._images, url]);
-    } on ImagePickCancelled {
+} on ImagePickCancelled {
       // user backed out; nothing to do
     } catch (e) {
       if (!mounted) return;

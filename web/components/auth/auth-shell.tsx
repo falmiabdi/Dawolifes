@@ -24,14 +24,14 @@ export function AuthShell({
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-950">
-      {/* Background image */}
+      {}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${backgroundUrl})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/35 to-black/55" />
 
-      {/* Header */}
+      {}
       <header className="relative z-10 border-b border-white/10 bg-black/30 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo dark />
@@ -48,7 +48,7 @@ export function AuthShell({
         </div>
       </header>
 
-      {/* Main content */}
+      {}
       <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
         <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/95 p-6 shadow-2xl shadow-black/40 backdrop-blur sm:p-8">
           <h1 className={titleClassName}>{title}</h1>

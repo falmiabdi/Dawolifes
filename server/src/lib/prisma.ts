@@ -45,7 +45,7 @@ function isRetryableConnectionError(error: unknown): boolean {
 
 const RETRY_BACKOFFS_MS = [500, 1000, 2000, 4000, 8000, 15000]
 
-/** Retries an operation when Neon drops an idle pooled connection or is waking from autosuspend. */
+
 export async function withPrismaRetry<T>(operation: () => Promise<T>): Promise<T> {
   let lastError: unknown
   for (const delay of RETRY_BACKOFFS_MS) {
@@ -67,7 +67,7 @@ export async function withPrismaRetry<T>(operation: () => Promise<T>): Promise<T
 const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000
 let keepAliveStarted = false
 
-/** Pings the DB before Neon's autosuspend threshold so pooled connections stay warm. */
+
 export function startKeepAlive() {
   if (keepAliveStarted) return
   keepAliveStarted = true

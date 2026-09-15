@@ -30,7 +30,7 @@ async function getSettings() {
   return created
 }
 
-// Public: fetch app-wide contact / social settings (no auth required).
+
 router.get('/', async (_req, res) => {
   try {
     const settings = await getSettings()
@@ -41,7 +41,7 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// Admin: update app-wide contact / social settings.
+
 router.put('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const {

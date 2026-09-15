@@ -15,17 +15,17 @@ import '../admin/admin_agents.dart';
 import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
-/// Notifications list mirroring components/notifications/notification-list.tsx.
-///
-/// Stays fresh via real-time WebSocket pushes (same as the web app):
-/// new notifications and unread-count changes reload the list, and a live
-/// status pill mirrors the web sidebar's connection indicator. The underlying
-/// WS client reconnects automatically with exponential backoff.
+
+
+
+
+
+
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key, this.entityType, this.entityId});
 
-  /// Set when arriving from a push notification tap; the destination
-  /// listing/agent is resolved and opened after the list loads.
+  
+  
   final String? entityType;
   final String? entityId;
 
@@ -301,7 +301,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 }
 
-/// Thin live/offline bar mirroring the web app's connection indicator.
+
 class _ConnectionPill extends StatelessWidget {
   const _ConnectionPill({required this.state});
 

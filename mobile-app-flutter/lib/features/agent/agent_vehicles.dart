@@ -12,7 +12,7 @@ import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 import 'agent_post_vehicle.dart';
 
-/// My vehicles mirroring app/agent/vehicles/page.tsx.
+
 class AgentVehiclesScreen extends StatefulWidget {
   const AgentVehiclesScreen({super.key});
 

@@ -24,10 +24,10 @@ import 'agent_properties.dart';
 import 'agent_settings.dart';
 import 'agent_vehicles.dart';
 
-/// Agent portal hub mirroring the agent sidebar in dashboard/sidebar.tsx.
-///
-/// All agents (Pending/Approved/Rejected) see the full hub. Post features
-/// (Post Property, Post Vehicle) are locked until the profile is approved.
+
+
+
+
 class AgentPortalScreen extends StatefulWidget {
   const AgentPortalScreen({super.key});
 
@@ -47,10 +47,10 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
   @override
   void initState() {
     super.initState();
-    // Mirror the web sidebar: poll the unread notification count every 30s.
+    
     _loadUnread();
     _unreadTimer = Timer.periodic(const Duration(seconds: 30), (_) => _loadUnread());
-    // Real-time: refresh the badge on socket events.
+    
     _wsSub = context.read<WebSocketService>().messages.listen((msg) {
       if (!mounted) return;
       switch (msg.type) {
@@ -75,19 +75,23 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
   }
 
   Future<void> _loadUnread() async {
-    // Mirror the web sidebar: poll unread notification + message counts every
-    // 30s so the agent portal badges stay fresh.
+    
+    
     try {
       final count = await _notifRepo.fetchUnreadCount();
       if (mounted && count != _unread) setState(() => _unread = count);
     } catch (_) {
-      // Ignore polling failures.
+  // Ignore polling failures.
+  
+      
     }
     try {
       final count = await _msgRepo.fetchUnreadCount();
       if (mounted && count != _msgUnread) setState(() => _msgUnread = count);
     } catch (_) {
-      // Ignore polling failures.
+  // Ignore polling failures.
+  
+      
     }
   }
 
@@ -102,10 +106,10 @@ class _AgentPortalScreenState extends State<AgentPortalScreen> {
     final l10n = context.watch<LanguageProvider>();
     final t = l10n.t;
 
-    // Defense-in-depth: an admin should never render inside the agent portal.
-    // All normal entry points (role routing, home account button, More tab)
-    // already send admins to the admin portal; this catches any future
-    // unguarded deep link and bounces the admin back to their own shell.
+    
+    
+    
+    
     if (user?.isAdmin == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

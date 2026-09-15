@@ -49,7 +49,7 @@ export function SaveButton({
           setSaved(data.saved)
         }
       } catch {
-        // silently ignore
+        
       }
     }
     check()

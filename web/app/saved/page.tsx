@@ -101,7 +101,7 @@ export default function SavedPage() {
         setItems(data.items || [])
       }
     } catch {
-      // silently ignore
+      
     } finally {
       setLoading(false)
     }

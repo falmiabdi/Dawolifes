@@ -142,7 +142,7 @@ export default function VerifyPage() {
               <div className="relative">
                 {photo ? (
                   <div className="relative h-24 w-24 overflow-hidden rounded-full ring-4 ring-orange-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {}
                     <img src={photo} alt="Profile" className="h-full w-full object-cover" />
                   </div>
                 ) : (

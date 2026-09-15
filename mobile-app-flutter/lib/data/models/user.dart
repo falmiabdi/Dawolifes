@@ -1,4 +1,4 @@
-/// Authenticated user session, mirroring SessionUser from auth-guard.tsx.
+
 class SessionUser {
   const SessionUser({
     required this.id,
@@ -34,11 +34,11 @@ class SessionUser {
 
   bool get isOwner => role == 'owner';
 
-  /// Whether the account can post listings.
+  
   bool get canSell => isAgent || isOwner || isAdmin;
 
-  /// Agents/owners who have not finished the onboarding wizard (mirrors the
-  /// web's `user.onboardingComplete ? '/agent' : '/agent/onboarding'`).
+  
+  
   bool get needsOnboarding => (isAgent || isOwner) && !onboardingComplete;
 
   factory SessionUser.fromJson(Map<String, dynamic> json) {

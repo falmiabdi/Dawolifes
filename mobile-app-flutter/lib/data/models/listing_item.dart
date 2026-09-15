@@ -2,8 +2,8 @@ import 'listing_agent.dart';
 import 'property.dart';
 import 'vehicle.dart';
 
-/// A unified item rendered by the home grid and saved list,
-/// matching the ListingItem interface from image-section.tsx.
+
+
 class ListingItem {
   const ListingItem({
     required this.id,
@@ -53,8 +53,8 @@ class ListingItem {
   final String? displayPhoto;
   final String? contactUserId;
 
-  /// Name shown on the public listing: the stored override wins when present,
-  /// otherwise falls back to the agent account name.
+  
+  
   String get contactName {
     final n = agentName?.trim() ?? '';
     final email = agent?.email?.trim() ?? '';
@@ -62,22 +62,22 @@ class ListingItem {
     return agent?.displayName ?? 'Agent';
   }
 
-  /// Phone shown on the public listing: stored override wins over agent phone.
+  
   String get contactPhone {
     final p = displayPhone?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.phone?.trim() ?? '';
   }
 
-  /// Profile photo shown on the public listing: stored override wins.
+  
   String get contactPhoto {
     final p = displayPhoto?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.avatar?.trim() ?? '';
   }
 
-  /// User id the Message button routes to: follows the admin-switched contact
-  /// when one is set, otherwise the listing's original agent.
+  
+  
   String? get messageRecipientId {
     final c = contactUserId?.trim();
     if (c != null && c.isNotEmpty) return c;
@@ -134,7 +134,7 @@ class ListingItem {
         isVehicle: true,
       );
 
-  /// Matches the search/filter logic from mobile-home.tsx.
+  
   bool matches({String query = '', String category = ''}) {
     final term = query.trim().toLowerCase();
 

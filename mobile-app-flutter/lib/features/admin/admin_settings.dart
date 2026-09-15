@@ -10,8 +10,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../portal/change_password_screen.dart';
 
-/// Admin settings mirroring app/admin/settings/page.tsx:
-/// profile (photo/phone/email), change password, create admin (root only).
+
+
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
 

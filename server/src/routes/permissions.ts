@@ -10,14 +10,14 @@ const router = Router()
 export type PermissionAction = 'EDIT' | 'DELETE'
 export type PermissionEntity = 'PROPERTY' | 'VEHICLE'
 
-/**
- * Gate before editing/deleting a listing:
- * - Admins always pass.
- * - Non-approved listings (Pending/Rejected) are freely editable by the poster.
- * - Approved listings require an Approved, unused permission request of the
- *   matching type from the poster. If one exists it is consumed (used=true)
- *   so each granted permission is usable only once.
- */
+
+
+
+
+
+
+
+
 export async function assertListingPermissionAllowed(opts: {
   requesterId: string
   isAdmin: boolean
@@ -29,9 +29,9 @@ export async function assertListingPermissionAllowed(opts: {
   if (opts.isAdmin || opts.listingStatus !== 'Approved') {
     return { allowed: true }
   }
-  // Reads + one-time consumer update in a single retry unit: if Neon drops the
-  // pooled connection mid-flight the whole gate retries (safe — deciding the
-  // same request twice only ever yields one "used" flip thanks to the filter).
+  
+  
+  
   return withPrismaRetry(async () => {
     const request = await prisma.permissionRequest.findFirst({
       where: {
@@ -58,8 +58,8 @@ const createSchema = z.object({
   reason: z.string().max(500).optional(),
 })
 
-// Sellers request permission to edit/delete an already-approved listing.
-// Pending/approved-unused duplicates are not created twice.
+
+
 router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
   try {
     const parsed = createSchema.safeParse(req.body)
@@ -112,7 +112,7 @@ router.post('/', authMiddleware, agentMiddleware, async (req, res) => {
   }
 })
 
-// Admin list of all permission requests (with requester details for the badge).
+
 router.get('/admin', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { requests, pendingCount } = await withPrismaRetry(async () => {
@@ -130,7 +130,7 @@ router.get('/admin', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// A seller's own requests for a specific listing (status for UI badges).
+
 router.get('/mine', authMiddleware, async (req, res) => {
   try {
     const { entityId, entityType, type } = req.query
@@ -150,16 +150,16 @@ router.get('/mine', authMiddleware, async (req, res) => {
   }
 })
 
-// Admin approves or rejects a permission request.
+
 router.patch('/:id/decide', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!isValidUuid(req.params.id)) {
       return res.status(404).json({ message: 'Request not found' })
     }
     const approve = req.body.approve === true
-    // Find + update in a single retry unit so a dropped Neon pooled connection
-    // (the symptom behind "Could not update permission request") is retried
-    // with backoff instead of surfacing as a 500. Decide is idempotent per id.
+    
+    
+    
     const updated = await withPrismaRetry(async () => {
       const request = await prisma.permissionRequest.findUnique({ where: { id: req.params.id } })
       if (!request) {

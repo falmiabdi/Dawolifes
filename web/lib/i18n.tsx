@@ -364,14 +364,14 @@ const STRINGS: Record<Language, Record<string, string>> = {
 }
 const FORM_STRINGS: Record<Language, Record<string, string>> = {
   en: {
-    // shared form fields
+    
     gender: 'Gender', date_of_birth: 'Date of Birth', nationality: 'Nationality', preferred_language: 'Preferred Language', select_gender: 'Select gender', select_language: 'Select language', male: 'Male', female: 'Female', other: 'Other', region: 'Region', city: 'City', woreda_subcity: 'Woreda / Sub City', kebele: 'Kebele', full_address: 'Full Address', highest_education: 'Highest Education Level', agent_experience: 'Agent Experience', company_name: 'Company Name', tin_number: 'TIN Number', office_address: 'Office Address', business_license_number: 'Business License Number', business_license_upload: 'Business License Upload',
     phone_number: 'Phone Number', profile_photo: 'Profile Photo', current_password: 'Current Password', new_password: 'New Password', change_password: 'Change Password',
-    // register
+    
     add_photo: 'Add photo', registration_verified: 'Your registration is immediately verified.', application_reviewed: 'Your application will be reviewed by our team.',
-    // auth login
+    
     email_placeholder: 'Email', password_placeholder: 'Password', enter_password: 'Enter your password', invalid_credentials: 'Invalid email or password. Please try again.',
-    // onboarding
+    
     personal: 'Personal', contact: 'Contact', identity: 'Identity', education: 'Education', professional: 'Professional', submit: 'Submit',
     agent_registration: 'Agent Registration', owner_registration: 'Owner Registration', complete_profile: 'Complete Your Profile', step_of: 'Step',
     personal_info: 'Personal Information', contact_info: 'Contact Information', identity_verification: 'Identity Verification', professional_info: 'Professional Information', review_submit: 'Review & Submit',
@@ -444,17 +444,17 @@ All of these rules and agreements are valid and accepted under the laws and regu
     submit_application: 'Submit Application', application_submitted: 'Application submitted successfully!',
     back: 'Back', close: 'Close', save_continue: 'Save & Continue', full_name: 'Full Name', optional: 'Optional', not_specified: 'Not specified', yes: 'Yes', no: 'No',
     click_to_upload: 'Click to upload', confirm_password: 'Confirm Password',
-    // admin settings
+    
     admin_settings: 'Admin Settings', manage_profile: 'Manage your profile, credentials, and team.', profile: 'Profile', save_profile: 'Save Profile',
     only_root_admin: 'Only root administrators can create new admin accounts.', create_new_admin: 'Create New Admin', create_admin: 'Create Admin',
-    // verify
+    
     my_account: 'My Account', account_verified: 'Account verified', account_verified_note: 'Your account was verified when you registered. You can browse, save and message sellers.',
     email_readonly: 'Email (read-only)',
-    // agent profile
+    
     personal_identity: 'Personal & Identity', contact_information: 'Contact Information', education_background: 'Education & Background', uploaded_documents: 'Uploaded Documents',
     region_city: 'Region & City', woreda_kebele: 'Woreda / Kebele', doc_fayda_front: 'Fayda ID Front', doc_fayda_back: 'Fayda ID Back', doc_selfie: 'Selfie with Fayda', doc_passport: 'Passport Photo', doc_education: 'Education Certificate', doc_license: 'Business License',
     view_document: 'View Document', not_uploaded: 'Not Uploaded', under_review: 'Under Review', verified_agent: 'Verified Agent', application_rejected: 'Application Rejected', reason_label: 'Reason:', edit_resubmit: 'Edit Profile & Resubmit', edit_profile: 'Edit Profile', edit_name_photo: 'Edit Name & Photo',
-    // property wizard
+    
     post_property: 'Post a Property', list_property_note: 'List your property for millions of buyers across Ethiopia',
     basic_info: 'Basic Info', location_map: 'Location & Map', photos_media: 'Photos & Media', location_map2: 'Location Map',
     property_details: 'Property Details', property_location: 'Property Location', photos_media_title: 'Photos & Media', property_location_map: 'Property Location Map', contact_info_title: 'Contact Information',
@@ -479,7 +479,7 @@ All of these rules and agreements are valid and accepted under the laws and regu
     video_url_placeholder: 'e.g. https://www.youtube.com/watch?v=...', latitude_placeholder: 'e.g. 9.0375', longitude_placeholder: 'e.g. 38.7612',
     failed_upload_file: 'Failed to upload {name}', failed_upload_images: 'Failed to upload image(s). Please try again.', failed_upload_document: 'Failed to upload document', failed_upload_document_retry: 'Failed to upload document. Please try again.',
     failed_submit_property: 'Failed to submit property listing.', error_occurred: 'An error occurred. Please try again.', submit_listing: 'Submit Listing',
-    // vehicle wizard
+    
     post_vehicle: 'Post a Vehicle', list_vehicle_note: 'List your vehicle for millions of buyers across Ethiopia',
     technical: 'Technical', condition_features: 'Condition & Features', pricing: 'Pricing', location_legal: 'Location & Legal', photos_step: 'Photos', map_step: 'Map', review: 'Review',
     basic_vehicle_info: 'Basic Vehicle Info', technical_specs: 'Technical Specifications', vehicle_condition_features: 'Vehicle Condition & Features', pricing_info: 'Pricing & Rental/Sale Info', location_legal_info: 'Location & Legal Info', vehicle_location_map: 'Vehicle Location Map', review_submit_title: 'Review & Submit',
@@ -500,7 +500,7 @@ All of these rules and agreements are valid and accepted under the laws and regu
     ph_engine_size: 'e.g. 4.5', ph_horsepower: 'e.g. 381', ph_cylinders: 'e.g. 6', ph_seating_capacity: 'e.g. 7', ph_doors: 'e.g. 5', ph_mileage: 'e.g. 45000', ph_fuel_consumption: 'e.g. 12.5', ph_fuel_tank_capacity: 'e.g. 93', ph_ground_clearance: 'e.g. 225', ph_weight: 'e.g. 2650', ph_tire_size: 'e.g. 265/65R18', ph_ownership_count: 'e.g. 2',
     ph_price: 'e.g. 3500000', ph_daily_rate: 'e.g. 5000', ph_weekly_rate: 'e.g. 30000', ph_monthly_rate: 'e.g. 100000', ph_security_deposit: 'e.g. 50000', ph_min_rental_days: 'e.g. 1', ph_max_rental_days: 'e.g. 30', ph_mileage_limit: 'e.g. 200', ph_extra_km_charge: 'e.g. 15',
     ph_region_city: 'e.g. Addis Ababa', ph_sub_city: 'e.g. Bole', ph_woreda: 'e.g. 03', ph_pickup_address: 'e.g. Bole Road, near Edna Mall', ph_plate_number: 'e.g. AA-123456', ph_latitude: 'e.g. 9.0375', ph_longitude: 'e.g. 38.7612',
-    // agent dashboard
+    
     agent_workspace: 'Agent Workspace', owner_workspace: 'Owner Workspace', welcome_name: 'Welcome, {name}!',
     agent_hub_note: 'Your central hub for managing properties, tracking performance, and growing your real estate business.',
     account_status: 'Account {status}', update_resubmit: 'Update & Resubmit',
@@ -740,7 +740,7 @@ DawoLife ለገዥዎች ትክክለኛ መረጃ ያቀርባል። ከንብ�
     ph_engine_size: 'ለምሳሌ 4.5', ph_horsepower: 'ለምሳሌ 381', ph_cylinders: 'ለምሳሌ 6', ph_seating_capacity: 'ለምሳሌ 7', ph_doors: 'ለምሳሌ 5', ph_mileage: 'ለምሳሌ 45000', ph_fuel_consumption: 'ለምሳሌ 12.5', ph_fuel_tank_capacity: 'ለምሳሌ 93', ph_ground_clearance: 'ለምሳሌ 225', ph_weight: 'ለምሳሌ 2650', ph_tire_size: 'ለምሳሌ 265/65R18', ph_ownership_count: 'ለምሳሌ 2',
     ph_price: 'ለምሳሌ 3500000', ph_daily_rate: 'ለምሳሌ 5000', ph_weekly_rate: 'ለምሳሌ 30000', ph_monthly_rate: 'ለምሳሌ 100000', ph_security_deposit: 'ለምሳሌ 50000', ph_min_rental_days: 'ለምሳሌ 1', ph_max_rental_days: 'ለምሳሌ 30', ph_mileage_limit: 'ለምሳሌ 200', ph_extra_km_charge: 'ለምሳሌ 15',
     ph_region_city: 'ለምሳሌ አዲስ አበባ', ph_sub_city: 'ለምሳሌ ቦሌ', ph_woreda: 'ለምሳሌ 03', ph_pickup_address: 'ለምሳሌ ቦሌ መንገድ፣ ኤድና ሞል አጠገብ', ph_plate_number: 'ለምሳሌ AA-123456', ph_latitude: 'ለምሳሌ 9.0375', ph_longitude: 'ለምሳሌ 38.7612',
-    // agent dashboard
+    
     agent_workspace: 'የወኪል ስራ ቦታ', owner_workspace: 'የንብረት ባለቤት ስራ ቦታ', welcome_name: 'እንኳን ደህና መጡ, {name}!',
     agent_hub_note: 'ንብረትዎን ለማስተዳደር፣ አፈጻጸምዎን ለመከታተል እና የሪል እስቴት ንግድዎን ለማሳደግ የእርስዎ ማዕከላዊ ቦታ ነው።',
     account_status: 'መለያ {status}', update_resubmit: 'አዘምን እና እንደገና አስገባ',
@@ -980,7 +980,7 @@ Seeronni fi waliigalteen kun hundi dambii fi seera biyya keenyaa biratti fudhata
     ph_engine_size: 'fkn. 4.5', ph_horsepower: 'fkn. 381', ph_cylinders: 'fkn. 6', ph_seating_capacity: 'fkn. 7', ph_doors: 'fkn. 5', ph_mileage: 'fkn. 45000', ph_fuel_consumption: 'fkn. 12.5', ph_fuel_tank_capacity: 'fkn. 93', ph_ground_clearance: 'fkn. 225', ph_weight: 'fkn. 2650', ph_tire_size: 'fkn. 265/65R18', ph_ownership_count: 'fkn. 2',
     ph_price: 'fkn. 3500000', ph_daily_rate: 'fkn. 5000', ph_weekly_rate: 'fkn. 30000', ph_monthly_rate: 'fkn. 100000', ph_security_deposit: 'fkn. 50000', ph_min_rental_days: 'fkn. 1', ph_max_rental_days: 'fkn. 30', ph_mileage_limit: 'fkn. 200', ph_extra_km_charge: 'fkn. 15',
     ph_region_city: 'fkn. Finfinnee', ph_sub_city: 'fkn. Bole', ph_woreda: 'fkn. 03', ph_pickup_address: 'fkn. Daandii Bole, naannoo Edna Mall', ph_plate_number: 'fkn. AA-123456', ph_latitude: 'fkn. 9.0375', ph_longitude: 'fkn. 38.7612',
-    // agent dashboard
+    
     agent_workspace: 'Bakka Hojii Eejentii', owner_workspace: 'Bakka Hojii Abbootii Qabeenyaa', welcome_name: 'Baga nagaan dhufte, {name}!',
     agent_hub_note: 'Bakka giddugalaa qabeenya bulchuu, hojii kee hordofuu fi daldala mana kee guddisuuf.',
     account_status: 'Akkaawuntii {status}', update_resubmit: 'Sirreessi itti deebi\'i galchi',
@@ -1095,73 +1095,73 @@ Seeronni fi waliigalteen kun hundi dambii fi seera biyya keenyaa biratti fudhata
   },
 }
 
-// Option values that are stored in English (DB) but shown translated in the UI.
-// Missing entries fall back to the English value.
+
+
 const VALUE_STRINGS: Record<Language, Record<string, string>> = {
   en: {
     "House": "Condominium", "Houses": "Condominiums",
     "Condominium": "Condominium", "Condominiums": "Condominiums",
   },
   am: {
-    // property options
+    
     "Agent": "ወኪል", "Owner": "ባለቤት", "Farmer Owner": "አርሶ አደር ባለቤት", "Saving Owner": "ቆጣቢ ባለቤት", "Private Owner": "የግል ባለቤት", "Government": "መንግስት", "Company": "ኩባንያ",
     "House": "ኮንዶሚኒየም", "Condominium": "ኮንዶሚኒየም", "Apartment": "አፓርታማ", "Land": "መሬት", "Commercial": "የንግድ", "Villa": "ቪላ",
     "For Rent": "ለኪራይ", "For Sale": "ለሽያጭ", "Both": "ሁለቱም",
     "Fixed Price": "ቋሚ ዋጋ", "Negotiable": "መደራደር የሚቻል", "per month": "በወር", "Starting From": "ከ... ጀምሮ",
     "Finished": "የተጠናቀቀ", "Semi-finished": "በከፊል የተጠናቀቀ", "Under Construction": "በግንባታ ላይ",
     "Houses": "ኮንዶሚኒየሞች", "Condominiums": "ኮንዶሚኒየሞች", "Apartments": "አፓርታማዎች", "Villas": "ቪላዎች",
-    // amenities
+    
     "Parking": "መኪና ማቆሚያ", "Garden": "የአትክልት ቦታ", "Security": "ደህንነት", "Swimming Pool": "መዋኛ ገንዳ", "Elevator": "አሳንሰር", "Balcony": "በረንዳ", "Solar Power": "የፀሐይ ኃይል", "Generator": "ጀነሬተር", "Compound": "ግቢ", "Borehole": "ቦር ቧንቧ", "CCTV": "ሲሲቲቪ", "Air Conditioning": "አየር ማቀዝቀዣ", "Furnished": "የተሟላ ቤት እቃዎች", "Water Tank": "የውሃ ታንክ",
-    // vehicle categories
+    
     "Sedan": "ሴዳን", "SUV": "ኤስዩቪ", "Pickup": "ፒክአፕ", "Hatchback": "ሀችባክ", "Coupe": "ኩፕ", "Convertible": "ሊለወጥ የሚችል", "Van": "ቫን", "Minibus": "ሚኒባስ", "Bus": "አውቶቡስ", "Truck": "መኪና", "Motorcycle": "ሞተርሳይክል", "Three-Wheeler (Bajaj)": "የሶስት ጎማ ተሽከርካሪ (ባጃጅ)", "Electric Vehicle": "የኤሌክትሪክ ተሽከርካሪ", "Hybrid Vehicle": "ድብልቅ ተሽከርካሪ",
-    // fuel
+    
     "Gasoline": "ቤንዚን", "Diesel": "ናፍጣ", "Electric": "ኤሌክትሪክ", "Hybrid": "ድብልቅ (ቦብአ እና ኤሌክትሪክ አንድ ላይ)", "CNG": "ሲኤንጂ", "LPG": "ኤልፒጂ",
-    // transmission
+    
     "Automatic": "አውቶማቲክ", "Manual": "በእጅ የሚተላለፍ", "CVT": "ሲቪቲ", "DCT": "ዲሲቲ",
-    // drivetrain
+    
     "FWD": "የፊት ጎማ ማሽከርከር", "RWD": "የኋላ ጎማ ማሽከርከር", "4WD": "ባለ 4 ጎማ ማሽከርከር", "AWD": "ሁሉም ጎማ ማሽከርከር",
-    // condition
+    
     "New": "አዲስ", "Slightly Used": "በትንሹ ጥቅም ላይ የዋለ", "Used": "ጥቅም ላይ የዋለ", "Certified Pre-Owned": "የተረጋገጠ ቀዳሚ ባለቤትነት",
-    // colors
+    
     "White": "ነጭ", "Black": "ጥቁር", "Silver": "ብር", "Gray": "ግራጫ", "Red": "ቀይ", "Blue": "ሰማያዊ", "Green": "አረንጓዴ", "Yellow": "ቢጫ", "Orange": "ብርቱካናማ", "Brown": "ቡናማ", "Beige": "ቤጅ", "Gold": "ወርቅ", "Other": "ሌላ",
-    // country of origin
+    
     "Japan": "ጃፓን", "Germany": "ጀርመን", "USA": "አሜሪካ", "South Korea": "ደቡብ ኮሪያ", "China": "ቻይና", "UK": "እንግሊዝ", "France": "ፈረንሳይ", "Italy": "ጣሊያን", "Thailand": "ታይላንድ", "India": "ህንድ", "Ethiopia": "ኢትዮጵያ",
-    // safety
+    
     "ABS": "ኤቢኤስ", "Airbags": "ኤርባግስ", "Traction Control": "የመጎተት መቆጣጠሪያ", "Stability Control": "የመረጋጋት መቆጣጠሪያ", "Blind Spot Monitoring": "የዓይን እይታ ክትትል", "Lane Assist": "የመንገድ እርዳታ", "Tire Pressure Monitoring": "የጎማ ግፊት ክትትል", "Child Lock": "የልጅ መቆለፊያ", "Immobilizer": "ኢሞቢላይዘር", "Alarm System": "የማንቂያ ስርዓት",
-    // interior
+    
     "Leather Seats": "የቆዳ መቀመጫዎች", "Fabric Seats": "የጨርቅ መቀመጫዎች", "Heated Seats": "የሚሞቁ መቀመጫዎች", "Power Windows": "ኤሌክትሪክ መስኮቶች", "Power Steering": "ኤሌክትሪክ መሪ", "Power Mirrors": "ኤሌክትሪክ መስተዋቶች", "Sunroof": "የጣሪያ መስኮት", "Bluetooth": "ብሉቱዝ", "USB Ports": "የዩኤስቢ መሰኪያዎች", "Apple CarPlay": "አፕል ካርፕሌይ", "Android Auto": "አንድሮይድ አውቶ", "Premium Sound System": "ፕሪሚየም የድምጽ ስርዓት",
-    // exterior
+    
     "Alloy Wheels": "የብረት ጎማዎች", "Fog Lights": "የጭጋግ መብራቶች", "LED Headlights": "የኤልኢዲ ጭንቅላት መብራቶች", "Roof Rack": "የጣሪያ መደርደሪያ", "Tow Hook": "መጎተቻ", "Running Boards": "የጎን መወጣጫ ሰሌዳዎች", "Spare Tire": "ተጨማሪ ጎማ",
-    // regions
+    
     "Addis Ababa": "አዲስ አበባ", "Afar": "አፋር", "Amhara": "አማራ", "Benishangul-Gumuz": "ቤኒሻንጉል-ጉሙዝ", "Central Ethiopia": "ማዕከላዊ ኢትዮጵያ", "Dire Dawa": "ድሬ ዳዋ", "Gambela": "ጋምቤላ", "Harari": "ሐረሪ", "Oromia": "ኦሮሚያ", "Sidama": "ሲዳማ", "Somali": "ሶማሌ", "South Ethiopia": "ደቡብ ኢትዮጵያ", "SNNPR": "ደቡብ ብሔር ብሔረሰቦች ሕዝብ ክልል", "Tigray": "ትግራይ",
-    // yes/no/pending
+    
     "Yes": "አዎ", "No": "አይ", "Pending": "በመጠባበቅ ላይ",
     "Approved": "የጸደቀ", "Rejected": "ውድቅ የተደረገ", "Suspended": "የታገደ", "Completed": "የተጠናቀቀ",
     "Full to Full": "ሙሉ ለሙሉ", "Prepaid": "ቅድመ ክፍያ", "Included": "የተካተተ",
     "Diplomatic": "ዲፕሎማቲክ",
   },
   om: {
-    // property options (Oromo equivalents where provided, else keep English)
+    
     "Agent": "Erijantii", "Owner": "Abbaa qabeenyaa", "Farmer Owner": "Mana qotee bulaa", "Saving Owner": "Mana abbootii kuufatan", "Private Owner": "Abbaa qabeenyaa dhuunfaa", "Government": "Mootummaa", "Company": "Kompii",
     "House": "Koondoominiya", "Condominium": "Koondoominiya", "Apartment": "Apartment", "Land": "Lafa", "Commercial": "Daldala", "Villa": "Viilaa",
     "For Rent": "Kiraaf", "For Sale": "Gurgurtaaf", "Both": "Lamaaniif",
     "Fixed Price": "Gatii dhumaa", "Negotiable": "Waliigalteen", "per month": "Baatiin", "Starting From": "Irraa jalqaba",
     "Finished": "Gutuutti kan ijaarame", "Semi-finished": "Walakkaan kan ijaarame", "Under Construction": "Ijaarsarra kan jiru",
     "Houses": "Koondoominiya", "Condominiums": "Koondoominiya", "Apartments": "Apartment", "Villas": "Viilaa",
-    // amenities (English kept — no Oromo provided in worksheet)
-    // vehicle categories (English kept)
-    // fuel
+    
+    
+    
     "Gasoline": "Beenzila", "Diesel": "Naafxaa", "Electric": "Elektirikii", "Hybrid": "Bob'aa fi Electric bakka tokkootti", "CNG": "CNG", "LPG": "LPG",
-    // condition
+    
     "New": "Haaraa", "Slightly Used": "Kan xiqqoo fayyadame", "Used": "Kan fayyadame", "Certified Pre-Owned": "Kan duraanitii mirkanaa'e",
-    // colors
+    
     "White": "Adii", "Black": "Gurraacha", "Silver": "Silveerii", "Gray": "Gireeyi", "Red": "Diimaa", "Blue": "Cuquliisa", "Green": "Magariisa", "Yellow": "Keelloo", "Orange": "Loomii", "Brown": "Boora", "Beige": "Beige", "Gold": "Warqee", "Other": "Kan biroo",
-    // regions
+    
     "Addis Ababa": "Finfinnee", "Afar": "Afar", "Amhara": "Amhara", "Benishangul-Gumuz": "Benishangul-Gumuz", "Central Ethiopia": "Jidduu galeessa Itiyoophiyaa", "Dire Dawa": "Dire Dawa", "Gambela": "Gambela", "Harari": "Harari", "Oromia": "Oromiyaa", "Sidama": "Sidama", "Somali": "Somali", "South Ethiopia": "Kibba Itiyoophiyaa", "SNNPR": "SNNPR", "Tigray": "Tigray",
-    // yes/no/pending
+    
     "Yes": "Eeyyee", "No": "Miti", "Pending": "Eega",
     "Approved": "Mirkanaa'e", "Rejected": "Ittifame", "Suspended": "Hawiitame", "Completed": "Xumurame",
-    // transmission/drivetrain/makes — keep English (abbreviations & proper nouns)
+    
     "Diplomatic": "Diplomatic", "Full to Full": "Full to Full", "Prepaid": "Prepaid", "Included": "Included",
   },
 }

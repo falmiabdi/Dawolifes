@@ -11,8 +11,8 @@ export function rateLimit(options: { windowMs: number; max: number }) {
   const { windowMs, max } = options
 
   return (req: Request, res: Response, next: NextFunction) => {
-    // Key on the route path (without the query string) so appending ?x=1, ?x=2
-    // cannot create a fresh bucket per request and bypass the limit.
+    
+    
     const path = (req.originalUrl || req.url || '/').split('?')[0]
     const key = `${req.ip}:${path}`
     const now = Date.now()

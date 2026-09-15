@@ -1,7 +1,7 @@
 import '../../core/network/api_client.dart';
 import '../models/message.dart';
 
-/// Messaging API calls, mirroring messages.ts.
+
 class MessageRepository {
   MessageRepository(this._api);
 
@@ -42,7 +42,7 @@ class MessageRepository {
     });
   }
 
-  /// Marks a single message as read.
+  
   Future<void> markRead(String messageId) async {
     await _api.patch('/api/messages/$messageId/read');
   }

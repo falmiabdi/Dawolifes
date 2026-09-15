@@ -26,8 +26,8 @@ export function LatestVehicles() {
         return data
       })
       .then((data) => {
-        // The public API returns { vehicles: [...] }. On an API error it
-        // returns an object, so never call array methods on the raw payload.
+        
+        
         const dbVehicles = Array.isArray(data?.vehicles) ? data.vehicles : Array.isArray(data) ? data : []
         const transformed = dbVehicles
           .filter((v: any) => v.agent && v.agent.status !== 'Suspended')

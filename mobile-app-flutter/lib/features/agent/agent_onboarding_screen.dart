@@ -31,12 +31,12 @@ const _experienceOptions = [
   'More than 10 years',
 ];
 
-/// Agent/Owner onboarding wizard mirroring web/app/agent/onboarding/page.tsx.
-///
-/// Six steps (Personal, Contact, Identity, Education, Professional, Submit).
-/// Step 1 collects whether the user registers as an Agent or an Owner (shown
-/// under the Gender field); Step 6 requires accepting the applicable Terms &
-/// Conditions (owner/agent) and the Privacy Policy.
+
+
+
+
+
+
 class AgentOnboardingScreen extends StatefulWidget {
   const AgentOnboardingScreen({super.key});
 
@@ -52,13 +52,13 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   bool _agreedTerms = false;
   bool _agreedPrivacy = false;
 
-  // Step 1 – Personal
+  
   late final TextEditingController _fullName;
   late final TextEditingController _dob;
   late final TextEditingController _nationality;
   String _gender = '';
 
-  // Step 2 – Contact
+  
   late final TextEditingController _ethPhone;
   late final TextEditingController _safaricomPhone;
   late final TextEditingController _city;
@@ -67,16 +67,16 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   late final TextEditingController _fullAddress;
   String _region = '';
 
-  // Step 3 – Identity files
+  
   String? _faydaFront;
   String? _faydaBack;
   String? _selfie;
 
-  // Step 4 – Education
+  
   String _education = '';
   String? _eduCert;
 
-  // Step 5 – Professional
+  
   late final TextEditingController _experience;
   late final TextEditingController _company;
   late final TextEditingController _officeAddr;
@@ -136,8 +136,8 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
   Future<void> _pickFile(String field) async {
     setState(() => _uploading = field);
     try {
-      // Identity selfie must be captured live with the camera (full face,
-      // no eyeglasses / head cover) rather than picked from the gallery.
+      
+      
       final url = field == 'selfie'
           ? await captureAndUploadImage(
               context.read<ApiClient>(),
@@ -169,7 +169,7 @@ class _AgentOnboardingScreenState extends State<AgentOnboardingScreen> {
             break;
         }
       });
-    } on ImagePickCancelled {
+} on ImagePickCancelled {
       // user backed out of the picker
     } on ApiException catch (e) {
       _snack('Upload failed: ${e.message}');
@@ -290,9 +290,9 @@ case 'selfie':
           return;
         }
         if (!mounted) return;
-        // Mirror the web: after submitting, reload the session so the cached
-        // status/onboardingComplete reflect the server, then land on the
-        // pending-approval screen until an admin approves the account.
+        
+        
+        
         await context.read<AuthProvider>().refreshUser();
         if (!mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
@@ -368,7 +368,7 @@ case 'selfie':
     return t(map[value] ?? value);
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  
 
   Widget _labelledDropdown(String label, String value, List<(String, String)> options, ValueChanged<String> onChanged) {
     final hasMatch = options.any((o) => o.$1 == value);
@@ -514,7 +514,7 @@ case 'selfie':
     );
   }
 
-  // ── Step builders ──────────────────────────────────────────────────────────
+  
 
   Widget _buildPersonal() {
     final t = context.read<LanguageProvider>().t;

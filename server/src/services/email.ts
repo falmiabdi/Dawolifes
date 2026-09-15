@@ -6,7 +6,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || ''
 const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || 'DawoLife'
 
-// Lazy singleton so the Resend SDK is only constructed when a key is present.
+
 let resendClient: Resend | null = null
 function getResendClient(): Resend | null {
   if (!RESEND_API_KEY) return null
@@ -18,17 +18,17 @@ export function isResendConfigured(): boolean {
   return Boolean(RESEND_API_KEY && RESEND_FROM_EMAIL)
 }
 
-/**
- * Returns the production BASE_URL only when it is a real public HTTPS host.
- * Localhost / http URLs are dropped: emails that link to "localhost" are a
- * major spam signal for Gmail and get sent straight to the spam folder.
- */
+
+
+
+
+
 function publicBaseUrl(): string {
   const base = process.env.BASE_URL || ''
   return /^https:\/\//.test(base) && !/localhost|127\.0\.0\.1/.test(base) ? base : ''
 }
 
-/** Sends a test email via Resend and returns a credential-free result. */
+
 export async function testResendConnection(to: string): Promise<{ ok: boolean; message: string }> {
   if (!isResendConfigured()) {
     return {
@@ -57,7 +57,7 @@ interface SendEmailParams {
 }
 
 export async function sendEmail({ to, subject, htmlContent, textContent, replyTo }: SendEmailParams) {
-  // 1) Resend API (preferred transactional provider for OTP delivery).
+  
   if (isResendConfigured()) {
     const resend = getResendClient()!
     const { error } = await resend.emails.send({

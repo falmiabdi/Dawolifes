@@ -1,5 +1,5 @@
-import { connectDB } from "./config/database.js";
-import { UserModel, PropertyModel, VehicleModel } from "./models/index.js";
+import { Prisma } from "@prisma/client";
+import { connectDB, prisma } from "./config/database.js";
 import { hashPassword } from "./utils/password.js";
 
 const SEED_PASSWORD = "SecurePass@123";
@@ -9,8 +9,8 @@ const img = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=c
 const USERS = [
   {
     email: "falmitesfaye@gmail.com",
-    username: "Falmite Sefaye",
-    phone: "+251911000001",
+    username: "System Admin",
+    phone: "+251947896869",
     role: "admin" as const,
     roles: ["admin"],
     isRootAdmin: true,
@@ -469,80 +469,68 @@ const VEHICLES = [
 
 async function upsertUser(data: (typeof USERS)[number]) {
   const password = await hashPassword(SEED_PASSWORD);
-  const [user] = await UserModel.findOrCreate({
-    where: { email: data.email },
-    defaults: {
-      username: data.username,
-      email: data.email,
-      phone: data.phone,
-      password,
-      role: data.role,
-      roles: data.roles,
-      status: "Approved",
-      isRootAdmin: data.isRootAdmin,
-      emailVerified: true,
-      onboardingComplete: true,
-    } as any,
-  });
-  await user.update({
+  const roles = data.roles as Prisma.InputJsonValue;
+  const fields = {
     username: data.username,
     phone: data.phone,
     password,
     role: data.role,
-    roles: data.roles,
-    status: "Approved",
+    roles,
+    status: "Approved" as const,
     isRootAdmin: data.isRootAdmin,
     emailVerified: true,
     onboardingComplete: true,
-  } as any);
-  return user;
+  };
+  return prisma.user.upsert({
+    where: { email: data.email },
+    update: fields,
+    create: { ...fields, email: data.email },
+  });
 }
 
 async function upsertProperty(data: (typeof PROPERTIES)[number], agentId: string, agentName: string) {
-  const existing = await PropertyModel.findOne({ where: { title: data.title, agentId } });
+  const existing = await prisma.property.findFirst({
+    where: { title: data.title, agentId },
+  });
+  const fields = { ...data, agentId, agentName };
   if (existing) {
-    await existing.update({ ...data, agentId, agentName } as any);
-    return existing;
+    return prisma.property.update({ where: { id: existing.id }, data: fields });
   }
-  return PropertyModel.create({ ...data, agentId, agentName } as any);
+  return prisma.property.create({ data: fields });
 }
 
 async function upsertVehicle(data: (typeof VEHICLES)[number], agentId: string, agentName: string) {
-  const existing = await VehicleModel.findOne({ where: { vehicleId: data.vehicleId } });
-  if (existing) {
-    await existing.update({ ...data, agentId, agentName } as any);
-    return existing;
-  }
-  return VehicleModel.create({ ...data, agentId, agentName } as any);
+  const fields = { ...data, agentId, agentName };
+  return prisma.vehicle.upsert({
+    where: { vehicleId: data.vehicleId },
+    create: fields,
+    update: fields,
+  });
 }
 
 async function seed() {
-  const db = await connectDB();
-  if (!db) {
-    console.error("❌ Could not connect to the database. Aborting seed.");
-    process.exit(1);
-  }
+  await connectDB();
 
   console.log("🌱 Seeding DawoLife database...");
 
   const admin = await upsertUser(USERS[0]);
   const agent = await upsertUser(USERS[1]);
   const buyer = await upsertUser(USERS[2]);
-  console.log(`✅ Users ready (admin=${admin.getDataValue("email")}, agent=${agent.getDataValue("email")}, user=${buyer.getDataValue("email")})`);
+  console.log(`✅ Users ready (admin=${admin.email}, agent=${agent.email}, user=${buyer.email})`);
 
-  const agentId = agent.getDataValue("id") as string;
+  const agentId = agent.id;
 
   for (const p of PROPERTIES) {
-    await upsertProperty(p, agentId, agent.getDataValue("username"));
+    await upsertProperty(p, agentId, agent.username);
   }
   console.log(`✅ ${PROPERTIES.length} properties seeded/updated (status=Approved)`);
 
   for (const v of VEHICLES) {
-    await upsertVehicle(v, agentId, agent.getDataValue("username"));
+    await upsertVehicle(v, agentId, agent.username);
   }
   console.log(`✅ ${VEHICLES.length} vehicles seeded/updated (status=Approved)`);
 
-  await db.close();
+  await prisma.$disconnect();
   console.log("🎉 Seed complete. All accounts share password: " + SEED_PASSWORD);
   process.exit(0);
 }

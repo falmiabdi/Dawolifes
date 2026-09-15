@@ -10,7 +10,7 @@ import 'package:web_socket_channel/status.dart' as ws_status;
 import '../config/app_config.dart';
 import '../storage/token_storage.dart';
 
-/// Typed API error surfaced to the UI.
+
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode, this.cause});
 
@@ -22,14 +22,14 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-/// Thin HTTP client that attaches the bearer token to every request.
-///
-/// Resilient to Render free-tier cold starts (which can take 30+ seconds on
-/// the first request after idle): connection/receive timeouts are generous
-/// (30s/60s), and transient failures (timeouts, socket errors) are retried
-/// with exponential backoff up to 3 attempts so a slow wakeup doesn't surface
-/// as a connection error to the user. Failures are normalized into
-/// [ApiException]s that preserve the underlying cause for diagnosis.
+
+
+
+
+
+
+
+
 class ApiClient {
   ApiClient({required this.storage, http.Client? httpClient})
       : _http = httpClient ?? http.Client();
@@ -39,13 +39,13 @@ class ApiClient {
 
   String? _resolvedBase;
 
-  /// Picks the first reachable backend host and caches it for the session.
-  ///
-  /// Probing covers the local-dev cases transparently: Android emulator
-  /// (http://10.0.2.2:4000) and physical phone over USB with `adb reverse
-  /// tcp:4000 tcp:4000` (http://localhost:4000). An explicit API_BASE_URL
-  /// dart-define is trusted without probing so production never incurs the
-  /// health-check delay.
+  
+  
+  
+  
+  
+  
+  
   Future<String> resolveApiBaseUrl() async {
     if (_resolvedBase != null) return _resolvedBase!;
     final candidates = AppConfig.apiBaseCandidates;
@@ -60,13 +60,15 @@ class ApiClient {
             .timeout(const Duration(milliseconds: 1500));
         return _resolvedBase = candidate;
       } catch (_) {
-        // Try the next candidate.
+  // Try the next candidate.
+  
+        
       }
     }
     return _resolvedBase = candidates.first;
   }
 
-  /// Number of attempts for transient failures (timeouts, socket errors).
+  
   static const int _maxAttempts = 3;
 
   Future<void> saveToken(String token) => storage.saveToken(token);
@@ -103,13 +105,13 @@ class ApiClient {
     return headers;
   }
 
-  /// Runs [run] with retries against transient failures.
-  ///
-  /// Render's free tier can take 30+ seconds to wake from idle on the first
-  /// request. Rather than failing immediately on a timeout or socket error,
-  /// we retry up to [_maxAttempts] times with exponential backoff (1s, 2s, 4s),
-  /// so a transient cold-start wake becomes a brief delay instead of a
-  /// connection-error screen.
+  
+  
+  
+  
+  
+  
+  
   Future<http.Response> _attempt(Future<http.Response> Function(String base) run) async {
     final base = await resolveApiBaseUrl();
     var lastError = ApiException('Request failed');
@@ -118,14 +120,16 @@ class ApiClient {
         return await run(base)
             .timeout(AppConfig.receiveTimeout);
       } on TimeoutException catch (_) {
+  // Ignore parse errors
+  
         lastError = ApiException('Request timed out. Check your connection.');
       } on SocketException catch (e) {
         lastError = ApiException('Cannot connect to the server. Check your connection.', cause: e);
       } on http.ClientException catch (e) {
         lastError = ApiException('Cannot connect to the server. Check your connection.', cause: e);
       } catch (e) {
-        // Non-transient: don't retry (e.g. ApiException from _decode, or a
-        // clearly non-recoverable client setup error).
+        
+        
         lastError = e is ApiException
             ? e
             : ApiException('$e');
@@ -133,7 +137,7 @@ class ApiClient {
       }
 
       if (attempt < _maxAttempts) {
-        await Future.delayed(Duration(seconds: 1 << (attempt - 1))); // 1s, 2s, 4s
+        await Future.delayed(Duration(seconds: 1 << (attempt - 1))); 
       }
     }
     throw lastError;
@@ -197,11 +201,11 @@ class ApiClient {
     return _decode(response);
   }
 
-  /// Uploads a single file as multipart/form-data (field name `file`),
-  /// mirroring the web app's `POST /api/upload` and `/api/agent/upload`.
-  /// Pass [contentType] (e.g. `image/jpeg`) so the server's multer file
-  /// filter accepts the upload; otherwise the default `application/octet-stream`
-  /// is rejected as "File type not allowed".
+  
+  
+  
+  
+  
   Future<dynamic> uploadFile(
     String path, {
     required List<int> bytes,
@@ -226,10 +230,10 @@ class ApiClient {
     return _decode(response);
   }
 
-  /// Removes null values from JSON bodies before encoding so optional
-  /// fields the user left blank are omitted rather than sent as `null`
-  /// (the backend treats null as "no change", but dropping them keeps every
-  /// endpoint robust regardless of its schema). Lists are preserved as-is.
+  
+  
+  
+  
   Map<String, dynamic> _stripNulls(Map<String, dynamic> body) {
     final cleaned = <String, dynamic>{};
     for (final entry in body.entries) {
@@ -257,8 +261,8 @@ class ApiClient {
         : null;
 
     if (response.statusCode == 403 || response.statusCode == 401) {
-      // Prefer the backend's specific message (e.g. "awaiting admin
-      // approval", "suspended") and only fall back to a generic one.
+      
+      
       throw ApiException(
         serverMessage ?? 'Your account has been rejected or suspended.',
         statusCode: response.statusCode,
@@ -272,7 +276,7 @@ class ApiClient {
   }
 }
 
-/// WebSocket message types matching the backend.
+
 enum WSMessageType {
   notification,
   unreadCount,
@@ -282,7 +286,7 @@ enum WSMessageType {
   announcement,
 }
 
-/// Parsed WebSocket message from the server.
+
 class WSMessage {
   const WSMessage({
     required this.type,
@@ -339,7 +343,7 @@ class WSMessage {
   }
 }
 
-/// WebSocket client for real-time notifications and updates.
+
 class WSClient {
   WSClient(this._api);
 
@@ -360,7 +364,7 @@ class WSClient {
   Stream<WSMessage> get messages => _messageController.stream;
   Stream<WSConnectionState> get connectionState => _stateController.stream;
 
-  /// Connects to the WebSocket server with the current auth token.
+  
   Future<void> connect() async {
     if (_channel != null) return;
     
@@ -398,7 +402,7 @@ class WSClient {
       final json = jsonDecode(data.toString());
       final message = WSMessage.fromJson(json as Map<String, dynamic>);
       _messageController.add(message);
-    } catch (e) {
+} catch (e) {
       // Ignore parse errors
     }
   }
@@ -451,17 +455,17 @@ class WSClient {
     });
   }
 
-  /// Sends a message to mark all notifications as read.
+  
   void markAllRead() {
     _send({'type': 'mark_read'});
   }
 
-  /// Sends a message to mark a single notification as read.
+  
   void markSingleRead(String notificationId) {
     _send({'type': 'mark_single_read', 'notificationId': notificationId});
   }
 
-  /// Requests the current unread count.
+  
   void requestUnreadCount() {
     _send({'type': 'unread_count'});
   }
@@ -474,7 +478,7 @@ class WSClient {
     }
   }
 
-  /// Disconnects the WebSocket and cleans up resources.
+  
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     _stopPingTimer();
@@ -491,7 +495,7 @@ class WSClient {
   }
 }
 
-/// WebSocket connection state.
+
 enum WSConnectionState {
   disconnected,
   connecting,

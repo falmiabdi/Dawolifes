@@ -21,7 +21,7 @@ const upload = multer({
 
 const router = Router()
 
-// Upload a file for agent onboarding
+
 router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -41,7 +41,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
   }
 })
 
-// Save onboarding step data
+
 router.post('/onboarding', authMiddleware, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
@@ -129,7 +129,7 @@ router.post('/onboarding', authMiddleware, async (req, res) => {
   }
 })
 
-// Get agent profile
+
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
@@ -176,7 +176,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
   }
 })
 
-// Get agent's own properties (all statuses)
+
 router.get('/properties', authMiddleware, agentMiddleware, async (req, res) => {
   try {
     const properties = await prisma.property.findMany({
@@ -189,7 +189,7 @@ router.get('/properties', authMiddleware, agentMiddleware, async (req, res) => {
   }
 })
 
-// Get agent's own vehicles (all statuses)
+
 router.get('/vehicles', authMiddleware, agentMiddleware, async (req, res) => {
   try {
     const vehicles = await prisma.vehicle.findMany({

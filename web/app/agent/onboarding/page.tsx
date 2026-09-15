@@ -123,14 +123,14 @@ export default function OnboardingPage() {
   const [termsModal, setTermsModal] = useState<'owner' | 'agent' | null>(null)
   const [showPrivacy, setShowPrivacy] = useState(false)
 
-  // Step 1
+  
   const [fullName, setFullName] = useState('')
   const [gender, setGender] = useState('')
   const [dob, setDob] = useState('')
   const [nationality, setNationality] = useState('Ethiopian')
   const [language, setLanguage] = useState('')
 
-  // Step 2
+  
   const [ethPhone, setEthPhone] = useState('')
   const [safaricomPhone, setSafaricomPhone] = useState('')
   const [region, setRegion] = useState('')
@@ -139,16 +139,16 @@ export default function OnboardingPage() {
   const [kebele, setKebele] = useState('')
   const [fullAddress, setFullAddress] = useState('')
 
-  // Step 3 - files
+  
   const [faydaFront, setFaydaFront] = useState<FileState | null>(null)
   const [faydaBack, setFaydaBack] = useState<FileState | null>(null)
   const [selfie, setSelfie] = useState<FileState | null>(null)
 
-  // Step 4
+  
   const [education, setEducation] = useState('')
   const [eduCert, setEduCert] = useState<FileState | null>(null)
 
-  // Step 5 - all optional
+  
   const [experience, setExperience] = useState('')
   const [company, setCompany] = useState('')
   const [officeAddr, setOfficeAddr] = useState('')
@@ -233,14 +233,14 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50 px-4 py-10">
       <div className="mx-auto max-w-3xl">
-        {/* Header */}
+        {}
         <div className="mb-8 text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-orange-500">{user?.role === 'owner' ? t('owner_registration') : t('agent_registration')}</p>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">{t('complete_profile')}</h1>
           <p className="mt-2 text-slate-500">{t('step_of')} {step}/{STEPS.length} &mdash; {({ Personal: t('personal'), Contact: t('contact'), Identity: t('identity'), Education: t('education'), Professional: t('professional'), Submit: t('submit') } as Record<string, string>)[STEPS[step - 1].label]}</p>
         </div>
 
-        {/* Step progress */}
+        {}
         <div className="mb-10 flex items-center justify-between">
           {STEPS.map((s, i) => {
             const Icon = s.icon
@@ -259,13 +259,13 @@ export default function OnboardingPage() {
           })}
         </div>
 
-        {/* Card */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
           {error && (
             <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
           )}
 
-          {/* â”€â”€ STEP 1 â”€â”€ */}
+          {}
           {step === 1 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">{t('personal_info')}</h2>
@@ -306,7 +306,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 2 â”€â”€ */}
+          {}
           {step === 2 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">{t('contact_info')}</h2>
@@ -346,7 +346,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 3 â”€â”€ */}
+          {}
           {step === 3 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">{t('identity_verification')}</h2>
@@ -360,7 +360,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 4 â”€â”€ */}
+          {}
           {step === 4 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">{t('education')}</h2>
@@ -379,7 +379,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 5 â”€â”€ */}
+          {}
           {step === 5 && (
             <div className="space-y-5">
               <h2 className="text-xl font-bold text-slate-800">{t('professional_info')}</h2>
@@ -415,7 +415,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* â”€â”€ STEP 6 â”€â”€ */}
+          {}
           {step === 6 && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-slate-800">{t('review_submit')}</h2>
@@ -444,7 +444,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Navigation */}
+          {}
           <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-6">
             <Button
               type="button"
@@ -464,7 +464,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Terms & Conditions Modal */}
+      {}
       {termsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
@@ -491,7 +491,7 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Privacy Policy Modal */}
+      {}
       {showPrivacy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">

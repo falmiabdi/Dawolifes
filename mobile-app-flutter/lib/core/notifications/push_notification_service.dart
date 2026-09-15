@@ -7,20 +7,20 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../features/notifications/notifications_screen.dart';
 
-/// Global [NavigatorKey] so taps on push notifications (which arrive outside
-/// the widget tree, e.g. from a cold start) can navigate to the notifications
-/// screen. Assigned to the root `MaterialApp.navigatorKey`.
+
+
+
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 const String _pushChannelId = 'notifications';
 const String _pushChannelName = 'Notifications';
 
-/// Android shows system-tray notifications itself for FCM messages that carry a
-/// [RemoteMessage.notification]. This handler covers data-only messages while
-/// the app is in the background/terminated state. It must stay a top-level
-/// function (Firebase requires `@pragma('vm:entry-point')`-tagged top-level or
-/// static entries). Plugins are registered automatically in the background
-/// isolate by the engine on this Flutter version.
+
+
+
+
+
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
@@ -34,12 +34,12 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } catch (_) {}
 }
 
-/// Manages FCM registration + local notification display.
-///
-/// - Foreground messages: rendered as a local notification (FCM does not
-///   display anything while the app is open).
-/// - Background/terminated: handled by the OS (Android) / APNs (iOS); taps are
-///   caught via [FirebaseMessaging.onMessageOpenedApp] / `getInitialMessage`.
+
+
+
+
+
+
 class PushNotificationService {
   PushNotificationService._();
 
@@ -90,7 +90,7 @@ class PushNotificationService {
     }
   }
 
-  /// Fetches the current FCM token (cached for unregister-on-logout).
+  
   Future<String?> refreshToken() async {
     try {
       _fcmToken = await FirebaseMessaging.instance.getToken();
@@ -100,8 +100,8 @@ class PushNotificationService {
     return _fcmToken;
   }
 
-  /// Registers this device's FCM token with the backend so the server can send
-  /// pushes. Best-effort: never throws.
+  
+  
   Future<void> register(NotificationRepository repo, String platform) async {
     final token = await refreshToken();
     if (token == null || token.isEmpty) return;
@@ -110,8 +110,8 @@ class PushNotificationService {
     } catch (_) {}
   }
 
-  /// Removes this device's FCM token from the backend (e.g. on logout).
-  /// Best-effort: never throws.
+  
+  
   Future<void> unregister(NotificationRepository repo) async {
     final token = _fcmToken;
     if (token == null || token.isEmpty) return;
@@ -121,10 +121,10 @@ class PushNotificationService {
     _fcmToken = null;
   }
 
-  /// Routes to the notifications screen when a push is tapped. The entity
-  /// target (pulled from the FCM/locale payload) is forwarded so the screen can
-  /// deep-link to the relevant listing/agent. If the navigator isn't ready yet
-  /// (cold-start tap before first frame), defers until [maybeOpenPending].
+  
+  
+  
+  
   void _openNotifications({String entityType = '', String entityId = ''}) {
     final nav = appNavigatorKey.currentState;
     if (nav == null || !nav.mounted) {
@@ -153,8 +153,8 @@ class PushNotificationService {
     _openNotifications(entityType: et ?? '', entityId: eid ?? '');
   }
 
-  /// Pulls [key] from the FCM data map, preferring the top-level value and
-  /// falling back to the nested `data` JSON string the server also ships.
+  
+  
   static String _entityOf(Map<String, dynamic> data, String key) {
     final direct = data[key] as String?;
     final nested = data['data'];

@@ -1,6 +1,6 @@
 import 'listing_agent.dart';
 
-/// Property listing matching the Property type in lib/data.ts.
+
 class Property {
   const Property({
     required this.id,
@@ -93,8 +93,8 @@ class Property {
 
   String get location => [subCity, city, region].where((e) => e != null && e.isNotEmpty).join(', ');
 
-  /// Name shown on the public listing: the stored override wins when present,
-  /// otherwise falls back to the agent account name.
+  
+  
   String get contactName {
     final n = agentName?.trim() ?? '';
     final email = agent?.email?.trim() ?? '';
@@ -102,22 +102,22 @@ class Property {
     return agent?.displayName ?? 'Agent';
   }
 
-  /// Phone shown on the public listing: stored override wins over agent phone.
+  
   String get contactPhone {
     final p = displayPhone?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.phone?.trim() ?? '';
   }
 
-  /// Profile photo shown on the public listing: stored override wins.
+  
   String get contactPhoto {
     final p = displayPhoto?.trim() ?? '';
     if (p.isNotEmpty) return p;
     return agent?.avatar?.trim() ?? '';
   }
 
-  /// User id the Message button routes to: follows the admin-switched contact
-  /// when one is set, otherwise the listing's original agent.
+  
+  
   String? get messageRecipientId {
     final c = contactUserId?.trim();
     if (c != null && c.isNotEmpty) return c;
@@ -125,7 +125,7 @@ class Property {
     return (a != null && a.isNotEmpty) ? a : null;
   }
 
-  /// Copy of this property with the contact override replaced.
+  
   Property withContact({
     String? agentName,
     String? displayPhone,
@@ -177,7 +177,7 @@ class Property {
     );
   }
 
-  /// Copy of this property with a new listing status (Sold/Rented/Approved...).
+  
   Property withStatus(String status) {
     return Property(
       id: id,

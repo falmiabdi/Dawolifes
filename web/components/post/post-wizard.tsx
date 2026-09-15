@@ -175,12 +175,12 @@ export function PostWizard() {
   }
 
   const next = () => {
-    // Validation for photos
+    
     if (step === 2 && form.images.length < 3) {
       setError("Please upload at least 3 photos of the property to continue.")
       return
     }
-    // Validation for location map
+    
     if (step === 3 && (form.latitude === 0 || form.longitude === 0)) {
       setError("Please select the property location on the map to continue.")
       return
@@ -360,7 +360,7 @@ export function PostWizard() {
         <p className="mt-1 text-sm text-muted-foreground">{t('list_property_note')}</p>
       </div>
 
-      {/* Stepper */}
+      {}
       <div className="mt-8 flex items-center justify-between">
         {steps.map((s, i) => {
           const Icon = s.icon
@@ -404,7 +404,7 @@ export function PostWizard() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-        {/* Form panel */}
+        {}
         <div className="rounded-2xl border border-border bg-card p-6">
           {step === 0 && (
             <div className="space-y-5">
@@ -884,7 +884,7 @@ export function PostWizard() {
             </div>
           )}
 
-          {/* Nav buttons */}
+          {}
           <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
             <Button variant="outline" onClick={back} disabled={step === 0 || submitting} className="rounded-xl">
               <ArrowLeft className="h-4 w-4" /> {t('back')}
@@ -917,7 +917,7 @@ export function PostWizard() {
           </div>
         </div>
 
-        {/* Live summary */}
+        {}
         <aside className="rounded-2xl border border-border bg-card p-5 lg:sticky lg:top-24 lg:self-start">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Building2 className="h-4 w-4 text-primary" /> {t('property_summary')}

@@ -19,8 +19,8 @@ const _conditions = ['Finished', 'Semi-Finished', 'Under Construction', 'Unfinis
 
 const _stepLabels = ['basic_info', 'location_details', 'media_upload', 'location_map2', 'review_submit'];
 
-/// Post/edit property mirroring app/agent/post/page.tsx (5-step wizard with
-/// a review & submit step).
+
+
 class AgentPostPropertyScreen extends StatefulWidget {
   const AgentPostPropertyScreen({super.key, this.edit});
 
@@ -141,8 +141,8 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
     }
   }
 
-  /// Auto-fills the location/contact fields from the poster's saved profile
-  /// (region, city, and the owner name/phone entered during onboarding).
+  
+  
   Future<void> _prefillFromProfile() async {
     try {
       final profile = await context.read<AgentRepository>().fetchProfile();
@@ -180,7 +180,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       final url = await pickAndUploadImage(context.read<ApiClient>(), endpoint: '/api/agent/upload', field: 'image');
       if (!mounted) return;
       setState(() => _images = [..._images, url]);
-    } on ImagePickCancelled {
+} on ImagePickCancelled {
       // user backed out of the picker
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -199,7 +199,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
       final url = await pickAndUploadDocument(context, context.read<ApiClient>());
       if (!mounted) return;
       setState(() => _locationDocument = url);
-    } on ImagePickCancelled {
+} on ImagePickCancelled {
       // user backed out of the picker
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -263,7 +263,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
         }
         break;
       case 3:
-        // Coordinates are optional; the map step may be skipped entirely.
+        
         break;
     }
     setState(() {
@@ -426,7 +426,7 @@ class _AgentPostPropertyScreenState extends State<AgentPostPropertyScreen> {
 
   Widget _buildBasicInfo() {
     final t = context.read<LanguageProvider>().t;
-    // Owners post as owner with their own contact (mirrors the web post form).
+    
     final isOwnerAcct = context.read<AuthProvider>().user?.isOwner ?? false;
     return Form(
       key: _basicFormKey,

@@ -78,7 +78,7 @@ function LinkedinIcon({ className }: { className?: string }) {
   )
 }
 
-// Brand colors kept on hover/bg per platform.
+
 const brandColors: Record<string, string> = {
   Facebook: "#1877F2",
   YouTube: "#FF0000",

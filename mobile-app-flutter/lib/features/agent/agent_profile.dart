@@ -11,9 +11,9 @@ import '../../providers/language_provider.dart';
 import '../portal/widgets.dart';
 import '../agent/agent_onboarding_screen.dart';
 
-/// Agent profile mirroring app/agent/profile/page.tsx. Shows all onboarding
-/// info; read-only when Approved, shows rejection reason + resubmit CTA when
-/// Rejected.
+
+
+
 class AgentProfileScreen extends StatefulWidget {
   const AgentProfileScreen({super.key});
 

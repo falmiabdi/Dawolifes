@@ -5,11 +5,11 @@ import '../../providers/auth_provider.dart';
 import '../admin/admin_portal.dart';
 import '../agent/agent_portal.dart';
 
-/// Routes the logged-in user to their role-appropriate home after sign-in.
-///
-/// All agents and owners (approved or not) go to the agent portal; post
-/// features are locked until the profile is approved by admin. Buyers/users
-/// stay in the app shell.
+
+
+
+
+
 void routeToRoleHome(BuildContext context) {
   final auth = context.read<AuthProvider>();
   final user = auth.user;

@@ -18,10 +18,10 @@ const otpLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50 })
 const emailFilter = (email: string) => ({ email: { equals: email, mode: 'insensitive' as const } })
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
-// Accounts are created immediately in the DB at registration with
-// emailVerified=false, so a user with a correct password can always sign in
-// (the account survives server restarts) and OTP codes are persisted on the
-// user record instead of living in memory.
+
+
+
+
 const OTP_BYPASS_CODE = process.env.OTP_BYPASS_CODE
 
 function createUserWithOtp(data: {
@@ -61,7 +61,7 @@ function createUserWithOtp(data: {
   })
 }
 
-// Register (Agent)
+
 router.post('/register', authLimiter, async (req, res) => {
   try {
     const parsed = registerSchema.safeParse(req.body)
@@ -115,7 +115,7 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 })
 
-// Buyer / user registration
+
 router.post('/register-buyer', authLimiter, async (req, res) => {
   try {
     const parsed = buyerRegisterSchema.safeParse(req.body)
@@ -172,7 +172,7 @@ router.post('/register-buyer', authLimiter, async (req, res) => {
   }
 })
 
-// Verify email with OTP
+
 router.post('/verify-otp', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body
@@ -245,7 +245,7 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
   }
 })
 
-// Resend OTP code
+
 router.post('/resend-otp', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body
@@ -277,7 +277,7 @@ router.post('/resend-otp', otpLimiter, async (req, res) => {
   }
 })
 
-// Email-link verification
+
 router.get('/verify-email', async (req, res) => {
   try {
     const { token } = req.query
@@ -321,7 +321,7 @@ router.get('/verify-email', async (req, res) => {
   }
 })
 
-// Check verification status
+
 router.post('/check-verification', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body
@@ -369,7 +369,7 @@ router.post('/check-verification', otpLimiter, async (req, res) => {
   }
 })
 
-// Login
+
 router.post('/signin', authLimiter, async (req, res) => {
   try {
     const parsed = loginSchema.safeParse(req.body)
@@ -384,7 +384,7 @@ router.post('/signin', authLimiter, async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
-    // Auto-verify if user logs in with valid password
+    
     if (!user.emailVerified) {
       user = await prisma.user.update({
         where: { id: user.id },
@@ -393,9 +393,9 @@ router.post('/signin', authLimiter, async (req, res) => {
     }
 
     const { status } = user
-    // Pending (agent/owner) sign in so they can complete their profile;
-    // posting is locked until admin approval (requireActiveUser).
-    // Rejected / Suspended are blocked below.
+    
+    
+    
     if (status === 'Rejected') {
       return res.status(403).json({ message: 'Your account has been rejected', rejectionReason: user.rejectionReason })
     }
@@ -440,7 +440,7 @@ router.post('/signin', authLimiter, async (req, res) => {
   }
 })
 
-// Firebase Authentication (Google OAuth & Firebase Email/Password)
+
 router.post('/firebase', authLimiter, async (req, res) => {
   try {
     const { idToken, role: requestedRole, name: providedName, phone: providedPhone } = req.body
@@ -448,7 +448,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
       return res.status(400).json({ message: 'idToken is required' })
     }
 
-    // 1. Verify token signature, audience, issuer, expiration via Firebase Admin SDK
+    
     let verifiedFirebaseUser
     try {
       verifiedFirebaseUser = await verifyFirebaseIdToken(idToken)
@@ -459,15 +459,15 @@ router.post('/firebase', authLimiter, async (req, res) => {
 
     const { uid, email, emailVerified, name, picture, phoneNumber, signInProvider } = verifiedFirebaseUser
 
-    // Google OAuth is an automatic sign-in + registration pipeline. A Google
-    // account has already passed Firebase email verification, so we never gate
-    // these users behind OTP or a manual password login.
+    
+    
+    
     const isGoogle = signInProvider === 'google.com'
     const targetRole = requestedRole === 'agent' ? 'agent' : requestedRole === 'owner' ? 'owner' : 'user'
     const finalName = providedName || name || email.split('@')[0]
     const finalPhone = providedPhone || phoneNumber || null
 
-    // 2. Look up existing user by firebaseUid or normalized email
+    
     let user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -478,8 +478,8 @@ router.post('/firebase', authLimiter, async (req, res) => {
     })
 
     if (!user) {
-      // 3. New user — Google accounts are auto-verified + session issued.
-      //    Firebase email/password users come back unverified so OTP flow applies.
+      
+      
       user = await prisma.user.create({
         data: {
           firebaseUid: uid,
@@ -498,13 +498,13 @@ router.post('/firebase', authLimiter, async (req, res) => {
         },
       })
     } else {
-      // 4. Existing user — sync profile + verification, never downgrade role
+      
       const updates: any = {}
 
-      // A plain buyer may explicitly re-register as an agent/owner via Google
-      // sign-up. Honor that choice by upgrading the account to the requested
-      // seller role and re-running onboarding + admin review. Never downgrade
-      // an existing seller, and never upgrade an admin.
+      
+      
+      
+      
       if (
         (targetRole === 'agent' || targetRole === 'owner') &&
         user.role === 'user' &&
@@ -528,7 +528,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
         updates.firebaseUid = uid
       }
       if (isGoogle) {
-        // Google is proof-of-email: mark verified so OTP is never required.
+        
         updates.authProvider = 'google'
         updates.lastLoginAt = new Date()
         if (!user.emailVerified) {
@@ -555,7 +555,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
       }
     }
 
-    // 5. Check account approval status
+    
     if (user.status === 'Rejected') {
       return res.status(403).json({
         message: 'Your account has been rejected',
@@ -567,7 +567,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
       return res.status(403).json({ message: 'Your account has been suspended' })
     }
 
-    // 6. Google = always verified; Firebase email/password = still needs OTP if email not yet verified
+    
     const isVerified = isGoogle || user.emailVerified
 
     if (!isVerified) {
@@ -592,7 +592,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
       })
     }
 
-    // 7. Issue DawoLife JWT session tokens for verified users
+    
     const accessToken = signAccessToken({
       userId: user.id,
       email: user.email,
@@ -631,7 +631,7 @@ router.post('/firebase', authLimiter, async (req, res) => {
   }
 })
 
-// Get session
+
 router.get('/session', async (req, res) => {
   try {
     const authHeader = req.headers.authorization
@@ -669,7 +669,7 @@ router.get('/session', async (req, res) => {
   }
 })
 
-// Update profile
+
 router.patch('/profile', authMiddleware, async (req, res) => {
   try {
     const { name, phone, profilePhoto } = req.body
@@ -708,7 +708,7 @@ router.patch('/profile', authMiddleware, async (req, res) => {
   }
 })
 
-// Change password
+
 router.post('/change-password', authMiddleware, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body
@@ -734,7 +734,7 @@ router.post('/change-password', authMiddleware, async (req, res) => {
   }
 })
 
-// Forgot password: send a reset OTP to the user's email
+
 router.post('/forgot-password', otpLimiter, async (req, res) => {
   try {
     const parsed = forgotPasswordSchema.safeParse(req.body)
@@ -745,8 +745,8 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
     const normalizedEmail = normalizeEmail(parsed.data.email)
     const user = await prisma.user.findFirst({ where: emailFilter(normalizedEmail) })
 
-    // Always respond the same way whether or not the account exists to avoid
-    // leaking which emails are registered.
+    
+    
     if (!user) {
       return res.json({ message: 'If an account exists for that email, a reset code has been sent.' })
     }
@@ -768,7 +768,7 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
   }
 })
 
-// Reset password: verify OTP + set new password
+
 router.post('/reset-password', otpLimiter, async (req, res) => {
   try {
     const parsed = resetPasswordSchema.safeParse(req.body)
@@ -804,7 +804,7 @@ router.post('/reset-password', otpLimiter, async (req, res) => {
   }
 })
 
-// Signout
+
 router.post('/signout', (_req, res) => {
   res.json({ message: 'Signed out successfully' })
 })

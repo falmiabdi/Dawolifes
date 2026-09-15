@@ -11,7 +11,7 @@ import '../agent/agent_post_property.dart';
 import '../listings/listing_detail_screen.dart';
 import '../portal/widgets.dart';
 
-/// Admin property moderation mirroring app/admin/properties/page.tsx.
+
 class AdminPropertiesScreen extends StatefulWidget {
   const AdminPropertiesScreen({super.key});
 
@@ -140,7 +140,7 @@ class _AdminPropertiesScreenState extends State<AdminPropertiesScreen> {
   }
 }
 
-/// Detail review panel for a single property.
+
 class AdminPropertyDetailScreen extends StatefulWidget {
   const AdminPropertyDetailScreen({super.key, required this.property});
 

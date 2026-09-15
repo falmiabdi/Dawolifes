@@ -7,8 +7,8 @@ import '../../data/models/announcement.dart';
 import '../../data/repositories/announcement_repository.dart';
 import '../portal/widgets.dart';
 
-/// Admin announcement management mirroring app/admin/announcements/page.tsx.
-/// Supports create, edit and delete of announcements published to the News feed.
+
+
 class AdminAnnouncementsScreen extends StatefulWidget {
   const AdminAnnouncementsScreen({super.key});
 

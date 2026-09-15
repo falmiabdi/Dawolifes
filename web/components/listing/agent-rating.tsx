@@ -34,7 +34,7 @@ export function AgentRating({ agentId, agentName }: AgentRatingProps) {
       setAverage(data.rating?.average || 0)
       setCount(data.rating?.count || 0)
     } catch {
-      // Rating badge is decorative, fail silently.
+      
     }
   }, [agentId])
 

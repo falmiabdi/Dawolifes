@@ -8,7 +8,7 @@ import { getGoogleRedirectResult, signInWithGoogle } from '@/lib/firebase-auth'
 
 patchFetchForCapacitor()
 
-// localStorage survives app restarts in the Android WebView (sessionStorage does not)
+
 function authStorage() {
   try {
     if (Capacitor.isNativePlatform()) return window.localStorage
@@ -48,8 +48,8 @@ export interface SessionUser {
 
 export type UserRole = 'buyer' | 'seller' | 'agent' | 'owner' | 'admin'
 
-// Maps the four distinct account roles to a stable UI-facing role value.
-// Admin must NEVER collapse into agent — the dashboards are role-separated.
+
+
 export function mapUserRole(role?: string): UserRole {
   if (role === 'admin') return 'admin'
   if (role === 'owner') return 'owner'
@@ -97,9 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [user, setUser] = useState<SessionUser | null>(null)
   const [loading, setLoading] = useState(true)
-  // Remembers the page the Google redirect flow started from, so the return
-  // navigation (which reloads the app) lands on the right route. Defaults to
-  // '/' (home) when the origin page was an auth page.
+  
+  
+  
   const redirectPathRef = useRef<string>('/')
 
   useEffect(() => {
@@ -126,13 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     fetchAuthSession()
     resolveRedirectSignIn()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [])
 
-  /**
-   * Completes a Google sign-in that used the redirect flow (chosen when the
-   * popup flow is blocked by Cross-Origin-Opener-Policy). Runs once on mount.
-   */
+  
+
+
+
   async function resolveRedirectSignIn() {
     try {
       const cred = await getGoogleRedirectResult()
@@ -150,8 +150,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.accessToken) await persistToken(data.accessToken)
       if (data.user) setUserAndCache(data.user)
 
-      // Route by role exactly like googleSignIn (redirect flow loses the
-      // register-page role, so default to buyer /).
+      
+      
       const target =
         data.user?.role === 'admin'
           ? '/admin'
@@ -162,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             : redirectPathRef.current || '/'
       router.replace(target)
     } catch {
-      // Silently fail — user can retry from the sign-in UI.
+      
     }
   }
 
@@ -201,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(timer)
       }
     } catch {
-      // Silently fail
+      
     } finally {
       setLoading(false)
     }
@@ -238,19 +238,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await persistToken(data.accessToken)
     setUserAndCache(data.user)
     
-    // Auto-redirect admin to admin portal
+    
     if (data.user?.role === 'admin') {
       router.replace('/admin')
     }
     return data
   }
 
-  /**
-   * Google sign-in: opens the Google sheet, then exchanges the Firebase ID
-   * token for a DawoLife session. Returns `null` if the user canceled the
-   * sheet. If the account needs email verification the backend responds with
-   * `requiresEmailVerification` and no session — surfaced for the UI.
-   */
+  
+
+
+
+
+
   async function googleSignIn(role?: string) {
     const cred = await signInWithGoogle()
     if (!cred) return null
@@ -361,12 +361,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch {
-      // Silently fail
+      
     }
   }
 
   function logout() {
-    // Clear the JWT everywhere it can be stored.
+    
     if (Capacitor.isNativePlatform()) {
       try {
         const { Preferences } = require('@capacitor/preferences')
@@ -374,8 +374,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     }
     document.cookie = 'token=; path=/; max-age=0'
-    // Drop the cached session from both storages so a later login (or another
-    // role's account) never hydrates from a stale session.
+    
+    
     try {
       authStorage().removeItem('auth_user')
       window.sessionStorage.removeItem('auth_user')
@@ -435,9 +435,9 @@ export function AuthGuard({
         router.replace(`/auth/login?redirect=${encodeURIComponent(pathname)}`)
       }
     } else if (redirecting) {
-      // Clear the flag once the redirect is no longer needed so client-side
-      // transitions (which never remount this component) don't stay stuck
-      // showing the loading bar.
+      
+      
+      
       setRedirecting(false)
     }
   }, [user, loading, requiredRole, router, pathname, redirecting])

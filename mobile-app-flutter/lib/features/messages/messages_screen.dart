@@ -13,8 +13,8 @@ import '../../providers/language_provider.dart';
 import '../auth/login_screen.dart';
 import 'chat_screen.dart';
 
-/// Inbox screen, mirroring GET /api/messages/inbox. Refreshes from the API
-/// and also on real-time WebSocket `message` events for parity with the web.
+
+
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 

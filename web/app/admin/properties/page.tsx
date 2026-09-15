@@ -154,7 +154,7 @@ export default function AdminPropertiesPage() {
     }
   }
 
-  // Whether the listing is currently showing the admin's contact.
+  
   const isAdminContact = (p: Property) => {
     if (p.contactMode) return p.contactMode === 'Admin'
     return !(p.displayPhone && p.agent?.phone && p.displayPhone === p.agent.phone)
@@ -218,7 +218,7 @@ export default function AdminPropertiesPage() {
         <p className="text-sm text-slate-500">Monitor properties listed by agents. Approve for public publish, reject incorrect posts, or delete violations.</p>
       </div>
 
-      {/* Filter and Search */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white border border-slate-200 p-4 rounded-3xl shadow-sm">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -255,9 +255,9 @@ export default function AdminPropertiesPage() {
         </div>
       </div>
 
-      {/* Properties Display Layout */}
+      {}
       <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
-        {/* Listings Catalog */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-h-[400px]">
           <h2 className="font-bold text-slate-900 mb-4">Listings Queue</h2>
           {loading ? (
@@ -309,12 +309,12 @@ export default function AdminPropertiesPage() {
           )}
         </div>
 
-        {/* Detailed Property Review Panel */}
+        {}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm min-h-[400px] lg:sticky lg:top-24">
           <h2 className="font-bold text-slate-900 mb-4">Review Listing details</h2>
           {selectedProperty ? (
             <div className="space-y-5 text-xs text-slate-600">
-              {/* Image preview */}
+              {}
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
                 <img
                   src={selectedProperty.images?.[0] || '/placeholder.svg'}
@@ -326,7 +326,7 @@ export default function AdminPropertiesPage() {
                 </div>
               </div>
 
-              {/* Title & Agent Info */}
+              {}
               <div>
                 <h3 className="text-sm font-bold text-slate-900">{selectedProperty.title}</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">
@@ -337,7 +337,7 @@ export default function AdminPropertiesPage() {
                 </p>
               </div>
 
-              {/* Rejection Reason Display */}
+              {}
               {selectedProperty.status === 'Rejected' && selectedProperty.rejectionReason && (
                 <div className="rounded-xl bg-red-50 border border-red-200 p-3">
                   <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-1">Rejection Reason</p>
@@ -345,10 +345,10 @@ export default function AdminPropertiesPage() {
                 </div>
               )}
 
-              {/* Action Buttons */}
+              {}
               <div className="space-y-3 border-t border-b border-slate-100 py-3">
                 {selectedProperty.agent?.role === 'admin' ? (
-                  // Admin-posted: View + Edit + Delete
+                  
                   <div className="flex gap-2">
                     <Button
                       onClick={() => window.open(`/listings/view?id=${selectedProperty.id}`, '_blank')}
@@ -375,7 +375,7 @@ export default function AdminPropertiesPage() {
                     </Button>
                   </div>
                 ) : (
-                  // Agent/owner-posted: Approve/Reject + Switch Contact + Delete
+                  
                   <>
                     {(selectedProperty.status === 'Pending' || selectedProperty.status === 'Rejected' || selectedProperty.status === 'Approved') && (
                       <>
@@ -484,7 +484,7 @@ export default function AdminPropertiesPage() {
                 )}
               </div>
 
-              {/* Specifications */}
+              {}
               <div className="space-y-3">
                 <div>
                   <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Specifications</h4>
@@ -517,7 +517,7 @@ export default function AdminPropertiesPage() {
                   </div>
                 )}
 
-                {/* Amenities */}
+                {}
                 {selectedProperty.features.length > 0 && (
                   <div>
                     <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] text-orange-500 mb-2">Amenities</h4>

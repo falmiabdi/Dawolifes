@@ -10,14 +10,14 @@ import '../agent/agent_onboarding_screen.dart';
 import 'auth_shell.dart';
 import 'login_screen.dart';
 
-/// Email verification screen (6-digit code).
-///
-/// After registering (buyer or agent) the user lands here with the email they
-/// signed up with. The backend emails a 6-digit OTP code. Entering the code is
-/// the only verification path (matches the web verify-email page). On success:
-/// a buyer gets a session (straight to the app shell/dashboard); an agent gets
-/// a session and is sent straight to the agent application form so they can
-/// complete it without waiting for admin approval.
+
+
+
+
+
+
+
+
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key, required this.email, this.devOtp});
 
@@ -73,15 +73,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   String get _enteredCode => _controllers.map((c) => c.text.trim()).join();
 
-  /// Routes the user based on the verify result: agent/owner ->
-  /// application form, buyer -> app shell (dashboard), otherwise -> login
-  /// (verified).
+  
+  
+  
   void _routeByResult(dynamic result) {
     final user = result.user;
     if (user != null) {
       if (user.isAgent || user.isOwner) {
-        // Send fresh sellers to the application form; someone who already
-        // completed onboarding (relogin) goes straight to the app shell.
+        
+        
         if (user.needsOnboarding) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const AgentOnboardingScreen()),
@@ -101,8 +101,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// Submits the 6-digit code the user typed. The server verifies it and has
-  /// already emailed the OTP at registration time.
+  
+  
   Future<void> _verifyWithCode() async {
     final t = context.read<LanguageProvider>().t;
     if (_enteredCode.length != _codeLength) {
@@ -130,8 +130,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// Re-triggers the server to email a fresh 6-digit OTP (60s cooldown
-  /// enforced client-side).
+  
+  
   Future<void> _resendLink() async {
     if (_resending) return;
     setState(() {
@@ -232,7 +232,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 24),
-            // 6-digit OTP entry (primary path).
+            
             Text(
               t('enter_6_digit_code'),
               style: const TextStyle(color: Color(0xFF334155), fontSize: 13, fontWeight: FontWeight.w600),

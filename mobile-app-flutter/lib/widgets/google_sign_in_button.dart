@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Reusable Google Sign-In button following Google branding guidelines
-/// (full-width white outlined button, Google G logo, neutral slate colors).
+
+
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({
     super.key,
@@ -10,10 +10,10 @@ class GoogleSignInButton extends StatelessWidget {
     this.label = 'Continue with Google',
   });
 
-  /// Called when the button is tapped. Ignored while [loading].
+  
   final VoidCallback? onPressed;
 
-  /// Shows an inline spinner and disables the button while true.
+  
   final bool loading;
 
   final String label;

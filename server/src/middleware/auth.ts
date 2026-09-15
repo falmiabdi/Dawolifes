@@ -20,7 +20,7 @@ export interface AuthenticatedRequest extends Request {
   user?: RequestUser
 }
 
-/** Resolves the authenticated user from the Authorization header without rejecting the request. */
+
 export function getRequestUserId(req: Request): RequestUser | null {
   const header = req.headers.authorization
   if (!header || !header.startsWith('Bearer ')) return null

@@ -24,11 +24,11 @@ import 'admin_settings.dart';
 import 'admin_users.dart';
 import 'admin_vehicles.dart';
 
-/// Admin portal hub mirroring the admin sidebar in dashboard/sidebar.tsx.
-///
-/// Nav order, labels and the unread notification badge match the web sidebar:
-/// Dashboard, Agents, Listing Permissions, Properties, Vehicles, Users,
-/// Notifications, Announcements, Payments, Settings.
+
+
+
+
+
 class AdminPortalScreen extends StatefulWidget {
   const AdminPortalScreen({super.key});
 
@@ -48,10 +48,10 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   @override
   void initState() {
     super.initState();
-    // Mirror the web admin sidebar: poll the unread notification count every 30s.
+    
     _loadUnread();
     _unreadTimer = Timer.periodic(const Duration(seconds: 30), (_) => _loadUnread());
-    // Real-time: refresh the badge on socket events.
+    
     _wsSub = context.read<WebSocketService>().messages.listen((msg) {
       if (!mounted) return;
       switch (msg.type) {
@@ -76,19 +76,23 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   }
 
   Future<void> _loadUnread() async {
-    // Mirror the web sidebar: poll unread notification + message counts every
-    // 30s so the admin portal badges stay fresh.
+    
+    
     try {
       final count = await _notifRepo.fetchUnreadCount();
       if (mounted && count != _unread) setState(() => _unread = count);
     } catch (_) {
-      // Ignore polling failures.
+  // Ignore polling failures.
+  
+      
     }
     try {
       final count = await _msgRepo.fetchUnreadCount();
       if (mounted && count != _msgUnread) setState(() => _msgUnread = count);
     } catch (_) {
-      // Ignore polling failures.
+  // Ignore polling failures.
+  
+      
     }
   }
 

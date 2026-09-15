@@ -10,8 +10,8 @@ import '../../data/models/announcement.dart';
 import '../../data/repositories/announcement_repository.dart';
 import '../portal/widgets.dart';
 
-/// News / announcements feed mirroring the web app's `/news` page.
-/// Refreshes from the API and on real-time WebSocket `announcement` events.
+
+
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
 

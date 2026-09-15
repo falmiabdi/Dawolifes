@@ -67,7 +67,7 @@ export default function AdminPermissionsPage() {
           const data = await res.json()
           if (data?.message) message = data.message
         } catch {
-          // non-JSON error body — keep the generic message
+          
         }
         throw new Error(message)
       }

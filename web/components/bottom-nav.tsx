@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 const SCROLL_THRESHOLD = 10
 const HIDE_ANIMATION = { duration: 0.25, ease: "easeInOut" as const }
 
-// Portals / auth flows have their own navigation — hide the bottom bar there.
+
 const HIDDEN_PATHS = ["/admin", "/agent", "/auth", "/listings"]
 
 interface NavItem {
@@ -34,13 +34,13 @@ export function BottomNav() {
 
   const hidden = HIDDEN_PATHS.some((path) => pathname.startsWith(path))
 
-  // Reset visibility whenever the route changes
+  
   useEffect(() => {
     lastScrollY.current = window.scrollY
     setNavHidden(false)
   }, [pathname])
 
-  // Scroll-based show/hide (hide on scroll down, show on scroll up, always visible near the top)
+  
   useEffect(() => {
     if (hidden || typeof window === "undefined") return
     lastScrollY.current = window.scrollY

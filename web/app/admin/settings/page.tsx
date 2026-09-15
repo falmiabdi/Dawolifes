@@ -17,23 +17,23 @@ export default function AdminSettingsPage() {
   const { t } = useI18n()
   const [saving, setSaving] = useState(false)
 
-  // Profile
+  
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [profilePhoto, setProfilePhoto] = useState('')
 
-  // Password
+  
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
 
-  // Create admin
+  
   const [newAdmin, setNewAdmin] = useState({ username: '', email: '', password: '' })
   const [creatingAdmin, setCreatingAdmin] = useState(false)
   const [isRootAdmin, setIsRootAdmin] = useState(false)
 
-  // Contact / Social (app-wide settings)
+  
   const [contactPhone1, setContactPhone1] = useState('')
   const [contactPhone2, setContactPhone2] = useState('')
   const [contactPhone3, setContactPhone3] = useState('')
@@ -205,7 +205,7 @@ export default function AdminSettingsPage() {
         <p className="text-sm text-slate-500">{t('manage_profile')}</p>
       </div>
 
-      {/* Profile */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Camera className="h-5 w-5" />
@@ -239,7 +239,7 @@ export default function AdminSettingsPage() {
         </Button>
       </div>
 
-      {/* Change Password */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Lock className="h-5 w-5" />
@@ -266,7 +266,7 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Create Admin */}
+      {}
       {isRootAdmin && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-2 text-orange-600 font-bold">
@@ -294,7 +294,7 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* Contact & Social (app-wide, shown in footer + mobile About) */}
+      {}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
         <div className="flex items-center gap-2 text-orange-600 font-bold">
           <Phone className="h-5 w-5" />

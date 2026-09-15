@@ -1,4 +1,4 @@
-/// Supported languages, matching the Capacitor app's i18n provider.
+
 enum AppLanguage { english, amharic, oromo }
 
 extension AppLanguageX on AppLanguage {
@@ -21,7 +21,7 @@ extension AppLanguageX on AppLanguage {
       };
 }
 
-/// Translation strings identical to lib/i18n.tsx in the Capacitor app.
+
 abstract final class AppStrings {
   static const Map<AppLanguage, Map<String, String>> _strings = {
   AppLanguage.english: {
@@ -423,7 +423,7 @@ abstract final class AppStrings {
       'password_mismatch': 'Jechoonni iccitii wal hin fakkaatanu',
       'password_reset_success': 'Jechi iccitii milkaa\'inaan haaromeera! Amma seenuu dandeessa.',
   },
-};// GENERATED from web/lib/i18n.tsx (FORM_STRINGS + VALUE_STRINGS)
+};
 static const Map<AppLanguage, Map<String, String>> _formStrings = {
   AppLanguage.english: {
       'gender': 'Gender',
@@ -1730,7 +1730,7 @@ static const Map<AppLanguage, Map<String, String>> _valueStrings = {
   static String t(AppLanguage lang, String key) {
     return _strings[lang]?[key] ?? _formStrings[lang]?[key] ?? _strings[AppLanguage.english]?[key] ?? _formStrings[AppLanguage.english]?[key] ?? key;
   }
-  /// Translates a stored English option value (e.g. "For Sale") for display.
+  
   static String tv(AppLanguage lang, String value) {
     if (value.isEmpty) return value;
     return _valueStrings[lang]?[value] ?? value;

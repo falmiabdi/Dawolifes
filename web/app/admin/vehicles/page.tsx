@@ -336,7 +336,7 @@ export default function AdminVehiclesPage() {
 
               <div className="space-y-3 border-t border-b border-slate-100 py-3">
                 {selectedVehicle.agent?.role === 'admin' ? (
-                  // Admin-posted: only View, Edit and Delete
+                  
                   <div className="flex gap-2">
                     <Button
                       onClick={() => window.open(`/listings/vehicle?id=${selectedVehicle.id}`, '_blank')}
@@ -362,7 +362,7 @@ export default function AdminVehiclesPage() {
                     </Button>
                   </div>
                 ) : (
-                  // Agent/owner-posted: Approve/Reject + Switch Contact + View/Delete
+                  
                   <>
                     {(selectedVehicle.status === 'Pending' || selectedVehicle.status === 'Rejected' || selectedVehicle.status === 'Approved') && (
                       <>

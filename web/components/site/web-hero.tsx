@@ -102,7 +102,7 @@ export function WebHero() {
   useEffect(() => {
     setSearch(searchParams.get("search") || "")
     setSelectedCats((searchParams.get("category") || "").split(",").filter(Boolean))
-  }, [paramsString]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paramsString]) 
 
   function toggleCat(key: string) {
     setSelectedCats((prev) =>

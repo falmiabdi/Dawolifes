@@ -8,8 +8,8 @@ import '../agent/agent_portal.dart';
 import '../news/news_screen.dart';
 import '../notifications/notifications_screen.dart';
 
-/// "More" tab — quick links to News, Notifications and role portals,
-/// mirroring the web site header's More menu + dashboard links.
+
+
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 

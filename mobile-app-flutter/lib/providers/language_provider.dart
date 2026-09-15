@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/config/app_config.dart';
 import '../core/i18n/app_strings.dart';
 
-/// Locale state mirroring the I18nProvider.
+
 class LanguageProvider extends ChangeNotifier {
   LanguageProvider(this._prefs);
 

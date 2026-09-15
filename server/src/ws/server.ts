@@ -36,8 +36,8 @@ export function setupWebSocket(server: HTTPServer) {
     }
     clients.get(userId)!.add(ws)
 
-    // Track liveness on the actual socket so the heartbeat can terminate
-    // dead connections instead of killing everyone on the first tick.
+    
+    
     ;(ws as any).isAlive = true
     ws.on('pong', () => {
       ;(ws as any).isAlive = true

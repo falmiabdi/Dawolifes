@@ -113,7 +113,7 @@ export default function MessagesPage() {
       }
       setConversations([...map.values()])
     } catch {
-      // silently ignore
+      
     } finally {
       setLoadingInbox(false)
     }
@@ -155,7 +155,7 @@ export default function MessagesPage() {
         )
       }
     } catch {
-      // silently ignore
+      
     }
   }, [activeConv, user, getToken])
 
@@ -211,7 +211,7 @@ export default function MessagesPage() {
         setTypedMessage('')
       }
     } catch {
-      // silently ignore
+      
     } finally {
       setSending(false)
     }
